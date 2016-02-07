@@ -9,6 +9,8 @@ organization := "net.scalax.fsn"
 name := "fsn-parent"
 version := "0.0.1"
 
+scalacOptions ++= Seq("-feature", "-deprecation")
+
 libraryDependencies ++= Seq(
   "com.lihaoyi" % "ammonite-repl" % "0.5.3" % "test" cross CrossVersion.full
 )
