@@ -72,10 +72,10 @@ object FsnRun extends App {
 
   val resultQuery = for {
     sTq <- new SourceQueryExtensionMethods(menuItemTq)
-  } yield for {
+    rTq <- new SourceQueryExtensionMethods(menuItemTq)
     tTq <- new TargetQueryExtensionMethods(menuItemTq)
   } yield {
-    List(sTq.parent setToSame tTq.parent, sTq.name setToSame tTq.name, sTq.url setToSame tTq.url)
+    List(sTq.parent setToSame tTq.parent, sTq.name setToSame tTq.name, rTq.url setToSame tTq.url)
     //List(sTq setToSame tTq)
   }
 

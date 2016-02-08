@@ -1,6 +1,6 @@
 package net.scalax.fsn.s2s
 
-import slick.ast.{Bind, Ref, AnonSymbol}
+import slick.ast.{AnonSymbol, Bind, Ref}
 import slick.driver.JdbcActionComponent
 import slick.jdbc.JdbcBackend
 import slick.lifted._
@@ -10,32 +10,41 @@ import scala.language.higherKinds
 
 class TargetQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
 
-  type TargetTempAlia = TargetQuery with TargetTemp
+  trait TempWrapper {
+    def query: Query[wrapper.writer.TargetColumn, wrapper.writer.DataType, Seq]
+    val wrapper: SlickWrapper
+  }
 
-  def flatMap(f: E => TargetTempAlia)
-  : TargetTempAlia = {
+  def flatMap(f: E => FQuery)
+  : FQuery = {
     val generator = new AnonSymbol
     val aliased = queryToExt.shaped.encodeRef(Ref(generator)).value
     val fv = f(aliased)
-    val fvQuery = fv.targetQuery
-    val query2 = new WrappingQuery[fv.TE, fv.TU, Seq](new Bind(generator, queryToExt.toNode, fvQuery.toNode), fvQuery.shaped)
-    new TargetQuery with TargetTemp {
+    val query2 = new WrappingQuery[fv.TE, fv.TU, Seq](new Bind(generator, queryToExt.toNode, fv.targetQuery.toNode), fv.targetQuery.shaped)
+    new FQuery {
       override type TE = fv.TE
       override type TU = fv.TU
+      override type SE = fv.SE
+      override type SU = fv.SU
+      override val sourceQuery = fv.sourceQuery
       override val targetQuery = query2
-      override val temp = fv.temp
+      override val transafrom = fv.transafrom
     }
   }
 
-  def map(f: E => List[SlickWrapper]): TargetTempAlia = {
+  def map(f: E => List[SlickWrapper]): FQuery = {
     flatMap(s => {
       val selectRep = f(s).reduce(_ append _)
-      val query2: Query[selectRep.writer.TargetColumn, selectRep.writer.DataType, Seq] = Query(selectRep.writer.sourceColumn)(selectRep.writer.writer)
-      new TargetQuery with TargetTemp {
+      val query1: Query[selectRep.writer.TargetColumn, selectRep.writer.DataType, Seq] = Query(selectRep.writer.sourceColumn)(selectRep.writer.writer)
+      val query2: Query[selectRep.reader.TargetColumn, selectRep.reader.DataType, Seq] = Query(selectRep.reader.sourceColumn)(selectRep.reader.reader)
+      new FQuery {
         override type TE = selectRep.writer.TargetColumn
         override type TU = selectRep.writer.DataType
-        override val targetQuery = query2
-        override val temp = selectRep
+        override val targetQuery = query1
+        override type SE = selectRep.reader.TargetColumn
+        override type SU = selectRep.reader.DataType
+        override val sourceQuery = query2
+        override val transafrom = selectRep.convert
       }
     })
   }
@@ -43,8 +52,6 @@ class TargetQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
 }
 
 class SourceQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
-
-  type TargetTempAlia = TargetQuery with TargetTemp
 
   def flatMap(f: E => FQuery)
   : FQuery = {
@@ -64,41 +71,17 @@ class SourceQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
     }
   }
 
-  def map(f: E => TargetTempAlia): FQuery = {
-    flatMap(s => {
-      val selectRep = f(s)
-      val query2: Query[selectRep.temp.reader.TargetColumn, selectRep.temp.reader.DataType, Seq] = Query(selectRep.temp.reader.sourceColumn)(selectRep.temp.reader.reader)
-      new FQuery {
-        override type TE = selectRep.TE
-        override type TU = selectRep.TU
-        override val targetQuery = selectRep.targetQuery
-        override type SE = selectRep.temp.reader.TargetColumn
-        override type SU = selectRep.temp.reader.DataType
-        override val sourceQuery = query2
-        override val transafrom = selectRep.temp.convert.asInstanceOf[this.SU => this.TU]
-      }
-    })
-  }
-
 }
 
-trait SourceQuery {
+trait FQuery {
+
   type SE
   type SU
   val sourceQuery: Query[SE, SU, Seq]
-}
 
-trait TargetQuery {
   type TE
   type TU
   val targetQuery: Query[TE, TU, Seq]
-}
-
-trait TargetTemp {
-  val temp: SlickWrapper
-}
-
-trait FQuery extends SourceQuery with TargetQuery {
 
   val transafrom: SU => TU
 
