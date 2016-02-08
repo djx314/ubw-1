@@ -66,14 +66,12 @@ object FsnRun extends App {
 
   Await.result(sdb.run(menuItemTq ++= data), scala.concurrent.duration.Duration.Inf)
 
-  val aa = new FConvert {}
-  import aa._
   import scala.concurrent.ExecutionContext.Implicits.global
 
   val resultQuery = for {
-    sTq <- new SourceQueryExtensionMethods(menuItemTq)
-    rTq <- new SourceQueryExtensionMethods(menuItemTq)
-    tTq <- new TargetQueryExtensionMethods(menuItemTq)
+    sTq <- menuItemTq.in
+    rTq <- menuItemTq.in
+    tTq <- menuItemTq.out
   } yield {
     List(sTq.parent setToSame tTq.parent, sTq.name setToSame tTq.name, rTq.url setToSame tTq.url)
     //List(sTq setToSame tTq)
