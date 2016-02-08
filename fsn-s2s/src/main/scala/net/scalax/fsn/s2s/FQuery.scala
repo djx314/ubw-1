@@ -10,11 +10,6 @@ import scala.language.higherKinds
 
 class TargetQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
 
-  trait TempWrapper {
-    def query: Query[wrapper.writer.TargetColumn, wrapper.writer.DataType, Seq]
-    val wrapper: SlickWrapper
-  }
-
   def flatMap(f: E => FQuery)
   : FQuery = {
     val generator = new AnonSymbol
