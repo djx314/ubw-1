@@ -13,6 +13,12 @@ trait SlickWriter extends FWriter {
 
 }
 
+/*trait SlickWriteContent extends SlickWriter with FData {
+
+  override type DataType
+
+}*/
+
 trait SlickReader extends FReader {
 
   type SourceColumn
