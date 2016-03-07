@@ -8,36 +8,39 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class TargetQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
 
-  def flatMap(f: E => SlickQuery)
-  : SlickQuery = {
+  def flatMap(f: E => SlickQuery): SlickQuery = {
     val generator = new AnonSymbol
     val aliased = queryToExt.shaped.encodeRef(Ref(generator)).value
     val fv = f(aliased)
     val query2 = new WrappingQuery[fv.TE, fv.TU, Seq](new Bind(generator, queryToExt.toNode, fv.targetQuery.toNode), fv.targetQuery.shaped)
     new SlickQuery {
-      override type TE = fv.TE
-      override type TU = fv.TU
       override type SE = fv.SE
       override type SU = fv.SU
       override val sourceQuery = fv.sourceQuery
+
+      override type TE = fv.TE
+      override type TU = fv.TU
       override val targetQuery = query2
+
       override val transafrom = fv.transafrom
     }
   }
 
   def map(f: E => List[SlickWrapper]): SlickQuery = {
     flatMap(s => {
-      val selectRep = f(s).reduce(_ append _)
-      val query1: Query[selectRep.writer.TargetColumn, selectRep.writer.DataType, Seq] = Query(selectRep.writer.sourceColumn)(selectRep.writer.writer)
-      val query2: Query[selectRep.reader.TargetColumn, selectRep.reader.DataType, Seq] = Query(selectRep.reader.sourceColumn)(selectRep.reader.reader)
+      val wrapper = f(s).reduce(_ append _)
+      val query1: Query[wrapper.writer.TargetColumn, wrapper.writer.DataType, Seq] = Query(wrapper.writer.sourceColumn)(wrapper.writer.writer)
+      val query2: Query[wrapper.reader.TargetColumn, wrapper.reader.DataType, Seq] = Query(wrapper.reader.sourceColumn)(wrapper.reader.reader)
       new SlickQuery {
-        override type TE = selectRep.writer.TargetColumn
-        override type TU = selectRep.writer.DataType
-        override val targetQuery = query1
-        override type SE = selectRep.reader.TargetColumn
-        override type SU = selectRep.reader.DataType
+        override type SE = wrapper.reader.TargetColumn
+        override type SU = wrapper.reader.DataType
         override val sourceQuery = query2
-        override val transafrom = selectRep.convert
+
+        override type TE = wrapper.writer.TargetColumn
+        override type TU = wrapper.writer.DataType
+        override val targetQuery = query1
+
+        override val transafrom = wrapper.convert
       }
     })
   }
@@ -46,20 +49,21 @@ class TargetQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
 
 class SourceQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
 
-  def flatMap(f: E => SlickQuery)
-  : SlickQuery = {
+  def flatMap(f: E => SlickQuery): SlickQuery = {
     val generator = new AnonSymbol
     val aliased = queryToExt.shaped.encodeRef(Ref(generator)).value
     val fv = f(aliased)
     val fvQuery = fv.sourceQuery
     val query2 = new WrappingQuery[fv.SE, fv.SU, Seq](new Bind(generator, queryToExt.toNode, fvQuery.toNode), fvQuery.shaped)
     new SlickQuery {
-      override type TE = fv.TE
-      override type TU = fv.TU
       override type SE = fv.SE
       override type SU = fv.SU
       override val sourceQuery = query2
+
+      override type TE = fv.TE
+      override type TU = fv.TU
       override val targetQuery = fv.targetQuery
+
       override val transafrom = fv.transafrom
     }
   }
