@@ -50,15 +50,23 @@ object FsnRun extends App {
   )
 
   val sdb = {
-    val datasource = new JdbcDataSource()
-    datasource.setUrl(s"jdbc:h2:mem:source;DB_CLOSE_DELAY=-1")
-    Database.forDataSource(datasource)
+    //val datasource = new JdbcDataSource()
+    //datasource.setUrl(s"jdbc:jdbcdslog:h2:mem:source;DB_CLOSE_DELAY=-1;targetDriver=org.h2.Driver")
+    //datasource.setURL("org.jdbcdslog.DriverLoggingProxy")
+    Database.forURL(
+      url = "jdbc:jdbcdslog:h2:mem:source;DB_CLOSE_DELAY=-1;targetDriver=org.h2.Driver",
+      driver = "org.jdbcdslog.DriverLoggingProxy"
+    )
   }
 
   val tdb = {
-    val datasource = new JdbcDataSource()
+    /*val datasource = new JdbcDataSource()
     datasource.setUrl(s"jdbc:h2:mem:target;DB_CLOSE_DELAY=-1")
-    Database.forDataSource(datasource)
+    Database.forDataSource(datasource)*/
+    Database.forURL(
+      url = "jdbc:jdbcdslog:h2:mem:target;DB_CLOSE_DELAY=-1;targetDriver=org.h2.Driver",
+      driver = "org.jdbcdslog.DriverLoggingProxy"
+    )
   }
 
   Await.result(sdb.run(menuItemTq.schema.create), scala.concurrent.duration.Duration.Inf)
