@@ -4,7 +4,7 @@ import sbt._
 import sbt.Keys._
 import scala.language.reflectiveCalls
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 organization := "net.scalax.fsn"
 name := "fsn-parent"
 version := "0.0.1"
@@ -12,7 +12,8 @@ version := "0.0.1"
 scalacOptions ++= Seq("-feature", "-deprecation")
 
 libraryDependencies ++= Seq(
-  "com.lihaoyi" % "ammonite-repl" % "0.5.3" % "test" cross CrossVersion.full
+  //"com.lihaoyi" % "ammonite-repl" % "0.5.3" % "test" cross CrossVersion.full
+  "com.lihaoyi" % "ammonite-repl_2.11.7" % "0.5.3" % "test"
 )
 
 extAliasInfo.collect { case Some(s) => s }
@@ -61,7 +62,7 @@ lazy val windowsGitInitCommandMap = "windowsGitInit" ->
     |git config --global i18n.commitencoding utf-8;
     |git config --global i18n.logoutputencoding gbk;
     |git config --global core.autocrlf true;
-    |git config core.editor \"extras/commit_note.bat\"
+    |git config core.editor \"extras/commit_notepad.bat\"
   """.stripMargin
 
 lazy val linuxGitInitCommandMap = "linuxGitInit" ->

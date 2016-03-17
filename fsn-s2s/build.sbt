@@ -2,9 +2,8 @@ import org.slf4j.LoggerFactory
 
 import sbt._
 import sbt.Keys._
-import scala.language.reflectiveCalls
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 organization := "net.scalax.fsn"
 name := "fsn-s2s"
 version := "0.0.1"
