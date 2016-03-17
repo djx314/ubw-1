@@ -52,8 +52,7 @@ trait SlickWrapper {
   }
 
 }
-
-trait SlickRW {
+/*trait SlickRW {
 
   val writer: SlickWriter
 
@@ -124,4 +123,4 @@ trait SlickWrapper11 {
     }
   }
 
-}
+}*/
