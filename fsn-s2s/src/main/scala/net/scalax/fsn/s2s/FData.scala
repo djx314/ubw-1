@@ -12,11 +12,7 @@ trait SlickWriter extends FWriter {
   override type Writer[C] = Shape[_ <: FlatShapeLevel, SourceColumn, C, TargetColumn]
 
 }
-/*trait SlickWriteContent extends SlickWriter with FData {
 
-  override type DataType
-
-}*/
 trait SlickReader extends FReader {
 
   type SourceColumn
@@ -26,13 +22,7 @@ trait SlickReader extends FReader {
   override type Reader[C] = Shape[_ <: FlatShapeLevel, SourceColumn, C, TargetColumn]
 
 }
-/*trait FData {
 
-  type DataType
-
-  val data: DataType
-
-}*/
 trait FWriter {
 
   type DataType

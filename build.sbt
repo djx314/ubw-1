@@ -20,11 +20,11 @@ extAliasInfo.collect { case Some(s) => s }
 .foldLeft(List.empty[Def.Setting[_]]){ (s, t) => s ++ addCommandAlias(t._1, t._2) }
 
 if (OSName.isWindows)
-initialCommands in (Test, console) += s"""ammonite.repl.Main.run("repl.frontEnd() = ammonite.repl.frontend.FrontEnd.JLineWindows");"""
+  initialCommands in (Test, console) += s"""ammonite.repl.Main.run("repl.frontEnd() = ammonite.repl.frontend.FrontEnd.JLineWindows");"""
 else if (OSName.isLinux)
-initialCommands in (Test, console) += s"""ammonite.repl.Main.run("");"""
+  initialCommands in (Test, console) += s"""ammonite.repl.Main.run("");"""
 else
-initialCommands in (Test, console) += s"""ammonite.repl.Main.run("");"""
+  initialCommands in (Test, console) += s"""ammonite.repl.Main.run("");"""
 
 lazy val logger = {
   LoggerFactory.getLogger("sbt init")

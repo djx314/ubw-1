@@ -1,9 +1,9 @@
 package assist.models
 
-import org.h2.jdbcx.JdbcDataSource
 import slick.driver.H2Driver.api._
 import net.scalax.fsn.s2s._
 import scala.concurrent.Await
+import shapeless._
 
 case class MenuItem(
   id: Option[Long] = None,
@@ -19,22 +19,22 @@ case class MenuItemPermission(
 )
 
 class MenuItemTable(tag: Tag) extends Table[MenuItem](tag, "a_menu_item") {
-  def id = column[Option[Long]]("id", O.PrimaryKey, O.AutoInc)
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def parent = column[Long]("mi_parent_id")
   def name = column[String]("mi_menu_name")
   def url = column[Option[String]]("url")
 
-  def * = (id, parent, name, url) <> (MenuItem.tupled, MenuItem.unapply _)
+  def * = (id.?, parent, name, url) <> (MenuItem.tupled, MenuItem.unapply _)
 }
 
 object menuItemTq extends TableQuery(cons => new MenuItemTable(cons))
 
 class MenuItemPermissionTable(tag: Tag) extends Table[MenuItemPermission](tag, "a_mi_auth_link") {
-  def id = column[Option[Long]]("id", O.PrimaryKey, O.AutoInc)
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def menuItem = column[Option[Long]]("mi_id")
   def permission = column[Option[Long]]("au_id")
 
-  def * = (id, menuItem, permission) <> (MenuItemPermission.tupled, MenuItemPermission.unapply _)
+  def * = (id.?, menuItem, permission) <> (MenuItemPermission.tupled, MenuItemPermission.unapply _)
 
 }
 
@@ -45,8 +45,8 @@ object FsnRun extends App {
   val data = List(
     MenuItem(parent = 23L, name = "dfdsfhtrjh", url = Option("fdhtyjyukuili")),
     MenuItem(parent = 231L, name = "喵喵喵喵", url = Option("汪汪汪汪")),
-    MenuItem(parent = 23L, name = "dfdsfh23423trjh", url = Option("fdhtyjyuk23423uili")),
-    MenuItem(parent = 23L, name = "dfdsfh2342trjh", url = Option("34234234234"))
+    MenuItem(parent = 679518L, name = "dfdsfh23423trjh", url = Option("fdhtyjyuk23423uili")),
+    MenuItem(parent = 8524961L, name = "dfdsfh2342trjh", url = None)
   )
 
   val sdb = {
@@ -78,11 +78,13 @@ object FsnRun extends App {
 
   val resultQuery = for {
     sTq <- menuItemTq.in
-    rTq <- menuItemTq.in
     tTq <- menuItemTq.out
   } yield {
-    List(sTq.parent setToSame tTq.parent, sTq.name setToSame tTq.name, rTq.url setToSame tTq.url)
-    //List(sTq setToSame tTq)
+    List(
+      sTq.parent setToSame tTq.parent,
+      (sTq.parent :: sTq.name :: HNil).setTo(tTq.name).apply { case id :: name :: HNil => name + id.toString },
+      (sTq.parent :: sTq.name :: sTq.url :: HNil).setTo(tTq.url).apply { case parent :: name :: url :: HNil => url.map(s => parent.toString + name + s) }
+    )
   }
 
   Await.result(resultQuery.db2db(sdb, tdb), scala.concurrent.duration.Duration.Inf)
