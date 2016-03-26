@@ -31,9 +31,10 @@ lazy val logger = {
 }
 
 lazy val s2s = (project in file("./fsn-s2s"))
+  .dependsOn(core)
 
-lazy val parent = (project in file("."))
-  .dependsOn(s2s)
+lazy val core = (project in file("."))
+
 
 lazy val OSName = new {
   val OS = System.getProperty("os.name").toLowerCase

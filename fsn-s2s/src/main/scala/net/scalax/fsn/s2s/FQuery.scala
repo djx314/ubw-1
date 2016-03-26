@@ -13,35 +13,15 @@ class TargetQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
     val aliased = queryToExt.shaped.encodeRef(Ref(generator)).value
     val fv = f(aliased)
     val query2 = new WrappingQuery[fv.TE, fv.TU, Seq](new Bind(generator, queryToExt.toNode, fv.targetQuery.toNode), fv.targetQuery.shaped)
-    new SlickQuery {
-      override type SE = fv.SE
-      override type SU = fv.SU
-      override val sourceQuery = fv.sourceQuery
-
-      override type TE = fv.TE
-      override type TU = fv.TU
-      override val targetQuery = query2
-
-      override val transafrom = fv.transafrom
-    }
+    SlickQuery(fv.sourceQuery)(query2)(fv.transafrom)
   }
 
-  def map(f: E => List[SlickWrapper]): SlickQuery = {
+  def map(f: E => List[SlickConverter]): SlickQuery = {
     flatMap(s => {
       val wrapper = f(s).reduce(_ append _)
       val query1: Query[wrapper.writer.TargetColumn, wrapper.writer.DataType, Seq] = Query(wrapper.writer.sourceColumn)(wrapper.writer.writer)
       val query2: Query[wrapper.reader.TargetColumn, wrapper.reader.DataType, Seq] = Query(wrapper.reader.sourceColumn)(wrapper.reader.reader)
-      new SlickQuery {
-        override type SE = wrapper.reader.TargetColumn
-        override type SU = wrapper.reader.DataType
-        override val sourceQuery = query2
-
-        override type TE = wrapper.writer.TargetColumn
-        override type TU = wrapper.writer.DataType
-        override val targetQuery = query1
-
-        override val transafrom = wrapper.convert
-      }
+      SlickQuery(query2)(query1)(wrapper.convert)
     })
   }
 
@@ -55,17 +35,7 @@ class SourceQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
     val fv = f(aliased)
     val fvQuery = fv.sourceQuery
     val query2 = new WrappingQuery[fv.SE, fv.SU, Seq](new Bind(generator, queryToExt.toNode, fvQuery.toNode), fvQuery.shaped)
-    new SlickQuery {
-      override type SE = fv.SE
-      override type SU = fv.SU
-      override val sourceQuery = query2
-
-      override type TE = fv.TE
-      override type TU = fv.TU
-      override val targetQuery = fv.targetQuery
-
-      override val transafrom = fv.transafrom
-    }
+    SlickQuery(query2)(fv.targetQuery)(fv.transafrom)
   }
 
 }
@@ -95,6 +65,22 @@ trait SlickQuery {
       val insertDBIO = query2InsertDBIO(targetQuery) ++= dataToInsert
       targetDB.run(insertDBIO)
     }).flatMap(s => s)
+  }
+
+}
+
+object SlickQuery {
+
+  def apply[SE1, SU1, TE1, TU1](sourceQuery1: Query[SE1, SU1, Seq])(targetQuery1: Query[TE1, TU1, Seq])(transafrom1: SU1 => TU1) = {
+    new SlickQuery {
+      override type SE = SE1
+      override type SU = SU1
+      override type TE = TE1
+      override type TU = TU1
+      override val sourceQuery = sourceQuery1
+      override val targetQuery = targetQuery1
+      override val transafrom = transafrom1
+    }
   }
 
 }
