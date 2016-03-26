@@ -1,5 +1,6 @@
 package net.scalax.fsn.s2s
 
+import scala.language.existentials
 import scala.language.implicitConversions
 import shapeless._
 import slick.lifted._
@@ -8,23 +9,11 @@ trait SlickConvert {
 
   protected class ColumnExtensionMethods[T, S, R](repLike: T)(implicit sShape: Shape[_ <: FlatShapeLevel, T, S, R]) {
 
-    def setTo[H, B, U](targetRepLike: H)(implicit tShape: Shape[_ <: FlatShapeLevel, H, B, U]): (S => B) => SlickWrapper = {
+    def setTo[H, B, U](targetRepLike: H)(implicit tShape: Shape[_ <: FlatShapeLevel, H, B, U]): (S => B) => SlickConverter = {
       (convert1) => {
-        val reader1 = new SlickReader {
-          override type SourceColumn = T
-          override type TargetColumn = R
-          override val sourceColumn = repLike
-          override type DataType = S
-          override val reader = sShape
-        }
-        val writer1 = new SlickWriter {
-          override type SourceColumn = H
-          override type TargetColumn = U
-          override val sourceColumn = targetRepLike
-          override type DataType = B
-          override val writer = tShape
-        }
-        new SlickWrapper {
+        val reader1 = SlickReader(repLike)(sShape)
+        val writer1 = SlickWriter(targetRepLike)(tShape)
+        new SlickConverter {
           override val writer = writer1
           override val reader = reader1
           override val convert = convert1
@@ -32,7 +21,7 @@ trait SlickConvert {
       }
     }
 
-    def setToSame[H, U](targetRepLike: H)(implicit tShape: Shape[_ <: FlatShapeLevel, H, S, U]): SlickWrapper = {
+    def setToSame[H, U](targetRepLike: H)(implicit tShape: Shape[_ <: FlatShapeLevel, H, S, U]): SlickConverter = {
       setTo(targetRepLike)(tShape)((s: S) => s)
     }
 
@@ -77,23 +66,11 @@ trait SlickConvert {
 
   implicit class ColumnExtensionMethods1111[T, H](repLike: T)(implicit hlistReader: HListReader[T, H]) {
 
-    def setTo[K, B, U](targetRepLike: K)(implicit tShape: Shape[_ <: FlatShapeLevel, K, B, U]): (H => B) => SlickWrapper = {
+    def setTo[K, B, U](targetRepLike: K)(implicit tShape: Shape[_ <: FlatShapeLevel, K, B, U]): (H => B) => SlickConverter = {
       (convert1) => {
-        val reader1 = new SlickReader {
-          override type SourceColumn = hlistReader.SourceColumn
-          override type TargetColumn = hlistReader.TargetColumn
-          override val sourceColumn = hlistReader.colConvert(repLike)
-          override type DataType = hlistReader.DataType
-          override val reader = hlistReader.shape
-        }
-        val writer1 = new SlickWriter {
-          override type SourceColumn = K
-          override type TargetColumn = U
-          override val sourceColumn = targetRepLike
-          override type DataType = B
-          override val writer = tShape
-        }
-        new SlickWrapper {
+        val reader1 = SlickReader(hlistReader.colConvert(repLike))(hlistReader.shape)
+        val writer1 = SlickWriter(targetRepLike)(tShape)
+        new SlickConverter {
           override val writer = writer1
           override val reader = reader1
           override val convert = (sourceData: hlistReader.DataType) => {
