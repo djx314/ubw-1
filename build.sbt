@@ -6,7 +6,7 @@ import scala.language.reflectiveCalls
 
 scalaVersion := "2.11.8"
 organization := "net.scalax.fsn"
-name := "fsn-parent"
+name := "fsn"
 version := "0.0.1"
 
 scalacOptions ++= Seq("-feature", "-deprecation")
@@ -31,9 +31,9 @@ lazy val logger = {
 }
 
 lazy val s2s = (project in file("./fsn-s2s"))
-  .dependsOn(core)
+  .dependsOn(fsn)
 
-lazy val core = (project in file("."))
+lazy val fsn = (project in file("."))
 
 
 lazy val OSName = new {
