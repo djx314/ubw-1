@@ -7,7 +7,7 @@ import slick.lifted._
 
 trait SlickConvert {
 
-  protected class ColumnExtensionMethods[T, S, R](repLike: T)(implicit sShape: Shape[_ <: FlatShapeLevel, T, S, R]) {
+  implicit class ColumnExtensionMethods[T, S, R](repLike: T)(implicit sShape: Shape[_ <: FlatShapeLevel, T, S, R]) {
 
     def setTo[H, B, U](targetRepLike: H)(implicit tShape: Shape[_ <: FlatShapeLevel, H, B, U]): (S => B) => SlickConverter = {
       (convert1) => {
@@ -39,7 +39,7 @@ trait SlickConvert {
 
   }
 
-  implicit def aaaaaaaabbimplicit[U, V, W <: HList, X, Y, Z <: HList](implicit bconvert: U <:< (V :: W), bShape: Shape[_ <: FlatShapeLevel, V, X, Y], hListReader: HListReader[W, Z]): HListReader[U, X :: Z] = {
+  implicit def hListReaderImplicit[U, V, W <: HList, X, Y, Z <: HList](implicit bconvert: U <:< (V :: W), bShape: Shape[_ <: FlatShapeLevel, V, X, Y], hListReader: HListReader[W, Z]): HListReader[U, X :: Z] = {
     new HListReader[U, X :: Z] {
       override type SourceColumn = (V, hListReader.SourceColumn)
       override type DataType = (X, hListReader.DataType)
@@ -53,18 +53,18 @@ trait SlickConvert {
     }
   }
 
-  implicit def kkk[X, Y, Z, W](implicit bconvert: X <:< (Y :: HNil), bShape: Shape[_ <: FlatShapeLevel, Y, Z, W]): HListReader[X, Z :: HNil] = {
-    new HListReader[X, Z :: HNil] {
-      override type SourceColumn = Y
-      override type DataType = Z
-      override type TargetColumn = W
+  implicit def hNilReaderImplicit[S, T](implicit bShape: Shape[_ <: FlatShapeLevel, Unit, S, T]): HListReader[HNil, HNil] = {
+    new HListReader[HNil, HNil] {
+      override type SourceColumn = Unit
+      override type DataType = S
+      override type TargetColumn = T
       override val shape = bShape
-      override val colConvert = (s: X) => bconvert(s)(0)
-      override val convert = (s: Z) => s :: HNil
+      override val colConvert = (s: HNil) => ()
+      override val convert = (s: S) => HNil
     }
   }
 
-  implicit class ColumnExtensionMethods1111[T, H](repLike: T)(implicit hlistReader: HListReader[T, H]) {
+  implicit class HListLikeColumnExtensionMethods[T, H](repLike: T)(implicit hlistReader: HListReader[T, H]) {
 
     def setTo[K, B, U](targetRepLike: K)(implicit tShape: Shape[_ <: FlatShapeLevel, K, B, U]): (H => B) => SlickConverter = {
       (convert1) => {
@@ -81,11 +81,9 @@ trait SlickConvert {
     }
 
   }
-
-  implicit def columnExtensionMethodImplicit[T, S, R](repLike: T)(implicit sShape: Shape[_ <: FlatShapeLevel, T, S, R]): ColumnExtensionMethods[T, S, R] = {
+  /*implicit def columnExtensionMethodImplicit[T, S, R](repLike: T)(implicit sShape: Shape[_ <: FlatShapeLevel, T, S, R]): ColumnExtensionMethods[T, S, R] = {
     new ColumnExtensionMethods(repLike)(sShape)
-  }
-
+  }*/
   implicit class SlickQueryExtensionMethods[E, U](val query: Query[E, U, Seq]) {
 
     def in: SourceQueryExtensionMethods[E, U] = {

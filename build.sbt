@@ -5,7 +5,7 @@ import sbt.Keys._
 import scala.language.reflectiveCalls
 
 scalaVersion := "2.11.8"
-organization := "net.scalax.fsn"
+organization := "net.scalax"
 name := "fsn-parent"
 version := "0.0.1"
 
@@ -31,10 +31,11 @@ lazy val logger = {
 }
 
 lazy val s2s = (project in file("./fsn-s2s"))
-  .dependsOn(fsn)
+  .dependsOn(core)
 
-lazy val fsn = (project in file("."))
+lazy val core = (project in file("./fsn-core"))
 
+lazy val fsn = (project in file(".")).aggregate(s2s, core)
 
 lazy val OSName = new {
   val OS = System.getProperty("os.name").toLowerCase
