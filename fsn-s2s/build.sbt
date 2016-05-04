@@ -4,7 +4,7 @@ import sbt._
 import sbt.Keys._
 
 scalaVersion := "2.11.8"
-organization := "net.scalax.fsn"
+organization := "net.scalax"
 name := "fsn-s2s"
 version := "0.0.1"
 
