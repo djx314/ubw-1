@@ -1,11 +1,3 @@
-import org.slf4j.LoggerFactory
-
-import sbt._
-import sbt.Keys._
-import scala.language.reflectiveCalls
-
-scalacOptions ++= Seq("-feature", "-deprecation")
-
 libraryDependencies ++= Seq(
   "com.chuusai" %% "shapeless" % "2.3.1"
 )

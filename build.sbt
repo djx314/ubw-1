@@ -1,9 +1,5 @@
 import net.scalax.sbt.CustomSettings
 import org.slf4j.LoggerFactory
-import sbt._
-import sbt.Keys._
-
-import scala.language.reflectiveCalls
 
 name := "fsn-parent"
 

@@ -1,9 +1,3 @@
-import org.slf4j.LoggerFactory
-
-import sbt._
-import sbt.Keys._
-import scala.language.reflectiveCalls
-
 val slickVersion = "3.1.1"
 val scalazVersion = "7.3.0-M3"
 
@@ -17,5 +11,3 @@ libraryDependencies ++= Seq(
   "org.scalaz" %% "scalaz-iteratee" % scalazVersion,
   "org.scalaz" %% "scalaz-concurrent" % scalazVersion
 )
-
-scalacOptions ++= Seq("-feature", "-deprecation")
