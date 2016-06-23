@@ -1,5 +1,6 @@
 val slickVersion = "3.1.1"
 val scalazVersion = "7.3.0-M3"
+val circeVersion = "0.5.0-M2"
 
 libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % slickVersion,
@@ -11,3 +12,9 @@ libraryDependencies ++= Seq(
   "org.scalaz" %% "scalaz-iteratee" % scalazVersion,
   "org.scalaz" %% "scalaz-concurrent" % scalazVersion
 )
+
+libraryDependencies ++= Seq(
+  "io.circe" %% "circe-core",
+  "io.circe" %% "circe-generic",
+  "io.circe" %% "circe-parser"
+).map(_ % circeVersion)
