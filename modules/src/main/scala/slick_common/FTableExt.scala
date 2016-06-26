@@ -22,6 +22,8 @@ trait FTable {
         "This may be an initialization order problem. "+
         "When using a MappedColumnType, you may want to change it from a val to a lazy val or def.")
 
+    val thisTable = this
+
     new Rep.TypedRep[C] with FRepExt {
 
       override def toNode =
@@ -35,7 +37,7 @@ trait FTable {
         case _ => _tableName
       }) + "." + n
 
-      override val owner = self
+      override val owner = thisTable
 
     }
   }
