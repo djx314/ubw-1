@@ -11,7 +11,7 @@ object CustomSettings {
 
   def projectVersion = Seq(
     organization := "net.scalax",
-    version := "0.0.2-M4"
+    version := "0.0.3-M1"
   )
 
   def scalaSettings =

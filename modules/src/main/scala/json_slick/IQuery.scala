@@ -2,9 +2,9 @@ package net.scalax.fsn.json_slick
 
 import io.circe.Json
 import slick.dbio._
-import slick.driver.JdbcActionComponent
+import slick.jdbc.JdbcActionComponent
 import slick.lifted._
-import slick.profile.{BasicProfile, RelationalProfile}
+import slick.relational.RelationalProfile
 
 import scala.concurrent.{ExecutionContext, Future}
 
