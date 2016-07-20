@@ -11,7 +11,7 @@ object CustomSettings {
 
   def projectVersion = Seq(
     organization := "net.scalax",
-    version := "0.0.2-M4"
+    version := "0.0.3-M2"
   )
 
   def scalaSettings =
@@ -25,7 +25,7 @@ object CustomSettings {
       resolvers ++= Seq(
         "mavenRepoJX" at "http://repo1.maven.org/maven2/",
         "bintray/non" at "http://dl.bintray.com/non/maven",
-        Resolver.mavenLocal,
+        //Resolver.mavenLocal,
         Resolver.sonatypeRepo("release"),
         Resolver.url("typesafe-ivy", url("http://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
       ),
