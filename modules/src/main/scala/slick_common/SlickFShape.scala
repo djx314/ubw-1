@@ -14,12 +14,7 @@ trait SlickMonad {
 
     override def zip[A, B](f1: => SlickReaderE[A], f2: => SlickReaderE[B]): SlickReaderE[(A, B)] = {
       val (f1Case, f2Case) = (f1, f2)
-      val newShape = new TupleShape[
-        FlatShapeLevel,
-        (f1Case.SourceColumn, f2Case.SourceColumn),
-        (f1Case.DataType, f2Case.DataType),
-        (f1Case.TargetColumn, f2Case.TargetColumn)
-        ](f1Case.effect, f2Case.effect)
+      val newShape = Shape.tuple2Shape(f1Case.effect, f2Case.effect)
 
       val sourceOrderGen: Map[String, ((f1Case.TargetColumn, f2Case.TargetColumn)) => ColumnOrdered[_]] =
         for {
