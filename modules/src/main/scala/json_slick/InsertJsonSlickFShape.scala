@@ -1,4 +1,4 @@
-package net.scalax.fsn.json_slick
+/*package net.scalax.fsn.json_slick
 
 import io.circe.Json
 import net.scalax.fsn.core.FShape
@@ -48,4 +48,4 @@ class InsertJsonSlickFShape(implicit ec: ExecutionContext) extends FShape[Insert
     }
   }
 
-}
+}*/

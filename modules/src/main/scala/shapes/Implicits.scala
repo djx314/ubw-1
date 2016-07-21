@@ -11,7 +11,7 @@ trait Implicits {
 
   implicit def jsonQueyShape: FShape[SlickJsonBind, JsonQuery] = new SlickJsonFShape {}
   implicit def poiQueyShape: FShape[SlickPoiBind, PoiQuery] = new SlickPoiFShape {}
-  implicit def insertJsonSlickShape(implicit ec: ExecutionContext): FShape[InsertJsonSlickBind, InsertQuery] = new InsertJsonSlickFShape()(ec)
+  //implicit def insertJsonSlickShape(implicit ec: ExecutionContext): FShape[InsertJsonSlickBind, InsertQuery] = new InsertJsonSlickFShape()(ec)
   implicit def iRetrieveJsonSlickShape(implicit ec: ExecutionContext): FShape[IRetrieveJsonSlickBind, IRetrieveQuery] = new IRetrieveJsonSlickFShape()(ec)
   implicit def updateDeleteJsonSlickShape(implicit ec: ExecutionContext): FShape[UpdateDeleteSlickJsonBind, IQuery] = new UpdateDeleteJsonSlickFShape()(ec)
 
