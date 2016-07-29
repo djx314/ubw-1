@@ -2,7 +2,7 @@ package net.scalax.fsn.slick_common
 
 import slick.ast._
 import slick.lifted._
-import slick.profile.RelationalProfile
+import slick.relational.RelationalProfile
 
 trait FRepExt {
 

@@ -2,8 +2,8 @@ package net.scalax.fsn.shapes
 
 import net.scalax.fsn.core.FShape
 import net.scalax.fsn.json_slick._
-import net.scalax.fsn.slick_json.{JsonQuery, SlickJsonBind, SlickJsonConvert, SlickJsonFShape}
-import net.scalax.fsn.slick_poi.{PoiQuery, SlickPoiBind, SlickPoiConvert, SlickPoiFShape}
+import net.scalax.fsn.slick_json.{JsonQuery, SlickJsonBind, SlickJsonFShape}
+import net.scalax.fsn.slick_poi.{PoiQuery, SlickPoiBind, SlickPoiFShape}
 
 import scala.concurrent.ExecutionContext
 

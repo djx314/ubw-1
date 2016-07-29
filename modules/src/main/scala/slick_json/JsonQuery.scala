@@ -2,9 +2,9 @@ package net.scalax.fsn.slick_json
 
 import io.circe.Json
 import net.scalax.fsn.slick_common._
+import slick.basic.BasicProfile
 import slick.dbio._
 import slick.lifted._
-import slick.profile.BasicProfile
 
 import scala.concurrent.ExecutionContext
 
