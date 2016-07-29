@@ -2,9 +2,9 @@ package net.scalax.fsn.slick_poi
 
 import net.scalax.fsn.slick_common._
 import org.xarcher.cpoi.CellData
+import slick.basic.BasicProfile
 import slick.dbio._
 import slick.lifted._
-import slick.profile.BasicProfile
 
 import scala.concurrent.ExecutionContext
 

@@ -1,8 +1,8 @@
 package net.scalax.fsn.slick_common
 
+import slick.basic.BasicProfile
 import slick.dbio._
 import slick.lifted._
-import slick.profile.BasicProfile
 
 import scala.concurrent.ExecutionContext
 

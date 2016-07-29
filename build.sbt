@@ -33,7 +33,7 @@ lazy val fsn = (project in file("."))
   .aggregate(modules, core)
   .settings(CustomSettings.customSettings: _*)
   .settings(
-    libraryDependencies += "net.scalax" %% "jfxgit" % "0.0.1" exclude ("org.slf4j", "slf4j-log4j12"),
+    libraryDependencies += "net.scalax" %% "jfxgit" % "0.0.2-M1",
     autoGit <<= (
       baseDirectory in ThisBuild,
       fullClasspath in Compile,
