@@ -248,7 +248,18 @@ trait FilterWrapper[E] {
   }
 }
 
-case class PropertyInfo(property: String, typeName: String, inRetrieve: Boolean, canOrder: Boolean, isDefaultDesc: Boolean, isAutoInc: Boolean, isPrimaryKey: Boolean = false)
+case class PropertyInfo(
+  property: String,
+  typeName: String,
+  inRetrieve: Boolean,
+  canOrder: Boolean,
+  isDefaultDesc: Boolean,
+  isAutoInc: Boolean,
+  isPrimaryKey: Boolean = false,
+  selectRender: String,
+  retrieveRender: String,
+  inputRender: String
+)
 
 case class StaticManyInfo(
   propertyInfo: List[PropertyInfo],

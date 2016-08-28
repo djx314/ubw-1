@@ -6,7 +6,16 @@ import slick.dbio.DBIO
 
 import scala.concurrent.ExecutionContext
 
-case class PropertyInfo(property: String, typeName: String, inRetrieve: Boolean, canOrder: Boolean, isDefaultDesc: Boolean)
+case class PropertyInfo(
+  property: String,
+  typeName: String,
+  inRetrieve: Boolean,
+  canOrder: Boolean,
+  isDefaultDesc: Boolean,
+  selectRender: String,
+  retrieveRender: String,
+  inputRender: String
+)
 
 case class JsonView(properties: List[PropertyInfo], data: List[Map[String, Json]], sum: Int)
 case class JsonOut(properties: List[PropertyInfo], data: SlickParam => DBIO[(List[Map[String, Json]], Int)]) {
