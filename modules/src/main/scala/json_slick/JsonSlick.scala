@@ -57,12 +57,7 @@ trait JsonSlickMonad {
     override def zip[A, B](f1: => SlickWriterE[A], f2: => SlickWriterE[B]): SlickWriterE[(A, B)] = {
       val (f1Case, f2Case) = (f1, f2)
 
-      val newShape = new TupleShape[
-        FlatShapeLevel,
-        (f1Case.SourceColumn, f2Case.SourceColumn),
-        (f1Case.DataType, f2Case.DataType),
-        (f1Case.TargetColumn, f2Case.TargetColumn)
-        ](f1Case.effect, f2Case.effect)
+      val newShape = Shape.tuple2Shape(f1Case.effect, f2Case.effect)
 
       val appendPrimaryGen: List[((f1Case.DataType, f2Case.DataType)) => FilterWrapper[(f1Case.TargetColumn, f2Case.TargetColumn)]] = {
         type SlefTarget = f1Case.TargetColumn
@@ -253,7 +248,18 @@ trait FilterWrapper[E] {
   }
 }
 
-case class PropertyInfo(property: String, typeName: String, inRetrieve: Boolean, canOrder: Boolean, isDefaultDesc: Boolean, isAutoInc: Boolean, isPrimaryKey: Boolean = false)
+case class PropertyInfo(
+  property: String,
+  typeName: String,
+  inRetrieve: Boolean,
+  canOrder: Boolean,
+  isDefaultDesc: Boolean,
+  isAutoInc: Boolean,
+  isPrimaryKey: Boolean = false,
+  selectRender: String,
+  retrieveRender: String,
+  inputRender: String
+)
 
 case class StaticManyInfo(
   propertyInfo: List[PropertyInfo],
