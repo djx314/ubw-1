@@ -33,7 +33,26 @@ lazy val fsn = (project in file("."))
   .aggregate(modules, core)
   .settings(CustomSettings.customSettings: _*)
   .settings(
-    libraryDependencies += "net.scalax" %% "jfxgit" % "0.0.2-M1",
+    //libraryDependencies += "net.scalax" %% "jfxgit" % "0.0.2-M1",
+    libraryDependencies ++= {
+      val jgitVersion = "4.4.1.201607150455-r"
+      ("org.scalafx" %% "scalafx" % "8.0.92-R10") ::
+      (
+        List(
+          "org.eclipse.jgit" % "org.eclipse.jgit",
+          "org.eclipse.jgit" % "org.eclipse.jgit.pgm",
+          "org.eclipse.jgit" % "org.eclipse.jgit.http.server",
+          "org.eclipse.jgit" % "org.eclipse.jgit.ui",
+          "org.eclipse.jgit" % "org.eclipse.jgit.junit"
+        ) map (
+          _ % jgitVersion
+            exclude("javax.jms", "jms")
+            exclude("com.sun.jdmk", "jmxtools")
+            exclude("com.sun.jmx", "jmxri")
+            exclude("org.slf4j", "slf4j-log4j12")
+          )
+        )
+    },
     autoGit <<= (
       baseDirectory in ThisBuild,
       fullClasspath in Compile,

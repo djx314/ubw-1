@@ -11,10 +11,10 @@ case class PropertyInfo(
   typeName: String,
   inRetrieve: Boolean,
   canOrder: Boolean,
-  isDefaultDesc: Boolean,
-  selectRender: String,
-  retrieveRender: String,
-  inputRender: String
+  isDefaultDesc: Boolean//,
+  //selectRender: String,
+  //retrieveRender: String,
+  //inputRender: String
 )
 
 case class JsonView(properties: List[PropertyInfo], data: List[Map[String, Json]], sum: Int)

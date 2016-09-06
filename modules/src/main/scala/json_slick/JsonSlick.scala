@@ -255,10 +255,10 @@ case class PropertyInfo(
   canOrder: Boolean,
   isDefaultDesc: Boolean,
   isAutoInc: Boolean,
-  isPrimaryKey: Boolean = false,
-  selectRender: String,
-  retrieveRender: String,
-  inputRender: String
+  isPrimaryKey: Boolean = false//,
+  //selectRender: String,
+  //retrieveRender: String,
+  //inputRender: String
 )
 
 case class StaticManyInfo(
