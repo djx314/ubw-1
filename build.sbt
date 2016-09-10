@@ -20,7 +20,12 @@ lazy val logger = {
 
 lazy val modules = (project in file("./modules"))
   .settings(CustomSettings.baseSettings: _*)
-  .settings(name := "fsn-modules")
+  .settings(
+    name := "fsn-modules",
+    addCompilerPlugin(
+      "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
+    )
+  )
   .dependsOn(core)
 
 lazy val core = (project in file("./fsn-core"))
