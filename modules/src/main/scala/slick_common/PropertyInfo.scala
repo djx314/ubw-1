@@ -6,7 +6,6 @@ import slick.dbio.DBIO
 
 import scala.concurrent.ExecutionContext
 
-@io.circe.generic.JsonCodec
 case class PropertyInfo(
   property: String,
   typeName: String,
@@ -18,7 +17,6 @@ case class PropertyInfo(
   //inputRender: String
 )
 
-@io.circe.generic.JsonCodec
 case class JsonView(properties: List[PropertyInfo], data: List[Map[String, Json]], sum: Int)
 
 case class JsonOut(properties: List[PropertyInfo], data: SlickParam => DBIO[(List[Map[String, Json]], Int)]) {
