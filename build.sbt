@@ -5,14 +5,12 @@ name := "fsn-parent"
 
 scalacOptions ++= Seq("-feature", "-deprecation")
 
-libraryDependencies ++= Seq(
-  "com.lihaoyi" % "ammonite-repl" % "0.6.2" % "test" cross CrossVersion.full
-)
+libraryDependencies += "com.lihaoyi" % "ammonite" % "0.7.7" % "test" cross CrossVersion.full
 
 if (scala.util.Properties.isWin)
   initialCommands in (Test, console) += s"""ammonite.repl.Main.run("repl.frontEnd() = ammonite.repl.frontend.FrontEnd.JLineWindows");"""
 else
-  initialCommands in (Test, console) += s"""ammonite.repl.Main.run("");"""
+  initialCommands in (Test, console) += s"""ammonite.Main().run();"""
 
 lazy val logger = {
   LoggerFactory.getLogger("sbt init")
