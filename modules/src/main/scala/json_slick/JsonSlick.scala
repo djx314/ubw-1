@@ -252,13 +252,13 @@ case class PropertyInfo(
   property: String,
   typeName: String,
   inRetrieve: Boolean,
-  canOrder: Boolean,
-  isDefaultDesc: Boolean,
+  //canOrder: Boolean,
+  //isDefaultDesc: Boolean,
   isAutoInc: Boolean,
-  isPrimaryKey: Boolean = false,
-  selectRender: String,
-  retrieveRender: String,
-  inputRender: String
+  isPrimaryKey: Boolean = false//,
+  //selectRender: String,
+  //retrieveRender: String,
+  //inputRender: String
 )
 
 case class StaticManyInfo(
