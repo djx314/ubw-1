@@ -1,1 +1,0 @@
-java -jar "../project/sbt-launch-0.13.7.jar" -Dsbt.ivy.home=/home/djx314/pro/vmshare/baiduyun/x32editor/sbtIvy

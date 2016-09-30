@@ -5,9 +5,14 @@ import sbt.Keys._
 
 object CustomSettings {
   
-  def customSettings = scalaSettings ++ resolversSettings ++ extAlias
+  def customSettings = scalaSettings ++ resolversSettings ++ extAlias ++ projectVersion
 
-  def baseSettings = scalaSettings
+  def baseSettings = scalaSettings ++ projectVersion
+
+  def projectVersion = Seq(
+    organization := "net.scalax",
+    version := "0.0.3-M3"
+  )
 
   def scalaSettings =
     Seq(

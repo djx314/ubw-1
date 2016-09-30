@@ -59,3 +59,5 @@ lazy val fsn = (project in file("."))
       ()
     }
   )
+
+lazy val old = (project in file("./framework"))
