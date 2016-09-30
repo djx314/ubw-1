@@ -14,6 +14,6 @@ lazy val logger = {
   LoggerFactory.getLogger("sbt init")
 }
 
-lazy val core = (project in file("./old/fsn-core"))
+lazy val core = (project in file("./old"))
   .settings(CustomSettings.baseSettings: _*)
   .settings(name := "fsn-core")

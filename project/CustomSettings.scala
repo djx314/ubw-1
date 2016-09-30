@@ -10,8 +10,7 @@ object CustomSettings {
   def baseSettings = scalaSettings ++ projectVersion
 
   def projectVersion = Seq(
-    organization := "net.scalax",
-    version := "0.0.3-M3"
+    organization := "net.scalax"
   )
 
   def scalaSettings =
