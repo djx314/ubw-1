@@ -1,4 +1,4 @@
-package net.scalax.fsn.json_slick
+/*package net.scalax.fsn.json_slick
 
 import io.circe.Json
 import slick.dbio._
@@ -76,4 +76,4 @@ case class IQueryWrapper(retrieve: IRetrieveQuery/*, insert: InsertQuery*/, dele
 
   private type JsonType = Map[String, Json]
 
-}
+}*/

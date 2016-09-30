@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick_common
+/*package net.scalax.fsn.slick_common
 
 import slick.ast._
 import slick.lifted._
@@ -42,4 +42,4 @@ trait FTable {
     }
   }
 
-}
+}*/

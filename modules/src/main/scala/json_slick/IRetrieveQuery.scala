@@ -1,4 +1,4 @@
-package net.scalax.fsn.json_slick
+/*package net.scalax.fsn.json_slick
 
 import io.circe.Json
 import slick.basic.BasicProfile
@@ -33,4 +33,4 @@ trait IRetrieveQuery {
     }
   }
 
-}
+}*/
