@@ -5,35 +5,13 @@ name := "fsn-parent"
 
 scalacOptions ++= Seq("-feature", "-deprecation")
 
-libraryDependencies += "com.lihaoyi" % "ammonite" % "0.7.7" % "test" cross CrossVersion.full
-
-if (scala.util.Properties.isWin)
-  initialCommands in (Test, console) += s"""ammonite.repl.Main.run("repl.frontEnd() = ammonite.repl.frontend.FrontEnd.JLineWindows");"""
-else
-  initialCommands in (Test, console) += s"""ammonite.Main().run();"""
-
 lazy val logger = {
   LoggerFactory.getLogger("sbt init")
 }
 
-lazy val modules = (project in file("./modules"))
-  .settings(CustomSettings.baseSettings: _*)
-  .settings(
-    name := "fsn-modules",
-    addCompilerPlugin(
-      "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
-    )
-  )
-  .dependsOn(core)
-
-lazy val core = (project in file("./fsn-core"))
-  .settings(CustomSettings.baseSettings: _*)
-  .settings(name := "fsn-core")
-
 lazy val autoGit = taskKey[Unit]("wang")
 
 lazy val fsn = (project in file("."))
-  .aggregate(modules, core)
   .settings(CustomSettings.customSettings: _*)
   .settings(
     //libraryDependencies += "net.scalax" %% "jfxgit" % "0.0.2-M1",
