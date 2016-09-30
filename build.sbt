@@ -1,20 +1,14 @@
 import net.scalax.sbt.CustomSettings
 import org.slf4j.LoggerFactory
 
-name := "fsn-parent"
-
-scalacOptions ++= Seq("-feature", "-deprecation")
-
 lazy val logger = {
   LoggerFactory.getLogger("sbt init")
 }
 
-lazy val autoGit = taskKey[Unit]("wang")
-
 lazy val fsn = (project in file("."))
   .settings(CustomSettings.customSettings: _*)
   .settings(
-    //libraryDependencies += "net.scalax" %% "jfxgit" % "0.0.2-M1",
+    name := "fsn-parent",
     libraryDependencies ++= {
       val jgitVersion = "4.4.1.201607150455-r"
       ("org.scalafx" %% "scalafx" % "8.0.92-R10") ::
@@ -33,31 +27,34 @@ lazy val fsn = (project in file("."))
             exclude("org.slf4j", "slf4j-log4j12")
           )
         )
+    }, {
+      lazy val autoGit = taskKey[Unit]("To run a git gui.")
+      autoGit <<= (
+        baseDirectory in ThisBuild,
+        fullClasspath in Compile,
+        javaHome in Compile,
+        connectInput in Compile,
+        outputStrategy in Compile,
+        javaOptions in Compile,
+        envVars in Compile
+        ) map { (baseDir, fullCp, jHome, cInput, sOutput, jOpts, envs) =>
+        val forkOptions: ForkOptions =
+          ForkOptions(
+            workingDirectory = Some(baseDir),
+            bootJars = List(new java.io.File(System.getenv("JAVA_HOME"), "/jre/lib/ext/jfxrt.jar")).filter(_.exists) ++: fullCp.files,
+            javaHome = jHome,
+            connectInput = cInput,
+            outputStrategy = sOutput,
+            runJVMOptions = jOpts,
+            envVars = envs
+          )
+        val baseDirPath = baseDir.getAbsolutePath
+        println(s"run jfxgit base on directory: $baseDirPath")
+        new Fork("java", Option("org.xarcher.jfxgit.Jfxgit")).apply(forkOptions, Array(baseDirPath))
+        ()
+      }
     },
-    autoGit <<= (
-      baseDirectory in ThisBuild,
-      fullClasspath in Compile,
-      javaHome in Compile,
-      connectInput in Compile,
-      outputStrategy in Compile,
-      javaOptions in Compile,
-      envVars in Compile
-      ) map { (baseDir, fullCp, jHome, cInput, sOutput, jOpts, envs) =>
-      val forkOptions: ForkOptions =
-        ForkOptions(
-          workingDirectory = Some(baseDir),
-          bootJars = List(new java.io.File(System.getenv("JAVA_HOME"), "/jre/lib/ext/jfxrt.jar")).filter(_.exists) ++: fullCp.files,
-          javaHome = jHome,
-          connectInput = cInput,
-          outputStrategy = sOutput,
-          runJVMOptions = jOpts,
-          envVars = envs
-        )
-      val baseDirPath = baseDir.getAbsolutePath
-      println(s"以 $baseDirPath 为根目录运行 jfxgit")
-      new Fork("java", Option("org.xarcher.jfxgit.Jfxgit")).apply(forkOptions, Array(baseDirPath))
-      ()
-    }
+    addCommandAlias("pack", ";tempBase/clean;old/clean;core/clean;old/package;core/package")
   )
 
-lazy val old = (project in file("./framework"))
+lazy val framework = (project in file("./framework"))

@@ -1,10 +1,11 @@
 package net.scalax.fsn.slick_common
 
 import io.circe.Json
+import net.scalax.fsn.model.{SlickParam, StaticManyInfo, StaticManyUbw, UpdateStaticManyInfo}
 import org.xarcher.cpoi.CellData
 import slick.dbio.DBIO
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 case class PropertyInfo(
   property: String,
@@ -25,9 +26,3 @@ case class JsonOut(properties: List[PropertyInfo], data: SlickParam => DBIO[(Lis
   }
 }
 case class PoiOut(properties: List[PropertyInfo], data: SlickParam => DBIO[(List[Map[String, CellData[_]]], Int)])
-
-case class SlickRange(drop: Int, take: Option[Int])
-case class SlickPage(pageIndex: Int, pageSize: Int)
-case class ColumnOrder(columnName: String, isDesc: Boolean)
-
-case class SlickParam(orders: List[ColumnOrder] = Nil, range: Option[SlickRange] = None, page: Option[SlickPage] = None)

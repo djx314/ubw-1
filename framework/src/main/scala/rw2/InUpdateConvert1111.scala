@@ -4,7 +4,7 @@ import aaaa.FilterColumnGen
 import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl}
 import indicator.rw.utils.rw.{FProperty, OneToOneUpdate, SlickUpdate}
 import net.scalax.fsn.core.FColumn
-import net.scalax.fsn.json_slick.UpdateStaticManyInfo
+import net.scalax.fsn.model.UpdateStaticManyInfo
 import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent
 import slick.lifted.{FlatShapeLevel, Query, Shape}

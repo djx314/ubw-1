@@ -4,8 +4,8 @@ import indicator.rw.utils.SlickQueryBindImpl
 import indicator.rw.utils.rw2._
 import io.circe.Json
 import net.scalax.fsn.core.FColumn
-import net.scalax.fsn.json_slick._
-import net.scalax.fsn.slick_common.{ColumnOrder, JsonOut, SlickParam}
+import net.scalax.fsn.model._
+import net.scalax.fsn.slick_common.JsonOut
 import slick.basic.BasicProfile
 import slick.dbio.{DBIO, NoStream}
 import slick.jdbc.JdbcActionComponent

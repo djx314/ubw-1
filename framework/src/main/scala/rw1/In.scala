@@ -4,7 +4,7 @@ import aaaa.FilterWrapper1111
 import bbbb.FRep
 import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.core.{FAtomic, FColumn}
-import net.scalax.fsn.json_slick.StaticManyGen
+import net.scalax.fsn.model.StaticManyGen
 import org.xarcher.cpoi.{ReadableCellOperationAbs, WriteableCellOperationAbs}
 import slick.lifted.{ColumnOrdered, FlatShapeLevel, Shape}
 
