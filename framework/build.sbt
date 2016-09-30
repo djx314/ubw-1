@@ -28,7 +28,6 @@ lazy val tempBase = (project in file("./temp-base"))
       "com.chuusai" %% "shapeless" % "2.3.1"
     ),
 
-
     libraryDependencies ++= Seq(
       "com.typesafe.slick" %% "slick" % slickVersion,
       "com.typesafe.slick" %% "slick-hikaricp" % slickVersion exclude("com.zaxxer", "HikariCP-java6")

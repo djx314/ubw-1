@@ -49,7 +49,7 @@ lazy val fsn = (project in file("."))
             envVars = envs
           )
         val baseDirPath = baseDir.getAbsolutePath
-        println(s"以 $baseDirPath 为根目录运行 jfxgit")
+        println(s"run jfxgit base on directory: $baseDirPath")
         new Fork("java", Option("org.xarcher.jfxgit.Jfxgit")).apply(forkOptions, Array(baseDirPath))
         ()
       }
