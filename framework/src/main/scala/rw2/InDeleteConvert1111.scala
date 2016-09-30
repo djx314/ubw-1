@@ -12,7 +12,6 @@ import slick.relational.RelationalProfile
 
 import scala.language.existentials
 import scala.concurrent.{ExecutionContext, Future}
-import scalaz.Semigroup
 
 trait DeleteTran2 {
   val table: RelationalProfile#Table[_]

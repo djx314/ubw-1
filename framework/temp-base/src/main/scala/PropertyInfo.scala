@@ -3,8 +3,9 @@ package net.scalax.fsn.slick_common
 import io.circe.Json
 import org.xarcher.cpoi.CellData
 import slick.dbio.DBIO
+import slick.lifted.{CanBeQueryCondition, Query, Rep}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 case class PropertyInfo(
   property: String,

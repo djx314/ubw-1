@@ -57,7 +57,8 @@ lazy val fsn = (project in file("."))
       println(s"以 $baseDirPath 为根目录运行 jfxgit")
       new Fork("java", Option("org.xarcher.jfxgit.Jfxgit")).apply(forkOptions, Array(baseDirPath))
       ()
-    }
+    },
+    addCommandAlias("pack", ";tempBase/clean;old/clean;core/clean;old/package;core/package")
   )
 
 lazy val old = (project in file("./framework"))
