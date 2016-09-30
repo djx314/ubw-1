@@ -1,3 +1,7 @@
+libraryDependencies ++= Seq(
+  "com.chuusai" %% "shapeless" % "2.3.1"
+)
+
 val slickVersion = "3.2.0-M1"
 val scalazVersion = "7.3.0-M3"
 val circeVersion = "0.5.1"

@@ -1,6 +1,5 @@
 package net.scalax.fsn.core
 
-import shapeless._
 import scala.language.implicitConversions
 
 trait FShape[In, Out] {
@@ -9,7 +8,7 @@ trait FShape[In, Out] {
 
 }
 
-object FShape {
+/*object FShape {
 
   implicit def fRepLikeExtensionMethod[I <: HList, J, JO, K <: HList, KO <: HList]
   (implicit headCons: I <:< (J :: K), jShape: FShape[J, JO], kShape: FShape[K, KO])
@@ -30,4 +29,4 @@ object FShape {
     }
   }
 
-}
+}*/

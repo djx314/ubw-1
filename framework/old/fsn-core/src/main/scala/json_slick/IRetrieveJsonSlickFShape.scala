@@ -1,4 +1,4 @@
-package net.scalax.fsn.json_slick
+/*package net.scalax.fsn.json_slick
 
 import io.circe.Json
 import net.scalax.fsn.core.FShape
@@ -40,4 +40,4 @@ class IRetrieveJsonSlickFShape(implicit ec: ExecutionContext) extends FShape[IRe
     }
   }
 
-}
+}*/
