@@ -1,12 +1,17 @@
-package net.scalax.fsn.json_slick
+package net.scalax.fsn.model
 
 import io.circe.Json
 import net.scalax.fsn.slick_common.JsonOut
-import org.xarcher.cpoi.CellData
 import slick.dbio.DBIO
 import slick.lifted.{CanBeQueryCondition, Query, Rep}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
+
+case class SlickRange(drop: Int, take: Option[Int])
+case class SlickPage(pageIndex: Int, pageSize: Int)
+case class ColumnOrder(columnName: String, isDesc: Boolean)
+
+case class SlickParam(orders: List[ColumnOrder] = Nil, range: Option[SlickRange] = None, page: Option[SlickPage] = None)
 
 trait FilterWrapper[E] {
   type Target <: Rep[_]
@@ -25,10 +30,7 @@ case class PropertyInfo(
                          //canOrder: Boolean,
                          //isDefaultDesc: Boolean,
                          isAutoInc: Boolean,
-                         isPrimaryKey: Boolean = false//,
-                         //selectRender: String,
-                         //retrieveRender: String,
-                         //inputRender: String
+                         isPrimaryKey: Boolean = false
                        )
 
 case class StaticManyInfo(
@@ -41,16 +43,6 @@ case class UpdateStaticManyInfo(
                                  effectRows: Int,
                                  many: Map[String, QueryJsonInfo]
                                )
-
-case class QueryJsonInfo(
-                          properties: List[PropertyInfo],
-                          jsonGen: JsonOut,
-                          retrieveGen: Map[String, Json] => DBIO[StaticManyInfo],
-                          insertGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
-                          deleteGen: Map[String, Json] => DBIO[Int],
-                          updateGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
-                          staticMany: Future[List[StaticManyUbw]]
-                        )
 
 case class StaticManyGen[T](
                              //model 的属性名称
@@ -71,4 +63,14 @@ case class StaticManyUbw(
                           //关联表的从表 id 字段
                           slaveryIdField: String,
                           ubwGen: JsonOut
+                        )
+
+case class QueryJsonInfo(
+                          properties: List[PropertyInfo],
+                          jsonGen: JsonOut,
+                          retrieveGen: Map[String, Json] => DBIO[StaticManyInfo],
+                          insertGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
+                          deleteGen: Map[String, Json] => DBIO[Int],
+                          updateGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
+                          staticMany: Future[List[StaticManyUbw]]
                         )

@@ -25,20 +25,14 @@ lazy val tempBase = (project in file("./temp-base"))
   .settings(name := "fsn-temp-base")
   .settings(
     libraryDependencies ++= Seq(
-      "com.chuusai" %% "shapeless" % "2.3.1"
-    ),
-
-    libraryDependencies ++= Seq(
       "com.typesafe.slick" %% "slick" % slickVersion,
       "com.typesafe.slick" %% "slick-hikaricp" % slickVersion exclude("com.zaxxer", "HikariCP-java6")
     ),
-
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser"
     ).map(_ % circeVersion),
-
     libraryDependencies ++= Seq(
       //poi
       "org.apache.poi" % "poi" % poiVersion exclude("stax", "stax-api"),
@@ -59,33 +53,26 @@ val poiVersion = "3.15-beta2"
 lazy val core = (project in file("."))
   .settings(CustomSettings.baseSettings: _*)
   .settings(name := "fsn-core")
-    .dependsOn(tempBase)
-    .aggregate(tempBase)
-.settings(
-  libraryDependencies ++= Seq(
-    "com.chuusai" %% "shapeless" % "2.3.1"
-  ),
+  .dependsOn(tempBase)
+  .aggregate(tempBase)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.slick" %% "slick" % slickVersion,
+      "com.typesafe.slick" %% "slick-hikaricp" % slickVersion exclude("com.zaxxer", "HikariCP-java6")
+    ),
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core",
+      "io.circe" %% "circe-generic",
+      "io.circe" %% "circe-parser"
+    ).map(_ % circeVersion),
+    libraryDependencies ++= Seq(
+      //poi
+      "org.apache.poi" % "poi" % poiVersion exclude("stax", "stax-api"),
+      "org.apache.poi" % "poi-ooxml" % poiVersion exclude("stax", "stax-api"),
+      "org.apache.poi" % "poi-ooxml-schemas" % poiVersion exclude("stax", "stax-api"),
 
-
-libraryDependencies ++= Seq(
-  "com.typesafe.slick" %% "slick" % slickVersion,
-  "com.typesafe.slick" %% "slick-hikaricp" % slickVersion exclude("com.zaxxer", "HikariCP-java6")
-),
-
-libraryDependencies ++= Seq(
-  "io.circe" %% "circe-core",
-  "io.circe" %% "circe-generic",
-  "io.circe" %% "circe-parser"
-).map(_ % circeVersion),
-
-libraryDependencies ++= Seq(
-  //poi
-  "org.apache.poi" % "poi" % poiVersion exclude("stax", "stax-api"),
-  "org.apache.poi" % "poi-ooxml" % poiVersion exclude("stax", "stax-api"),
-  "org.apache.poi" % "poi-ooxml-schemas" % poiVersion exclude("stax", "stax-api"),
-
-  //joda-time
-  "joda-time" % "joda-time" % "2.9.4",
-  "org.joda" % "joda-convert" % "1.8.1"
-)
-)
+      //joda-time
+      "joda-time" % "joda-time" % "2.9.4",
+      "org.joda" % "joda-convert" % "1.8.1"
+    )
+  )

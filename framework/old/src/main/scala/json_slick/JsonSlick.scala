@@ -3,7 +3,7 @@ package net.scalax.fsn.json_slick
 import io.circe.{Encoder, Json}
 import io.circe.syntax._
 import net.scalax.fsn.core.{FEffect, FEffectConverter, FEffectZero}
-import net.scalax.fsn.slick_common.JsonOut
+import net.scalax.fsn.model.{FilterWrapper, PropertyInfo, QueryJsonInfo}
 import slick.dbio.DBIO
 
 import scala.language.existentials
