@@ -17,10 +17,6 @@ trait SubUbw[E] extends FAtomic[E] {
   val subCols: List[FColumn]
 }
 
-trait FProperty[E] extends FAtomic[E] {
-  val proName: String
-}
-
 trait JsonReader[E] extends FAtomic[E] {
 
   type JsonType

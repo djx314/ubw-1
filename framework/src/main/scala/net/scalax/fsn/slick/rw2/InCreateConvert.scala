@@ -1,8 +1,8 @@
 package indicator.rw.utils.rw2
 
-import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl, SlickUtils}
-import indicator.rw.utils.rw.{AutoInc, FProperty, OneToOneCrate, SlickCreate}
-import net.scalax.fsn.core.{FColumn, FsnColumn}
+import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl}
+import indicator.rw.utils.rw.{AutoInc, OneToOneCrate, SlickCreate}
+import net.scalax.fsn.core.FColumn
 import slick.basic.BasicProfile
 import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent

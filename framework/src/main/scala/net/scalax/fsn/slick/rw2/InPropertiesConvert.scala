@@ -2,6 +2,7 @@ package indicator.rw.utils.rw2
 
 import indicator.rw.utils.rw._
 import net.scalax.fsn.core.FColumn
+import net.scalax.fsn.slick.common.FProperty
 import net.scalax.fsn.slick.model.RWProperty
 import net.scalax.fsn.slick.helpers.TypeHelpers
 

@@ -6,6 +6,7 @@ import net.scalax.fsn.core.FColumn
 import indicator.rw.utils.rw._
 import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.slick.common.FProperty
 import net.scalax.fsn.slick.model.StaticManyGen
 import org.xarcher.cpoi.ReadableCellOperationAbs
 import slick.lifted.{FlatShapeLevel, Shape}
@@ -40,15 +41,9 @@ object In {
   def jWrite[T](
     implicit
     encoder: Encoder[T],
-    weakTypeTag: WeakTypeTag[T]//,
-    //selectRender1: SelectRender[T],
-    //retrieveRender1: RetrieveRender[T],
-    //inputRender1: InputRender[T]
+    weakTypeTag: WeakTypeTag[T]
   ): List[FAtomic[T]] = List(new JsonWriter[T] {
     override type JsonType = T
-    //override val selectRender = selectRender1
-    //override val retrieveRender = retrieveRender1
-    //override val inputRender = inputRender1
     override val writer = encoder
     override val convert = identity[T] _
     override val typeTag = weakTypeTag
