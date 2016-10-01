@@ -88,7 +88,7 @@ object OutSelectConvert {
 
 }
 
-object OutSelect {
+object OutSelectOperation {
 
   def encode(columns: List[FColumn], wQuery: SlickQueryBindImpl): JsonQuery = {
     val genList = columns.map(OutSelectConvert.convert)
@@ -167,9 +167,9 @@ trait JsonQuery {
 
 object CommonResult {
 
-  type CommonRType[T] = (/*List[PropertyInfo],*/List[T], Int)
+  type CommonRType[T] = (List[T], Int)
 
-  def commonResult[E, U, T](defaultOrders: List[ColumnOrder], query: Query[E, U, Seq], modelConvert: U => T, sortMap: Map[String, E => ColumnOrdered[_]]/*, properties: List[PropertyInfo]*/)(
+  def commonResult[E, U, T](defaultOrders: List[ColumnOrder], query: Query[E, U, Seq], modelConvert: U => T, sortMap: Map[String, E => ColumnOrdered[_]])(
     implicit
     jsonEv: Query[E, U, Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[U], U],
     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
@@ -221,20 +221,19 @@ object CommonResult {
               val dataGen = s.toList.map(t => {
                 modelConvert(t)
               })
-              (/*properties,*/dataGen, endCount - startCount)
+              (dataGen, endCount - startCount)
             })
           })
             .flatMap(s => s)
 
         case SlickParam(_, Some(SlickRange(drop, Some(take))), None) =>
           val dropQuery = mappedQuery.drop(drop)
-          //val takeQuery = dropQuery.take(take)
 
           baseQuery.drop(drop).take(take - drop).result.map(s => {
             val dataGen = s.toList.map(t => {
               modelConvert(t)
             })
-            (/*properties,*/dataGen, s.size)
+            (dataGen, s.size)
           })
 
         case SlickParam(_, Some(SlickRange(drop1, None)), Some(SlickPage(pageIndex1, pageSize1))) =>
@@ -254,7 +253,7 @@ object CommonResult {
               val dataGen = s.toList.map(t => {
                 modelConvert(t)
               })
-              (/*properties,*/dataGen, sum)
+              (dataGen, sum)
             })
           })
             .flatMap(s => s)
@@ -264,7 +263,7 @@ object CommonResult {
             val dataGen = s.toList.map(t => {
               modelConvert(t)
             })
-            (/*properties,*/dataGen, s.size)
+            (dataGen, s.size)
           })
 
         case SlickParam(_, None, Some(SlickPage(pageIndex, pageSize))) =>
@@ -278,14 +277,14 @@ object CommonResult {
             val dataGen = s.toList.map(t => {
               modelConvert(t)
             })
-            (/*properties,*/dataGen, sum)
+            (dataGen, sum)
           }
         case _ =>
           baseQuery.result.map(s => {
             val dataGen = s.toList.map(t => {
               modelConvert(t)
             })
-            (/*properties,*/dataGen, s.size)
+            (dataGen, s.size)
           })
       }
     }

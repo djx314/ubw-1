@@ -7,7 +7,7 @@ import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.model.RWProperty
 import net.scalax.fsn.slick.helpers.TypeHelpers
 
-object InPropertiesConvert {
+object InPropertiesOperation {
 
   def convert(column: FColumn): RWProperty = {
     val jsonWriter = FColumn.find(column) { case s: JsonWriter[column.DataType] => s }

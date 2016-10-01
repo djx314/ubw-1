@@ -130,7 +130,7 @@ object InCreateConvert2 {
   }
 }
 
-object InsertWrapDeal2 {
+object InCreateOperation {
 
   trait InsWrapTran2 {
     val table: RelationalProfile#Table[_]

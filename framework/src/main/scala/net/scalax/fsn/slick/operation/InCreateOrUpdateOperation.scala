@@ -8,7 +8,7 @@ import scala.language.existentials
 import scala.concurrent.ExecutionContext
 import scala.util.Success
 
-object InCreateOrUpdateConvert {
+object InCreateOrUpdateOperation {
 
   import slick.jdbc.PostgresProfile.api._
 
@@ -20,16 +20,16 @@ object InCreateOrUpdateConvert {
     ec: ExecutionContext
   ): DBIO[ExecInfo] = {
     //println("3333" * 100)
-    RetrieveWrapDeal2.parseInsert(insertQuerytWrap, columns).asTry.flatMap {
+    InRetrieveOperation.parseInsert(insertQuerytWrap, columns).asTry.flatMap {
       case Success(_) =>
         //println("1111" * 100)
-        UpdateWrapDeal2.parseInsert(insertQuerytWrap, columns).map { s =>
+        InUpdateOperation.parseInsert(insertQuerytWrap, columns).map { s =>
           ExecInfo(s.effectRows, Nil)
         }
       case s =>
         //println(s.isSuccess)
         //println("2222" * 100)
-        InsertWrapDeal2.parseInsert(insertQuerytWrap, columns).map { s =>
+        InCreateOperation.parseInsert(insertQuerytWrap, columns).map { s =>
           ExecInfo(s.effectRows, Nil)
         }
     }

@@ -122,7 +122,7 @@ object InUpdateConvert2 {
 
 }
 
-object UpdateWrapDeal2 {
+object InUpdateOperation {
 
   def parseInsertGen(
     binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
