@@ -2,7 +2,8 @@ package net.scalax.fsn.slick_json
 
 import io.circe.Json
 import net.scalax.fsn.core._
-import net.scalax.fsn.slick_common.{PropertyInfo, SlickMonad, SlickReader}
+import net.scalax.fsn.model.SelectProperty
+import net.scalax.fsn.slick_common.{SlickMonad, SlickReader}
 import slick.lifted._
 
 trait SlickJsonBind {
@@ -117,7 +118,7 @@ case class JWriter[T](override val effect: T => Map[String, Json]) extends JsonW
 
 trait SlickJsonConvert extends FEffectConverter {
 
-  val propertyInfo: List[PropertyInfo]
+  val propertyInfo: List[SelectProperty]
 
   override type Font = SlickReader
   override type Back = JsonWriter

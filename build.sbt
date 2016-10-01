@@ -54,7 +54,10 @@ lazy val fsn = (project in file("."))
         ()
       }
     },
-    addCommandAlias("pack", ";tempBase/clean;old/clean;core/clean;old/package;core/package")
+    addCommandAlias("pack", ";fsn/clean;tempBase/clean;old/clean;core/clean;dist")
   )
+  .dependsOn(LocalProject("core"))
+  .dependsOn(LocalProject("old"))
+  .enablePlugins(JDKPackagerPlugin)
 
 lazy val framework = (project in file("./framework"))

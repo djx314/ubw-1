@@ -37,7 +37,7 @@ object InPropertiesConvert {
     }
   }
 
-  def convertProperty(columns: FColumn): net.scalax.fsn.slick_common.PropertyInfo = {
+  def convertProperty(columns: FColumn): net.scalax.fsn.model.SelectProperty = {
     val property = FColumn.find(columns) { case s: FProperty[columns.DataType] => s }
     val jsonWriter = FColumn.find(columns) { case s: JsonWriter[columns.DataType] => s }
     val slickSelect = FColumn.find(columns) { case s: SlickSelect[columns.DataType] => s }
@@ -45,7 +45,7 @@ object InPropertiesConvert {
     val isInRetrieve = FColumn.findOpt(columns) { case s: InRetrieve[columns.DataType] => s }.map(_.isInRetrieve).getOrElse(true)
     val orderTargetName = FColumn.findOpt(columns) { case s: OrderTargetName[columns.DataType] => s }.map(_.orderTargetName)
 
-    val slickCommonpropertyInfo: net.scalax.fsn.slick_common.PropertyInfo = net.scalax.fsn.slick_common.PropertyInfo(
+    val slickCommonpropertyInfo: net.scalax.fsn.model.SelectProperty = net.scalax.fsn.model.SelectProperty(
       property = property.proName,
       typeName = TypeUtils.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString,
       inRetrieve = isInRetrieve,

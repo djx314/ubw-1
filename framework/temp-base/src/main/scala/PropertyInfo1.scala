@@ -1,7 +1,6 @@
 package net.scalax.fsn.model
 
 import io.circe.Json
-import net.scalax.fsn.slick_common.JsonOut
 import slick.dbio.DBIO
 import slick.lifted.{CanBeQueryCondition, Query, Rep}
 

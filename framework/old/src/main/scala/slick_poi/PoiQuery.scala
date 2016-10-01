@@ -1,7 +1,7 @@
 package net.scalax.fsn.slick_poi
 
-import net.scalax.fsn.model.{ColumnOrder, SlickParam}
-import net.scalax.fsn.slick_common._
+import net.scalax.fsn.model.{ColumnOrder, PoiOut, SelectProperty, SlickParam}
+import net.scalax.fsn.slick_common.CommonResult
 import org.xarcher.cpoi.CellData
 import slick.basic.BasicProfile
 import slick.dbio._
@@ -16,7 +16,7 @@ trait PoiQuery {
 
   val uQuery: Query[PoiE, PoiU, Seq]
   val render: PoiU => Map[String, CellData[_]]
-  val properties: List[PropertyInfo]
+  val properties: List[SelectProperty]
   val sortMap: Map[String, PoiE => ColumnOrdered[_]]
 
   def poiResult(

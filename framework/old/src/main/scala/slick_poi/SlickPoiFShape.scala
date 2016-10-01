@@ -1,7 +1,8 @@
 package net.scalax.fsn.slick_poi
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.slick_common.{PropertyInfo, SlickMonad, SlickReader}
+import net.scalax.fsn.model.SelectProperty
+import net.scalax.fsn.slick_common.{SlickMonad, SlickReader}
 import org.xarcher.cpoi.CellData
 import slick.lifted._
 
@@ -116,7 +117,7 @@ trait PoiMonad extends SlickMonad {
 
 trait SlickPoiConvert extends FEffectConverter {
 
-  val propertyInfo: List[PropertyInfo]
+  val propertyInfo: List[SelectProperty]
 
   type Font = SlickReader
   type Back = PoiWriter
