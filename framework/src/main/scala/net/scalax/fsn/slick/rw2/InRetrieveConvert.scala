@@ -2,8 +2,8 @@ package indicator.rw.utils.rw2
 
 import aaaa.FilterColumnGen
 import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl}
-import indicator.rw.utils.rw.{OneToOneRetrieve, SlickRetrieve}
 import net.scalax.fsn.core.{FColumn, FsnColumn}
+import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
 import slick.basic.BasicProfile
 import slick.dbio.DBIO
 import slick.lifted._

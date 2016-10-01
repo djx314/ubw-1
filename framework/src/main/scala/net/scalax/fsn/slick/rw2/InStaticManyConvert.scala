@@ -1,8 +1,8 @@
 package indicator.rw.utils.rw2
 
-import indicator.rw.utils.rw.StaticMany
 import net.scalax.fsn.core.FColumn
 import net.scalax.fsn.common.FProperty
+import net.scalax.fsn.slick.atomic.StaticMany
 import net.scalax.fsn.slick.model.{QueryJsonInfo, StaticManyUbw}
 
 import scala.concurrent.{ExecutionContext, Future}
