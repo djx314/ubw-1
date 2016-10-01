@@ -9,10 +9,7 @@ object InPropertiesConvert {
 
   def convert(column: FColumn): RWProperty = {
     val jsonWriter = FColumn.find(column) { case s: JsonWriter[column.DataType] => s }
-    //val slickSelect = FColumn.find(column) { case s: SlickSelect[column.DataType] => s }
     val isInRetrieve = FColumn.findOpt(column) { case s: InRetrieve[column.DataType] => s }.map(_.isInRetrieve).getOrElse(true)
-    //val isDefaultDesc = FColumn.findOpt(column) { case s: DefaultDesc[column.DataType] => s }.map(_.isDefaultDesc).getOrElse(true)
-    //val orderTargetName = FColumn.findOpt(column) { case s: OrderTargetName[column.DataType] => s }.map(_.orderTargetName)
     val isAutoInc = FColumn.findOpt(column) { case s : AutoInc[column.DataType] => s }.map(_.isAutoInc).getOrElse(false)
     val isPrimary = FColumn.find(column)({ case s: SlickRetrieve[column.DataType] => s }).primaryGen.isDefined
     val property = FColumn.find(column)({ case s: FProperty[column.DataType] => s })
@@ -21,13 +18,8 @@ object InPropertiesConvert {
       property = property.proName,
       typeName = TypeUtils.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString,
       inRetrieve = isInRetrieve,
-      //canOrder = false,//slickSelect.colToOrder.isDefined || orderTargetName.isDefined,
-      //isDefaultDesc = isDefaultDesc,
       isAutoInc = isAutoInc,
-      isPrimaryKey = isPrimary//,
-      //selectRender = "",//jsonWriter.selectRender.filterEmptySelect,
-      //retrieveRender = "",//jsonWriter.retrieveRender.filterEmptyRetrieve,
-      //inputRender = ""//jsonWriter.inputRender.filterEmptyInput
+      isPrimaryKey = isPrimary
     )
     slickCommonpropertyInfo
   }
@@ -51,10 +43,7 @@ object InPropertiesConvert {
       typeName = TypeUtils.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString,
       inRetrieve = isInRetrieve,
       canOrder = slickSelect.colToOrder.isDefined || orderTargetName.isDefined,
-      isDefaultDesc = isDefaultDesc//,
-      //selectRender = "",//jsonWriter.selectRender.filterEmptySelect,
-      //retrieveRender = "",//jsonWriter.retrieveRender.filterEmptyRetrieve,
-      //inputRender = ""//jsonWriter.inputRender.filterEmptyInput
+      isDefaultDesc = isDefaultDesc
     )
 
     slickCommonpropertyInfo
