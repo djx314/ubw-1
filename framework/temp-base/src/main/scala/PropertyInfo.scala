@@ -1,4 +1,4 @@
-package net.scalax.fsn.model
+package net.scalax.fsn.slick.model
 
 import io.circe.Json
 import org.xarcher.cpoi.CellData

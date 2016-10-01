@@ -1,7 +1,7 @@
 package net.scalax.fsn.slick_json
 
 import io.circe.Json
-import net.scalax.fsn.model.{ColumnOrder, JsonOut, SelectProperty, SlickParam}
+import net.scalax.fsn.slick.model.{ColumnOrder, JsonOut, SelectProperty, SlickParam}
 import net.scalax.fsn.slick_common.CommonResult
 import slick.basic.BasicProfile
 import slick.dbio._

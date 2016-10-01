@@ -1,4 +1,4 @@
-package net.scalax.fsn.model
+package net.scalax.fsn.slick.model
 
 import io.circe.Json
 import slick.dbio.DBIO
@@ -22,7 +22,7 @@ trait FilterWrapper[E] {
   }
 }
 
-case class PropertyInfo(
+case class RWProperty(
                          property: String,
                          typeName: String,
                          inRetrieve: Boolean,
@@ -33,7 +33,7 @@ case class PropertyInfo(
                        )
 
 case class StaticManyInfo(
-                           propertyInfo: List[PropertyInfo],
+                           propertyInfo: List[RWProperty],
                            model: Map[String, Json],
                            many: Map[String, QueryJsonInfo]
                          )
@@ -65,7 +65,7 @@ case class StaticManyUbw(
                         )
 
 case class QueryJsonInfo(
-                          properties: List[PropertyInfo],
+                          properties: List[RWProperty],
                           jsonGen: JsonOut,
                           retrieveGen: Map[String, Json] => DBIO[StaticManyInfo],
                           insertGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],

@@ -1,6 +1,6 @@
 package net.scalax.fsn.slick_poi
 
-import net.scalax.fsn.model.{ColumnOrder, PoiOut, SelectProperty, SlickParam}
+import net.scalax.fsn.slick.model.{ColumnOrder, PoiOut, SelectProperty, SlickParam}
 import net.scalax.fsn.slick_common.CommonResult
 import org.xarcher.cpoi.CellData
 import slick.basic.BasicProfile

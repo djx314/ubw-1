@@ -1,7 +1,7 @@
 package net.scalax.fsn.slick_poi
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.model.SelectProperty
+import net.scalax.fsn.slick.model.SelectProperty
 import net.scalax.fsn.slick_common.{SlickMonad, SlickReader}
 import org.xarcher.cpoi.CellData
 import slick.lifted._

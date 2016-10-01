@@ -1,6 +1,6 @@
 package net.scalax.fsn.slick_common
 
-import net.scalax.fsn.model.{ColumnOrder, SlickPage, SlickParam, SlickRange}
+import net.scalax.fsn.slick.model.{ColumnOrder, SlickPage, SlickParam, SlickRange}
 import slick.basic.BasicProfile
 import slick.dbio._
 import slick.lifted._

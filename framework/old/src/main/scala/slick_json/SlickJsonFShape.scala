@@ -2,7 +2,7 @@ package net.scalax.fsn.slick_json
 
 import io.circe.Json
 import net.scalax.fsn.core._
-import net.scalax.fsn.model.SelectProperty
+import net.scalax.fsn.slick.model.SelectProperty
 import net.scalax.fsn.slick_common.{SlickMonad, SlickReader}
 import slick.lifted._
 
