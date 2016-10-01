@@ -1,4 +1,4 @@
-package bbbb
+package net.scalax.fsn.slick.helpers
 
 import slick.ast.{ColumnOption, TypedType}
 

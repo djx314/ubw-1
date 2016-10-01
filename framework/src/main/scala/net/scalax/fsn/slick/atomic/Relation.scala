@@ -1,10 +1,9 @@
 package net.scalax.fsn.slick.atomic
 
 import aaaa.FilterWrapper1111
-import bbbb.FRep
 import net.scalax.fsn.core.{FAtomic, FColumn}
+import net.scalax.fsn.slick.helpers.FRep
 import net.scalax.fsn.slick.model.StaticManyGen
-import org.xarcher.cpoi.{ReadableCellOperationAbs, WriteableCellOperationAbs}
 import slick.lifted.{FlatShapeLevel, Shape}
 
 import scala.language.existentials

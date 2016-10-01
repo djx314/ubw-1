@@ -1,4 +1,4 @@
-package indicator.rw.utils
+package net.scalax.fsn.slick.helpers
 
 import slick.lifted.Query
 

@@ -1,13 +1,12 @@
-package indicator.rw.utils.rw2
+package net.scalax.fsn.json.operation
 
 import io.circe.Json
 import io.circe.syntax._
 import net.scalax.fsn.core.{FColumn, FsnColumn}
 import net.scalax.fsn.common.{DefaultValue, FProperty}
 import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
-import net.scalax.fsn.slick.atomic.{AutoInc, SlickRetrieve}
 
-object InJsonConvert {
+object JsonOperation {
 
   def read(eachColumn: FColumn): Map[String, Json] => FColumn = { data: Map[String, Json] =>
     val jsonReader = FColumn.find(eachColumn)({ case s: JsonReader[eachColumn.DataType] => s })
@@ -42,7 +41,7 @@ object InJsonConvert {
     }
   }
 
-  def readJNotInc(columns: List[FColumn]): Map[String, Json] => List[FColumn] = { data: Map[String, Json] =>
+  /*def readJNotInc(columns: List[FColumn]): Map[String, Json] => List[FColumn] = { data: Map[String, Json] =>
     columns.map { eachColumn =>
       val isAutoInc = FColumn.findOpt(eachColumn) { case s: AutoInc[eachColumn.DataType] => s }.map(_.isAutoInc).getOrElse(false)
       if (isAutoInc) {
@@ -57,6 +56,17 @@ object InJsonConvert {
     columns.map { eachColumn =>
       val isPrimary = FColumn.findOpt(eachColumn) { case s: SlickRetrieve[eachColumn.DataType] => s }.map(_.primaryGen.isDefined).getOrElse(false)
       if (isPrimary) {
+        read(eachColumn)(data)
+      } else {
+        eachColumn
+      }
+    }
+  }*/
+
+  def readWithFilter(columns: List[FColumn])(filter: FColumn => Boolean): Map[String, Json] => List[FColumn] = { data: Map[String, Json] =>
+    columns.map { eachColumn =>
+      val isNeed = filter(eachColumn)
+      if (isNeed) {
         read(eachColumn)(data)
       } else {
         eachColumn

@@ -1,9 +1,9 @@
-package indicator.rw.utils.rw2
+package net.scalax.fsn.slick.operation
 
 import aaaa.FilterColumnGen
-import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl}
 import net.scalax.fsn.core.{FColumn, FsnColumn}
 import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
+import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl}
 import slick.basic.BasicProfile
 import slick.dbio.DBIO
 import slick.lifted._
@@ -98,126 +98,10 @@ object InRetrieveConvert2 {
         }
 
       }
-      /*oneToOneRetrieveOpt.map { oneToOneRetrieve =>
-        val newTran = new IWrapTran[slickReader.SlickType] {
-          override val table = oneToOneRetrieve.mainCol.owner
-          override def convert(data: slickReader.SlickType, source: ISlickReader): ISlickReader = {
-            val newSource = ISReader(
-              mainCol = source.mainCol -> (oneToOneRetrieve.mainCol.rep: oneToOneRetrieve.SourceType),
-              table = oneToOneRetrieve.mainCol.owner,
-              mainShape = Shape.tuple2Shape(source.mainShape, oneToOneRetrieve.mainShape),
-              autalColumn = { s: (source.MainDColumn, oneToOneRetrieve.SlickType) => source.autalColumn(s._1) },
-              primaryGen = {
-                val sourcePriGen = source.primaryGen.map { eachPrimaryGen =>
-                  new FilterColumnGen[(source.MainTColumn, oneToOneRetrieve.TargetType)] {
-                    override type BooleanTypeRep = eachPrimaryGen.BooleanTypeRep
-                    override val dataToCondition = { filterCol: (source.MainTColumn, oneToOneRetrieve.TargetType) =>
-                      eachPrimaryGen.dataToCondition(filterCol._1)
-                    }
-                    override val wt = eachPrimaryGen.wt
-                  }
-                }
-                val filterOneToOneGen = {
-                  new FilterColumnGen[(source.MainTColumn, oneToOneRetrieve.TargetType)] {
-                    override type BooleanTypeRep = oneToOneRetrieve.primaryGen.BooleanTypeRep
-                    override val dataToCondition = { filterCol: (source.MainTColumn, oneToOneRetrieve.TargetType) =>
-                      oneToOneRetrieve.primaryGen.dataToCondition(filterCol._2)(
-                        oneToOneRetrieve.filterConvert(slickReader.convert(data))
-                      )
-                    }
-                    override val wt = oneToOneRetrieve.primaryGen.wt
-                  }
-                }
-                filterOneToOneGen :: sourcePriGen
-              },
-              subGen =
-                source.subGen.map { eachGen =>
-                  new IWrapTran[(source.MainDColumn, oneToOneRetrieve.SlickType)] {
-                    override val table = eachGen.table
-                    override def convert(data: (source.MainDColumn, oneToOneRetrieve.SlickType), source1: ISlickReader): ISlickReader = {
-                      eachGen.convert(data._1, source1)
-                    }
-                  }
-                }
-            )
-            newSource
-          }
-        }
-        newTran
-      }.toList*/
     )
     iSlickReader
   }
 }
-
-/*trait IlickMonad2 {
-
-  implicit def dJsonSlick(implicit ec: ExecutionContext): Semigroup[ISlickReader] = new Semigroup[ISlickReader] {
-    def append(f1: ISlickReader, f2: => ISlickReader): ISlickReader = {
-      val f2Case = f2
-      ISReader(
-        mainCol = f1.mainCol -> f2Case.mainCol,
-        mainShape = Shape.tuple2Shape(f1.mainShape, f2Case.mainShape),
-        table = (f1.table :: f2Case.table :: Nil).distinct match {
-          case headTable :: Nil =>
-            headTable
-          case _ =>
-            throw new Exception("要合并的 2 个 reader 来自不同的表11111111")
-        },
-        autalColumn = { s: (f1.MainDColumn, f2Case.MainDColumn) =>
-          f1.autalColumn(s._1) ::: f2Case.autalColumn(s._2)
-        },
-        primaryGen = {
-          val f1List = f1.primaryGen.map { eachPrimary =>
-            new FilterColumnGen[(f1.MainTColumn, f2Case.MainTColumn)] {
-
-              override type BooleanTypeRep = eachPrimary.BooleanTypeRep
-
-              override val dataToCondition = { s: (f1.MainTColumn, f2Case.MainTColumn) =>
-                eachPrimary.dataToCondition(s._1)
-              }
-              override val wt = eachPrimary.wt
-
-            }
-          }
-          val f2List = f2Case.primaryGen.map { eachPrimary =>
-            new FilterColumnGen[(f1.MainTColumn, f2Case.MainTColumn)] {
-
-              override type BooleanTypeRep = eachPrimary.BooleanTypeRep
-
-              override val dataToCondition = { s: (f1.MainTColumn, f2Case.MainTColumn) =>
-                eachPrimary.dataToCondition(s._2)
-              }
-              override val wt = eachPrimary.wt
-
-            }
-          }
-          f1List ::: f2List
-        },
-        subGen = f1.subGen.map { eachGen =>
-          new IWrapTran[(f1.MainDColumn, f2Case.MainDColumn)] {
-
-            override val table = eachGen.table
-            override def convert(data: (f1.MainDColumn, f2Case.MainDColumn), source: ISlickReader): ISlickReader = {
-              eachGen.convert(data._1, source)
-            }
-
-          }
-        } ::: f2Case.subGen.map { eachGen =>
-          new IWrapTran[(f1.MainDColumn, f2Case.MainDColumn)] {
-
-            override val table = eachGen.table
-            override def convert(data: (f1.MainDColumn, f2Case.MainDColumn), source: ISlickReader): ISlickReader = {
-              eachGen.convert(data._2, source)
-            }
-
-          }
-        }
-      )
-    }
-  }
-
-}*/
 
 trait RetrieveQuery {
 
@@ -230,7 +114,7 @@ trait RetrieveQuery {
 
 case class ExecInfo2(effectRows: Int, columns: List[FColumn])
 
-object RetrieveWrapDeal2 {
+object RetrieveOperation {
 
   trait WrapTran2 {
     val table: RelationalProfile#Table[_]
@@ -277,11 +161,6 @@ object RetrieveWrapDeal2 {
       for {
         retrieveData <- filterQuery.result.head
         (fillCols, fillSubGens) = eachWrap.zip(retrieveData).map { case (wrap, dataItem) =>
-          /*val slickReader = FColumn.find(col)({ case s: SlickRetrieve[col.DataType] => s })
-          val slickData = dataItem.asInstanceOf[slickReader.SlickType]
-          val wrapSlickData = dataItem.asInstanceOf[wrap.MainDColumn]
-          val resultData: col.DataType = slickReader.convert(slickData)
-          val newCols = FsnColumn(col.cols, Option(resultData))*/
           val wrapSlickData = dataItem.asInstanceOf[wrap.MainDColumn]
           val newCols = wrap.autalColumn(wrapSlickData)
           val subGens = wrap.subGen.map { gen => new WrapTran2 {
@@ -350,11 +229,6 @@ object RetrieveWrapDeal2 {
       for {
         retrieveData <- filterQuery.result.head
         (fillCols, fillSubGens) = eachWrap.zip(retrieveData).map { case (wrap, dataItem) =>
-          /*val slickReader = FColumn.find(col)({ case s: SlickRetrieve[col.DataType] => s })
-          val slickData = dataItem.asInstanceOf[slickReader.SlickType]
-          val wrapSlickData = dataItem.asInstanceOf[wrap.MainDColumn]
-          val resultData: col.DataType = slickReader.convert(slickData)
-          val newCols = FsnColumn(col.cols, Option(resultData))*/
           val wrapSlickData = dataItem.asInstanceOf[wrap.MainDColumn]
           val newCols = wrap.autalColumn(wrapSlickData)
           val subGens = wrap.subGen.map { gen => new WrapTran2 {

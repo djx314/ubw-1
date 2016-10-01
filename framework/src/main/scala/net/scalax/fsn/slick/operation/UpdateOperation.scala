@@ -1,9 +1,9 @@
-package indicator.rw.utils.rw2
+package net.scalax.fsn.slick.operation
 
 import aaaa.FilterColumnGen
-import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl}
 import net.scalax.fsn.core.FColumn
 import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate}
+import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl}
 import net.scalax.fsn.slick.model.UpdateStaticManyInfo
 import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent
@@ -122,7 +122,7 @@ object InUpdateConvert2 {
 
 }
 
-object UpdateWrapDeal2 {
+object UpdateOperation {
 
   def parseInsertGen(
     binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],

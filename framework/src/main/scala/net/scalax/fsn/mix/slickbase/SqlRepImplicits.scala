@@ -1,7 +1,6 @@
-package indicator.rw.utils
+package net.scalax.fsn.mix.slickbase
 
 import aaaa.FilterRepImplicit1111
-import indicator.rw.utils.rw._
 import net.scalax.fsn.core.FColumnImplicits
 import slick.lifted._
 import slick.relational.RelationalProfile

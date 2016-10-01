@@ -1,9 +1,10 @@
 package net.scalax.fsn.slick.atomic
 
 import aaaa.FilterWrapper1111
-import bbbb.FRep
 import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.slick.helpers.FRep
 import slick.lifted.{FlatShapeLevel, Shape}
+
 import scala.language.existentials
 
 trait SlickDelete[E] extends FAtomic[E] {
