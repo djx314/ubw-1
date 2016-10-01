@@ -1,4 +1,4 @@
-package net.scalax.fsn.json_slick
+package net.scalax.fsn.json.atomic_slick
 
 import io.circe.{Encoder, Json}
 import io.circe.syntax._

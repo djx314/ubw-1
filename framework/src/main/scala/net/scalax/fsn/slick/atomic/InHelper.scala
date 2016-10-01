@@ -4,7 +4,7 @@ import aaaa.FilterWrapper1111
 import bbbb.FRep
 import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.core.FAtomic
-import net.scalax.fsn.json.{JsonReader, JsonWriter}
+import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 import net.scalax.fsn.slick.atomic._
 import slick.lifted.{ColumnOrdered, FlatShapeLevel, Shape}
 

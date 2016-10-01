@@ -4,7 +4,7 @@ import io.circe.Json
 import io.circe.syntax._
 import net.scalax.fsn.core.{FColumn, FsnColumn}
 import net.scalax.fsn.common.{DefaultValue, FProperty}
-import net.scalax.fsn.json.{JsonReader, JsonWriter}
+import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 import net.scalax.fsn.slick.atomic.{AutoInc, SlickRetrieve}
 
 object InJsonConvert {
