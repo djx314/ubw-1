@@ -1,40 +1,12 @@
-package net.scalax.fsn.model
+package net.scalax.fsn.slick.model
 
 import io.circe.Json
-import net.scalax.fsn.slick_common.JsonOut
 import slick.dbio.DBIO
-import slick.lifted.{CanBeQueryCondition, Query, Rep}
 
 import scala.concurrent.Future
 
-case class SlickRange(drop: Int, take: Option[Int])
-case class SlickPage(pageIndex: Int, pageSize: Int)
-case class ColumnOrder(columnName: String, isDesc: Boolean)
-
-case class SlickParam(orders: List[ColumnOrder] = Nil, range: Option[SlickRange] = None, page: Option[SlickPage] = None)
-
-trait FilterWrapper[E] {
-  type Target <: Rep[_]
-  val condition: CanBeQueryCondition[Target]
-  val convert: E => Target
-
-  def genFilter[U](query: Query[E, U, Seq]): Query[E, U, Seq] = {
-    query.filter(data => convert(data))(condition)
-  }
-}
-
-case class PropertyInfo(
-                         property: String,
-                         typeName: String,
-                         inRetrieve: Boolean,
-                         //canOrder: Boolean,
-                         //isDefaultDesc: Boolean,
-                         isAutoInc: Boolean,
-                         isPrimaryKey: Boolean = false
-                       )
-
 case class StaticManyInfo(
-                           propertyInfo: List[PropertyInfo],
+                           propertyInfo: List[RWProperty],
                            model: Map[String, Json],
                            many: Map[String, QueryJsonInfo]
                          )
@@ -66,7 +38,7 @@ case class StaticManyUbw(
                         )
 
 case class QueryJsonInfo(
-                          properties: List[PropertyInfo],
+                          properties: List[RWProperty],
                           jsonGen: JsonOut,
                           retrieveGen: Map[String, Json] => DBIO[StaticManyInfo],
                           insertGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],

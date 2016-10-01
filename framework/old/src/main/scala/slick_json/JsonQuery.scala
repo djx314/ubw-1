@@ -1,8 +1,8 @@
 package net.scalax.fsn.slick_json
 
 import io.circe.Json
-import net.scalax.fsn.model.{ColumnOrder, SlickParam}
-import net.scalax.fsn.slick_common._
+import net.scalax.fsn.slick.model.{ColumnOrder, JsonOut, SelectProperty, SlickParam}
+import net.scalax.fsn.slick_common.CommonResult
 import slick.basic.BasicProfile
 import slick.dbio._
 import slick.lifted._
@@ -16,7 +16,7 @@ trait JsonQuery {
 
   val uQuery: Query[JsonE, JsonU, Seq]
   val render: JsonU => Map[String, Json]
-  val properties: List[PropertyInfo]
+  val properties: List[SelectProperty]
   val sortMap: Map[String, JsonE => ColumnOrdered[_]]
 
   def jsonResult(

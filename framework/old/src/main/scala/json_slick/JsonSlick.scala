@@ -1,16 +1,13 @@
 package net.scalax.fsn.json_slick
 
-import io.circe.{Encoder, Json}
-import io.circe.syntax._
+import io.circe.Json
 import net.scalax.fsn.core.{FEffect, FEffectConverter, FEffectZero}
-import net.scalax.fsn.model.{FilterWrapper, PropertyInfo, QueryJsonInfo}
-import slick.dbio.DBIO
+import net.scalax.fsn.slick.model.{FilterWrapper, RWProperty, QueryJsonInfo}
 
 import scala.language.existentials
 import slick.lifted._
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.runtime.universe._
 
 trait JsonReader extends FEffect {
 
@@ -270,7 +267,7 @@ case class SWriter[S, D, T](
 
 trait JsonSlickConvert extends FEffectConverter with JsonSlickMonad {
 
-  val propertyInfo: List[PropertyInfo]
+  val propertyInfo: List[RWProperty]
 
   type Font = JsonReader
   type Back = SlickWriter
@@ -285,7 +282,7 @@ trait JsonSlickConvert extends FEffectConverter with JsonSlickMonad {
 
 trait JsonSlickInConvert {
 
-  val propertyInfo: List[PropertyInfo]
+  val propertyInfo: List[RWProperty]
 
   type Font = JsonReader
   type First = SlickWriter
@@ -300,7 +297,7 @@ trait JsonSlickInConvert {
 }
 
 case class JsonSlickInConvertImpl[A, B, C](
-  override val propertyInfo: List[PropertyInfo],
+  override val propertyInfo: List[RWProperty],
   override val font: FEffect.Aux[JsonReader, A],
   override val first: FEffect.Aux[SlickWriter, B],
   override val second: FEffect.Aux[SlickWriter, C],

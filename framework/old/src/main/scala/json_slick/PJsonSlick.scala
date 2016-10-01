@@ -3,7 +3,7 @@ package net.scalax.fsn.json_slick
 import io.circe.{Encoder, Json}
 import io.circe.syntax._
 import net.scalax.fsn.core.{FEffConvert, FEffect, FEffectZero}
-import net.scalax.fsn.model.{FilterWrapper, PropertyInfo, QueryJsonInfo, StaticManyUbw}
+import net.scalax.fsn.slick.model.{FilterWrapper, RWProperty, QueryJsonInfo, StaticManyUbw}
 
 import scala.language.existentials
 import slick.lifted._
@@ -72,7 +72,7 @@ case class PSReader[S, D, T](
 
 trait PJsonSlickConvert extends FEffConvert {
 
-  val propertyInfo: List[PropertyInfo]
+  val propertyInfo: List[RWProperty]
   val staticMany: Future[List[StaticManyUbw]]
 
   type Font = PJsonReader
