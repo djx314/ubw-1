@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick.operation
+package net.scalax.fsn.mix.operation
 
 import net.scalax.fsn.core.FColumn
 import net.scalax.fsn.common.FProperty
@@ -7,7 +7,7 @@ import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.model.RWProperty
 import net.scalax.fsn.slick.helpers.TypeHelpers
 
-object InPropertiesOperation {
+object PropertiesOperation {
 
   def convert(column: FColumn): RWProperty = {
     val jsonWriter = FColumn.find(column) { case s: JsonWriter[column.DataType] => s }

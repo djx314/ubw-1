@@ -1,8 +1,9 @@
 package net.scalax.fsn.slick.atomic
 
-import bbbb.FRep
 import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.slick.helpers.FRep
 import slick.lifted.{FlatShapeLevel, Shape}
+
 import scala.language.existentials
 
 trait SlickCreate[E] extends FAtomic[E] {

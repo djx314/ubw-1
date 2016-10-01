@@ -1,6 +1,6 @@
 package net.scalax.fsn.mix.slickbase
 
-import indicator.rw.utils.SlickQueryBindImpl
+import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import slick.ast.{AnonSymbol, Ref}
 import slick.lifted._
 import slick.relational.RelationalProfile

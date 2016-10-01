@@ -1,7 +1,6 @@
 package indicator.rw
 
 import aaaa.FilterWrapper1111
-import bbbb.FRep
 import net.scalax.fsn.core.FColumn
 import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.core.FAtomic
@@ -9,6 +8,7 @@ import net.scalax.fsn.common.{DefaultValue, FProperty}
 import net.scalax.fsn.excel.atomic.PoiReader
 import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 import net.scalax.fsn.slick.atomic._
+import net.scalax.fsn.slick.helpers.FRep
 import net.scalax.fsn.slick.model.StaticManyGen
 import org.xarcher.cpoi.ReadableCellOperationAbs
 import slick.lifted.{FlatShapeLevel, Shape}

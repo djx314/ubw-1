@@ -7,7 +7,7 @@ import net.scalax.fsn.slick.model.{QueryJsonInfo, StaticManyUbw}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object InStaticManyOperation {
+object StaticManyOperation {
 
   def convert2Query(columns: FColumn)(implicit ec: ExecutionContext): Future[Map[String, QueryJsonInfo]] = {
     val staticManyCol = FColumn.filter(columns)({ case s: StaticMany[columns.DataType] => s })

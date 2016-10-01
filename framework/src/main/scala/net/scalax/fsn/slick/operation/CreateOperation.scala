@@ -1,8 +1,8 @@
 package net.scalax.fsn.slick.operation
 
-import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl}
 import net.scalax.fsn.core.FColumn
 import net.scalax.fsn.slick.atomic.{AutoInc, OneToOneCrate, SlickCreate}
+import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl}
 import slick.basic.BasicProfile
 import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent
@@ -130,7 +130,7 @@ object InCreateConvert2 {
   }
 }
 
-object InCreateOperation {
+object CreateOperation {
 
   trait InsWrapTran2 {
     val table: RelationalProfile#Table[_]

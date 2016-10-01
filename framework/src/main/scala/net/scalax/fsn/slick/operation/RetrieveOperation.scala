@@ -1,9 +1,9 @@
 package net.scalax.fsn.slick.operation
 
 import aaaa.FilterColumnGen
-import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl}
 import net.scalax.fsn.core.{FColumn, FsnColumn}
 import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
+import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl}
 import slick.basic.BasicProfile
 import slick.dbio.DBIO
 import slick.lifted._
@@ -114,7 +114,7 @@ trait RetrieveQuery {
 
 case class ExecInfo2(effectRows: Int, columns: List[FColumn])
 
-object InRetrieveOperation {
+object RetrieveOperation {
 
   trait WrapTran2 {
     val table: RelationalProfile#Table[_]

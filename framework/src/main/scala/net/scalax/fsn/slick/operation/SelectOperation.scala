@@ -1,9 +1,9 @@
 package net.scalax.fsn.slick.operation
 
-import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl}
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.FProperty
 import net.scalax.fsn.slick.atomic.{OrderNullsLast, OrderTargetName, SlickSelect, SubUbw}
+import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl}
 import net.scalax.fsn.slick.model.{ColumnOrder, SlickPage, SlickParam, SlickRange}
 import slick.basic.BasicProfile
 import slick.dbio.{DBIO, NoStream}
@@ -88,7 +88,7 @@ object OutSelectConvert {
 
 }
 
-object OutSelectOperation {
+object SelectOperation {
 
   def encode(columns: List[FColumn], wQuery: SlickQueryBindImpl): JsonQuery = {
     val genList = columns.map(OutSelectConvert.convert)

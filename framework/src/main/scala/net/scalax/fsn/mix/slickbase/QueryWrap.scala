@@ -1,11 +1,12 @@
 package net.scalax.fsn.mix.slickbase
 
-import indicator.rw.utils.SlickQueryBindImpl
 import net.scalax.fsn.slick.operation._
 import io.circe.Json
 import net.scalax.fsn.core.FColumn
 import net.scalax.fsn.json.operation.JsonOperation
+import net.scalax.fsn.mix.operation.PropertiesOperation
 import net.scalax.fsn.slick.atomic.{AutoInc, SlickRetrieve}
+import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import net.scalax.fsn.slick.model._
 import slick.basic.BasicProfile
 import slick.dbio.{DBIO, NoStream}
@@ -22,7 +23,7 @@ case class ListQueryWrap(
 
   lazy val withExtraCols = OutSelectConvert.extraSubCol(columns)
 
-  lazy val queryWrap: JsonQuery = OutSelectOperation.encode(withExtraCols, listQueryBind)
+  lazy val queryWrap: JsonQuery = SelectOperation.encode(withExtraCols, listQueryBind)
 
   def result
   (defaultOrders: List[ColumnOrder])
@@ -36,7 +37,7 @@ case class ListQueryWrap(
         result._1.map(JsonOperation.writeJ) -> result._2
       }
     }
-    JsonOut(withExtraCols.map(InPropertiesOperation.convertProperty), gen)
+    JsonOut(withExtraCols.map(PropertiesOperation.convertProperty), gen)
   }
 
   def result
@@ -67,7 +68,7 @@ case class QueryWrap(
 
   lazy val queryWrap: listQueryWrap.queryWrap.type = listQueryWrap.queryWrap
   val columns = listQueryWrap.columns
-  lazy val properties = InPropertiesOperation.convertColumn(columns)
+  lazy val properties = PropertiesOperation.convertColumn(columns)
 
   def result
   (defaultOrders: List[ColumnOrder])
@@ -100,8 +101,8 @@ case class QueryWrap(
           FColumn.findOpt(eachColumn) { case s: SlickRetrieve[eachColumn.DataType] => s }.map(_.primaryGen.isDefined).getOrElse(false)
         } (v)
         for {
-          execInfo <- InRetrieveOperation.parseInsert(binds, jsonData)
-          staticMany = InStaticManyOperation.convertList2Query(execInfo.columns)
+          execInfo <- RetrieveOperation.parseInsert(binds, jsonData)
+          staticMany = StaticManyOperation.convertList2Query(execInfo.columns)
           staticM <- DBIO.from(staticMany)
         } yield {
           val jsonResult = JsonOperation.writeJ(execInfo.columns)
@@ -113,8 +114,8 @@ case class QueryWrap(
           ! FColumn.findOpt(eachColumn) { case s: AutoInc[eachColumn.DataType] => s }.map(_.isAutoInc).getOrElse(false)
         }(v)
         for {
-          execInfo <- InCreateOperation.parseInsert(binds, jsonData)
-          staticMany = InStaticManyOperation.convertList2Query(execInfo.columns)
+          execInfo <- CreateOperation.parseInsert(binds, jsonData)
+          staticMany = StaticManyOperation.convertList2Query(execInfo.columns)
           staticM <- DBIO.from(staticMany)
         } yield {
           UpdateStaticManyInfo(execInfo.effectRows, staticM)
@@ -123,9 +124,9 @@ case class QueryWrap(
       deleteGen = (v: Map[String, Json]) => {
         val primaryColumns = columns.filter { col => FColumn.findOpt(col) { case retrieve: SlickRetrieve[col.DataType] => retrieve }.map(_.primaryGen.isDefined).getOrElse(false) }
         val jsonData = JsonOperation.readJ(primaryColumns)(v)
-        val staticMany = InStaticManyOperation.convertList2Query(jsonData)
+        val staticMany = StaticManyOperation.convertList2Query(jsonData)
         for {
-          updateInfo <- InDeleteOperation.parseInsert(binds, jsonData)
+          updateInfo <- DeleteOperation.parseInsert(binds, jsonData)
           staticM <- DBIO.from(staticMany)
         } yield {
           updateInfo.copy(many = staticM).effectRows
@@ -133,15 +134,15 @@ case class QueryWrap(
       },
       updateGen = (v: Map[String, Json]) => {
         val jsonData = JsonOperation.readJ(columns)(v)
-        val staticMany = InStaticManyOperation.convertList2Query(jsonData)
+        val staticMany = StaticManyOperation.convertList2Query(jsonData)
         for {
-          updateInfo <- InUpdateOperation.parseInsert(binds, jsonData)
+          updateInfo <- UpdateOperation.parseInsert(binds, jsonData)
           staticM <- DBIO.from(staticMany)
         } yield {
           updateInfo.copy(many = staticM)
         }
       },
-      staticMany = InStaticManyOperation.convertList2Ubw(columns)
+      staticMany = StaticManyOperation.convertList2Ubw(columns)
     )
   }
 
