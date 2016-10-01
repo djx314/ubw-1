@@ -4,6 +4,7 @@ import indicator.rw.utils.SlickQueryBindImpl
 import indicator.rw.utils.rw2._
 import io.circe.Json
 import net.scalax.fsn.core.FColumn
+import net.scalax.fsn.slick.atomic.SlickRetrieve
 import net.scalax.fsn.slick.model._
 import net.scalax.fsn.slick.model.JsonOut
 import slick.basic.BasicProfile

@@ -3,9 +3,12 @@ package indicator.rw
 import aaaa.FilterWrapper1111
 import bbbb.FRep
 import net.scalax.fsn.core.FColumn
-import indicator.rw.utils.rw._
 import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.common.{DefaultValue, FProperty}
+import net.scalax.fsn.excel.atomic.PoiReader
+import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
+import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.model.StaticManyGen
 import org.xarcher.cpoi.ReadableCellOperationAbs
 import slick.lifted.{FlatShapeLevel, Shape}
@@ -40,15 +43,9 @@ object In {
   def jWrite[T](
     implicit
     encoder: Encoder[T],
-    weakTypeTag: WeakTypeTag[T]//,
-    //selectRender1: SelectRender[T],
-    //retrieveRender1: RetrieveRender[T],
-    //inputRender1: InputRender[T]
+    weakTypeTag: WeakTypeTag[T]
   ): List[FAtomic[T]] = List(new JsonWriter[T] {
     override type JsonType = T
-    //override val selectRender = selectRender1
-    //override val retrieveRender = retrieveRender1
-    //override val inputRender = inputRender1
     override val writer = encoder
     override val convert = identity[T] _
     override val typeTag = weakTypeTag
@@ -69,45 +66,6 @@ object In {
     override val isAutoInc = true
   })
 
-  /*def retrieve[S, D, T](sourceCol: FRep[S])(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T]): List[FAtomic[D]] = List(new SlickRetrieve[D] {
-    override type SourceType = S
-    override type SlickType = D
-    override type TargetType = T
-
-    override val mainCol = sourceCol
-    override val mainShape = shape
-    override val primaryGen = Option.empty[(Map[String, Json], String) => FilterWrapper[T]]
-    override val convert = identity[D] _
-  })
-
-  def update[S, D, T, U, V](sourceCol: FRep[S])(
-    implicit
-    mainShape1: Shape[_ <: FlatShapeLevel, S, D, T],
-    updateShape1: Shape[_ <: FlatShapeLevel, T, U, V]
-  ): List[FAtomic[U]] = List(new SlickUpdate[U] {
-    override type SourceType = S
-    override type SlickType = D
-    override type TargetType = T
-    override type USlickType = U
-    override type UTargetType = V
-
-    override val mainCol = sourceCol
-    override val mainShape = mainShape1
-    override val updateShape = updateShape1
-    override val primaryGen = Option.empty[(Map[String, Json], String) => FilterWrapper[T]]
-    override val convert = identity[U] _
-  })
-
-  def delete[S, D, T](sourceCol: FRep[S])(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T]): List[FAtomic[D]] = List(new SlickDelete[D] {
-    override type SourceType = S
-    override type SlickType = D
-    override type TargetType = T
-
-    override val mainCol = sourceCol
-    override val mainShape = shape
-    override val primaryGen = Option.empty[(Map[String, Json], String) => FilterWrapper[T]]
-  })*/
-
   def oneTOneR[S, D, T](sourceCol: FRep[S])(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T], filterGen: FilterWrapper1111[T, D]): List[FAtomic[D]] = List(new OneToOneRetrieve[D] {
     override type SourceType = S
     override type SlickType = D
@@ -120,22 +78,18 @@ object In {
     override val filterConvert = identity[D] _
   })
 
-  def oneTOneU[S, D, T/*, U*/](sourceCol: FRep[S])(
+  def oneTOneU[S, D, T](sourceCol: FRep[S])(
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T],
-    //shape2: Shape[_ <: FlatShapeLevel, T, D, U],
     filterGen: FilterWrapper1111[T, D]
   ): List[FAtomic[D]] = List(new OneToOneUpdate[D] {
     override type SourceType = S
     override type SlickType = D
     override type TargetType = T
-    //override type USlickType = D
-    //override type UTargetType = U
     override type FilterData = D
 
     override val mainCol = sourceCol
     override val mainShape = shape
-    //override val updateShape = shape2
     override val primaryGen = filterGen
     override val convert = identity[D] _
     override val filterConvert = identity[D] _
@@ -151,10 +105,9 @@ object In {
     override val convert = identity[D] _
   })
 
-  def oneTOne[S, D, T/*, U*/](sourceCol: FRep[S])(
+  def oneTOne[S, D, T](sourceCol: FRep[S])(
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T],
-    //shape2: Shape[_ <: FlatShapeLevel, T, D, U],
     filterGen: FilterWrapper1111[T, D]
   ): List[FAtomic[D]] = List(
     new OneToOneRetrieve[D] {
@@ -172,13 +125,10 @@ object In {
       override type SourceType = S
       override type SlickType = D
       override type TargetType = T
-      //override type USlickType = D
-      //override type UTargetType = U
       override type FilterData = D
 
       override val mainCol = sourceCol
       override val mainShape = shape
-      //override val updateShape = shape2
       override val primaryGen = filterGen
       override val convert = identity[D] _
       override val filterConvert = identity[D] _

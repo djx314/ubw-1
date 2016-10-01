@@ -2,8 +2,8 @@ package indicator.rw.utils.rw2
 
 import aaaa.FilterColumnGen
 import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl}
-import indicator.rw.utils.rw.{FProperty, OneToOneUpdate, SlickUpdate}
 import net.scalax.fsn.core.FColumn
+import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate}
 import net.scalax.fsn.slick.model.UpdateStaticManyInfo
 import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent

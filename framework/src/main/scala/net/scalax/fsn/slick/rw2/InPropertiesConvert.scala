@@ -1,9 +1,11 @@
 package indicator.rw.utils.rw2
 
-import indicator.rw.utils.rw._
 import net.scalax.fsn.core.FColumn
+import net.scalax.fsn.common.FProperty
+import net.scalax.fsn.json.atomic.JsonWriter
+import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.model.RWProperty
-import net.scalax.ubw.helper.TypeUtils
+import net.scalax.fsn.slick.helpers.TypeHelpers
 
 object InPropertiesConvert {
 
@@ -16,7 +18,7 @@ object InPropertiesConvert {
 
     val slickCommonpropertyInfo: RWProperty = RWProperty(
       property = property.proName,
-      typeName = TypeUtils.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString,
+      typeName = TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString,
       inRetrieve = isInRetrieve,
       isAutoInc = isAutoInc,
       isPrimaryKey = isPrimary
@@ -40,7 +42,7 @@ object InPropertiesConvert {
 
     val slickCommonpropertyInfo: net.scalax.fsn.slick.model.SelectProperty = net.scalax.fsn.slick.model.SelectProperty(
       property = property.proName,
-      typeName = TypeUtils.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString,
+      typeName = TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString,
       inRetrieve = isInRetrieve,
       canOrder = slickSelect.colToOrder.isDefined || orderTargetName.isDefined,
       isDefaultDesc = isDefaultDesc

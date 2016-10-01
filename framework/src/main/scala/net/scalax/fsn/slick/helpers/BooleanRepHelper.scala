@@ -1,4 +1,4 @@
-package net.scalax.ubw.helper
+package net.scalax.fsn.slick.helpers
 
 import scala.language.implicitConversions
 import slick.ast.TypedType
@@ -105,7 +105,7 @@ trait BooleanRepHelper {
 
 object BooleanRepHelper extends BooleanRepHelper
 
-object TypeUtils {
+object TypeHelpers {
 
   import scala.reflect.runtime.universe._
 

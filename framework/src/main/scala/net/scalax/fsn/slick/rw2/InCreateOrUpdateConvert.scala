@@ -2,12 +2,11 @@ package indicator.rw.utils.rw2
 
 import indicator.rw.utils.SlickQueryBindImpl
 import net.scalax.fsn.core.FColumn
-import slick.basic.BasicProfile
 import slick.relational.RelationalProfile
 
 import scala.language.existentials
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.ExecutionContext
+import scala.util.Success
 
 object InCreateOrUpdateConvert {
 
