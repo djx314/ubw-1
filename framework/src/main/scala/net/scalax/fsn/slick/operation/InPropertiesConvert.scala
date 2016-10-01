@@ -1,4 +1,4 @@
-package indicator.rw.utils.rw2
+package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core.FColumn
 import net.scalax.fsn.common.FProperty

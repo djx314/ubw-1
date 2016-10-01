@@ -1,4 +1,4 @@
-package indicator.rw.utils.rw2
+package net.scalax.fsn.slick.operation
 
 import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl}
 import net.scalax.fsn.core.FColumn

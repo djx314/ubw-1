@@ -1,4 +1,4 @@
-package indicator.rw.utils.rw2
+package net.scalax.fsn.slick.operation
 
 import aaaa.FilterColumnGen
 import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl}

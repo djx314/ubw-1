@@ -1,7 +1,7 @@
 package net.scalax.fsn.mix.slickbase
 
 import indicator.rw.utils.SlickQueryBindImpl
-import indicator.rw.utils.rw2._
+import net.scalax.fsn.slick.operation._
 import io.circe.Json
 import net.scalax.fsn.core.FColumn
 import net.scalax.fsn.slick.atomic.SlickRetrieve
@@ -32,7 +32,7 @@ case class ListQueryWrap(
   ): JsonOut = {
     val gen = { slickParam: SlickParam =>
       queryWrap.jsonResult(defaultOrders).apply(slickParam).map { result =>
-        result._1.map(indicator.rw.utils.rw2.InJsonConvert.writeJ) -> result._2
+        result._1.map(InJsonConvert.writeJ) -> result._2
       }
     }
     JsonOut(withExtraCols.map(InPropertiesConvert.convertProperty), gen)
@@ -95,21 +95,21 @@ case class QueryWrap(
           val jsonResult = indicator.rw.utils.rw2.InJsonConvert.writeJ(execInfo.fColumns)
           StaticManyInfo(properties, jsonResult, staticM)
         }*/
-        val jsonData = indicator.rw.utils.rw2.InJsonConvert.readJPrimary(columns)(v)
+        val jsonData = InJsonConvert.readJPrimary(columns)(v)
         for {
           execInfo <- RetrieveWrapDeal2.parseInsert(binds, jsonData)
-          staticMany = indicator.rw.utils.rw2.InStaticManyConvert.convertList2Query(execInfo.columns)
+          staticMany = InStaticManyConvert.convertList2Query(execInfo.columns)
           staticM <- DBIO.from(staticMany)
         } yield {
-          val jsonResult = indicator.rw.utils.rw2.InJsonConvert.writeJ(execInfo.columns)
+          val jsonResult = InJsonConvert.writeJ(execInfo.columns)
           StaticManyInfo(properties, jsonResult, staticM)
         }
       },
       insertGen = { v: Map[String, Json] =>
-        val jsonData = indicator.rw.utils.rw2.InJsonConvert.readJNotInc(columns)(v)
+        val jsonData = InJsonConvert.readJNotInc(columns)(v)
         for {
           execInfo <- InsertWrapDeal2.parseInsert(binds, jsonData)
-          staticMany = indicator.rw.utils.rw2.InStaticManyConvert.convertList2Query(execInfo.columns)
+          staticMany = InStaticManyConvert.convertList2Query(execInfo.columns)
           staticM <- DBIO.from(staticMany)
         } yield {
           UpdateStaticManyInfo(execInfo.effectRows, staticM)
@@ -117,8 +117,8 @@ case class QueryWrap(
       },
       deleteGen = (v: Map[String, Json]) => {
         val primaryColumns = columns.filter { col => FColumn.findOpt(col) { case retrieve: SlickRetrieve[col.DataType] => retrieve }.map(_.primaryGen.isDefined).getOrElse(false) }
-        val jsonData = indicator.rw.utils.rw2.InJsonConvert.readJ(primaryColumns)(v)
-        val staticMany = indicator.rw.utils.rw2.InStaticManyConvert.convertList2Query(jsonData)
+        val jsonData = InJsonConvert.readJ(primaryColumns)(v)
+        val staticMany = InStaticManyConvert.convertList2Query(jsonData)
         for {
           updateInfo <- DeleteWrapDeal2.parseInsert(binds, jsonData)
           staticM <- DBIO.from(staticMany)
@@ -127,8 +127,8 @@ case class QueryWrap(
         }
       },
       updateGen = (v: Map[String, Json]) => {
-        val jsonData = indicator.rw.utils.rw2.InJsonConvert.readJ(columns)(v)
-        val staticMany = indicator.rw.utils.rw2.InStaticManyConvert.convertList2Query(jsonData)
+        val jsonData = InJsonConvert.readJ(columns)(v)
+        val staticMany = InStaticManyConvert.convertList2Query(jsonData)
         for {
           updateInfo <- UpdateWrapDeal2.parseInsert(binds, jsonData)
           staticM <- DBIO.from(staticMany)
@@ -136,7 +136,7 @@ case class QueryWrap(
           updateInfo.copy(many = staticM)
         }
       },
-      staticMany = indicator.rw.utils.rw2.InStaticManyConvert.convertList2Ubw(columns)
+      staticMany = InStaticManyConvert.convertList2Ubw(columns)
     )
   }
 
