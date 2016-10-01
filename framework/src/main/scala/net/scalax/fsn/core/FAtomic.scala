@@ -3,7 +3,7 @@ package net.scalax.fsn.core
 import bbbb.FRep
 import indicator.rw.utils.rw.{SCRUD, Select => SSelect}
 import io.circe.{Decoder, Encoder}
-import net.scalax.fsn.slick.common.FProperty
+import net.scalax.fsn.common.FProperty
 import slick.lifted.{FlatShapeLevel, Shape}
 
 import scala.reflect.runtime.universe._

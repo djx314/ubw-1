@@ -11,34 +11,9 @@ import slick.lifted.{ColumnOrdered, FlatShapeLevel, Shape}
 import scala.language.existentials
 import scala.language.implicitConversions
 import scala.concurrent.Future
-import scala.reflect.runtime.universe._
 
 trait SubUbw[E] extends FAtomic[E] {
   val subCols: List[FColumn]
-}
-
-trait JsonReader[E] extends FAtomic[E] {
-
-  type JsonType
-  type DataType = E
-
-  val reader: Decoder[JsonType]
-  val convert: JsonType => DataType
-
-}
-
-trait DefaultValue[E] extends FAtomic[E] {
-  val value: E
-}
-
-trait JsonWriter[E] extends FAtomic[E] {
-
-  type JsonType
-  type DataType = E
-  val writer: Encoder[JsonType]
-  val convert: DataType => JsonType
-  val typeTag: WeakTypeTag[JsonType]
-
 }
 
 trait SlickCreate[E] extends FAtomic[E] {
@@ -189,16 +164,12 @@ trait OneToOneUpdate[E] extends FAtomic[E] {
   type SourceType
   type SlickType
   type TargetType
-  //type USlickType
-  //type UTargetType
   type FilterData
   type DataType = E
 
   val mainCol: FRep[SourceType]
   val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
-  //val updateShape: Shape[_ <: FlatShapeLevel, TargetType, USlickType, UTargetType]
   val primaryGen: FilterWrapper1111[TargetType, FilterData]
-  //val convert: DataType => USlickType
   val convert: DataType => SlickType
   val filterConvert: DataType => FilterData
 

@@ -3,7 +3,7 @@ package indicator.rw.utils.rw2
 import indicator.rw.utils.{ListAnyShape, SlickQueryBindImpl}
 import indicator.rw.utils.rw._
 import net.scalax.fsn.core._
-import net.scalax.fsn.slick.common.FProperty
+import net.scalax.fsn.common.FProperty
 import net.scalax.fsn.slick.model.{ColumnOrder, SlickPage, SlickParam, SlickRange}
 import slick.basic.BasicProfile
 import slick.dbio.{DBIO, NoStream}
