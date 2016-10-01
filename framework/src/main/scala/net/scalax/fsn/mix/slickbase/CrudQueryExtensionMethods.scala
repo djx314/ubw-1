@@ -1,4 +1,4 @@
-package indicator.rw.utils.rw
+package net.scalax.fsn.mix.slickbase
 
 import indicator.rw.utils.SlickQueryBindImpl
 import slick.ast.{AnonSymbol, Ref}
@@ -18,9 +18,9 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
       }
     }
     val deleteWrap =
-      (aliased -> slickJsonQuery) :: fv.deleteWrap
+      (aliased -> slickJsonQuery) :: fv.binds
 
-    QueryWrap(/*fv.columns,*/deleteWrap, fv.listQueryWrap)(fv.ec)
+    QueryWrap(deleteWrap, fv.listQueryWrap)(fv.ec)
   }
 
   def map[A, B](f: E => ListQueryWrap): QueryWrap = {
@@ -35,7 +35,7 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
     val deleteWrap =
       List(aliased -> slickJsonQuery)
 
-    QueryWrap(/*fv.insertSeqList,*/deleteWrap, fv)(fv.ec)
+    QueryWrap(deleteWrap, fv)(fv.ec)
   }
 
   def filter[T <: Rep[_] : CanBeQueryCondition](f: E => T): CrudQueryExtensionMethods[E, U] = {

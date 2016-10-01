@@ -1,4 +1,4 @@
-package indicator.rw.utils.rw
+package net.scalax.fsn.mix.slickbase
 
 import indicator.rw.utils.SlickQueryBindImpl
 import net.scalax.fsn.core.FColumn
