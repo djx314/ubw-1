@@ -1,9 +1,8 @@
 package net.scalax.fsn.slick.operation
 
-import aaaa.FilterColumnGen
 import net.scalax.fsn.core.FColumn
 import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate}
-import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl}
+import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
 import net.scalax.fsn.slick.model.UpdateStaticManyInfo
 import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent

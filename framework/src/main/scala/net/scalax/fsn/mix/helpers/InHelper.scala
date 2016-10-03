@@ -1,11 +1,10 @@
-package indicator.rw.utils.rw
+package net.scalax.fsn.mix.helpers
 
-import aaaa.FilterWrapper1111
 import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.core.FAtomic
 import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.helpers.FRep
+import net.scalax.fsn.slick.helpers.{FRep, FilterWrapper}
 import slick.lifted.{ColumnOrdered, FlatShapeLevel, Shape}
 
 import scala.reflect.runtime.universe._
@@ -19,7 +18,7 @@ case class SCRUD[S, D, T, E](
   jWrite: JsonWriter[E],
   isAutoInc: Boolean
 ) { self =>
-  def primary(implicit priFilter: FilterWrapper1111[T, D]): SCRUD[S, D, T, E] = {
+  def primary(implicit priFilter: FilterWrapper[T, D]): SCRUD[S, D, T, E] = {
     this.copy(
       retrieve = retrieve.copy(primaryGen = Option(priFilter)),
       update = update.copy(primaryGen = Option(priFilter)),

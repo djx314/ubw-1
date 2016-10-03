@@ -1,6 +1,6 @@
 package net.scalax.fsn.core
 
-import indicator.rw.utils.rw.{SCRUD, Select => SSelect}
+import net.scalax.fsn.mix.helpers.{SCRUD, Select => SSelect}
 import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.common.FProperty
 import net.scalax.fsn.slick.helpers.FRep

@@ -1,9 +1,8 @@
 package net.scalax.fsn.slick.operation
 
-import aaaa.FilterColumnGen
 import net.scalax.fsn.core.{FColumn, FsnColumn}
 import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
-import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl}
+import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
 import slick.basic.BasicProfile
 import slick.dbio.DBIO
 import slick.lifted._

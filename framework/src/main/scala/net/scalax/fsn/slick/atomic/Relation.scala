@@ -1,8 +1,7 @@
 package net.scalax.fsn.slick.atomic
 
-import aaaa.FilterWrapper1111
 import net.scalax.fsn.core.{FAtomic, FColumn}
-import net.scalax.fsn.slick.helpers.FRep
+import net.scalax.fsn.slick.helpers.{FRep, FilterWrapper}
 import net.scalax.fsn.slick.model.StaticManyGen
 import slick.lifted.{FlatShapeLevel, Shape}
 
@@ -24,7 +23,7 @@ trait OneToOneRetrieve[E] extends FAtomic[E] {
 
   val mainCol: FRep[SourceType]
   val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
-  val primaryGen: FilterWrapper1111[TargetType, FilterData]
+  val primaryGen: FilterWrapper[TargetType, FilterData]
   val filterConvert: DataType => FilterData
 
 }
@@ -52,7 +51,7 @@ trait OneToOneUpdate[E] extends FAtomic[E] {
 
   val mainCol: FRep[SourceType]
   val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
-  val primaryGen: FilterWrapper1111[TargetType, FilterData]
+  val primaryGen: FilterWrapper[TargetType, FilterData]
   val convert: DataType => SlickType
   val filterConvert: DataType => FilterData
 
