@@ -46,7 +46,6 @@ lazy val tempBase = (project in file("./temp-base"))
   )
 
 val slickVersion = "3.2.0-M1"
-val scalazVersion = "7.3.0-M3"
 val circeVersion = "0.5.1"
 val poiVersion = "3.15"
 
@@ -74,5 +73,10 @@ lazy val core = (project in file("."))
       //joda-time
       "joda-time" % "joda-time" % "2.9.4",
       "org.joda" % "joda-convert" % "1.8.1"
+    ),
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.0.0" % "test",
+      "com.h2database" % "h2" % "1.4.192" % "test",
+      "org.slf4j" % "slf4j-simple" % "1.7.21" % "test"
     )
   )
