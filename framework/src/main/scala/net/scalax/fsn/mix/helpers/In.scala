@@ -1,4 +1,4 @@
-package indicator.rw
+package net.scalax.fsn.mix.helpers
 
 import net.scalax.fsn.core.FColumn
 import io.circe.{Decoder, Encoder}

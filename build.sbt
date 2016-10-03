@@ -5,6 +5,8 @@ lazy val logger = {
   LoggerFactory.getLogger("sbt init")
 }
 
+transitiveClassifiers in ThisBuild := Seq("sources", "javadoc")
+
 lazy val fsn = (project in file("."))
   .settings(CustomSettings.customSettings: _*)
   .settings(

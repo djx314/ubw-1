@@ -48,7 +48,7 @@ lazy val tempBase = (project in file("./temp-base"))
 val slickVersion = "3.2.0-M1"
 val scalazVersion = "7.3.0-M3"
 val circeVersion = "0.5.1"
-val poiVersion = "3.15-beta2"
+val poiVersion = "3.15"
 
 lazy val core = (project in file("."))
   .settings(CustomSettings.baseSettings: _*)

@@ -1,13 +1,11 @@
 package net.scalax.fsn.mix.slickbase
 
-import net.scalax.fsn.core.FColumnImplicits
+import net.scalax.fsn.mix.helpers.SlickCRUDImplicits
 import net.scalax.fsn.slick.helpers.FilterRepImplicitHelper
 import slick.lifted._
 import slick.relational.RelationalProfile
 
-import scala.language.implicitConversions
-
-trait SqlRepImplicits extends FilterRepImplicitHelper with FColumnImplicits {
+trait SqlRepImplicits extends FilterRepImplicitHelper with SlickCRUDImplicits {
 
   implicit class queryToUQueryExtendsionMethodGen[E, U](query: Query[E, U, Seq]) {
 
