@@ -2,7 +2,6 @@ package net.scalax.fsn.slick.helpers
 
 import slick.ast.{ColumnOption, TypedType}
 
-import scala.language.existentials
 import scala.language.implicitConversions
 import slick.lifted._
 import slick.relational.RelationalProfile

@@ -1,17 +1,22 @@
-package aaaa
+package net.scalax.fsn.slick.helpers
 
 import slick.ast.BaseTypedType
 import slick.lifted._
-
-import scala.language.existentials
-import scala.language.implicitConversions
-import scala.language.higherKinds
 
 trait FilterColumnGen[S] {
 
   type BooleanTypeRep <: Rep[_]
 
   val dataToCondition: S => BooleanTypeRep
+  val wt: CanBeQueryCondition[BooleanTypeRep]
+
+}
+
+trait FilterWrapper[S, D] {
+
+  type BooleanTypeRep <: Rep[_]
+
+  val dataToCondition: S => D => BooleanTypeRep
   val wt: CanBeQueryCondition[BooleanTypeRep]
 
 }
@@ -23,7 +28,7 @@ trait FilterBaseConvert {
   type BooleanType
 
   val typeGen: SourceRep <:< Rep[FilterType]
-  //val dataGen: FilterType
+
   val baseType: BaseTypedType[FilterType]
 
   val colImplicit: Rep[FilterType] => BaseColumnExtensionMethods[FilterType]
@@ -66,25 +71,9 @@ trait FilterOptConvertGen[S, T] extends FilterOptConvert {
 
 }
 
-trait FilterWrapper1111[S, D] {
-
-  type BooleanTypeRep <: Rep[_]
-
-  val dataToCondition: S => D => BooleanTypeRep
-  val wt: CanBeQueryCondition[BooleanTypeRep]
-
-}
-/*trait FilterJsonGen[S] {
-
-  type BooleanTypeRep <: Rep[_]
-
-  val dataToCondition: S => Map[String, Json] => BooleanTypeRep
-  val wt: CanBeQueryCondition[BooleanTypeRep]
-
-}*/
-object FilterWrapper1111 {
-  def fromIBaseConvert[S, T](convert1: FilterBaseConvertGen[S, T]): aaaa.FilterWrapper1111[S, T] = {
-    new aaaa.FilterWrapper1111[convert1.SourceRep, convert1.FilterType] {
+object FilterWrapper {
+  def fromIBaseConvert[S, T](convert1: FilterBaseConvertGen[S, T]): FilterWrapper[S, T] = {
+    new FilterWrapper[convert1.SourceRep, convert1.FilterType] {
       override type BooleanTypeRep = Rep[convert1.BooleanType]
       override val dataToCondition = { baseRep1: convert1.SourceRep => { data: convert1.FilterType =>
           convert1.colImplicit(convert1.typeGen(baseRep1)).===(LiteralColumn(data)(convert1.baseType))(convert1.om)
@@ -93,8 +82,8 @@ object FilterWrapper1111 {
     }
   }
 
-  def fromIOptConvert[S, T](convert1: FilterOptConvertGen[S, T]): aaaa.FilterWrapper1111[S, Option[T]] = {
-     new aaaa.FilterWrapper1111[convert1.SourceRep, Option[convert1.NoneOptType]] {
+  def fromIOptConvert[S, T](convert1: FilterOptConvertGen[S, T]): FilterWrapper[S, Option[T]] = {
+     new FilterWrapper[convert1.SourceRep, Option[convert1.NoneOptType]] {
       override type BooleanTypeRep = Rep[convert1.BooleanType]
       override val dataToCondition = { baseRep1: convert1.SourceRep => { data: Option[convert1.NoneOptType] =>
         convert1.colImplicit(convert1.typeGen(baseRep1)).===(LiteralColumn(data)(convert1.baseType.optionType))(convert1.om)
@@ -105,17 +94,16 @@ object FilterWrapper1111 {
 
 }
 
-trait FilterRepImplicit1111 {
+trait FilterRepImplicitHelper {
 
   implicit def baseWrapperConvert[A, B, C](
     implicit
     cv: A <:< Rep[C],
-    //decoder: Decoder[C],
     baseTypedType1: BaseTypedType[C],
     colImplicit1: Rep[C] => BaseColumnExtensionMethods[C],
     om1: OptionMapperDSL.arg[C, C]#arg[C, C]#to[Boolean, B],
     wt1: CanBeQueryCondition[Rep[B]]
-  ): aaaa.FilterWrapper1111[A, C] = {
+  ): FilterWrapper[A, C] = {
     val convert = new FilterBaseConvertGen[A, C] {
       override type BooleanType = B
       override val typeGen = cv
@@ -124,18 +112,17 @@ trait FilterRepImplicit1111 {
       override val om = om1
       override val wt = wt1
     }
-    FilterWrapper1111.fromIBaseConvert(convert)
+    FilterWrapper.fromIBaseConvert(convert)
   }
 
   implicit def baseOptWrapperConvert[A, B, C](
     implicit
     cv: A <:< Rep[Option[C]],
-    //decoder: Decoder[Option[C]],
     baseTypedType1: BaseTypedType[C],
     colImplicit1: Rep[Option[C]] => OptionColumnExtensionMethods[C],
     om1: OptionMapperDSL.arg[C, Option[C]]#arg[C, Option[C]]#to[Boolean, B],
     wt1: CanBeQueryCondition[Rep[B]]
-  ): aaaa.FilterWrapper1111[A, Option[C]] = {
+  ): FilterWrapper[A, Option[C]] = {
     val convert = new FilterOptConvertGen[A, C] {
       override type BooleanType = B
       override val typeGen = cv
@@ -144,7 +131,7 @@ trait FilterRepImplicit1111 {
       override val om = om1
       override val wt = wt1
     }
-    FilterWrapper1111.fromIOptConvert(convert)
+    FilterWrapper.fromIOptConvert(convert)
   }
 
 }

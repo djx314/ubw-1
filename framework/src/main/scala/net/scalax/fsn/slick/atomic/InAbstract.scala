@@ -1,6 +1,5 @@
 package indicator.rw
 
-import aaaa.FilterWrapper1111
 import net.scalax.fsn.core.FColumn
 import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.core.FAtomic
@@ -8,7 +7,7 @@ import net.scalax.fsn.common.{DefaultValue, FProperty}
 import net.scalax.fsn.excel.atomic.PoiReader
 import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.helpers.FRep
+import net.scalax.fsn.slick.helpers.{FRep, FilterWrapper}
 import net.scalax.fsn.slick.model.StaticManyGen
 import org.xarcher.cpoi.ReadableCellOperationAbs
 import slick.lifted.{FlatShapeLevel, Shape}
@@ -66,7 +65,7 @@ object In {
     override val isAutoInc = true
   })
 
-  def oneTOneR[S, D, T](sourceCol: FRep[S])(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T], filterGen: FilterWrapper1111[T, D]): List[FAtomic[D]] = List(new OneToOneRetrieve[D] {
+  def oneTOneR[S, D, T](sourceCol: FRep[S])(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T], filterGen: FilterWrapper[T, D]): List[FAtomic[D]] = List(new OneToOneRetrieve[D] {
     override type SourceType = S
     override type SlickType = D
     override type TargetType = T
@@ -81,7 +80,7 @@ object In {
   def oneTOneU[S, D, T](sourceCol: FRep[S])(
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T],
-    filterGen: FilterWrapper1111[T, D]
+    filterGen: FilterWrapper[T, D]
   ): List[FAtomic[D]] = List(new OneToOneUpdate[D] {
     override type SourceType = S
     override type SlickType = D
@@ -108,7 +107,7 @@ object In {
   def oneTOne[S, D, T](sourceCol: FRep[S])(
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T],
-    filterGen: FilterWrapper1111[T, D]
+    filterGen: FilterWrapper[T, D]
   ): List[FAtomic[D]] = List(
     new OneToOneRetrieve[D] {
       override type SourceType = S

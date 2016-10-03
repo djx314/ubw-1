@@ -1,8 +1,7 @@
 package net.scalax.fsn.slick.atomic
 
-import aaaa.FilterWrapper1111
 import net.scalax.fsn.core.FAtomic
-import net.scalax.fsn.slick.helpers.FRep
+import net.scalax.fsn.slick.helpers.{FRep, FilterWrapper}
 import slick.lifted.{FlatShapeLevel, Shape}
 
 import scala.language.existentials
@@ -17,7 +16,7 @@ trait SlickDelete[E] extends FAtomic[E] {
 
   val mainCol: FRep[SourceType]
   val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
-  val primaryGen: Option[FilterWrapper1111[TargetType, FilterData]]
+  val primaryGen: Option[FilterWrapper[TargetType, FilterData]]
   val filterConvert: DataType => FilterData
 
 }
@@ -25,7 +24,7 @@ trait SlickDelete[E] extends FAtomic[E] {
 case class SDelete[S, D, T, U, E](
                                    override val mainCol: FRep[S],
                                    override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
-                                   override val primaryGen: Option[FilterWrapper1111[T, U]],
+                                   override val primaryGen: Option[FilterWrapper[T, U]],
                                    override val filterConvert: E => U
                                  ) extends SlickDelete[E] {
   override type SourceType = S
