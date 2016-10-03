@@ -31,7 +31,6 @@ object CustomSettings {
     )
   
   def extAlias = List(
-    addCommandAlias("xeclipse", "eclipse with-source=true skip-parents=false"),
     if (scala.util.Properties.isWin)
       addCommandAlias("windowsGitInit",
         """|;
