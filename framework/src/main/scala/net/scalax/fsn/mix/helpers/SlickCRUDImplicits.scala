@@ -1,13 +1,14 @@
 package net.scalax.fsn.mix.helpers
 
 import io.circe.{Decoder, Encoder}
-
 import net.scalax.fsn.common.FProperty
 import net.scalax.fsn.core.{FAtomic, FsnColumn}
 import net.scalax.fsn.mix.helpers.{Select => SSelect}
+import net.scalax.fsn.mix.slickbase.{CrudQueryExtensionMethods, ListQueryExtensionMethods}
 import net.scalax.fsn.slick.helpers.FRep
+import slick.lifted.{FlatShapeLevel, Query, Shape}
+import slick.relational.RelationalProfile
 
-import slick.lifted.{FlatShapeLevel, Shape}
 import scala.reflect.runtime.universe._
 import scala.language.implicitConversions
 
@@ -80,6 +81,18 @@ trait SlickCRUDImplicits {
 
   implicit def Select2FAtomin[T](crud: SSelect[_, _, _, T]): List[FAtomic[T]] = {
     crud.result
+  }
+
+  implicit class queryToUQueryExtendsionMethodGen[E, U](query: Query[E, U, Seq]) {
+
+    def out = new ListQueryExtensionMethods[E, U](query)
+
+  }
+
+  implicit class queryToCrudQueryExtendsionMethodGen[E <: RelationalProfile#Table[_], U](query: Query[E, U, Seq]) {
+
+    def in = new CrudQueryExtensionMethods[E, U](query)
+
   }
 
 }
