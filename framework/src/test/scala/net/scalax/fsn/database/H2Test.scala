@@ -2,7 +2,7 @@ package net.scalax.fsn.database.test
 
 import net.scalax.fsn.mix.helpers.SlickCRUDImplicits
 import net.scalax.fsn.slick.helpers.FilterRepImplicitHelper
-import net.scalax.fsn.slick.model.SlickParam
+import net.scalax.fsn.slick.model.{RWProperty, SlickParam}
 import org.h2.jdbcx.JdbcDataSource
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
@@ -53,6 +53,13 @@ class H2Test extends FlatSpec
     }
 
     val friendWrap = friendQuery.result("id", true)
+
+    //List[RWProperty]是用来 encode 成 json 格式的数据传递给浏览器的,让浏览器自动生成 crud 相关的逻辑
+    friendQuery.properties shouldBe List(
+      RWProperty(property = "id", typeName = "Long", inRetrieve = true, isAutoInc = true, isPrimaryKey = true),
+      RWProperty("name", "java.lang.String", true, false, false),
+      RWProperty("nick", "java.lang.String", true, false, false)
+    )
 
     val jsonData = parse(
       """{ "name": "xiaoxingxin", "nick": "nvzhuang" }""").toOption.get

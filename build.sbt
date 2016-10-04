@@ -39,7 +39,7 @@ lazy val fsn = (project in file("."))
         outputStrategy in Compile,
         javaOptions in Compile,
         envVars in Compile
-        ) map { (baseDir, fullCp, jHome, cInput, sOutput, jOpts, envs) =>
+      ) map { (baseDir, fullCp, jHome, cInput, sOutput, jOpts, envs) =>
         val forkOptions: ForkOptions =
           ForkOptions(
             workingDirectory = Some(baseDir),
@@ -56,10 +56,10 @@ lazy val fsn = (project in file("."))
         ()
       }
     },
-    addCommandAlias("pack", ";fsn/clean;tempBase/clean;old/clean;core/clean;dist")
+    addCommandAlias("t", "core/test")
   )
   .dependsOn(LocalProject("core"))
   .dependsOn(LocalProject("old"))
-  .enablePlugins(JDKPackagerPlugin)
+  //.enablePlugins(JDKPackagerPlugin)
 
 lazy val framework = (project in file("./framework"))
