@@ -2,7 +2,7 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core.FColumn
 import net.scalax.fsn.slick.atomic.{AutoInc, OneToOneCrate, SlickCreate}
-import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl}
+import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl, SlickUtils}
 import slick.basic.BasicProfile
 import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent
@@ -164,12 +164,18 @@ object CreateOperation {
       }
       val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
       val bindQuery = convertRetrieveQuery.bind.bind(query)
-      val returingQuery = Query(convertRetrieveQuery.returningCols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.returningShapes))
-      val bindReturingQuery = convertRetrieveQuery.bind.bind(returingQuery)
-      val createQuery = bindQuery returning bindReturingQuery
+      val returningShape = new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.returningShapes)
+      val returingQuery = Query(convertRetrieveQuery.returningCols)(returningShape)
+      val incDataDBIO = if (SlickUtils.isShapeEmpty(returningShape)) {
+        (bindQuery += convertRetrieveQuery.data) >> returingQuery.result
+      } else {
+        val bindReturingQuery = convertRetrieveQuery.bind.bind(returingQuery)
+        val createQuery = bindQuery returning bindReturingQuery
+        createQuery += convertRetrieveQuery.data
+      }
       for {
-        retrieveData <- createQuery += convertRetrieveQuery.data
-        fillSubGens = eachWrap.zip(retrieveData).map { case (wrap, dataItem) =>
+        incData <- incDataDBIO
+        fillSubGens = eachWrap.zip(incData).map { case (wrap, dataItem) =>
           val wrapSlickData = dataItem.asInstanceOf[wrap.IncValue]
           val subGens = wrap.subGen.map { gen => new InsWrapTran2 {
             override val table = gen.table
@@ -224,12 +230,18 @@ object CreateOperation {
       val convertRetrieveQuery = initCreateQuery
       val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
       val bindQuery = convertRetrieveQuery.bind.bind(query)
-      val returingQuery = Query(convertRetrieveQuery.returningCols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.returningShapes))
-      val bindReturingQuery = convertRetrieveQuery.bind.bind(returingQuery)
-      val createQuery = bindQuery returning bindReturingQuery
+      val returningShape = new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.returningShapes)
+      val returingQuery = Query(convertRetrieveQuery.returningCols)(returningShape)
+      val incDataDBIO = if (SlickUtils.isShapeEmpty(returningShape)) {
+        (bindQuery += convertRetrieveQuery.data) >> returingQuery.result
+      } else {
+        val bindReturingQuery = convertRetrieveQuery.bind.bind(returingQuery)
+        val createQuery = bindQuery returning bindReturingQuery
+        createQuery += convertRetrieveQuery.data
+      }
       for {
-        retrieveData <- createQuery += convertRetrieveQuery.data
-        fillSubGens = eachWrap.zip(retrieveData).map { case (wrap, dataItem) =>
+        incData <- incDataDBIO
+        fillSubGens = eachWrap.zip(incData).map { case (wrap, dataItem) =>
           val wrapSlickData = dataItem.asInstanceOf[wrap.IncValue]
           val subGens = wrap.subGen.map { gen => new InsWrapTran2 {
             override val table = gen.table

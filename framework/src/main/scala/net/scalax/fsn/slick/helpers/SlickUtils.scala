@@ -44,7 +44,10 @@ final class ListAnyShape[Level <: ShapeLevel](override val shapes: Seq[Shape[_ <
   extends MappedProductShape[Level, Seq[Any], Seq[Any], Seq[Any], Seq[Any]] {
   override def getIterator(value: Seq[Any]) = value.toIterator
   override def getElement(value: Seq[Any], idx: Int) = value(idx)
-  override def buildValue(elems: IndexedSeq[Any]) = elems
+  override def buildValue(elems: IndexedSeq[Any]) = {
+    //throw new Exception("1234")
+    elems
+  }
   override def copy(shapes: Seq[Shape[_ <: ShapeLevel, _, _, _]]) = new ListAnyShape(shapes)
   override val classTag = implicitly[ClassTag[Seq[Any]]]
 }
