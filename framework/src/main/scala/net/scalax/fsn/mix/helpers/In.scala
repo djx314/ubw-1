@@ -7,10 +7,11 @@ import net.scalax.fsn.common.{DefaultValue, FProperty}
 import net.scalax.fsn.excel.atomic.PoiReader
 import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.helpers.{FRep, FilterWrapper}
+import net.scalax.fsn.slick.helpers.{FilterWrapper, SlickUtils}
 import net.scalax.fsn.slick.model.StaticManyGen
 import org.xarcher.cpoi.ReadableCellOperationAbs
-import slick.lifted.{FlatShapeLevel, Shape}
+import slick.lifted.{FlatShapeLevel, Rep, Shape}
+import slick.relational.RelationalProfile
 
 import scala.concurrent.Future
 import scala.reflect.runtime.universe._
@@ -50,12 +51,13 @@ object In {
     override val typeTag = weakTypeTag
   })
 
-  def create[S, D, T](sourceCol: FRep[S])(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T]): List[FAtomic[D]] = List(new SlickCreate[D] {
+  def create[S <: Rep[_], D, T](sourceCol: S)(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T]): List[FAtomic[D]] = List(new SlickCreate[D] {
     override type SourceType = S
     override type SlickType = D
     override type TargetType = T
 
     override val mainCol = sourceCol
+    override val owner = SlickUtils.getTableFromRep(sourceCol)
     override val mainShape = shape
     override val convert = identity[D] _
     override val reverseConvert = identity[D] _
@@ -65,19 +67,20 @@ object In {
     override val isAutoInc = true
   })
 
-  def oneTOneR[S, D, T](sourceCol: FRep[S])(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T], filterGen: FilterWrapper[T, D]): List[FAtomic[D]] = List(new OneToOneRetrieve[D] {
+  def oneTOneR[S <: Rep[_], D, T](sourceCol: S)(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T], filterGen: FilterWrapper[T, D]): List[FAtomic[D]] = List(new OneToOneRetrieve[D] {
     override type SourceType = S
     override type SlickType = D
     override type TargetType = T
     override type FilterData = D
 
     override val mainCol = sourceCol
+    override val owner = SlickUtils.getTableFromRep(sourceCol)
     override val mainShape = shape
     override val primaryGen = filterGen
     override val filterConvert = identity[D] _
   })
 
-  def oneTOneU[S, D, T](sourceCol: FRep[S])(
+  def oneTOneU[S <: Rep[_], D, T](sourceCol: S)(
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T],
     filterGen: FilterWrapper[T, D]
@@ -88,23 +91,25 @@ object In {
     override type FilterData = D
 
     override val mainCol = sourceCol
+    override val owner = SlickUtils.getTableFromRep(sourceCol)
     override val mainShape = shape
     override val primaryGen = filterGen
     override val convert = identity[D] _
     override val filterConvert = identity[D] _
   })
 
-  def oneTOneC[S, D, T](sourceCol: FRep[S])(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T]): List[FAtomic[D]] = List(new OneToOneCrate[D] {
+  def oneTOneC[S <: Rep[_], D, T](sourceCol: S)(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T]): List[FAtomic[D]] = List(new OneToOneCrate[D] {
     override type SourceType = S
     override type SlickType = D
     override type TargetType = T
 
     override val mainCol = sourceCol
+    override val owner = SlickUtils.getTableFromRep(sourceCol)
     override val mainShape = shape
     override val convert = identity[D] _
   })
 
-  def oneTOne[S, D, T](sourceCol: FRep[S])(
+  def oneTOne[S<: Rep[_], D, T](sourceCol: S)(
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T],
     filterGen: FilterWrapper[T, D]
@@ -116,6 +121,7 @@ object In {
       override type FilterData = D
 
       override val mainCol = sourceCol
+      override val owner = SlickUtils.getTableFromRep(sourceCol)
       override val mainShape = shape
       override val primaryGen = filterGen
       override val filterConvert = identity[D] _
@@ -127,6 +133,7 @@ object In {
       override type FilterData = D
 
       override val mainCol = sourceCol
+      override val owner = SlickUtils.getTableFromRep(sourceCol)
       override val mainShape = shape
       override val primaryGen = filterGen
       override val convert = identity[D] _
@@ -138,6 +145,7 @@ object In {
       override type TargetType = T
 
       override val mainCol = sourceCol
+      override val owner = SlickUtils.getTableFromRep(sourceCol)
       override val mainShape = shape
       override val convert = identity[D] _
     }

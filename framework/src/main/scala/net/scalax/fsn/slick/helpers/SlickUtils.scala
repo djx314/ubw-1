@@ -1,6 +1,8 @@
 package net.scalax.fsn.slick.helpers
 
+import slick.ast.{Ref, Select, TableNode}
 import slick.lifted._
+import slick.relational.RelationalProfile
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
@@ -36,6 +38,16 @@ object SlickUtils {
 
   def isShapeEmpty(shape: Shape[_ <: ShapeLevel, _, _, _]): Boolean = {
     countColumns(Nil, List(shape)).isEmpty
+  }
+
+  def getTableFromRep(rep: Rep[_]): RelationalProfile#Table[_] = {
+    //println(rep.toNode.asInstanceOf[Ref].sym.toString)
+    rep.toNode match {
+      case Select(tableNode, _) =>
+        println(tableNode.getClass.getName)
+        println(tableNode.asInstanceOf[slick.ast.Ref].pathString + "1111")
+        tableNode.asInstanceOf[TableNode].profileTable.asInstanceOf[RelationalProfile#Table[_]]
+    }
   }
 
 }

@@ -6,7 +6,7 @@ import scala.language.implicitConversions
 import slick.lifted._
 import slick.relational.RelationalProfile
 
-trait FsnTable {
+/*trait FsnTable {
   self: RelationalProfile#Table[_] =>
 
   def fsnColumn[C](n: String, options: ColumnOption[C]*)(implicit tt: TypedType[C]): FRep[Rep[C]] = {
@@ -36,4 +36,4 @@ object FRep {
     }
   }
 
-}
+}*/

@@ -64,15 +64,15 @@ object InDeleteConvert2 {
     val oneToDeleteOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })
     val subGenOpt = oneToDeleteOpt.map { oneToOneDelete =>
       new DeleteTran2 {
-        override val table = oneToOneDelete.mainCol.owner
+        override val table = oneToOneDelete.owner
 
         override def convert(source: DeleteQuery): DeleteQuery = {
           new DeleteQuery {
             override val bind = source.bind
-            override val cols = source.cols ::: oneToOneDelete.mainCol.rep :: Nil
+            override val cols = source.cols ::: oneToOneDelete.mainCol :: Nil
             override val shapes = source.shapes ::: oneToOneDelete.mainShape :: Nil
             override val filters = source.filters ::: {
-              val index = cols.indexOf(oneToOneDelete.mainCol.rep)
+              val index = cols.indexOf(oneToOneDelete.mainCol)
               new FilterColumnGen[Seq[Any]] {
                 override type BooleanTypeRep = oneToOneDelete.primaryGen.BooleanTypeRep
                 override val dataToCondition = { cols: Seq[Any] =>
@@ -88,9 +88,9 @@ object InDeleteConvert2 {
       }
     }
     DSWriter2(
-      mainCol = slickDelete.mainCol.rep,
+      mainCol = slickDelete.mainCol,
       mainShape = slickDelete.mainShape,
-      table = slickDelete.mainCol.owner,
+      table = slickDelete.owner,
       primaryGen = slickDelete.primaryGen.map { eachPri => (new FilterColumnGen[slickDelete.TargetType] {
         override type BooleanTypeRep = eachPri.BooleanTypeRep
         override val dataToCondition = { sourceCol: slickDelete.TargetType =>

@@ -59,8 +59,8 @@ object InRetrieveConvert2 {
     val oneToOneRetrieveOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })
 
     val iSlickReader = ISReader2(
-      mainCol = (slickReader.mainCol.rep: slickReader.SourceType),
-      table = slickReader.mainCol.owner,
+      mainCol = (slickReader.mainCol: slickReader.SourceType),
+      table = slickReader.owner,
       mainShape = slickReader.mainShape,
       autalColumn = { s: slickReader.SlickType => FsnColumn(columns.cols, Option(slickReader.convert(s))) },
       primaryGen = slickReader.primaryGen.map(eachPri => new FilterColumnGen[slickReader.TargetType] {
@@ -74,14 +74,14 @@ object InRetrieveConvert2 {
       }),
       subGen = oneToOneRetrieveOpt.map { oneToOneRetrieve =>
         new IWrapTran2[slickReader.SlickType] {
-          override val table = oneToOneRetrieve.mainCol.owner
+          override val table = oneToOneRetrieve.owner
           override def convert(data: slickReader.SlickType, source: RetrieveQuery): RetrieveQuery = {
             new RetrieveQuery {
               override val bind = source.bind
-              override val cols = source.cols ::: oneToOneRetrieve.mainCol.rep :: Nil
+              override val cols = source.cols ::: oneToOneRetrieve.mainCol :: Nil
               override val shapes = source.shapes ::: oneToOneRetrieve.mainShape :: Nil
               override lazy val filters = source.filters ::: {
-                val index = cols.indexOf(oneToOneRetrieve.mainCol.rep)
+                val index = cols.indexOf(oneToOneRetrieve.mainCol)
                 new FilterColumnGen[Seq[Any]] {
                   override type BooleanTypeRep = oneToOneRetrieve.primaryGen.BooleanTypeRep
                   override val dataToCondition = { cols: Seq[Any] =>

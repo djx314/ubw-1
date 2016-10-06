@@ -73,15 +73,15 @@ object InUpdateConvert2 {
 
     val uSlickSubGen = oneToOneUpdateOpt.map { oneToOneUpdate =>
       new UUpdateTran2 {
-        override val table = oneToOneUpdate.mainCol.owner
+        override val table = oneToOneUpdate.owner
         override def convert(source: UpdateQuery): UpdateQuery = {
           new UpdateQuery {
 
             override val bind = source.bind
-            override val cols = source.cols ::: oneToOneUpdate.mainCol.rep :: Nil
+            override val cols = source.cols ::: oneToOneUpdate.mainCol :: Nil
             override val shapes = source.shapes ::: oneToOneUpdate.mainShape :: Nil
             override val filters = source.filters ::: {
-              val index = cols.indexOf(oneToOneUpdate.mainCol.rep)
+              val index = cols.indexOf(oneToOneUpdate.mainCol)
               new FilterColumnGen[Seq[Any]] {
                 override type BooleanTypeRep = oneToOneUpdate.primaryGen.BooleanTypeRep
                 override val dataToCondition = { cols: Seq[Any] =>
@@ -101,9 +101,9 @@ object InUpdateConvert2 {
     }
 
     val uSlickWriter = USWriter2(
-      mainCol = slickWriter.mainCol.rep,
+      mainCol = slickWriter.mainCol,
       mainShape = slickWriter.mainShape,
-      table = slickWriter.mainCol.owner,
+      table = slickWriter.owner,
       data = slickWriter.convert(columns.data.get),
       primaryGen = slickWriter.primaryGen.map { eachPri => (new FilterColumnGen[slickWriter.TargetType] {
         override type BooleanTypeRep = eachPri.BooleanTypeRep

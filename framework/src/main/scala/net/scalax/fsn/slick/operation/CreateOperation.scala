@@ -78,11 +78,11 @@ object InCreateConvert2 {
 
     if (isAutoInc) {
       lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate => new InsertWrapTran2[slickCreate.SlickType] {
-        override val table = oneToOneCreate.mainCol.owner
+        override val table = oneToOneCreate.owner
         def convert(sourceData: slickCreate.SlickType, source: InsertDataQuery): InsertDataQuery = {
           new InsertDataQuery {
             override val bind = source.bind
-            override val cols = source.cols ::: oneToOneCreate.mainCol.rep :: Nil
+            override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
             override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
             override val data = source.data ::: oneToOneCreate.convert(slickCreate.convert(sourceData)) :: Nil
             override val returningCols = source.returningCols
@@ -93,20 +93,20 @@ object InCreateConvert2 {
 
       ISWriter2(
         preData = (),
-        table = slickCreate.mainCol.owner,
+        table = slickCreate.owner,
         preRep = (),
         preShape = implicitly[Shape[FlatShapeLevel, Unit, Unit, Unit]],
-        autoIncRep = (slickCreate.mainCol.rep: slickCreate.SourceType),
+        autoIncRep = (slickCreate.mainCol: slickCreate.SourceType),
         autoIncShape = slickCreate.mainShape,
         subGen = oneToOneSubGen
       )
     } else {
       lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate => new InsertWrapTran2[Unit] {
-        override val table = oneToOneCreate.mainCol.owner
+        override val table = oneToOneCreate.owner
         def convert(sourceData: Unit, source: InsertDataQuery): InsertDataQuery = {
           new InsertDataQuery {
             override val bind = source.bind
-            override val cols = source.cols ::: oneToOneCreate.mainCol.rep :: Nil
+            override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
             override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
             override val data = source.data ::: oneToOneCreate.convert(column.data.get) :: Nil
             override val returningCols = source.returningCols
@@ -119,8 +119,8 @@ object InCreateConvert2 {
         preData = {
           slickCreate.reverseConvert(column.data.get)
         },
-        table = slickCreate.mainCol.owner,
-        preRep = (slickCreate.mainCol.rep: slickCreate.SourceType),
+        table = slickCreate.owner,
+        preRep = (slickCreate.mainCol: slickCreate.SourceType),
         preShape = slickCreate.mainShape,
         autoIncRep = (),
         autoIncShape = implicitly[Shape[FlatShapeLevel, Unit, Unit, Unit]],

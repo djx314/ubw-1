@@ -1,7 +1,7 @@
 package net.scalax.fsn.database.test
 
 import net.scalax.fsn.mix.helpers.SlickCRUDImplicits
-import net.scalax.fsn.slick.helpers.{FRep, FilterRepImplicitHelper, SlickUtils}
+import net.scalax.fsn.slick.helpers.{FilterRepImplicitHelper, SlickUtils}
 import net.scalax.fsn.slick.model.{RWProperty, SlickParam}
 import org.h2.jdbcx.JdbcDataSource
 import org.scalatest._
