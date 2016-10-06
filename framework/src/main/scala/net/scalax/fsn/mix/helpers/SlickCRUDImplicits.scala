@@ -37,37 +37,37 @@ trait SlickCRUDImplicits {
 
   implicit def fColumnStringExtesionMethods(proName: String): FColumnStringImplicits = new FColumnStringImplicits(proName)
 
-  implicit class slickColumn2OutputColumn[S](repLike: S) {
-    def out[D, T](
-      implicit
-      shape1: Shape[_ <: FlatShapeLevel, S, D, T],
-      encoder: Encoder[D],
-      weakTypeTag: WeakTypeTag[D]
-    ): SSelect[S, D, T, D] = {
+  implicit class slickColumn2OutputColumn[S, D, T](repLike: S)(
+    implicit
+    shape1: Shape[_ <: FlatShapeLevel, S, D, T],
+    encoder: Encoder[D],
+    weakTypeTag: WeakTypeTag[D]
+  ) {
+    def out: SSelect[S, D, T, D] = {
       SSelect.out(repLike)
     }
   }
 
-  implicit class slickColumn2CommonColumn[S <: Rep[_]](repLike: S) {
-    def input[D, T](
-      implicit
-      shape: Shape[_ <: FlatShapeLevel, S, D, T],
-      encoder: Encoder[D],
-      decoder: Decoder[D],
-      weakTypeTag: WeakTypeTag[D]
-    ): SCRUD[S, D, T, D] = {
+  implicit class slickColumn2CommonColumn[S <: Rep[_], D, T](repLike: S)(
+    implicit
+    shape: Shape[_ <: FlatShapeLevel, S, D, T],
+    encoder: Encoder[D],
+    decoder: Decoder[D],
+    weakTypeTag: WeakTypeTag[D]
+  ) {
+    def crud: SCRUD[S, D, T, D] = {
       SCRUD.in(repLike, SlickUtils.getTableIdFromRep(repLike))
     }
   }
 
-  implicit class slickColumn2CRUDColumn[S](fRepLike: FRep[S]) {
-    def input[D, T](
-      implicit
-      shape: Shape[_ <: FlatShapeLevel, S, D, T],
-      encoder: Encoder[D],
-      decoder: Decoder[D],
-      weakTypeTag: WeakTypeTag[D]
-    ): SCRUD[S, D, T, D] = {
+  implicit class slickColumn2CRUDColumn[S, D, T](fRepLike: FRep[S])(
+    implicit
+    shape: Shape[_ <: FlatShapeLevel, S, D, T],
+    encoder: Encoder[D],
+    decoder: Decoder[D],
+    weakTypeTag: WeakTypeTag[D]
+  ) {
+    def crud: SCRUD[S, D, T, D] = {
       SCRUD.in(fRepLike.rep, SlickUtils.getTableIdFromTable(fRepLike.owner))
     }
   }
@@ -116,7 +116,7 @@ trait SlickCRUDImplicits {
 
   implicit class queryToCrudQueryExtendsionMethodGen[E <: RelationalProfile#Table[_], U](query: Query[E, U, Seq]) {
 
-    def in = new CrudQueryExtensionMethods[E, U](query)
+    def crud = new CrudQueryExtensionMethods[E, U](query)
 
   }
 
