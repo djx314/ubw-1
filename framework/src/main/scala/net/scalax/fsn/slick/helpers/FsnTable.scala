@@ -1,22 +1,7 @@
 package net.scalax.fsn.slick.helpers
 
-import slick.ast.{ColumnOption, TypedType}
-
 import scala.language.implicitConversions
-import slick.lifted._
 import slick.relational.RelationalProfile
-
-/*trait FsnTable {
-  self: RelationalProfile#Table[_] =>
-
-  def fsnColumn[C](n: String, options: ColumnOption[C]*)(implicit tt: TypedType[C]): FRep[Rep[C]] = {
-    new FRep[Rep[C]] {
-      override val owner = self
-      override val rep = self.column[C](n, options: _*)(tt)
-    }
-  }
-
-}
 
 trait FRep[C] {
 
@@ -36,4 +21,4 @@ object FRep {
     }
   }
 
-}*/
+}

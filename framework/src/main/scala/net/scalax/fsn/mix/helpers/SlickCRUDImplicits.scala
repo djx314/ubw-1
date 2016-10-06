@@ -5,7 +5,7 @@ import net.scalax.fsn.common.FProperty
 import net.scalax.fsn.core.{FAtomic, FsnColumn}
 import net.scalax.fsn.mix.helpers.{Select => SSelect}
 import net.scalax.fsn.mix.slickbase.{CrudQueryExtensionMethods, ListQueryExtensionMethods}
-import net.scalax.fsn.slick.helpers.SlickUtils
+import net.scalax.fsn.slick.helpers.{FRep, SlickUtils}
 import slick.lifted.{FlatShapeLevel, Query, Rep, Shape}
 import slick.relational.RelationalProfile
 
@@ -37,7 +37,18 @@ trait SlickCRUDImplicits {
 
   implicit def fColumnStringExtesionMethods(proName: String): FColumnStringImplicits = new FColumnStringImplicits(proName)
 
-  implicit class slickFsnColumn2CRUDColumn[S <: Rep[_]](repLike: S) {
+  implicit class slickColumn2OutputColumn[S](repLike: S) {
+    def out[D, T](
+      implicit
+      shape1: Shape[_ <: FlatShapeLevel, S, D, T],
+      encoder: Encoder[D],
+      weakTypeTag: WeakTypeTag[D]
+    ): SSelect[S, D, T, D] = {
+      SSelect.out(repLike)
+    }
+  }
+
+  implicit class slickColumn2CommonColumn[S <: Rep[_]](repLike: S) {
     def input[D, T](
       implicit
       shape: Shape[_ <: FlatShapeLevel, S, D, T],
@@ -47,14 +58,17 @@ trait SlickCRUDImplicits {
     ): SCRUD[S, D, T, D] = {
       SCRUD.in(repLike, SlickUtils.getTableIdFromRep(repLike))
     }
+  }
 
-    def out[D, T](
+  implicit class slickColumn2CRUDColumn[S](fRepLike: FRep[S]) {
+    def input[D, T](
       implicit
-      shape1: Shape[_ <: FlatShapeLevel, S, D, T],
+      shape: Shape[_ <: FlatShapeLevel, S, D, T],
       encoder: Encoder[D],
+      decoder: Decoder[D],
       weakTypeTag: WeakTypeTag[D]
-    ): SSelect[S, D, T, D] = {
-      SSelect.out(repLike)
+    ): SCRUD[S, D, T, D] = {
+      SCRUD.in(fRepLike.rep, SlickUtils.getTableIdFromTable(fRepLike.owner))
     }
   }
 
