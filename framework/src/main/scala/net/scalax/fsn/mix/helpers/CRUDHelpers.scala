@@ -49,7 +49,7 @@ case class SCRUD[S, D, T, E](
 
 object SCRUD {
 
-  def in[S, D, T](repLike: S, owner1: RelationalProfile#Table[_])(
+  def in[S, D, T](repLike: S, owner1: Any)(
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T],
     encoder: Encoder[D],
@@ -115,7 +115,7 @@ object SCRUD {
   }
 
   case class Embber[S, D, T]
-  (repLike: S, owner1: RelationalProfile#Table[_])
+  (repLike: S, owner1: Any)
   (
     shape: Shape[_ <: FlatShapeLevel, S, D, T]
   ) {

@@ -13,7 +13,7 @@ object CreateOrUpdateOperation {
   import slick.jdbc.PostgresProfile.api._
 
   def parseInsert(
-    insertQuerytWrap: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    insertQuerytWrap: List[(Any, SlickQueryBindImpl)],
     columns: List[FColumn]
   )(
     implicit

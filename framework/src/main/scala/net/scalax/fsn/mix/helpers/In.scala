@@ -57,7 +57,7 @@ object In {
     override type TargetType = T
 
     override val mainCol = sourceCol
-    override val owner = SlickUtils.getTableFromRep(sourceCol)
+    override val owner = SlickUtils.getTableIdFromRep(sourceCol)
     override val mainShape = shape
     override val convert = identity[D] _
     override val reverseConvert = identity[D] _
@@ -74,7 +74,7 @@ object In {
     override type FilterData = D
 
     override val mainCol = sourceCol
-    override val owner = SlickUtils.getTableFromRep(sourceCol)
+    override val owner = SlickUtils.getTableIdFromRep(sourceCol)
     override val mainShape = shape
     override val primaryGen = filterGen
     override val filterConvert = identity[D] _
@@ -91,7 +91,7 @@ object In {
     override type FilterData = D
 
     override val mainCol = sourceCol
-    override val owner = SlickUtils.getTableFromRep(sourceCol)
+    override val owner = SlickUtils.getTableIdFromRep(sourceCol)
     override val mainShape = shape
     override val primaryGen = filterGen
     override val convert = identity[D] _
@@ -104,7 +104,7 @@ object In {
     override type TargetType = T
 
     override val mainCol = sourceCol
-    override val owner = SlickUtils.getTableFromRep(sourceCol)
+    override val owner = SlickUtils.getTableIdFromRep(sourceCol)
     override val mainShape = shape
     override val convert = identity[D] _
   })
@@ -121,7 +121,7 @@ object In {
       override type FilterData = D
 
       override val mainCol = sourceCol
-      override val owner = SlickUtils.getTableFromRep(sourceCol)
+      override val owner = SlickUtils.getTableIdFromRep(sourceCol)
       override val mainShape = shape
       override val primaryGen = filterGen
       override val filterConvert = identity[D] _
@@ -133,7 +133,7 @@ object In {
       override type FilterData = D
 
       override val mainCol = sourceCol
-      override val owner = SlickUtils.getTableFromRep(sourceCol)
+      override val owner = SlickUtils.getTableIdFromRep(sourceCol)
       override val mainShape = shape
       override val primaryGen = filterGen
       override val convert = identity[D] _
@@ -145,7 +145,7 @@ object In {
       override type TargetType = T
 
       override val mainCol = sourceCol
-      override val owner = SlickUtils.getTableFromRep(sourceCol)
+      override val owner = SlickUtils.getTableIdFromRep(sourceCol)
       override val mainShape = shape
       override val convert = identity[D] _
     }

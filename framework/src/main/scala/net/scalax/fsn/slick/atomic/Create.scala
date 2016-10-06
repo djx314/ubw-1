@@ -14,7 +14,7 @@ trait SlickCreate[E] extends FAtomic[E] {
   type DataType = E
 
   val mainCol: SourceType
-  val owner: RelationalProfile#Table[_]
+  val owner: Any
   val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
   val convert: SlickType => DataType
   val reverseConvert: DataType => SlickType
@@ -23,7 +23,7 @@ trait SlickCreate[E] extends FAtomic[E] {
 
 case class SCreate[S, D, T, E](
                                 override val mainCol: S,
-                                override val owner: RelationalProfile#Table[_],
+                                override val owner: Any,
                                 override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
                                 override val convert: D => E,
                                 override val reverseConvert: E => D

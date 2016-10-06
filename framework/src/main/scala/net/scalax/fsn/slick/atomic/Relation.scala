@@ -23,7 +23,7 @@ trait OneToOneRetrieve[E] extends FAtomic[E] {
   type DataType = E
 
   val mainCol: SourceType
-  val owner: RelationalProfile#Table[_]
+  val owner: Any
   val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
   val primaryGen: FilterWrapper[TargetType, FilterData]
   val filterConvert: DataType => FilterData
@@ -38,7 +38,7 @@ trait OneToOneCrate[E] extends FAtomic[E] {
   type DataType = E
 
   val mainCol: SourceType
-  val owner: RelationalProfile#Table[_]
+  val owner: Any
   val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
   val convert: DataType => SlickType
 
@@ -53,7 +53,7 @@ trait OneToOneUpdate[E] extends FAtomic[E] {
   type DataType = E
 
   val mainCol: SourceType
-  val owner: RelationalProfile#Table[_]
+  val owner: Any
   val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
   val primaryGen: FilterWrapper[TargetType, FilterData]
   val convert: DataType => SlickType

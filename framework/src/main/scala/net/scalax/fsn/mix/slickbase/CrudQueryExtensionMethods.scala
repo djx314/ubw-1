@@ -1,6 +1,6 @@
 package net.scalax.fsn.mix.slickbase
 
-import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
+import net.scalax.fsn.slick.helpers.{SlickQueryBindImpl, SlickUtils}
 import slick.ast.{AnonSymbol, Ref}
 import slick.lifted._
 import slick.relational.RelationalProfile
@@ -18,7 +18,7 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
       }
     }
     val deleteWrap =
-      (aliased -> slickJsonQuery) :: fv.binds
+      (SlickUtils.getTableIdFromTable(aliased) -> slickJsonQuery) :: fv.binds
 
     QueryWrap(deleteWrap, fv.listQueryWrap)(fv.ec)
   }
@@ -33,7 +33,7 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
       }
     }
     val deleteWrap =
-      List(aliased -> slickJsonQuery)
+      List(SlickUtils.getTableIdFromTable(aliased) -> slickJsonQuery)
 
     QueryWrap(deleteWrap, fv)(fv.ec)
   }

@@ -13,7 +13,7 @@ import scala.language.existentials
 
 trait IWrapTran2[U] {
 
-  val table: RelationalProfile#Table[_]
+  val table: Any
   def convert(data: U, source: RetrieveQuery): RetrieveQuery
 
 }
@@ -28,7 +28,7 @@ trait ISlickReader2 {
 
   val mainShape: Shape[_ <: FlatShapeLevel, MainSColumn, MainDColumn, MainTColumn]
 
-  val table: RelationalProfile#Table[_]
+  val table: Any
 
   val autalColumn: MainDColumn => FColumn
 
@@ -40,7 +40,7 @@ trait ISlickReader2 {
 
 case class ISReader2[S, D, T](
   override val mainCol: S,
-  override val table: RelationalProfile#Table[_],
+  override val table: Any,
   override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
   override val autalColumn: D => FColumn,
   override val primaryGen: Option[FilterColumnGen[T]],
@@ -116,12 +116,12 @@ case class ExecInfo2(effectRows: Int, columns: List[FColumn])
 object RetrieveOperation {
 
   trait WrapTran2 {
-    val table: RelationalProfile#Table[_]
+    val table: Any
     def convert(source: RetrieveQuery): RetrieveQuery
   }
 
   def parseInsertGen(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     retrieveList: List[FColumn],
     converts: List[WrapTran2]
   )(
@@ -191,7 +191,7 @@ object RetrieveOperation {
   }
 
   def parseInsertWithIndex(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     retrieveList: List[FColumn]
   )(
     implicit
@@ -259,7 +259,7 @@ object RetrieveOperation {
   }
 
   def parseInsert(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     retrieveList: List[FColumn]
   )(
     implicit

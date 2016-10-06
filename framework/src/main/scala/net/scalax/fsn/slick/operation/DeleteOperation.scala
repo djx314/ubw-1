@@ -13,7 +13,7 @@ import scala.language.existentials
 import scala.concurrent.ExecutionContext
 
 trait DeleteTran2 {
-  val table: RelationalProfile#Table[_]
+  val table: Any
   def convert(source: DeleteQuery): DeleteQuery
 }
 
@@ -36,7 +36,7 @@ trait DSlickWriter2 {
 
   val mainShape: Shape[_ <: FlatShapeLevel, MainSColumn, MainDColumn, MainTColumn]
 
-  val table: RelationalProfile#Table[_]
+  val table: Any
   val primaryGen: Option[FilterColumnGen[MainTColumn]]
 
   val subGen: Option[DeleteTran2]
@@ -46,7 +46,7 @@ trait DSlickWriter2 {
 case class DSWriter2[MS, MD, MT, D](
                                     override val mainCol: MS,
                                     override val mainShape: Shape[_ <: FlatShapeLevel, MS, MD, MT],
-                                    override val table: RelationalProfile#Table[_],
+                                    override val table: Any,
                                     override val primaryGen: Option[FilterColumnGen[MT]],
                                     override val subGen: Option[DeleteTran2]
                                   ) extends DSlickWriter2 {
@@ -109,7 +109,7 @@ object InDeleteConvert2 {
 object DeleteOperation {
 
   def parseInsertGen(
-                      binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+                      binds: List[(Any, SlickQueryBindImpl)],
                       updateList: List[FColumn],
                       converts: List[DeleteTran2]
                     )(
@@ -165,7 +165,7 @@ object DeleteOperation {
   }
 
   def parseInsert(
-                   binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+                   binds: List[(Any, SlickQueryBindImpl)],
                    updateList: List[FColumn]
                  )(
                    implicit

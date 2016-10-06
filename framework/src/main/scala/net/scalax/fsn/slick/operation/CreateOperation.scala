@@ -21,7 +21,7 @@ case class ExecInfo(effectRows: Int, columns: List[ColumnWithIndex]) {
 case class ColumnWithIndex(column: FColumn, index: Int)
 
 trait InsertWrapTran2[I] {
-  val table: RelationalProfile#Table[_]
+  val table: Any
   def convert(inc: I, source: InsertDataQuery): InsertDataQuery
 }
 
@@ -45,7 +45,7 @@ trait ISlickWriter2 {
   type IncTarget
 
   val preData: PreValue
-  val table: RelationalProfile#Table[_]
+  val table: Any
   val preRep: PreRep
   val preShape: Shape[_ <: FlatShapeLevel, PreRep, PreValue, PreTarget]
   val autoIncRep: IncRep
@@ -55,7 +55,7 @@ trait ISlickWriter2 {
 
 case class ISWriter2[A, B, C, D, E, F](
   override val preData: B,
-  override val table: RelationalProfile#Table[_],
+  override val table: Any,
   override val preRep: A,
   override val preShape: Shape[_ <: FlatShapeLevel, A, B, C],
   override val autoIncRep: D,
@@ -133,12 +133,12 @@ object InCreateConvert2 {
 object CreateOperation {
 
   trait InsWrapTran2 {
-    val table: RelationalProfile#Table[_]
+    val table: Any
     def convert(source: InsertDataQuery): InsertDataQuery
   }
 
   def parseInsertGen(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     insertList: List[FColumn],
     converts: List[InsWrapTran2]
   )(
@@ -206,7 +206,7 @@ object CreateOperation {
   }
 
   def parseInsert(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     insertList: List[FColumn]
   )(
     implicit

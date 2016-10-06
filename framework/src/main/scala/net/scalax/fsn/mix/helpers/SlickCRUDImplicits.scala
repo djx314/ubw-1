@@ -45,7 +45,7 @@ trait SlickCRUDImplicits {
       decoder: Decoder[D],
       weakTypeTag: WeakTypeTag[D]
     ): SCRUD[S, D, T, D] = {
-      SCRUD.in(repLike, SlickUtils.getTableFromRep(repLike))
+      SCRUD.in(repLike, SlickUtils.getTableIdFromRep(repLike))
     }
 
     def out[D, T](

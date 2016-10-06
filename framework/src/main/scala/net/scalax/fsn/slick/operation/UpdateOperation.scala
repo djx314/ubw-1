@@ -26,7 +26,7 @@ trait UpdateQuery {
 }
 
 trait UUpdateTran2 {
-  val table: RelationalProfile#Table[_]
+  val table: Any
   def convert(source: UpdateQuery): UpdateQuery
 }
 
@@ -40,7 +40,7 @@ trait USlickWriter2 {
 
   val mainShape: Shape[_ <: FlatShapeLevel, MainSColumn, MainDColumn, MainTColumn]
 
-  val table: RelationalProfile#Table[_]
+  val table: Any
 
   val data: MainDColumn
 
@@ -53,7 +53,7 @@ trait USlickWriter2 {
 case class USWriter2[MS, MD, MT](
   override val mainCol: MS,
   override val mainShape: Shape[_ <: FlatShapeLevel, MS, MD, MT],
-  override val table: RelationalProfile#Table[_],
+  override val table: Any,
   override val data: MD,
   override val primaryGen: Option[FilterColumnGen[MT]],
   override val subGen: Option[UUpdateTran2]
@@ -124,7 +124,7 @@ object InUpdateConvert2 {
 object UpdateOperation {
 
   def parseInsertGen(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     updateList: List[FColumn],
     converts: List[UUpdateTran2]
   )(
@@ -184,7 +184,7 @@ object UpdateOperation {
   }
 
   def parseInsert(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     updateList: List[FColumn]
   )(
     implicit

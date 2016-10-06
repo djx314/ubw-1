@@ -40,13 +40,19 @@ object SlickUtils {
     countColumns(Nil, List(shape)).isEmpty
   }
 
-  def getTableFromRep(rep: Rep[_]): RelationalProfile#Table[_] = {
-    //println(rep.toNode.asInstanceOf[Ref].sym.toString)
+  def getTableIdFromRep(rep: Rep[_]): Any = {
     rep.toNode match {
-      case Select(tableNode, _) =>
-        println(tableNode.getClass.getName)
-        println(tableNode.asInstanceOf[slick.ast.Ref].pathString + "1111")
-        tableNode.asInstanceOf[TableNode].profileTable.asInstanceOf[RelationalProfile#Table[_]]
+      case Select(tableNode: TableNode, _) =>
+        tableNode.profileTable
+      case Select(pathNode, _) =>
+        pathNode
+    }
+  }
+
+  def getTableIdFromTable(table: AbstractTable[_]): Any = {
+    table.tableTag match {
+      case r: RefTag => r.path
+      case _ => table.tableNode.profileTable
     }
   }
 

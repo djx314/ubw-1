@@ -16,7 +16,7 @@ trait SlickDelete[E] extends FAtomic[E] {
   type FilterData
 
   val mainCol: SourceType
-  val owner: RelationalProfile#Table[_]
+  val owner: Any
   val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
   val primaryGen: Option[FilterWrapper[TargetType, FilterData]]
   val filterConvert: DataType => FilterData
@@ -25,7 +25,7 @@ trait SlickDelete[E] extends FAtomic[E] {
 
 case class SDelete[S, D, T, U, E](
   override val mainCol: S,
-  override val owner: RelationalProfile#Table[_],
+  override val owner: Any,
   override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
   override val primaryGen: Option[FilterWrapper[T, U]],
   override val filterConvert: E => U
