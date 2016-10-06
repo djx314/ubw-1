@@ -21,7 +21,7 @@ case class ExecInfo(effectRows: Int, columns: List[ColumnWithIndex]) {
 case class ColumnWithIndex(column: FColumn, index: Int)
 
 trait InsertWrapTran2[I] {
-  val table: RelationalProfile#Table[_]
+  val table: Any
   def convert(inc: I, source: InsertDataQuery): InsertDataQuery
 }
 
@@ -45,7 +45,7 @@ trait ISlickWriter2 {
   type IncTarget
 
   val preData: PreValue
-  val table: RelationalProfile#Table[_]
+  val table: Any
   val preRep: PreRep
   val preShape: Shape[_ <: FlatShapeLevel, PreRep, PreValue, PreTarget]
   val autoIncRep: IncRep
@@ -55,7 +55,7 @@ trait ISlickWriter2 {
 
 case class ISWriter2[A, B, C, D, E, F](
   override val preData: B,
-  override val table: RelationalProfile#Table[_],
+  override val table: Any,
   override val preRep: A,
   override val preShape: Shape[_ <: FlatShapeLevel, A, B, C],
   override val autoIncRep: D,
@@ -78,11 +78,11 @@ object InCreateConvert2 {
 
     if (isAutoInc) {
       lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate => new InsertWrapTran2[slickCreate.SlickType] {
-        override val table = oneToOneCreate.mainCol.owner
+        override val table = oneToOneCreate.owner
         def convert(sourceData: slickCreate.SlickType, source: InsertDataQuery): InsertDataQuery = {
           new InsertDataQuery {
             override val bind = source.bind
-            override val cols = source.cols ::: oneToOneCreate.mainCol.rep :: Nil
+            override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
             override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
             override val data = source.data ::: oneToOneCreate.convert(slickCreate.convert(sourceData)) :: Nil
             override val returningCols = source.returningCols
@@ -93,20 +93,20 @@ object InCreateConvert2 {
 
       ISWriter2(
         preData = (),
-        table = slickCreate.mainCol.owner,
+        table = slickCreate.owner,
         preRep = (),
         preShape = implicitly[Shape[FlatShapeLevel, Unit, Unit, Unit]],
-        autoIncRep = (slickCreate.mainCol.rep: slickCreate.SourceType),
+        autoIncRep = (slickCreate.mainCol: slickCreate.SourceType),
         autoIncShape = slickCreate.mainShape,
         subGen = oneToOneSubGen
       )
     } else {
       lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate => new InsertWrapTran2[Unit] {
-        override val table = oneToOneCreate.mainCol.owner
+        override val table = oneToOneCreate.owner
         def convert(sourceData: Unit, source: InsertDataQuery): InsertDataQuery = {
           new InsertDataQuery {
             override val bind = source.bind
-            override val cols = source.cols ::: oneToOneCreate.mainCol.rep :: Nil
+            override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
             override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
             override val data = source.data ::: oneToOneCreate.convert(column.data.get) :: Nil
             override val returningCols = source.returningCols
@@ -119,8 +119,8 @@ object InCreateConvert2 {
         preData = {
           slickCreate.reverseConvert(column.data.get)
         },
-        table = slickCreate.mainCol.owner,
-        preRep = (slickCreate.mainCol.rep: slickCreate.SourceType),
+        table = slickCreate.owner,
+        preRep = (slickCreate.mainCol: slickCreate.SourceType),
         preShape = slickCreate.mainShape,
         autoIncRep = (),
         autoIncShape = implicitly[Shape[FlatShapeLevel, Unit, Unit, Unit]],
@@ -133,12 +133,12 @@ object InCreateConvert2 {
 object CreateOperation {
 
   trait InsWrapTran2 {
-    val table: RelationalProfile#Table[_]
+    val table: Any
     def convert(source: InsertDataQuery): InsertDataQuery
   }
 
   def parseInsertGen(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     insertList: List[FColumn],
     converts: List[InsWrapTran2]
   )(
@@ -206,7 +206,7 @@ object CreateOperation {
   }
 
   def parseInsert(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     insertList: List[FColumn]
   )(
     implicit

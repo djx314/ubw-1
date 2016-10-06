@@ -26,7 +26,7 @@ trait UpdateQuery {
 }
 
 trait UUpdateTran2 {
-  val table: RelationalProfile#Table[_]
+  val table: Any
   def convert(source: UpdateQuery): UpdateQuery
 }
 
@@ -40,7 +40,7 @@ trait USlickWriter2 {
 
   val mainShape: Shape[_ <: FlatShapeLevel, MainSColumn, MainDColumn, MainTColumn]
 
-  val table: RelationalProfile#Table[_]
+  val table: Any
 
   val data: MainDColumn
 
@@ -53,7 +53,7 @@ trait USlickWriter2 {
 case class USWriter2[MS, MD, MT](
   override val mainCol: MS,
   override val mainShape: Shape[_ <: FlatShapeLevel, MS, MD, MT],
-  override val table: RelationalProfile#Table[_],
+  override val table: Any,
   override val data: MD,
   override val primaryGen: Option[FilterColumnGen[MT]],
   override val subGen: Option[UUpdateTran2]
@@ -73,15 +73,15 @@ object InUpdateConvert2 {
 
     val uSlickSubGen = oneToOneUpdateOpt.map { oneToOneUpdate =>
       new UUpdateTran2 {
-        override val table = oneToOneUpdate.mainCol.owner
+        override val table = oneToOneUpdate.owner
         override def convert(source: UpdateQuery): UpdateQuery = {
           new UpdateQuery {
 
             override val bind = source.bind
-            override val cols = source.cols ::: oneToOneUpdate.mainCol.rep :: Nil
+            override val cols = source.cols ::: oneToOneUpdate.mainCol :: Nil
             override val shapes = source.shapes ::: oneToOneUpdate.mainShape :: Nil
             override val filters = source.filters ::: {
-              val index = cols.indexOf(oneToOneUpdate.mainCol.rep)
+              val index = cols.indexOf(oneToOneUpdate.mainCol)
               new FilterColumnGen[Seq[Any]] {
                 override type BooleanTypeRep = oneToOneUpdate.primaryGen.BooleanTypeRep
                 override val dataToCondition = { cols: Seq[Any] =>
@@ -101,9 +101,9 @@ object InUpdateConvert2 {
     }
 
     val uSlickWriter = USWriter2(
-      mainCol = slickWriter.mainCol.rep,
+      mainCol = slickWriter.mainCol,
       mainShape = slickWriter.mainShape,
-      table = slickWriter.mainCol.owner,
+      table = slickWriter.owner,
       data = slickWriter.convert(columns.data.get),
       primaryGen = slickWriter.primaryGen.map { eachPri => (new FilterColumnGen[slickWriter.TargetType] {
         override type BooleanTypeRep = eachPri.BooleanTypeRep
@@ -124,7 +124,7 @@ object InUpdateConvert2 {
 object UpdateOperation {
 
   def parseInsertGen(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     updateList: List[FColumn],
     converts: List[UUpdateTran2]
   )(
@@ -184,7 +184,7 @@ object UpdateOperation {
   }
 
   def parseInsert(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     updateList: List[FColumn]
   )(
     implicit

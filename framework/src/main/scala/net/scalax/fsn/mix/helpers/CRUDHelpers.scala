@@ -4,10 +4,12 @@ import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.core.FAtomic
 import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.helpers.{FRep, FilterWrapper}
+import net.scalax.fsn.slick.helpers.FilterWrapper
 import slick.lifted.{ColumnOrdered, FlatShapeLevel, Shape}
+import slick.relational.RelationalProfile
 
 import scala.reflect.runtime.universe._
+import scala.language.existentials
 
 case class SCRUD[S, D, T, E](
   create: SCreate[S, D, T, E],
@@ -47,7 +49,7 @@ case class SCRUD[S, D, T, E](
 
 object SCRUD {
 
-  def in[S, D, T](repLike: FRep[S])(
+  def in[S, D, T](repLike: S, owner1: Any)(
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T],
     encoder: Encoder[D],
@@ -56,6 +58,7 @@ object SCRUD {
   ): SCRUD[S, D, T, D] = {
     val sCreate = SCreate[S, D, T, D](
       mainCol = repLike,
+      owner = owner1,
       mainShape = shape,
       convert = identity[D] _,
       reverseConvert = identity[D] _
@@ -63,6 +66,7 @@ object SCRUD {
 
     val sRetrieve = SRetrieve[S, D, T, D, D](
       mainCol = repLike,
+      owner = owner1,
       mainShape = shape,
       primaryGen = None,
       convert = identity[D] _,
@@ -71,6 +75,7 @@ object SCRUD {
 
     val sUpdate = SUpdate[S, D, T, D, D](
       mainCol = repLike,
+      owner = owner1,
       mainShape = shape,
       primaryGen = None,
       convert = identity[D] _,
@@ -79,6 +84,7 @@ object SCRUD {
 
     val sDelete = SDelete[S, D, T, D, D](
       mainCol = repLike,
+      owner = owner1,
       mainShape = shape,
       primaryGen = None,
       filterConvert = identity[D] _
@@ -109,7 +115,7 @@ object SCRUD {
   }
 
   case class Embber[S, D, T]
-  (repLike: FRep[S])
+  (repLike: S, owner1: Any)
   (
     shape: Shape[_ <: FlatShapeLevel, S, D, T]
   ) {
@@ -121,6 +127,7 @@ object SCRUD {
     ): SCRUD[S, D, T, E] = {
       val sCreate = SCreate[S, D, T, E](
         mainCol = repLike,
+        owner = owner1,
         mainShape = shape,
         convert = out,
         reverseConvert = in
@@ -128,6 +135,7 @@ object SCRUD {
 
       val sRetrieve = SRetrieve[S, D, T, D, E](
         mainCol = repLike,
+        owner = owner1,
         mainShape = shape,
         primaryGen = None,
         convert = out,
@@ -136,6 +144,7 @@ object SCRUD {
 
       val sUpdate = SUpdate[S, D, T, D, E](
         mainCol = repLike,
+        owner = owner1,
         mainShape = shape,
         primaryGen = None,
         convert = in,
@@ -144,6 +153,7 @@ object SCRUD {
 
       val sDelete = SDelete[S, D, T, D, E](
         mainCol = repLike,
+        owner = owner1,
         mainShape = shape,
         primaryGen = None,
         filterConvert = in
@@ -174,11 +184,11 @@ object SCRUD {
     }
   }
 
-  def inExt[S, D, T, A](repLike: FRep[S])(
+  def inExt[S, D, T, A](repLike: S, owner1: RelationalProfile#Table[_])(
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T]
   ): Embber[S, D, T] = {
-    Embber(repLike)(shape)
+    Embber(repLike, owner1)(shape)
   }
 
 }

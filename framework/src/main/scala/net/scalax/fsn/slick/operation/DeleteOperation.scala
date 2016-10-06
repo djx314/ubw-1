@@ -13,7 +13,7 @@ import scala.language.existentials
 import scala.concurrent.ExecutionContext
 
 trait DeleteTran2 {
-  val table: RelationalProfile#Table[_]
+  val table: Any
   def convert(source: DeleteQuery): DeleteQuery
 }
 
@@ -36,7 +36,7 @@ trait DSlickWriter2 {
 
   val mainShape: Shape[_ <: FlatShapeLevel, MainSColumn, MainDColumn, MainTColumn]
 
-  val table: RelationalProfile#Table[_]
+  val table: Any
   val primaryGen: Option[FilterColumnGen[MainTColumn]]
 
   val subGen: Option[DeleteTran2]
@@ -46,7 +46,7 @@ trait DSlickWriter2 {
 case class DSWriter2[MS, MD, MT, D](
                                     override val mainCol: MS,
                                     override val mainShape: Shape[_ <: FlatShapeLevel, MS, MD, MT],
-                                    override val table: RelationalProfile#Table[_],
+                                    override val table: Any,
                                     override val primaryGen: Option[FilterColumnGen[MT]],
                                     override val subGen: Option[DeleteTran2]
                                   ) extends DSlickWriter2 {
@@ -64,15 +64,15 @@ object InDeleteConvert2 {
     val oneToDeleteOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })
     val subGenOpt = oneToDeleteOpt.map { oneToOneDelete =>
       new DeleteTran2 {
-        override val table = oneToOneDelete.mainCol.owner
+        override val table = oneToOneDelete.owner
 
         override def convert(source: DeleteQuery): DeleteQuery = {
           new DeleteQuery {
             override val bind = source.bind
-            override val cols = source.cols ::: oneToOneDelete.mainCol.rep :: Nil
+            override val cols = source.cols ::: oneToOneDelete.mainCol :: Nil
             override val shapes = source.shapes ::: oneToOneDelete.mainShape :: Nil
             override val filters = source.filters ::: {
-              val index = cols.indexOf(oneToOneDelete.mainCol.rep)
+              val index = cols.indexOf(oneToOneDelete.mainCol)
               new FilterColumnGen[Seq[Any]] {
                 override type BooleanTypeRep = oneToOneDelete.primaryGen.BooleanTypeRep
                 override val dataToCondition = { cols: Seq[Any] =>
@@ -88,9 +88,9 @@ object InDeleteConvert2 {
       }
     }
     DSWriter2(
-      mainCol = slickDelete.mainCol.rep,
+      mainCol = slickDelete.mainCol,
       mainShape = slickDelete.mainShape,
-      table = slickDelete.mainCol.owner,
+      table = slickDelete.owner,
       primaryGen = slickDelete.primaryGen.map { eachPri => (new FilterColumnGen[slickDelete.TargetType] {
         override type BooleanTypeRep = eachPri.BooleanTypeRep
         override val dataToCondition = { sourceCol: slickDelete.TargetType =>
@@ -109,7 +109,7 @@ object InDeleteConvert2 {
 object DeleteOperation {
 
   def parseInsertGen(
-                      binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+                      binds: List[(Any, SlickQueryBindImpl)],
                       updateList: List[FColumn],
                       converts: List[DeleteTran2]
                     )(
@@ -165,7 +165,7 @@ object DeleteOperation {
   }
 
   def parseInsert(
-                   binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+                   binds: List[(Any, SlickQueryBindImpl)],
                    updateList: List[FColumn]
                  )(
                    implicit

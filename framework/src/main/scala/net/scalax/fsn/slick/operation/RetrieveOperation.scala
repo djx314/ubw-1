@@ -13,7 +13,7 @@ import scala.language.existentials
 
 trait IWrapTran2[U] {
 
-  val table: RelationalProfile#Table[_]
+  val table: Any
   def convert(data: U, source: RetrieveQuery): RetrieveQuery
 
 }
@@ -28,7 +28,7 @@ trait ISlickReader2 {
 
   val mainShape: Shape[_ <: FlatShapeLevel, MainSColumn, MainDColumn, MainTColumn]
 
-  val table: RelationalProfile#Table[_]
+  val table: Any
 
   val autalColumn: MainDColumn => FColumn
 
@@ -40,7 +40,7 @@ trait ISlickReader2 {
 
 case class ISReader2[S, D, T](
   override val mainCol: S,
-  override val table: RelationalProfile#Table[_],
+  override val table: Any,
   override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
   override val autalColumn: D => FColumn,
   override val primaryGen: Option[FilterColumnGen[T]],
@@ -59,8 +59,8 @@ object InRetrieveConvert2 {
     val oneToOneRetrieveOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })
 
     val iSlickReader = ISReader2(
-      mainCol = (slickReader.mainCol.rep: slickReader.SourceType),
-      table = slickReader.mainCol.owner,
+      mainCol = (slickReader.mainCol: slickReader.SourceType),
+      table = slickReader.owner,
       mainShape = slickReader.mainShape,
       autalColumn = { s: slickReader.SlickType => FsnColumn(columns.cols, Option(slickReader.convert(s))) },
       primaryGen = slickReader.primaryGen.map(eachPri => new FilterColumnGen[slickReader.TargetType] {
@@ -74,14 +74,14 @@ object InRetrieveConvert2 {
       }),
       subGen = oneToOneRetrieveOpt.map { oneToOneRetrieve =>
         new IWrapTran2[slickReader.SlickType] {
-          override val table = oneToOneRetrieve.mainCol.owner
+          override val table = oneToOneRetrieve.owner
           override def convert(data: slickReader.SlickType, source: RetrieveQuery): RetrieveQuery = {
             new RetrieveQuery {
               override val bind = source.bind
-              override val cols = source.cols ::: oneToOneRetrieve.mainCol.rep :: Nil
+              override val cols = source.cols ::: oneToOneRetrieve.mainCol :: Nil
               override val shapes = source.shapes ::: oneToOneRetrieve.mainShape :: Nil
               override lazy val filters = source.filters ::: {
-                val index = cols.indexOf(oneToOneRetrieve.mainCol.rep)
+                val index = cols.indexOf(oneToOneRetrieve.mainCol)
                 new FilterColumnGen[Seq[Any]] {
                   override type BooleanTypeRep = oneToOneRetrieve.primaryGen.BooleanTypeRep
                   override val dataToCondition = { cols: Seq[Any] =>
@@ -116,12 +116,12 @@ case class ExecInfo2(effectRows: Int, columns: List[FColumn])
 object RetrieveOperation {
 
   trait WrapTran2 {
-    val table: RelationalProfile#Table[_]
+    val table: Any
     def convert(source: RetrieveQuery): RetrieveQuery
   }
 
   def parseInsertGen(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     retrieveList: List[FColumn],
     converts: List[WrapTran2]
   )(
@@ -191,7 +191,7 @@ object RetrieveOperation {
   }
 
   def parseInsertWithIndex(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     retrieveList: List[FColumn]
   )(
     implicit
@@ -259,7 +259,7 @@ object RetrieveOperation {
   }
 
   def parseInsert(
-    binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+    binds: List[(Any, SlickQueryBindImpl)],
     retrieveList: List[FColumn]
   )(
     implicit

@@ -62,7 +62,7 @@ case class ListQueryWrap(
 }
 
 case class QueryWrap(
-  binds: List[(RelationalProfile#Table[_], SlickQueryBindImpl)],
+  binds: List[(Any, SlickQueryBindImpl)],
   listQueryWrap: ListQueryWrap
 )(implicit val ec: ExecutionContext) {
 

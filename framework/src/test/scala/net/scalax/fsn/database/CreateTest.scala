@@ -51,9 +51,9 @@ class CreateTest extends FlatSpec
       outFriend <- friendTq.out if outFriend.name === "xiaoxingxin"
     } yield {
       List(
-        "id" columns (outFriend.id.order, inFriend.fid.primary.autoInc),
-        "name" columns (outFriend.name.order, inFriend.fname),
-        "nick" columns (outFriend.nick.order, inFriend.fnick)
+        "id" columns (outFriend.id.out.order, inFriend.id.input.primary.autoInc),
+        "name" columns (outFriend.name.out.order, inFriend.name.input.result),
+        "nick" columns (outFriend.nick.out.order, inFriend.nick.input.result)
       )
     }
 
@@ -96,9 +96,9 @@ class CreateTest extends FlatSpec
       outFriend <- friendTq.out if outFriend.name === "xiaoxingxin"
     } yield {
       List(
-        "extId" columns (((2, (), (())), ()), FRep(((2, (), (())), ()), inFriend).autoInc),
-        "name" columns (outFriend.name.order, inFriend.fname),
-        "nick" columns (outFriend.nick.order, inFriend.fnick)
+        "extId" columns (((2, (), (())), ()).out.result, FRep(((2, (), (())), ()), inFriend).input.autoInc),
+        "name" columns (outFriend.name.out.order, inFriend.name.input.result),
+        "nick" columns (outFriend.nick.out.order, inFriend.nick.input.result)
       )
     }
 
