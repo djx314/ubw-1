@@ -46,14 +46,14 @@ class CreateTest extends FlatSpec
 
   "model" should "insert with json data" in {
     val friendQuery = for {
-      inFriend <- friendTq.in
+      inFriend <- friendTq.crud
     } yield for {
       outFriend <- friendTq.out if outFriend.name === "xiaoxingxin"
     } yield {
       List(
-        "id" columns (outFriend.id.out.order, inFriend.id.input.primary.autoInc),
-        "name" columns (outFriend.name.out.order, inFriend.name.input.result),
-        "nick" columns (outFriend.nick.out.order, inFriend.nick.input.result)
+        "id" columns (outFriend.id.out.order, inFriend.id.crud.primary.autoInc),
+        "name" columns (outFriend.name.out.order, inFriend.name.crud),
+        "nick" columns (outFriend.nick.out.order, inFriend.nick.crud)
       )
     }
 
@@ -91,14 +91,14 @@ class CreateTest extends FlatSpec
 
   "slick create module" should "insert with non autoInc data" in {
     val friendQuery = for {
-      inFriend <- friendTq.in
+      inFriend <- friendTq.crud
     } yield for {
       outFriend <- friendTq.out if outFriend.name === "xiaoxingxin"
     } yield {
       List(
-        "extId" columns (((2, (), (())), ()).out.result, FRep(((2, (), (())), ()), inFriend).input.autoInc),
-        "name" columns (outFriend.name.out.order, inFriend.name.input.result),
-        "nick" columns (outFriend.nick.out.order, inFriend.nick.input.result)
+        "extId" columns (((2, (), (())), ()).out, FRep(((2, (), (())), ()), inFriend).crud.autoInc),
+        "name" columns (outFriend.name.out.order, inFriend.name.crud),
+        "nick" columns (outFriend.nick.out.order, inFriend.nick.crud)
       )
     }
 

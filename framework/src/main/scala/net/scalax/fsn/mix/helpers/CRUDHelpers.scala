@@ -4,8 +4,8 @@ import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.core.FAtomic
 import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.helpers.FilterWrapper
-import slick.lifted.{ColumnOrdered, FlatShapeLevel, Shape}
+import net.scalax.fsn.slick.helpers.{FRep, FilterWrapper, SlickUtils}
+import slick.lifted.{ColumnOrdered, FlatShapeLevel, Rep, Shape}
 import slick.relational.RelationalProfile
 
 import scala.reflect.runtime.universe._
@@ -188,8 +188,22 @@ object SCRUD {
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T]
   ): Embber[S, D, T] = {
-    Embber(repLike, owner1)(shape)
+    Embber(repLike, SlickUtils.getTableIdFromTable(owner1))(shape)
   }
+
+  def inExt[S <: Rep[_], D, T, A](repLike: S)(
+    implicit
+    shape: Shape[_ <: FlatShapeLevel, S, D, T]
+  ): Embber[S, D, T] = {
+    Embber(repLike, SlickUtils.getTableIdFromRep(repLike))(shape)
+  }
+
+  /*def inExt[S <: Rep[_], D, T, A](repLike: FRep[S])(
+    implicit
+    shape: Shape[_ <: FlatShapeLevel, S, D, T]
+  ): Embber[S, D, T] = {
+    Embber(repLike.rep, SlickUtils.getTableIdFromTable(repLike.owner))(shape)
+  }*/
 
 }
 
