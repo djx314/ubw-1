@@ -48,7 +48,7 @@ trait SlickCRUDImplicits {
     }
   }
 
-  implicit class slickColumn2CommonColumn[S <: Rep[_], D, T](repLike: S)(
+  implicit class slickColumn2CommonColumn[S, D, T](repLike: S)(
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T],
     encoder: Encoder[D],
@@ -56,7 +56,7 @@ trait SlickCRUDImplicits {
     weakTypeTag: WeakTypeTag[D]
   ) {
     def crud: SCRUD[S, D, T, D] = {
-      SCRUD.in(repLike, SlickUtils.getTableIdFromRep(repLike))
+      SCRUD.in(repLike, SlickUtils.getTableIdFromCol(repLike)(shape))
     }
   }
 
