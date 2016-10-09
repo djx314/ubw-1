@@ -13,7 +13,13 @@ class ParamGenImpl(val c: scala.reflect.macros.blackbox.Context) {
            val labelGen = _root_.shapeless.LabelledGeneric[$entity]
            val hlistData = labelGen.to(s)
            import _root_.shapeless.record._
-           _root_.shapeless.ops.record.Keys[labelGen.Repr].apply.toList.map(_.name).zip(hlistData.values.toList.map(_.paramComp)).map {
+           (_root_.shapeless.ops.record.Keys[labelGen.Repr].apply.toList: List[_root_.scala.Symbol])
+           .map(_.name)
+           .zip {
+             (hlistData.values.toList: List[_root_.net.scalax.fsn.parameter.atomic.FParam[_]])
+             .map(_.paramComp)
+           }
+           .map {
              case (key, value) => value.toContent(key)
            }
          }
