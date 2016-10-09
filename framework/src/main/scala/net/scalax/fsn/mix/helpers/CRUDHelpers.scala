@@ -191,11 +191,11 @@ object SCRUD {
     Embber(repLike, SlickUtils.getTableIdFromTable(owner1))(shape)
   }
 
-  def inExt[S <: Rep[_], D, T, A](repLike: S)(
+  def inExt[S, D, T, A](repLike: S)(
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T]
   ): Embber[S, D, T] = {
-    Embber(repLike, SlickUtils.getTableIdFromRep(repLike))(shape)
+    Embber(repLike, SlickUtils.getTableIdFromCol(repLike)(shape))(shape)
   }
 
   /*def inExt[S <: Rep[_], D, T, A](repLike: FRep[S])(

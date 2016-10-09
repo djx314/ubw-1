@@ -39,9 +39,16 @@ object SlickUtils {
   def isShapeEmpty(shape: Shape[_ <: ShapeLevel, _, _, _]): Boolean = {
     countColumns(Nil, List(shape)).isEmpty
   }
-
-  def getTableIdFromRep(rep: Rep[_]): Any = {
+  /*def getTableIdFromRep(rep: Rep[_]): Any = {
     rep.toNode match {
+      case Select(tableNode: TableNode, _) =>
+        tableNode.profileTable
+      case Select(pathNode, _) =>
+        pathNode
+    }
+  }*/
+  def getTableIdFromCol[S, D, T](rep: S)(implicit shape: Shape[_ <: ShapeLevel, S, D, T]): Any = {
+    shape.toNode(rep) match {
       case Select(tableNode: TableNode, _) =>
         tableNode.profileTable
       case Select(pathNode, _) =>
