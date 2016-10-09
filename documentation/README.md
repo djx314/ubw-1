@@ -128,4 +128,116 @@ friend.name name
 | friend.nick        | nick        | nick       | 昵称       | String |
 
 好了,多余的东西出来了,现在越来越觉得 Model Field 这一列碍眼了,可否去掉呢?答案是可以的,在下面的例子中,我直接把
-Json Field 也去掉了,直接造成的结果是自带 DTO...
+Json Field 也去掉了,直接造成的后果是自带 DTO...
+
+在这里先引入 2 个前置知识
+##Slick
+Slick 是一个 Scala 的数据库操作框架,为数据库操作提供了一组类型安全的 API, Query 是所有操作的核心,
+令用户可以在类型安全的前提下进行表间的关联,数据过滤等几乎所有的数据库操作,并且可以把结果渲染成明确的数据类型(不存在
+Hibernate 的 Any 横行的情况)
+下面要介绍的方法虽然不会写出实现的原理,但如果觉得 Slick 那一层太难理解(跟原 API 差别太大或者看 fsn 的源码
+Slick 部分看不懂)的话可以前往
+https://github.com/scalax/hf/blob/master/src/main/scala/net/scalax/hf/common/HSlick.scala
+那是本项目 Slick 改装思路的原型.
+
+##type classes
+type classes 是 Scala 的其中一种模式,大家可以百度 google 一下具体是什么(宏江大神也写过相关的博客,大家可以去看看).
+这里会用到的 type classes 主要是 Reader[T] 和 Writer[T], Reader[T] 主要负责从混沌中整理识别数据,取出 E[T]
+这些赋予了类型的数据, Writer[T] 主要负责把指定类型的数据写入到混沌中去.这里说的混沌有很多例子,主要是数据的源头和
+数据的目标,例如数据库某一个表某一行某一列的数据(ResultSet 的某一列),Json 的一个字段的数据(io.circe.Json),也可以是
+Excel 表的一个单元格(自己写了一个 Java Poi 的 Scala Wrapper,单只实现 type classes 这一功能,大家可以去看看
+https://github.com/scalax/poi-collection )
+
+现在可以开始我们的削减代码的工程了.首先是最大限度削减必要的标记信息.现在的必要信息是
+
+| DataBase           | View Field | Type   |
+|:------------------:|:----------:|:------:|
+| friend.id(AutoInc) | ID         | Long   |
+| friend.name        | 姓名       | String |
+| friend.nick        | 昵称       | String |
+
+现在可以拿着这些信息去做一个增删查改了,那么我的设想是什么呢?
+1. type safe.数据的类型在编译时就已经决定,并且不可以处理的类型不可以通过编译.
+1. 把所有的映射都写在一个地方.每一列的所有声明应该高内聚,最好是一列我只需要在一个地方定义.
+1. 尽可能糅合更多的逻辑.因为我懒,所以我想把网页版的增删查改都写在这里,甚至连 js 端我也不需要新增一行代码就可以完事了.
+1. 尽可能糅合更多的数据转换途径.因为我懒,要是 Excel 导入导出, Json 端的 CRUD 和 Select
+都写在一处就可以睡觉的话就好了.
+
+上面的第 3 和第 4 点需要基于 2 个假设:
+1. 假设不同的(不同的含义是指我可能从数据库读取数据输出到 Json,也可能从 Json 获取数据对数据库进行更新,插入,删除)
+源 → 目标的数据转换的数据处理逻辑是相似的.例如拥有几乎相同的要处理的列,密码字段存入数据库的时候都会经过
+MD5 加密(不管是 Json 还是 Excel 的信息持久化到数据库),作为数据库主键的列是完全相同的
+2. 假设所有的数据转换逻辑的每一列的数据类型都存在一个中间数据类型,使得无论源和目标是什么,
+都可以做到源的数据可以转换到中间数据类型,并且中间数据类型可以转换到目标需要的数据类型,也就是在不同的逻辑之中
+```
+Reader[Source] → (Source => DataType) → E[DataType] → (DataType => Target) → Writer[Target]
+```
+里面的 DataType 的类型是保持不变的.而在绝大部分情况中, Source, DataType Target 都会是同一个类型,
+但在很多时候将会需要上面那种模型来处理不同的数据处理框架之间的适配问题(例如 Slick 善于处理 Tuple 类型的数据
+但 circe 却需要一个明确的 case class 来 Encoder, 而 poi-collection 却只能够一列一列地处理)
+
+而设想的第一点毫无疑问就是用 type classes 来解决了, slick 的 Reader 和 Writer 都是 Shape[_, _, _, _](slick 
+的情况有点特殊,看上去 Shape 是负责读写的,实际上负责读写的是 Node, Node 负责生成 sql,绑定参数,渲染结果这些操作,
+Shape 只是负责一些表面的类型安全的操作,并没有什么大的实际作用,甚至连数据集的渲染也不是他做的).
+io.circe.Json 的 Reader 和 Writer 是 Encoder 和 Decoder. 而 poi-collection 的 Reader 和 Writer 是
+ReadableCellOperationAbs 和 WriteableCellOperationAbs (我开始后悔起了个这么长的名字了).
+
+而这里的要点并不是如何使用 type class,而是如何一次过把所有 type class 都传进去,因为 Scala 的 type classes
+是基于 implicit 的,而 implicit 是编译时传入的,所以一次过获取所有的 type classes 并不会消耗太多的性能.
+
+而第二个问题看似简单,就是把字符串凑一起声明,但考虑到其他需求,这一点就变得不太简单了.
+这一点大概可以看成是类型无关的信息标记.为什么这样说呢?因为要考虑到在 View 那边的工作怎么偷懒.主要考虑网页和 Excel 这
+2 种特殊情况.
+
+例如我新增一个逻辑的时候,我连一行的网页端代码也不想新增了,我就想写一个适应性很高的界面,
+传过来什么信息我就渲染什么界面.例如这一列的数据类型是什么(String 信息)就怎么渲染数据,
+这一列可以排序的话就加一个排序按钮,点击之后会把参数传进后台重新获取数据,这一列是 AutoInc 于是我在 Create 的时候
+值为空并且不让用户填. JavaScript 是一门很动态的语言,只要我们传递给他足够的信息,即使只是简单的 Json,
+他也能帮你生成出一个万能的界面,即使不用 parser.
+
+还有就是 Excel,Excel 最难处理的就是生成时候要在每一列加上一个统一的 CellStyle,用来做限定小数位数,
+格式化数据等等的工作,而这个就需要一个函数式的解决方案,使得 CellStyle 的既能相对独立地声明,
+又能智能地合并相同的 CellStyle,以回避 Excel 2003 中 CellStyle 不能上 4000 个的问题并且能优化性能.
+这个在 poi-collection 中已经有了相应的处理,但要在每一列中声明该列的 CellStyle 的处理方式是不可避免的.
+
+考虑了这么多的问题之后,就可以建立出一个抽象了.(下面开始暴力贴 fsn 的代码了,做好准备)
+```scala
+package net.scalax.fsn.core
+
+import scala.reflect.runtime.universe._
+
+trait FAtomic[D]
+
+trait FColumn {
+
+  type DataType
+  val cols: List[FAtomic[DataType]]
+  val data: Option[DataType]
+
+}
+
+case class FsnColumn[D](override val cols: List[FAtomic[D]], override val data: Option[D] = None) extends FColumn {
+  override type DataType = D
+}
+
+object FColumn {
+
+  type Aux[D] = FColumn { type DataType = D }
+
+  def findOpt[T](column: FColumn)(par: PartialFunction[FAtomic[column.DataType], T]): Option[T] = {
+    column.cols.find(par.isDefinedAt(_)).map(par.apply(_))
+  }
+
+  def find[T](column: FColumn)(par: PartialFunction[FAtomic[column.DataType], T])(implicit typeTag: WeakTypeTag[T]): T = {
+    findOpt(column)(par).getOrElse(throw new Exception(s"找不到匹配类型 ${typeTag.tpe} 的转换器"))
+  }
+
+  def filter[T](column: FColumn)(par: PartialFunction[FAtomic[column.DataType], T]): List[T] = {
+    column.cols.filter(par.isDefinedAt(_)).map(par.apply(_))
+  }
+
+}
+```
+
+在 FColumn 中, DataType 就是中间数据类型, `val cols: List[FAtomic[DataType]]` 就是各种 type class
+的载体,
