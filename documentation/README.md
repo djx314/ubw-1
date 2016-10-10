@@ -240,4 +240,20 @@ object FColumn {
 ```
 
 在 FColumn 中, DataType 就是中间数据类型, `val cols: List[FAtomic[DataType]]` 就是各种 type class
-的载体,
+和数据类型转换的载体,例如下面就是 slick 的 Select 的 col:
+```scala
+trait SlickSelect[E] extends FAtomic[E] {
+  type SourceType
+  type SlickType
+  type TargetType
+  type DataType = E
+
+  val shape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
+  val outConvert: SlickType => DataType
+  val outCol: SourceType
+  val colToOrder: Option[TargetType => ColumnOrdered[_]]
+}
+```
+各种类型都使用 dependent type 封闭在内部,同时内部已经自带了对应的列等实体对象,对外只暴露 DataType
+这一个中间数据类型,这样的好处是我们处理特有业务逻辑的时候只需要对中间数据进行处理即可应用到所有的导入导出操作,
+而不需要为每一个导入导出逻辑都做一遍数据处理(而且这个这个假设下面也不可能做到或者很难做到).
