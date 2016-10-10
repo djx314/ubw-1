@@ -178,8 +178,7 @@ Reader[Source] → (Source => DataType) → E[DataType] → (DataType => Target)
 但在很多时候将会需要上面那种模型来处理不同的数据处理框架之间的适配问题(例如 Slick 善于处理 Tuple 类型的数据
 但 circe 却需要一个明确的 case class 来 encode, 而 poi-collection 却只能够一列一列地处理)
 
-而设想的第一点毫无疑问就是用 type classes 来解决了, slick 的 Reader 和 Writer 都是 Shape[ _, _, _, _ ]
-(slick 的情况有点特殊,看上去 Shape 是负责读写的,实际上负责读写的是 Node, Node 负责生成 sql,绑定参数,渲染结果这些操作,
+而设想的第一点毫无疑问就是用 type classes 来解决了, slick 的 Reader 和 Writer 都是 Shape(slick 的情况有点特殊,看上去 Shape 是负责读写的,实际上负责读写的是 Node, Node 负责生成 sql,绑定参数,渲染结果这些操作,
 Shape 只是负责一些表面的类型安全的操作,并没有什么大的实际作用,甚至连数据集的渲染也不是他做的).
 io.circe.Json 的 Reader 和 Writer 是 Encoder 和 Decoder. 而 poi-collection 的 Reader 和 Writer 是
 ReadableCellOperationAbs 和 WriteableCellOperationAbs (我开始后悔起了个这么长的名字了).
