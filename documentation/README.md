@@ -85,6 +85,7 @@ Model field name, View field name(表头标题), type.有了这个映射我们�
 
 可以看出,在这个基本的例子中,除了有时候需要关联某几列处理一些业务逻辑之外,无论是数据库端,Model 层,View
 层,我们做得最多的东西好像就只有两样:
+
 1. 字段名称的映射
 1. 标记字段的类型
 
@@ -112,14 +113,11 @@ Model field name, View field name(表头标题), type.有了这个映射我们�
 于是很多人便生出了一种想法:
 
 # Why not all in one?
-为什么不把映射,类型都声明在一个地方呢?这就是最初的想法.写到这里,语言被换成了 Scala.
+为什么不把映射,类型都声明都放在一个地方呢?这就是最初的想法.写到这里,语言被换成了 Scala.
 
 我们再来想想,上面写到的那个例子,我们去除了所有多余的信息,多余的映射之后,我们需要的最基本信息有哪些呢?
 
 可能真的很少,就像上面写的那样.
-
- id ID Long
-friend.name name
 
 | DataBase           | Model Field | Json Field | View Field | Type   |
 |:------------------:|:-----------:|:----------:|:----------:|:------:|
@@ -132,6 +130,7 @@ Json Field 也去掉了,直接造成的后果是自带 DTO...
 
 在这里先引入 2 个前置知识
 ##Slick
+
 Slick 是一个 Scala 的数据库操作框架,为数据库操作提供了一组类型安全的 API, Query 是所有操作的核心,
 令用户可以在类型安全的前提下进行表间的关联,数据过滤等几乎所有的数据库操作,并且可以把结果渲染成明确的数据类型(不存在
 Hibernate 的 Any 横行的情况)
@@ -141,6 +140,7 @@ https://github.com/scalax/hf/blob/master/src/main/scala/net/scalax/hf/common/HSl
 那是本项目 Slick 改装思路的原型.
 
 ##type classes
+
 type classes 是 Scala 的其中一种模式,大家可以百度 google 一下具体是什么(宏江大神也写过相关的博客,大家可以去看看).
 这里会用到的 type classes 主要是 Reader[T] 和 Writer[T], Reader[T] 主要负责从混沌中整理识别数据,取出 E[T]
 这些赋予了类型的数据, Writer[T] 主要负责把指定类型的数据写入到混沌中去.这里说的混沌有很多例子,主要是数据的源头和
@@ -157,6 +157,7 @@ https://github.com/scalax/poi-collection )
 | friend.nick        | 昵称       | String |
 
 现在可以拿着这些信息去做一个增删查改了,那么我的设想是什么呢?
+
 1. type safe.数据的类型在编译时就已经决定,并且不可以处理的类型不可以通过编译.
 1. 把所有的映射都写在一个地方.每一列的所有声明应该高内聚,最好是一列我只需要在一个地方定义.
 1. 尽可能糅合更多的逻辑.因为我懒,所以我想把网页版的增删查改都写在这里,甚至连 js 端我也不需要新增一行代码就可以完事了.
@@ -164,6 +165,7 @@ https://github.com/scalax/poi-collection )
 都写在一处就可以睡觉的话就好了.
 
 上面的第 3 和第 4 点需要基于 2 个假设:
+
 1. 假设不同的(不同的含义是指我可能从数据库读取数据输出到 Json,也可能从 Json 获取数据对数据库进行更新,插入,删除)
 源 → 目标的数据转换的数据处理逻辑是相似的.例如拥有几乎相同的要处理的列,密码字段存入数据库的时候都会经过
 MD5 加密(不管是 Json 还是 Excel 的信息持久化到数据库),作为数据库主键的列是完全相同的
@@ -174,10 +176,9 @@ Reader[Source] → (Source => DataType) → E[DataType] → (DataType => Target)
 ```
 里面的 DataType 的类型是保持不变的.而在绝大部分情况中, Source, DataType Target 都会是同一个类型,
 但在很多时候将会需要上面那种模型来处理不同的数据处理框架之间的适配问题(例如 Slick 善于处理 Tuple 类型的数据
-但 circe 却需要一个明确的 case class 来 Encoder, 而 poi-collection 却只能够一列一列地处理)
+但 circe 却需要一个明确的 case class 来 encode, 而 poi-collection 却只能够一列一列地处理)
 
-而设想的第一点毫无疑问就是用 type classes 来解决了, slick 的 Reader 和 Writer 都是 Shape[_, _, _, _](slick 
-的情况有点特殊,看上去 Shape 是负责读写的,实际上负责读写的是 Node, Node 负责生成 sql,绑定参数,渲染结果这些操作,
+而设想的第一点毫无疑问就是用 type classes 来解决了, slick 的 Reader 和 Writer 都是 Shape(slick 的情况有点特殊,看上去 Shape 是负责读写的,实际上负责读写的是 Node, Node 负责生成 sql,绑定参数,渲染结果这些操作,
 Shape 只是负责一些表面的类型安全的操作,并没有什么大的实际作用,甚至连数据集的渲染也不是他做的).
 io.circe.Json 的 Reader 和 Writer 是 Encoder 和 Decoder. 而 poi-collection 的 Reader 和 Writer 是
 ReadableCellOperationAbs 和 WriteableCellOperationAbs (我开始后悔起了个这么长的名字了).
@@ -196,8 +197,8 @@ ReadableCellOperationAbs 和 WriteableCellOperationAbs (我开始后悔起了个
 他也能帮你生成出一个万能的界面,即使不用 parser.
 
 还有就是 Excel,Excel 最难处理的就是生成时候要在每一列加上一个统一的 CellStyle,用来做限定小数位数,
-格式化数据等等的工作,而这个就需要一个函数式的解决方案,使得 CellStyle 的既能相对独立地声明,
-又能智能地合并相同的 CellStyle,以回避 Excel 2003 中 CellStyle 不能上 4000 个的问题并且能优化性能.
+格式化数据等等的工作,而这个就需要一个函数式的解决方案,使得 CellStyle 既能相对独立地声明,
+又能智能地合并相同的处理方式,以回避 Excel 2003 中 CellStyle 不能上 4000 个的问题并且能优化性能.
 这个在 poi-collection 中已经有了相应的处理,但要在每一列中声明该列的 CellStyle 的处理方式是不可避免的.
 
 考虑了这么多的问题之后,就可以建立出一个抽象了.(下面开始暴力贴 fsn 的代码了,做好准备)
@@ -256,4 +257,4 @@ trait SlickSelect[E] extends FAtomic[E] {
 ```
 各种类型都使用 dependent type 封闭在内部,同时内部已经自带了对应的列等实体对象,对外只暴露 DataType
 这一个中间数据类型,这样的好处是我们处理特有业务逻辑的时候只需要对中间数据进行处理即可应用到所有的导入导出操作,
-而不需要为每一个导入导出逻辑都做一遍数据处理(而且这个这个假设下面也不可能做到或者很难做到).
+而不需要为每一个导入导出逻辑都做一遍数据处理(而且在这个假设下面也不可能做到或者很难做到).
