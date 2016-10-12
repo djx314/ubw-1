@@ -99,6 +99,8 @@ trait BooleanRepHelper {
     RichBRep.empty[T]
   }
 
+  @inline implicit def optionBooleanNeedRepToRichRep[T](repOpt: Option[Rep[T]]): RichBRep[T] = RichBRep(repOpt)
+
   @inline implicit def booleanToOptionBooleanRep(baseRep: Rep[Boolean])(implicit columnMethods: Rep[Boolean] => BaseColumnExtensionMethods[Boolean]): Rep[Option[Boolean]] = columnMethods(baseRep).?
 
 }
