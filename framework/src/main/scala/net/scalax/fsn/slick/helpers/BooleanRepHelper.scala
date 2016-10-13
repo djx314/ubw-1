@@ -93,6 +93,8 @@ trait BooleanRepHelper {
 
   @inline implicit def booleanRepToRichRep[T](rep: Rep[T]): RichBRep[T] = RichBRep(Option(rep))
 
+  @inline implicit def optionBooleanRepToRichRep[T](repOpt: Option[Rep[T]]): RichBRep[T] = RichBRep(repOpt)
+
   @inline implicit def booleanNeedRepToRichRep[T](plus: (Boolean, Rep[T])): RichBRep[T] = if (plus._1) {
     RichBRep(Option(plus._2))
   } else {
