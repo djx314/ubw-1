@@ -1,6 +1,6 @@
 package net.scalax.fsn.slick.operation
 
-import net.scalax.fsn.core.FColumn
+import net.scalax.fsn.core.{FColumn, FsnColumn}
 import net.scalax.fsn.slick.atomic.{AutoInc, OneToOneCrate, SlickCreate}
 import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl, SlickUtils}
 import slick.basic.BasicProfile
@@ -51,6 +51,7 @@ trait ISlickWriter2 {
   val autoIncRep: IncRep
   val autoIncShape: Shape[_ <: FlatShapeLevel, IncRep, IncValue, IncTarget]
   val subGen: Option[InsertWrapTran2[IncValue]]
+  val autalColumn: IncValue => FColumn
 }
 
 case class ISWriter2[A, B, C, D, E, F](
@@ -60,7 +61,8 @@ case class ISWriter2[A, B, C, D, E, F](
   override val preShape: Shape[_ <: FlatShapeLevel, A, B, C],
   override val autoIncRep: D,
   override val autoIncShape: Shape[_ <: FlatShapeLevel, D, E, F],
-  override val subGen: Option[InsertWrapTran2[E]]
+  override val subGen: Option[InsertWrapTran2[E]],
+  override val autalColumn: E => FColumn
 ) extends ISlickWriter2 {
   override type PreRep = A
   override type PreValue = B
@@ -98,7 +100,8 @@ object InCreateConvert2 {
         preShape = implicitly[Shape[FlatShapeLevel, Unit, Unit, Unit]],
         autoIncRep = (slickCreate.mainCol: slickCreate.SourceType),
         autoIncShape = slickCreate.mainShape,
-        subGen = oneToOneSubGen
+        subGen = oneToOneSubGen,
+        autalColumn = (s: slickCreate.SlickType) => FsnColumn(column.cols, Option(slickCreate.convert(s)))
       )
     } else {
       lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate => new InsertWrapTran2[Unit] {
@@ -124,7 +127,8 @@ object InCreateConvert2 {
         preShape = slickCreate.mainShape,
         autoIncRep = (),
         autoIncShape = implicitly[Shape[FlatShapeLevel, Unit, Unit, Unit]],
-        subGen = oneToOneSubGen
+        subGen = oneToOneSubGen,
+        autalColumn = (s: Unit) => column
       )
     }
   }
@@ -183,11 +187,11 @@ object CreateOperation {
               gen.convert(wrapSlickData, source)
             }
           } }
-          subGens
+          subGens -> wrap.autalColumn(wrapSlickData)
         }
-        subResult <- parseInsertGen(binds, insertList, fillSubGens.map(_.toList).flatten)
+        subResult <- parseInsertGen(binds, insertList, fillSubGens.map(_._1.toList).flatten)
       } yield {
-        ExecInfo2(subResult.effectRows + 1, subResult.columns)
+        ExecInfo2(subResult.effectRows + 1, fillSubGens.map(_._2) ::: subResult.columns)
       }
 
     }
@@ -249,11 +253,11 @@ object CreateOperation {
               gen.convert(wrapSlickData, source)
             }
           } }
-          subGens
+          subGens -> wrap.autalColumn(wrapSlickData)
         }
-        subResult <- parseInsertGen(binds, insertList, fillSubGens.map(_.toList).flatten)
+        subResult <- parseInsertGen(binds, insertList, fillSubGens.map(_._1.toList).flatten)
       } yield {
-        ExecInfo2(subResult.effectRows + 1, subResult.columns)
+        ExecInfo2(subResult.effectRows + 1, fillSubGens.map(_._2) ::: subResult.columns)
       }
 
     }

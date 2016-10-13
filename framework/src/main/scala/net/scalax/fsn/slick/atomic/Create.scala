@@ -22,12 +22,12 @@ trait SlickCreate[E] extends FAtomic[E] {
 }
 
 case class SCreate[S, D, T, E](
-                                override val mainCol: S,
-                                override val owner: Any,
-                                override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
-                                override val convert: D => E,
-                                override val reverseConvert: E => D
-                              ) extends SlickCreate[E] {
+  override val mainCol: S,
+  override val owner: Any,
+  override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
+  override val convert: D => E,
+  override val reverseConvert: E => D
+) extends SlickCreate[E] {
   type SourceType = S
   type SlickType = D
   type TargetType = T

@@ -94,12 +94,7 @@ object JsonOperation {
       }
     }*/
     val colData = CommonOperation.genDataFromFColumn(eachColumn)
-    val eachColumnData: eachColumn.DataType = eachColumn.data match {
-      case Some(data) =>
-        data
-      case None =>
-        throw new Exception(s"字段 ${ property.proName } 未被定义")
-    }
+    val eachColumnData: eachColumn.DataType = colData.getOrElse(throw new Exception(s"字段 ${ property.proName } 未被定义"))
 
     property.proName -> jsonWriter.convert(eachColumnData).asJson(jsonWriter.writer)
   }
