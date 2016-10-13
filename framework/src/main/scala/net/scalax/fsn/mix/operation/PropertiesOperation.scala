@@ -1,7 +1,7 @@
 package net.scalax.fsn.mix.operation
 
+import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.core.FColumn
-import net.scalax.fsn.common.FProperty
 import net.scalax.fsn.json.atomic.JsonWriter
 import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.model.RWProperty

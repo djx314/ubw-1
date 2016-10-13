@@ -2,8 +2,8 @@ package net.scalax.fsn.mix.helpers
 
 import net.scalax.fsn.core.FColumn
 import io.circe.{Decoder, Encoder}
+import net.scalax.fsn.common.atomic.{DefaultValue, FProperty}
 import net.scalax.fsn.core.FAtomic
-import net.scalax.fsn.common.{DefaultValue, FProperty}
 import net.scalax.fsn.excel.atomic.PoiReader
 import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 import net.scalax.fsn.slick.atomic._

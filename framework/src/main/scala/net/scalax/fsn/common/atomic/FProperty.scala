@@ -1,4 +1,4 @@
-package net.scalax.fsn.common
+package net.scalax.fsn.common.atomic
 
 import net.scalax.fsn.core.FAtomic
 
