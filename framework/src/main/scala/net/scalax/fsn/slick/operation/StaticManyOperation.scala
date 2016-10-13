@@ -1,7 +1,7 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core.FColumn
-import net.scalax.fsn.common.FProperty
+import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.slick.atomic.StaticMany
 import net.scalax.fsn.slick.model.{QueryJsonInfo, StaticManyUbw}
 

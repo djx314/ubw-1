@@ -1,7 +1,7 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.common.FProperty
+import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.slick.atomic.{OrderNullsLast, OrderTargetName, SlickSelect, SubUbw}
 import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl}
 import net.scalax.fsn.slick.model.{ColumnOrder, SlickPage, SlickParam, SlickRange}

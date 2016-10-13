@@ -1,7 +1,7 @@
 package net.scalax.fsn.mix.helpers
 
 import io.circe.{Decoder, Encoder}
-import net.scalax.fsn.common.FProperty
+import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.core.{FAtomic, FsnColumn}
 import net.scalax.fsn.mix.helpers.{Select => SSelect}
 import net.scalax.fsn.mix.slickbase.{CrudQueryExtensionMethods, ListQueryExtensionMethods}
