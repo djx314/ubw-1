@@ -1,10 +1,7 @@
 package net.scalax.fsn.json.operation
 
-import io.circe.Json
-import io.circe.syntax._
 import net.scalax.fsn.common.atomic.DefaultValue
 import net.scalax.fsn.core.{FColumn, FsnColumn}
-import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 
 object CommonOperation {
 
