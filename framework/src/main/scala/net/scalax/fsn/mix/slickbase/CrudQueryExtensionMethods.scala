@@ -20,7 +20,7 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
     val deleteWrap =
       (SlickUtils.getTableIdFromTable(aliased) -> slickJsonQuery) :: fv.binds
 
-    QueryWrap(deleteWrap, fv.listQueryWrap)(fv.ec)
+    QueryWrap(deleteWrap, fv.listQueryWrap)
   }
 
   def map[A, B](f: E => ListQueryWrap): QueryWrap = {
@@ -35,7 +35,7 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
     val deleteWrap =
       List(SlickUtils.getTableIdFromTable(aliased) -> slickJsonQuery)
 
-    QueryWrap(deleteWrap, fv)(fv.ec)
+    QueryWrap(deleteWrap, fv)
   }
 
   def filter[T <: Rep[_] : CanBeQueryCondition](f: E => T): CrudQueryExtensionMethods[E, U] = {
