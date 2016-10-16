@@ -3,7 +3,7 @@ package net.scalax.fsn.mix.helpers
 import io.circe.{Decoder, Encoder, Json}
 import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.core.{FAtomic, FColumn, FsnColumn}
-import net.scalax.fsn.json.operation.JsonOperation
+import net.scalax.fsn.json.operation.{ExcelOperation, JsonOperation}
 import net.scalax.fsn.mix.helpers.{Select => SSelect}
 import net.scalax.fsn.mix.operation.PropertiesOperation
 import net.scalax.fsn.mix.slickbase.{CrudQueryExtensionMethods, ListQueryExtensionMethods, ListQueryWrap, QueryWrap}
@@ -49,7 +49,7 @@ trait Slick2JsonFsnImplicit {
                     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
                     ec: ExecutionContext
                   ): JsonOut = {
-      result( List(ColumnOrder(orderColumn, isDesc)))
+      result(List(ColumnOrder(orderColumn, isDesc)))
     }
 
     def result
@@ -59,8 +59,55 @@ trait Slick2JsonFsnImplicit {
                 repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
                 ec: ExecutionContext
               ): JsonOut = {
-      result( Nil)
+      result(Nil)
     }
+
+    def jpResult(defaultOrders: List[ColumnOrder])
+              (
+                implicit
+                jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+                repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+                ec: ExecutionContext
+              ): (JsonOut, PoiOut) = {
+      lazy val withExtraCols = OutSelectConvert.extraSubCol(listQueryWrap.columns)
+      lazy val queryWrap: JsonQuery = SelectOperation.encode(withExtraCols, listQueryWrap.listQueryBind)
+
+      val jsonGen = { slickParam: SlickParam =>
+        queryWrap.jsonResult(defaultOrders).apply(slickParam).map { result =>
+          result._1.map(JsonOperation.writeJ) -> result._2
+        }
+      }
+
+      val poiGen = { slickParam: SlickParam =>
+        queryWrap.jsonResult(defaultOrders).apply(slickParam).map { result =>
+          result._1.map(InRetrieveOperation.filterInRetrieve).map(ExcelOperation.writeP) -> result._2
+        }
+      }
+
+      JsonOut(withExtraCols.map(PropertiesOperation.convertProperty), jsonGen) ->
+      PoiOut(withExtraCols.map(PropertiesOperation.convertProperty), poiGen)
+    }
+
+    def jpResult(orderColumn: String, isDesc: Boolean = true)
+              (
+                implicit
+                jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+                repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+                ec: ExecutionContext
+              ): (JsonOut, PoiOut) = {
+      jpResult(List(ColumnOrder(orderColumn, isDesc)))
+    }
+
+    def jpResult
+    (
+      implicit
+      jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+      repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+      ec: ExecutionContext
+    ): (JsonOut, PoiOut) = {
+      jpResult(Nil)
+    }
+
   }
 
 }
