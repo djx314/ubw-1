@@ -171,7 +171,7 @@ object CreateOperation {
       val returningShape = new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.returningShapes)
       val returingQuery = Query(convertRetrieveQuery.returningCols)(returningShape)
       val incDataDBIO = if (SlickUtils.isShapeEmpty(returningShape)) {
-        (bindQuery += convertRetrieveQuery.data) >> returingQuery.result
+        (bindQuery += convertRetrieveQuery.data) >> returingQuery.result.head
       } else {
         val bindReturingQuery = convertRetrieveQuery.bind.bind(returingQuery)
         val createQuery = bindQuery returning bindReturingQuery
@@ -237,7 +237,7 @@ object CreateOperation {
       val returningShape = new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.returningShapes)
       val returingQuery = Query(convertRetrieveQuery.returningCols)(returningShape)
       val incDataDBIO = if (SlickUtils.isShapeEmpty(returningShape)) {
-        (bindQuery += convertRetrieveQuery.data) >> returingQuery.result
+        (bindQuery += convertRetrieveQuery.data) >> returingQuery.result.head
       } else {
         val bindReturingQuery = convertRetrieveQuery.bind.bind(returingQuery)
         val createQuery = bindQuery returning bindReturingQuery

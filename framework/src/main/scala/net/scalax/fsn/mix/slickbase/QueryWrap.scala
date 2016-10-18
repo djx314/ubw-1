@@ -1,19 +1,7 @@
 package net.scalax.fsn.mix.slickbase
 
-import net.scalax.fsn.slick.operation._
-import io.circe.Json
 import net.scalax.fsn.core.FColumn
-import net.scalax.fsn.json.operation.JsonOperation
-import net.scalax.fsn.mix.operation.PropertiesOperation
-import net.scalax.fsn.slick.atomic.{AutoInc, SlickRetrieve}
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
-import net.scalax.fsn.slick.model._
-import slick.basic.BasicProfile
-import slick.dbio.{DBIO, NoStream}
-import slick.jdbc.JdbcActionComponent
-import slick.lifted.{Query, Rep}
-import slick.relational.RelationalProfile
-
 import scala.concurrent.ExecutionContext
 
 case class ListQueryWrap(
@@ -21,11 +9,7 @@ case class ListQueryWrap(
   listQueryBind: SlickQueryBindImpl
 )(implicit val ec: ExecutionContext) {
 
-  lazy val withExtraCols = OutSelectConvert.extraSubCol(columns)
-
-  lazy val queryWrap: JsonQuery = SelectOperation.encode(withExtraCols, listQueryBind)
-
-  def result
+  /*def result
   (defaultOrders: List[ColumnOrder])
   (
     implicit
@@ -57,18 +41,21 @@ case class ListQueryWrap(
     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream]
   ): JsonOut = {
     result(Nil)
-  }
+  }*/
 
 }
 
 case class QueryWrap(
   binds: List[(Any, SlickQueryBindImpl)],
   listQueryWrap: ListQueryWrap
-)(implicit val ec: ExecutionContext) {
+)/*(implicit val ec: ExecutionContext)*/{
 
-  lazy val queryWrap: listQueryWrap.queryWrap.type = listQueryWrap.queryWrap
-  val columns = listQueryWrap.columns
+  //lazy val queryWrap: listQueryWrap.queryWrap.type = listQueryWrap.queryWrap
+  /*val columns = listQueryWrap.columns
   lazy val properties = PropertiesOperation.convertColumn(columns)
+
+  object aa extends Slick2JsonFsnImplicit
+  import aa._
 
   def result
   (defaultOrders: List[ColumnOrder])
@@ -88,15 +75,6 @@ case class QueryWrap(
         listQueryWrap.result(defaultOrders)
       },
       retrieveGen = { v: Map[String, Json] =>
-        /*val jsonData = indicator.rw.utils.rw2.InJsonConvert.readJPrimary(columns)(v)
-        for {
-          execInfo <- RetrieveWrapDeal.parseInsert(deleteWrap, jsonData)
-          staticMany = indicator.rw.utils.rw2.InStaticManyConvert.convertList2Query(execInfo.fColumns)
-          staticM <- DBIO.from(staticMany)
-        } yield {
-          val jsonResult = indicator.rw.utils.rw2.InJsonConvert.writeJ(execInfo.fColumns)
-          StaticManyInfo(properties, jsonResult, staticM)
-        }*/
         val jsonData = JsonOperation.readWithFilter(columns) { eachColumn =>
           FColumn.findOpt(eachColumn) { case s: SlickRetrieve[eachColumn.DataType] => s }.map(_.primaryGen.isDefined).getOrElse(false)
         } (v)
@@ -173,6 +151,5 @@ case class QueryWrap(
     ec: ExecutionContext
   ): QueryJsonInfo = {
     result(Nil)
-  }
-
+  }*/
 }

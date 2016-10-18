@@ -287,9 +287,9 @@ object Select {
 
   def outExt[S, D, T](repLike: S)(
     implicit
-    shape1: Shape[_ <: FlatShapeLevel, S, D, T],
+    shape1: Shape[_ <: FlatShapeLevel, S, D, T]/*,
     encoder: Encoder[D],
-    weakTypeTag: WeakTypeTag[D]
+    weakTypeTag: WeakTypeTag[D]*/
   ): Embber[S, D, T] = {
     Embber(repLike)(shape1)
   }

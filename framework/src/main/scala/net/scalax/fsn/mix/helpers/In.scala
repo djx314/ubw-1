@@ -4,12 +4,12 @@ import net.scalax.fsn.core.FColumn
 import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.common.atomic.{DefaultValue, FProperty}
 import net.scalax.fsn.core.FAtomic
-import net.scalax.fsn.excel.atomic.PoiReader
+import net.scalax.fsn.excel.atomic.{PoiReader, PoiStyleTransform, PoiWriter}
 import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.helpers.{FilterWrapper, SlickUtils}
 import net.scalax.fsn.slick.model.StaticManyGen
-import org.xarcher.cpoi.ReadableCellOperationAbs
+import org.xarcher.cpoi.{ReadableCellOperationAbs, StyleTransform, WriteableCellContentOperationAbs, WriteableCellOperationAbs}
 import slick.lifted.{FlatShapeLevel, Rep, Shape}
 import slick.relational.RelationalProfile
 
@@ -160,5 +160,19 @@ object In {
     override val reader = reader1
     override val convert = identity[E] _
   })
+
+  def excelWrite[E](trans: StyleTransform*)(implicit writer1: WriteableCellOperationAbs[E]): List[FAtomic[E]] = new PoiWriter[E] {
+    override type PoiType = E
+    override val writer = writer1
+    override val convert = identity[E] _
+  } :: new PoiStyleTransform[E] {
+    override val transforms = trans.toList
+  } :: Nil
+
+  def excelWrite[E](implicit writer1: WriteableCellOperationAbs[E]): List[FAtomic[E]] = new PoiWriter[E] {
+    override type PoiType = E
+    override val writer = writer1
+    override val convert = identity[E] _
+  } :: Nil
 
 }
