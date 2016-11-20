@@ -1,6 +1,6 @@
 package net.scalax.fsn.database.test
 
-import net.scalax.fsn.core.{AbstractFPathGen, FPathGen, FPathGenImpl, FPathImpl}
+import net.scalax.fsn.core.{AbstractFAtomicGen, FAtomicGen, FAtomicGenImpl, FPathImpl}
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import net.scalax.fsn.json.atomic.JsonReader
@@ -12,13 +12,13 @@ class ParTest extends FlatSpec
   with ScalaFutures
   with BeforeAndAfterAll
   with BeforeAndAfter
-  with FPathGenImpl {
+  with FAtomicGenImpl {
 
   "shapes" should "find readers in Atomic in FPath" in {
     val path = FPathImpl(In.jRead[Long] ::: In.jWrite[Long])
-    val bb: FPathGen[JsonReader] = needAtomic[JsonReader]
-    val jsonReaderGen: AbstractFPathGen = needAtomic[JsonReader]
-    println(jsonReaderGen.gen(path))
+    //val bb: FAtomicGen[JsonReader[path.DataType]] = needAtomic[JsonReader[path.DataType]]
+    //val jsonReaderGen: AbstractFAtomicGen = needAtomic[JsonReader[path.DataType]]
+    //println(jsonReaderGen.gen(path))
   }
 
 }

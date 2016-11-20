@@ -10,16 +10,16 @@ trait FPath {
 }
 
 object FPath {
-  def findOpt[T[_]](path: FPath)(par: PartialFunction[FAtomic[path.DataType], T[path.DataType]]): Option[T[path.DataType]] = {
-    path.atomics.find(par.isDefinedAt).map(s => par.apply(s))
+  def findOpt[T](path: FPath)(par: PartialFunction[FAtomic[path.DataType], T]): Option[T] = {
+    path.atomics.find(par.isDefinedAt).map(par.apply)
   }
 
-  def find[T[_]](path: FPath)(par: PartialFunction[FAtomic[path.DataType], T[path.DataType]])(typeTag: WeakTypeTag[T[_]]): T[path.DataType] = {
+  def find[T](path: FPath)(par: PartialFunction[FAtomic[path.DataType], T])(typeTag: WeakTypeTag[T]): T = {
     findOpt(path)(par).getOrElse(throw new Exception(s"找不到匹配类型 ${typeTag.tpe} 的转换器"))
   }
 
-  def filter[T[_]](path: FPath)(par: PartialFunction[FAtomic[path.DataType], T[path.DataType]]): List[T[path.DataType]] = {
-    path.atomics.filter(par.isDefinedAt).map(s => par.apply(s))
+  def filter[T](path: FPath)(par: PartialFunction[FAtomic[path.DataType], T]): List[T] = {
+    path.atomics.filter(par.isDefinedAt).map(par.apply)
   }
 
   def translate[T](pathTran: FPath => T)(implicit aa: String) = {
