@@ -78,9 +78,10 @@ trait FAtomicShapeImpl {
     }
   }*/
 
-  /*implicit def hListAtomicShape[S <: HList, T[_], U, V[_], A <: HList, B[H] <: HList]
-  (implicit repConvert: S <:< (U :: A), subShape: FAtomicShape[U, V], tailShape: FAtomicShape[A, B]): FAtomicShape[S, J] = {
-    new FAtomicShape[S, J] {
+  implicit def hListAtomicShape[S <: HList, T[_] <: HList, U, V[_], A <: HList, B[H] <: HList]
+  (implicit repConvert: S <:< (U :: A), subShape: FAtomicShape[U, V], tailShape: FAtomicShape[A, B]) = {
+    type C[K] = V[K] :: B[K]
+    new FAtomicShape[S, C] {
 
       override def needWrapLength = subShape.needWrapLength + tailShape.needWrapLength
 
@@ -89,12 +90,14 @@ trait FAtomicShapeImpl {
         subShape.unwrap(subRep) ::: tailShape.unwrap(tailRep)
       }
 
-      override def wrap[D](atomics: List[Any]): J[D] = {
+      override def wrap[D](atomics: List[Any]): C[D] = {
         //val aa = atomicConvert.asInstanceOf[(V[D] :: B[D]) <:< T[D]]
-        (((subShape.wrap(atomics.take(subShape.needWrapLength)): V[D]) :: ((tailShape.wrap(atomics.drop(tailShape.needWrapLength))): B[D])))
+        println(atomics.take(subShape.needWrapLength))
+        println(tailShape.wrap(atomics.drop(subShape.needWrapLength)))
+        (((subShape.wrap(atomics.take(subShape.needWrapLength)): V[D]) :: ((tailShape.wrap(atomics.drop(subShape.needWrapLength))): B[D])))
       }
 
     }
-  }*/
+  }
 
 }
