@@ -16,9 +16,9 @@ class ParTest extends FlatSpec
 
   "shapes" should "find readers in Atomic in FPath" in {
     val path = FPathImpl(In.jRead[Long] ::: In.jWrite[Long])
-    //val bb: FAtomicGen[JsonReader[path.DataType]] = needAtomic[JsonReader[path.DataType]]
-    //val jsonReaderGen: AbstractFAtomicGen = needAtomic[JsonReader[path.DataType]]
-    //println(jsonReaderGen.gen(path))
+    val bb: FAtomicGen[JsonReader] = needAtomic[JsonReader]
+    val jsonReaderGen: AbstractFAtomicGen = needAtomic[JsonReader]
+    println(bb.gen(path.atomics).reader)
   }
 
 }

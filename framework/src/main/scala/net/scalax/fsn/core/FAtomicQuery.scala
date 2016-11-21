@@ -2,37 +2,31 @@ package net.scalax.fsn.core
 
 import scala.language.higherKinds
 
-/*trait FAtomicQuery[E, U] {
-
-  type RepType = E
-  type AtomicType = U
+trait FAtomicQuery[E[_], U[_]] {
 
   val rep: E
 
   val atomicSape: FAtomicShape[E, U]
 
-  def gen(path: FPath): U = {
-    atomicSape.wrap(atomicSape.unwrap(rep).map { s => s.gen(path) })
+  def gen[D](atomics: List[FAtomic[D]]): U[D] = {
+    atomicSape.wrap(atomicSape.unwrap(rep).map { s => s.gen(atomics) })
   }
 
 }
 
 object FAtomicQuery {
 
-  def apply[E, U](rep1: E)(shape: FAtomicShape[E, U]): FAtomicQuery[E, U] = new FAtomicQuery[E, U] {
+  def apply[E, D, U](rep1: E)(shape: FAtomicShape[E, D, U]): FAtomicQuery[E, D, U] = new FAtomicQuery[E, D, U] {
     override val rep = rep1
     override val atomicSape = shape
   }
 
 }
 
-trait FAtomicShape[E, U] {
+trait FAtomicShape[E[_], U[_]] {
 
-  type RepType = E
-  type AtomicType = U
-
-  def unwrap(rep: E): List[AbstractFAtomicGen]
-  def wrap(atomics: List[Any]): U
+  def unwrap[D](rep: E[D]): List[AbstractFAtomicGen]
+  def wrap[D](atomics: List[Any]): U[D]
 
 }
 
@@ -71,4 +65,4 @@ object FAtomicShape {
     }
   }
 
-}*/
+}
