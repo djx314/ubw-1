@@ -46,7 +46,7 @@ trait FAtomicShapeImpl {
 
   type FNil[_] = HNil
 
-  implicit val hNilHListAtomicShape = {
+  implicit val hNilHListAtomicShape: FAtomicShape[HNil] { type U[_] = HNil } = {
     new FAtomicShape[HNil] {
 
       override type U[_] = HNil
@@ -58,7 +58,7 @@ trait FAtomicShapeImpl {
     }
   }
 
-  implicit def repLikeAtomicShape[S[_]] = {
+  implicit def repLikeAtomicShape[S[_]]: FAtomicShape[FAtomicGen[S]] { type U[K] = S[K] } = {
     new FAtomicShape[FAtomicGen[S]] {
 
       override type U[K] = S[K]
@@ -71,7 +71,8 @@ trait FAtomicShapeImpl {
   }
 
   implicit def hListAtomicShape[S <: HList, E, A <: HList]
-  (implicit repConvert: S <:< (E :: A), subShape: FAtomicShape[E], tailShape: FAtomicShape[A] { type U[K] <: HList }) = {
+  (implicit repConvert: S <:< (E :: A), subShape: FAtomicShape[E], tailShape: FAtomicShape[A] { type U[K] <: HList })
+  : FAtomicShape[S] { type U[K] = subShape.U[K] :: tailShape.U[K] } = {
     new FAtomicShape[S] {
 
       override type U[K] = subShape.U[K] :: tailShape.U[K]
