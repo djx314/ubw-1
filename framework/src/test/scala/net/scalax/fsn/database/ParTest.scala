@@ -25,7 +25,7 @@ class ParTest extends FlatSpec
     println(FAtomicQuery(HNil).gen(path.atomics))
     println(FAtomicQuery(needAtomic[JsonReader]).gen(path.atomics).reader)
 
-    FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil)(hListAtomicShape).gen(path.atomics)
+    FAtomicQuery(needAtomic[JsonReader] /*:: needAtomic[JsonReader] :: needAtomic[JsonWriter]*/ :: HNil)(hListAtomicShape(implicitly[(FAtomicGen[JsonReader] :: HNil) <:< (FAtomicGen[JsonReader] :: HNil)], hListAtomicShape(implicitly[(FAtomicGen[JsonReader]) <:< (FAtomicGen[JsonReader])], hListAtomicShape, hListAtomicShape), hListAtomicShape)).gen(path.atomics)
     println(FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics))
 
     val items: List[FAtomic[Long]] = path.atomics

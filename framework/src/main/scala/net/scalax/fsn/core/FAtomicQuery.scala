@@ -84,10 +84,10 @@ trait FAtomicShapeHelper {
     }
   }
 
-  implicit def hListAtomicShape[S <: HList, E, A <: HList]
-  (implicit repConvert: S <:< (E :: A), subShape: FAtomicShape[E], tailShape: FAtomicShape.AuxHList[A])
-  : FAtomicShapeImpl[S, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] = {
-    new FAtomicShapeImpl[S, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] {
+  implicit def hListAtomicShape[S <: HList, E, A <: HList, F[_]]
+  (implicit repConvert: S <:< (E :: A), subShape: FAtomicShapeImpl[E, F], tailShape: FAtomicShape.AuxHList[A])
+  : FAtomicShapeImpl[S, FAtomicShapeTypeHelper[F, tailShape.U]#U] = {
+    new FAtomicShapeImpl[S, FAtomicShapeTypeHelper[F, tailShape.U]#U] {
 
       override val needWrapLength = subShape.needWrapLength + tailShape.needWrapLength
 
@@ -96,8 +96,8 @@ trait FAtomicShapeHelper {
         subShape.unwrap(subRep) ::: (tailShape).unwrap(tailRep)
       }
 
-      override def wrap[D](atomics: List[Any]): subShape.U[D] :: tailShape.U[D] = {
-        (subShape.wrap(atomics.take(subShape.needWrapLength)): subShape.U[D]) :: (tailShape.wrap(atomics.drop(subShape.needWrapLength)): tailShape.U[D])
+      override def wrap[D](atomics: List[Any]): F[D] :: tailShape.U[D] = {
+        (subShape.wrap(atomics.take(subShape.needWrapLength)): F[D]) :: (tailShape.wrap(atomics.drop(subShape.needWrapLength)): tailShape.U[D])
       }
 
     }
