@@ -14,7 +14,7 @@ class ParTest extends FlatSpec
   with BeforeAndAfterAll
   with BeforeAndAfter
   with FAtomicGenImpl
-  with FAtomicShapeImpl {
+  with FAtomicShapeHelper {
 
   "shapes" should "find readers in Atomic in FPath" in {
     val path = FPathImpl(In.jRead[Long] ::: In.jWrite[Long])
@@ -25,7 +25,7 @@ class ParTest extends FlatSpec
     println(FAtomicQuery(HNil).gen(path.atomics))
     println(FAtomicQuery(needAtomic[JsonReader]).gen(path.atomics).reader)
 
-    FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics)
+    FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil)(hListAtomicShape).gen(path.atomics)
     println(FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics))
 
     val items: List[FAtomic[Long]] = path.atomics
