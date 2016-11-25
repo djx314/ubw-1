@@ -8,7 +8,17 @@ trait AbstractFAtomicQuery[F[_]] {
 
   def gen[D](atomics: List[FAtomic[D]]): F[D]
 
+  /*def map[U, X](cv: F[U] => X): FQueryTranform[U, X] = new FQueryTranform[U, X] {
+    override def apply(atomics: List[FAtomic[U]]) = cv(gen(atomics))
+  }*/
+
 }
+
+/*trait FQueryTranform[U, X] {
+
+  def apply(atomics: List[FAtomic[U]]): X
+
+}*/
 
 trait FAtomicQuery[E, F[_]] extends AbstractFAtomicQuery[F] {
 
@@ -60,6 +70,10 @@ trait FAtomicShapeTypeHelper[E[_], F[_] <: HList] {
   type U[K] = E[K] :: F[K]
 }
 
+trait FAtomicGenOptHelper[E[_]] {
+  type U[K] = Option[E[K]]
+}
+
 trait FAtomicShapeHelper {
 
   type FNil[_] = HNil
@@ -80,6 +94,16 @@ trait FAtomicShapeHelper {
       override val needWrapLength = 1
       override def unwrap(rep: FAtomicGen[S]): List[AbstractFAtomicGen] = rep :: Nil
       override def wrap[D](atomics: List[Any]): S[D] = atomics.head.asInstanceOf[S[D]]
+
+    }
+  }
+
+  implicit def repLikeAtomicOptShape[S[_]]: FAtomicShapeImpl[FAtomicGenOpt[S], FAtomicGenOptHelper[S]#U] = {
+    new FAtomicShapeImpl[FAtomicGenOpt[S], FAtomicGenOptHelper[S]#U] {
+
+      override val needWrapLength = 1
+      override def unwrap(rep: FAtomicGenOpt[S]): List[AbstractFAtomicGen] = rep :: Nil
+      override def wrap[D](atomics: List[Any]): Option[S[D]] = atomics.head.asInstanceOf[Option[S[D]]]
 
     }
   }
