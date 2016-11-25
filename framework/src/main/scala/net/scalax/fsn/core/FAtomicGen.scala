@@ -6,12 +6,15 @@ import scala.language.implicitConversions
 
 trait AbstractFAtomicGen {
   type T[_]
-  //val weakTypeTag: WeakTypeTag[T[_]]
   def gen[U](atomics: List[FAtomic[U]]): T[U]
 }
 
 trait FAtomicGen[S[_]] extends AbstractFAtomicGen {
   override type T[K] = S[K]
+}
+
+trait FAtomicGenOpt[S[_]] extends AbstractFAtomicGen {
+  override type T[K] = Option[S[K]]
 }
 
 trait FAtomicGenImpl {
@@ -20,6 +23,13 @@ trait FAtomicGenImpl {
     //override val weakTypeTag = typeTag
     override def gen[U](atomics: List[FAtomic[U]]): T[U] = {
       atomics.find(parGen.par[U].isDefinedAt).map(parGen.par[U].apply).getOrElse(throw new Exception(s"找不到匹配类型 ${typeTag.tpe} 的转换器"))
+    }
+  }
+
+  def needAtomicOpt[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenOpt[T] = new FAtomicGenOpt[T] {
+    //override val weakTypeTag = typeTag
+    override def gen[U](atomics: List[FAtomic[U]]): T[U] = {
+      atomics.find(parGen.par[U].isDefinedAt).map(parGen.par[U].apply)
     }
   }
 

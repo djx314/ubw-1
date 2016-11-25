@@ -8,7 +8,17 @@ trait AbstractFAtomicQuery[F[_]] {
 
   def gen[D](atomics: List[FAtomic[D]]): F[D]
 
+  /*def map[U, X](cv: F[U] => X): FQueryTranform[U, X] = new FQueryTranform[U, X] {
+    override def apply(atomics: List[FAtomic[U]]) = cv(gen(atomics))
+  }*/
+
 }
+
+/*trait FQueryTranform[U, X] {
+
+  def apply(atomics: List[FAtomic[U]]): X
+
+}*/
 
 trait FAtomicQuery[E, F[_]] extends AbstractFAtomicQuery[F] {
 
@@ -60,6 +70,10 @@ trait FAtomicShapeTypeHelper[E[_], F[_] <: HList] {
   type U[K] = E[K] :: F[K]
 }
 
+trait FAtomicGenOptHelper[E[_]] {
+  type U[K] = Option[E[K]]
+}
+
 trait FAtomicShapeHelper {
 
   type FNil[_] = HNil
@@ -84,10 +98,20 @@ trait FAtomicShapeHelper {
     }
   }
 
-  implicit def hListAtomicShape[S <: HList, E, A <: HList, F[_]]
-  (implicit repConvert: S <:< (E :: A), subShape: FAtomicShapeImpl[E, F], tailShape: FAtomicShape.AuxHList[A])
-  : FAtomicShapeImpl[S, FAtomicShapeTypeHelper[F, tailShape.U]#U] = {
-    new FAtomicShapeImpl[S, FAtomicShapeTypeHelper[F, tailShape.U]#U] {
+  implicit def repLikeAtomicOptShape[S[_]]: FAtomicShapeImpl[FAtomicGenOpt[S], FAtomicGenOptHelper[S]#U] = {
+    new FAtomicShapeImpl[FAtomicGenOpt[S], FAtomicGenOptHelper[S]#U] {
+
+      override val needWrapLength = 1
+      override def unwrap(rep: FAtomicGenOpt[S]): List[AbstractFAtomicGen] = rep :: Nil
+      override def wrap[D](atomics: List[Any]): Option[S[D]] = atomics.head.asInstanceOf[Option[S[D]]]
+
+    }
+  }
+
+  implicit def hListAtomicShape[S <: HList, E, A <: HList]
+  (implicit repConvert: S <:< (E :: A), subShape: FAtomicShape[E], tailShape: FAtomicShape.AuxHList[A])
+  : FAtomicShapeImpl[S, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] = {
+    new FAtomicShapeImpl[S, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] {
 
       override val needWrapLength = subShape.needWrapLength + tailShape.needWrapLength
 
@@ -96,8 +120,8 @@ trait FAtomicShapeHelper {
         subShape.unwrap(subRep) ::: (tailShape).unwrap(tailRep)
       }
 
-      override def wrap[D](atomics: List[Any]): F[D] :: tailShape.U[D] = {
-        (subShape.wrap(atomics.take(subShape.needWrapLength)): F[D]) :: (tailShape.wrap(atomics.drop(subShape.needWrapLength)): tailShape.U[D])
+      override def wrap[D](atomics: List[Any]): subShape.U[D] :: tailShape.U[D] = {
+        (subShape.wrap(atomics.take(subShape.needWrapLength)): subShape.U[D]) :: (tailShape.wrap(atomics.drop(subShape.needWrapLength)): tailShape.U[D])
       }
 
     }
