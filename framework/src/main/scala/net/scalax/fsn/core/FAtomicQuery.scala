@@ -8,9 +8,9 @@ trait AbstractFAtomicQuery[F[_]] {
 
   def gen[D](atomics: List[FAtomic[D]]): F[D]
 
-  /*def map[U, X](cv: F[U] => X): FQueryTranform[U, X] = new FQueryTranform[U, X] {
-    override def apply(atomics: List[FAtomic[U]]) = cv(gen(atomics))
-  }*/
+  def map[U, X](path: FPath)(cv: F[path.DataType] => X): X = {
+    cv(gen(path.atomics))
+  }
 
 }
 

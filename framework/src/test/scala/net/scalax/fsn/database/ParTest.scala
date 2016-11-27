@@ -36,9 +36,14 @@ class ParTest extends FlatSpec
     println(reader3.get.reader)
     println(FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics)(2).writer)
 
-    /*println(FAtomicQuery(needAtomic[JsonReader] :: needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: HNil).map { case reader1 :: readerOpt2 :: writer1 :: HNil =>
-      readerOpt2.isDefined
-    }.apply(items))*/
+    val isReaderDefined = (myPath: FPath) => {
+      FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: HNil).map(myPath) { case readerOpt2 :: writer1 :: HNil =>
+        readerOpt2.isDefined
+      }
+    }
+
+    val path1 = FPathImpl(In.jWrite[Long])
+    println(isReaderDefined(path1))
   }
 
 }
