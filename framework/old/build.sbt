@@ -4,7 +4,7 @@ libraryDependencies ++= Seq(
 
 val slickVersion = "3.2.0-M1"
 val scalazVersion = "7.3.0-M5"
-val circeVersion = "0.5.1"
+val circeVersion = "0.6.1"
 //val poiVersion = "3.15"
 libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % slickVersion,
