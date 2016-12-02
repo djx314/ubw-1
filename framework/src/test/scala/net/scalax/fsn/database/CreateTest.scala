@@ -44,7 +44,7 @@ class CreateTest extends FlatSpec
     db.run(friendTq.delete).futureValue
   }
 
-  "model" should "insert with json data" in {
+  /*"model" should "insert with json data" in {
     val friendQuery = for {
       inFriend <- friendTq.crud
     } yield for {
@@ -131,6 +131,6 @@ class CreateTest extends FlatSpec
     friendFromDB.id.isDefined shouldBe false
     friendFromDB == friendFromJson shouldBe true
 
-  }
+  }*/
 
 }

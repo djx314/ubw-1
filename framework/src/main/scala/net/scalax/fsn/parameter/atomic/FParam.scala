@@ -10,12 +10,16 @@ sealed trait FParam[T] {
 
 object FParam {
 
-  implicit def decodeFoo[T](implicit decoder: Decoder[T]): Decoder[FParam[T]] = new Decoder[FParam[T]] {
+  implicit def decodeFParam[T](implicit decoder: Decoder[T]): Decoder[FParam[T]] = new Decoder[FParam[T]] {
+    final def apply(c: HCursor): Decoder.Result[FParam[T]] = {
+      c.as[FInParam[T]]
+    }
+  }/*new Decoder[FParam[T]] {
     case class TempDecoder(FInParam: FInParam[T])
     final def apply(c: HCursor): Decoder.Result[FParam[T]] = {
       c.as[TempDecoder].map(_.FInParam)
     }
-  }
+  }*/
 
 }
 
@@ -40,10 +44,9 @@ case class FInParam[T](
 ) extends FParam[T] {
   override def paramComp: FCompAbs = throw new Exception("该实现没有提供组件信息")
 }
+/*object FInParam {
 
-object FInParam {
-
-  implicit def decodeFoo[T](implicit decoder: Decoder[T]) = {
+  implicit def decodeFIParam[T](implicit decoder: Decoder[T]) = {
     implicitly[Decoder[FInParam[T]]]
   }/*new Decoder[FInParam[T]] {
     final def apply(c: HCursor): Decoder.Result[FInParam[T]] = {
@@ -52,4 +55,4 @@ object FInParam {
     }
   }*/
 
-}
+}*/

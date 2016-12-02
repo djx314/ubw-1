@@ -21,7 +21,7 @@ object FColumn {
   type Aux[D] = FColumn { type DataType = D }
 
   def findOpt[T](column: FColumn)(par: PartialFunction[FAtomic[column.DataType], T]): Option[T] = {
-    column.cols.find(par.isDefinedAt(_)).map(par.apply(_))
+    column.cols.find(par.isDefinedAt).map(par.apply)
   }
 
   def find[T](column: FColumn)(par: PartialFunction[FAtomic[column.DataType], T])(implicit typeTag: WeakTypeTag[T]): T = {
@@ -29,7 +29,7 @@ object FColumn {
   }
 
   def filter[T](column: FColumn)(par: PartialFunction[FAtomic[column.DataType], T]): List[T] = {
-    column.cols.filter(par.isDefinedAt(_)).map(par.apply(_))
+    column.cols.filter(par.isDefinedAt).map(par.apply)
   }
 
 }

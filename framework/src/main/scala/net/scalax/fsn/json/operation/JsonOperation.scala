@@ -24,8 +24,8 @@ object JsonOperation {
 
     val eachColumnData: FColumn = data.get(property.proName) match {
       case Some(json) =>
-        json.as[jsonReader.JsonType](jsonReader.reader).toOption match {
-          case Some(data) =>
+        json.as[jsonReader.JsonType](jsonReader.reader) match {
+          case Right(data) =>
             FsnColumn(eachColumn.cols, Option(jsonReader.convert(data)))
           case _ =>
             if (fillData.data.isEmpty) {
