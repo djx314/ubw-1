@@ -1,78 +1,50 @@
 package net.scalax.fsn.core
 
-import scala.reflect.runtime.universe._
 import scala.language.higherKinds
 import scala.language.implicitConversions
 
-trait FPath {
-  type DataType
-  val atomics: List[FAtomic[DataType]]
-}
-
-object FPath {
-  def findOpt[T](path: FPath)(par: PartialFunction[FAtomic[path.DataType], T]): Option[T] = {
-    path.atomics.find(par.isDefinedAt).map(par.apply)
-  }
-
-  def find[T](path: FPath)(par: PartialFunction[FAtomic[path.DataType], T])(typeTag: WeakTypeTag[T]): T = {
-    findOpt(path)(par).getOrElse(throw new Exception(s"找不到匹配类型 ${typeTag.tpe} 的转换器"))
-  }
-
-  def filter[T](path: FPath)(par: PartialFunction[FAtomic[path.DataType], T]): List[T] = {
-    path.atomics.filter(par.isDefinedAt).map(par.apply)
-  }
-
-  def translate[T](pathTran: FPath => T)(implicit aa: String) = {
-
-  }
-}
-
-case class FPathImpl[D](override val atomics: List[FAtomic[D]]) extends FPath {
-  override type DataType = D
-}
-
-trait FPathShape[Source, Target] {
-
-  def apply(path: FPath, source: Source): Target
-
-}
-
-trait FPile[E, U, C] {
+trait FPile[E, U, C[_]] {
   self =>
 
   type PathType = E
   type DataType = U
-  type WrapType = C
+  type WrapType[T] = C[T]
 
   val pathPile: PathType
-  //val wrapPile: WrapType
 
   val fShape: FsnShape[PathType, DataType, WrapType]
 
-  def copyWrapPile(dataList: List[Any]): FPile[E, U, C] = new FPile[E, U, C] {
-    override val pathPile = self.pathPile
-    //override val wrapPile = self.fShape.decodeData(dataList)
-    override val fShape = self.fShape
-  }
+  val prePile: List[FPileWrap[DataType, WrapType]]
 
 }
 
 object FPile {
 }
 
-trait FsnShape[Packed_, DataType_, UnPacked_] {
+trait FPileWrap[P, C[_]] {
+
+  type PathType
+  type DataType
+  type ParentDataType = P
+  type WrapType[T] = C[T]
+
+  val convert: DataType => ParentDataType
+  val pile: FPile[PathType, DataType, WrapType]
+
+}
+
+trait FsnShape[Packed_, DataType_, UnPacked_[_]] {
 
   type Packed = Packed_
-  type UnPacked = UnPacked_
+  type UnPacked[T] = UnPacked_[T]
   type DataType = DataType_
 
   def encodeColumn(pile: Packed_): List[FPath]
   def decodeColumn(columns: List[FPath]): Packed_
 
-  def encodeData(pileData: UnPacked_): List[Any]
-  def decodeData(data: List[Any]): UnPacked_
+  def encodeData(pileData: DataType_): List[UnPacked_[Any]]
+  def decodeData(data: List[UnPacked_[Any]]): DataType_
 
-  def zero: UnPacked_
-  slick.lifted.Shape
+  def zero: DataType_
 
 }
