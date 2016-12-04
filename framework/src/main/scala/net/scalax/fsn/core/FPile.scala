@@ -14,11 +14,14 @@ trait FPile[E, U, C[_]] {
 
   val fShape: FsnShape[PathType, DataType, WrapType]
 
-  val prePile: List[FPileWrap[DataType, WrapType]]
+  val prePile: FPile.SubPileType[DataType, WrapType]
 
 }
 
 object FPile {
+
+  type SubPileType[DataType, WrapType[_]] = (List[Any] => DataType, List[FPileWrap[DataType, WrapType]])
+
 }
 
 trait FPileWrap[P, C[_]] {
@@ -28,7 +31,7 @@ trait FPileWrap[P, C[_]] {
   type ParentDataType = P
   type WrapType[T] = C[T]
 
-  val convert: DataType => ParentDataType
+  //val convert: DataType => ParentDataType
   val pile: FPile[PathType, DataType, WrapType]
 
 }
