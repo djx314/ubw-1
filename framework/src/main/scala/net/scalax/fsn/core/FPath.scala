@@ -9,6 +9,10 @@ trait FPath {
   val atomics: List[FAtomic[DataType]]
 }
 
+case class FPathImpl[D](override val atomics: List[FAtomic[D]]) extends FPath {
+  override type DataType = D
+}
+
 object FPath {
   def findOpt[T](path: FPath)(par: PartialFunction[FAtomic[path.DataType], T]): Option[T] = {
     path.atomics.find(par.isDefinedAt).map(par.apply)
@@ -26,13 +30,8 @@ object FPath {
 
   }
 }
-
-case class FPathImpl[D](override val atomics: List[FAtomic[D]]) extends FPath {
-  override type DataType = D
-}
-
-trait FPathShape[Source, Target] {
+/*trait FPathShape[Source, Target] {
 
   def apply(path: FPath, source: Source): Target
 
-}
+}*/
