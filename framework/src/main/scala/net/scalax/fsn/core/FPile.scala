@@ -3,14 +3,15 @@ package net.scalax.fsn.core
 import scala.language.higherKinds
 import scala.language.implicitConversions
 
-trait FPile[E, U, C[_]] {
+trait FPileAbstract[C[_]] {
   self =>
 
-  type PathType = E
-  type DataType = U
+  type PathType
+  type DataType
   type WrapType[T] = C[T]
 
   val pathPile: PathType
+  val data: Option[DataType]
 
   val fShape: FsnShape[PathType, DataType, WrapType]
 
@@ -18,20 +19,19 @@ trait FPile[E, U, C[_]] {
 
 }
 
-object FPile {
-
-  type SubPileType[DataType, WrapType[_]] = (List[Any] => DataType, List[FPileWrap[WrapType]])
-
+case class FPileImpl[E, U, C[_]](
+  override val pathPile: E,
+  override val data: Option[U],
+  override val fShape: FsnShape[E, U, C],
+  override val prePile: FPile.SubPileType[U, C]
+) extends FPileAbstract[C] {
+  override type PathType = E
+  override type DataType = U
 }
 
-trait FPileWrap[C[_]] {
+object FPile {
 
-  type PathType
-  type DataType
-  type WrapType[T] = C[T]
-
-  //val convert: DataType => ParentDataType
-  val pile: FPile[PathType, DataType, WrapType]
+  type SubPileType[DataType, WrapType[_]] = (List[Any] => DataType, List[FPileAbstract[WrapType]])
 
 }
 
