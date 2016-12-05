@@ -20,15 +20,14 @@ trait FPile[E, U, C[_]] {
 
 object FPile {
 
-  type SubPileType[DataType, WrapType[_]] = (List[Any] => DataType, List[FPileWrap[DataType, WrapType]])
+  type SubPileType[DataType, WrapType[_]] = (List[Any] => DataType, List[FPileWrap[WrapType]])
 
 }
 
-trait FPileWrap[P, C[_]] {
+trait FPileWrap[C[_]] {
 
   type PathType
   type DataType
-  type ParentDataType = P
   type WrapType[T] = C[T]
 
   //val convert: DataType => ParentDataType
