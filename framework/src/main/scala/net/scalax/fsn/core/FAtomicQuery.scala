@@ -36,7 +36,7 @@ object FAtomicQuery {
 
   def apply[E](rep1: E)(implicit shape: FAtomicShape[E]): FAtomicQuery[E, shape.U] = new FAtomicQuery[E, shape.U] {
     override val rep = rep1
-    override val atomicSape  = shape: FAtomicShape.Aux[E, shape.U]
+    override val atomicSape = shape: FAtomicShape.Aux[E, shape.U]
   }
 
 }
