@@ -7,6 +7,7 @@ import scala.language.implicitConversions
 trait AbstractFAtomicGen {
   type T[_]
   def gen[U](atomics: List[FAtomic[U]]): T[U]
+  def getBy[U](atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]]
 }
 
 trait FAtomicGen[S[_]] extends AbstractFAtomicGen {
@@ -24,12 +25,25 @@ trait FAtomicGenImpl {
     override def gen[U](atomics: List[FAtomic[U]]): T[U] = {
       atomics.find(parGen.par[U].isDefinedAt).map(parGen.par[U].apply).getOrElse(throw new Exception(s"找不到匹配类型 ${typeTag.tpe} 的转换器"))
     }
+
+    override def getBy[U](atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]] = {
+      atomics.find(parGen.par[U].isDefinedAt) match {
+        case Some(s) =>
+          Right(parGen.par[U](s))
+        case _ =>
+          Left(FAtomicException(List(typeTag)))
+      }
+    }
   }
 
   def needAtomicOpt[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenOpt[T] = new FAtomicGenOpt[T] {
     //override val weakTypeTag = typeTag
     override def gen[U](atomics: List[FAtomic[U]]): T[U] = {
       atomics.find(parGen.par[U].isDefinedAt).map(parGen.par[U].apply)
+    }
+
+    override def getBy[U](atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]] = {
+      Right(atomics.find(parGen.par[U].isDefinedAt).map(parGen.par[U].apply))
     }
   }
 
