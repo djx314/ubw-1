@@ -31,15 +31,14 @@ lazy val fsn = (project in file("."))
         )
     }, {
       lazy val autoGit = taskKey[Unit]("To run a git gui.")
-      autoGit <<= (
-        baseDirectory in ThisBuild,
-        fullClasspath in Compile,
-        javaHome in Compile,
-        connectInput in Compile,
-        outputStrategy in Compile,
-        javaOptions in Compile,
-        envVars in Compile
-      ) map { (baseDir, fullCp, jHome, cInput, sOutput, jOpts, envs) =>
+      autoGit := {
+        val baseDir = (baseDirectory in ThisBuild).value
+        val fullCp = (fullClasspath in Compile).value
+        val jHome = (javaHome in Compile).value
+        val cInput = (connectInput in Compile).value
+        val sOutput = (outputStrategy in Compile).value
+        val jOpts = (javaOptions in Compile).value
+        val envs = (envVars in Compile).value
         val forkOptions: ForkOptions =
           ForkOptions(
             workingDirectory = Some(baseDir),

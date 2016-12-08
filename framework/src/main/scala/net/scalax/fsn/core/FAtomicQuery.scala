@@ -6,10 +6,10 @@ import shapeless._
 
 trait AbstractFAtomicQuery[F[_]] {
 
-  def gen[D](atomics: List[FAtomic[D]]): F[D]
+  def gen[D](atomics: List[FAtomic[D]]): Either[FAtomicException, F[D]]
 
-  def map[U, X](path: FPath)(cv: F[path.DataType] => X): X = {
-    cv(gen(path.atomics))
+  def map[U, X](path: FPath)(cv: F[path.DataType] => X): Either[FAtomicException, X] = {
+    gen(path.atomics).right.map(cv)
   }
 
 }
@@ -26,8 +26,19 @@ trait FAtomicQuery[E, F[_]] extends AbstractFAtomicQuery[F] {
 
   val atomicSape: FAtomicShape.Aux[E, F]
 
-  override def gen[D](atomics: List[FAtomic[D]]): F[D] = {
-    atomicSape.wrap(atomicSape.unwrap(rep).map { s => s.gen(atomics) })
+  override def gen[D](atomics: List[FAtomic[D]]): Either[FAtomicException, F[D]] = {
+    atomicSape.wrap(atomicSape.unwrap(rep).map { s => s.getBy(atomics) }.foldLeft(Right(Nil): Either[FAtomicException, List[Any]]) { (font, end) =>
+      (font -> end) match {
+        case (Left(s), Left(t)) =>
+          Left(FAtomicException(s.typeTags ::: t.typeTags))
+        case (Left(s), Right(_)) =>
+          Left(FAtomicException(s.typeTags))
+        case (Right(_), Left(s)) =>
+          Left(FAtomicException(s.typeTags))
+        case (Right(s), Right(t)) =>
+          Right(s ::: t :: Nil)
+      }
+    })
   }
 
 }
@@ -36,7 +47,7 @@ object FAtomicQuery {
 
   def apply[E](rep1: E)(implicit shape: FAtomicShape[E]): FAtomicQuery[E, shape.U] = new FAtomicQuery[E, shape.U] {
     override val rep = rep1
-    override val atomicSape  = shape: FAtomicShape.Aux[E, shape.U]
+    override val atomicSape = shape: FAtomicShape.Aux[E, shape.U]
   }
 
 }
@@ -47,7 +58,7 @@ trait FAtomicShape[-E] {
 
   val needWrapLength: Int
   def unwrap(rep: E): List[AbstractFAtomicGen]
-  def wrap[D](atomics: List[Any]): U[D]
+  def wrap[D](atomics: Either[FAtomicException, List[Any]]): Either[FAtomicException, U[D]]
 
 }
 
@@ -62,7 +73,7 @@ trait FAtomicShapeImpl[-E, F[_]] extends FAtomicShape[E] {
 
   val needWrapLength: Int
   def unwrap(rep: E): List[AbstractFAtomicGen]
-  def wrap[D](atomics: List[Any]): U[D]
+  def wrap[D](atomics: Either[FAtomicException, List[Any]]): Either[FAtomicException, U[D]]
 
 }
 
@@ -83,7 +94,7 @@ trait FAtomicShapeHelper {
 
       override val needWrapLength = 0
       override def unwrap(rep: HNil): List[AbstractFAtomicGen] = Nil
-      override def wrap[D](atomics: List[Any]): HNil = HNil
+      override def wrap[D](atomics: Either[FAtomicException, List[Any]]): Either[FAtomicException, FNil[D]] = Right(HNil)
 
     }
   }
@@ -93,7 +104,7 @@ trait FAtomicShapeHelper {
 
       override val needWrapLength = 1
       override def unwrap(rep: FAtomicGen[S]): List[AbstractFAtomicGen] = rep :: Nil
-      override def wrap[D](atomics: List[Any]): S[D] = atomics.head.asInstanceOf[S[D]]
+      override def wrap[D](atomics: Either[FAtomicException, List[Any]]): Either[FAtomicException, S[D]] = atomics.right.map(_.head.asInstanceOf[S[D]])
 
     }
   }
@@ -103,7 +114,7 @@ trait FAtomicShapeHelper {
 
       override val needWrapLength = 1
       override def unwrap(rep: FAtomicGenOpt[S]): List[AbstractFAtomicGen] = rep :: Nil
-      override def wrap[D](atomics: List[Any]): Option[S[D]] = atomics.head.asInstanceOf[Option[S[D]]]
+      override def wrap[D](atomics: Either[FAtomicException, List[Any]]): Either[FAtomicException, Option[S[D]]] = atomics.right.map(_.head.asInstanceOf[Option[S[D]]])
 
     }
   }
@@ -120,8 +131,17 @@ trait FAtomicShapeHelper {
         subShape.unwrap(subRep) ::: tailShape.unwrap(tailRep)
       }
 
-      override def wrap[D](atomics: List[Any]): subShape.U[D] :: tailShape.U[D] = {
-        (subShape.wrap(atomics.take(subShape.needWrapLength)): subShape.U[D]) :: (tailShape.wrap(atomics.drop(subShape.needWrapLength)): tailShape.U[D])
+      override def wrap[D](atomics: Either[FAtomicException, List[Any]]): Either[FAtomicException, subShape.U[D] :: tailShape.U[D]] = {
+        ((subShape.wrap(atomics.right.map(_.take(subShape.needWrapLength))): Either[FAtomicException, subShape.U[D]]) -> (tailShape.wrap(atomics.right.map(_.drop(subShape.needWrapLength))): Either[FAtomicException, tailShape.U[D]])) match {
+          case (Left(s), Left(t)) =>
+            Left(FAtomicException(s.typeTags ::: t.typeTags))
+          case (Left(s), Right(_)) =>
+            Left(FAtomicException(s.typeTags))
+          case (Right(_), Left(s)) =>
+            Left(FAtomicException(s.typeTags))
+          case (Right(s), Right(t)) =>
+            Right(s :: t)
+        }
       }
 
     }
