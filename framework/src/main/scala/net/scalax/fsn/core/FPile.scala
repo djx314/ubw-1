@@ -125,32 +125,32 @@ object FsnShape {
     override val dataLength = 1
   }
 
-  implicit def jfkoajiroejhteiroth[S <: HList, T <: HList, U, V <: HList](
+  implicit def jfkoajiroejhteiroth[S <: HList, T <: HList, U, W, V <: HList](
     implicit
-    cv: S <:< (FPathImpl[U] :: T),
-    reverseCv: (FPathImpl[U] :: T) <:< S,
-    //subShape: FsnShape[FPathImpl[U], Option[U], Option],
+    cv: S <:< (U :: T),
+    reverseCv: (U :: T) <:< S,
+    subShape: FsnShape[U, W, Option],
     tailShape: FsnShape[T, V, Option]
-  ): FsnShape[S, Option[U] :: V, Option] = new FsnShape[S, Option[U] :: V, Option] {
+  ): FsnShape[S, W :: V, Option] = new FsnShape[S, W :: V, Option] {
     override def encodeColumn(pile: S): List[FPath] = {
       val headPile :: hlistPile = cv(pile)
-      headPile :: tailShape.encodeColumn(hlistPile)
+      subShape.encodeColumn(headPile) ::: tailShape.encodeColumn(hlistPile)
     }
     override def decodeColumn(columns: List[FPath]): S = {
-      reverseCv(columns.head.asInstanceOf[FPathImpl[U]] :: tailShape.decodeColumn(columns.tail))
+      reverseCv(subShape.decodeColumn(columns.take(subShape.dataLength)) :: tailShape.decodeColumn(columns.drop(subShape.dataLength)))
     }
 
-    override def encodeData(pileData: Option[U] :: V): List[Option[Any]] = {
+    override def encodeData(pileData: W :: V): List[Option[Any]] = {
       val headData :: tailData = pileData
-      headData :: tailShape.encodeData(tailData)
+      subShape.encodeData(headData) ::: tailShape.encodeData(tailData)
     }
-    override def decodeData(data: List[Option[Any]]): Option[U] :: V = {
-      data.head.asInstanceOf[Option[U]] :: tailShape.decodeData(data.tail)
+    override def decodeData(data: List[Option[Any]]): W :: V = {
+      subShape.decodeData(data.take(subShape.dataLength)) :: tailShape.decodeData(data.take(subShape.dataLength))
     }
 
-    override def zero = Option.empty[U] :: tailShape.zero
+    override def zero = subShape.zero :: tailShape.zero
 
-    override val dataLength = 1 + tailShape.dataLength
+    override val dataLength = subShape.dataLength + tailShape.dataLength
   }
 
   implicit val hlistFsnShapeImplicit: FsnShape[HNil, HNil, Option] = hlistFsnShape

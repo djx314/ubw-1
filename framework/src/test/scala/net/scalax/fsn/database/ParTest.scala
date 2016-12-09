@@ -89,14 +89,25 @@ class ParTest extends FlatSpec
     val pile = FPile.applyOpt(
       FPathImpl(In.property("我是") :: In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long]) ::
       ("小莎莎" columns (In.default("1234") ::: In.jWrite[String])) ::
-      ("的枕头" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) ::
+      (("千反田" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) :: HNil) ::
+      (
+        ("的枕头" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) ::
+        ("喵喵喵" columns (In.jRead[Long] ::: In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
+          (
+            ("哈哈哈哈哈" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) ::
+            ("汪汪汪" columns (In.jRead[Long] ::: In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
+            HNil
+        ) ::
+        HNil
+      ) ::
       HNil
     )
     val paths = pile.fShape.encodeColumn(pile.pathPile)
 
     val resultGen = FPile.transform { path =>
-      FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[DefaultValue] :: needAtomic[FProperty] :: HNil)
-      .map(path) { case readerOpt :: writer :: default :: property :: HNil =>
+      FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomic[DefaultValue] :: needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+      .map(path) { case readerOpt :: writer :: (default :: defaultOpt :: HNil) :: property :: HNil =>
+        println(defaultOpt + "11111111    " + pile.fShape.dataLength)
         new JsonWriterImpl {
           override type DataType = writer.JsonType
           override val key = property.proName
