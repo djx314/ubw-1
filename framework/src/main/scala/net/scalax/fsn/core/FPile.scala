@@ -40,6 +40,24 @@ object FPile {
     apply(paths)
   }
 
+  def transformTree[C[_], S, T](pathGen: FEntity[C] => Either[FAtomicException, S])(columnGen: (List[S], List[FPileAbstract[C]]) => T): (List[FPileAbstract[C]], List[Any]) => Either[FAtomicException, T] = {
+    (piles: List[FPileAbstract[C]], data: List[Any]) => {
+      val (pileDataList, tailData) = piles.foldLeft((List.empty[(FPileAbstract[C], List[Any])] -> data)) { case ((tuplelist, dataList), pile) =>
+        def fetchTreeLeaf(tempPile: FPileAbstract[C]): Int = {
+          if (tempPile.prePile._2.isEmpty) {
+            tempPile.fShape.dataLength
+          } else {
+            tempPile.prePile._2.map(fetchTreeLeaf).sum
+          }
+        }
+        val dataLength = fetchTreeLeaf(pile)
+        ((pile, dataList.take(dataLength)) :: tuplelist) -> dataList.drop(dataLength)
+      }
+      if (tailData.size > 0) throw  new Exception("数组长度不正确")
+      ???
+    }
+  }
+
   def transform[C[_], S, T](pathGen: FEntity[C] => Either[FAtomicException, S])(columnGen: List[S] => T): List[FEntity[C]] => Either[FAtomicException, T] = {
     (initPaths: List[FEntity[C]]) => {
       initPaths.map(pathGen).foldLeft(Right(Nil): Either[FAtomicException, List[S]]) { (font, end) =>

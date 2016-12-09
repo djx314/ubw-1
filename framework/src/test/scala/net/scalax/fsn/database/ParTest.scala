@@ -86,7 +86,7 @@ class ParTest extends FlatSpec
       val data: Option[DataType]
     }
 
-    val pile = FPile.applyOpt(
+    val mainPile = FPile.applyOpt(
       ("我是" columns (In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
       ("小莎莎" columns (In.default("1234") ::: In.jWrite[String])) ::
       (("千反田" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) :: HNil) ::
@@ -102,12 +102,19 @@ class ParTest extends FlatSpec
       ) ::
       HNil
     )
-    val paths = pile.fShape.encodeColumn(pile.pathPile)
+    val appendPile = FPile.applyOpt(
+      ("jilen" columns (In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      ("kerr" columns (In.default("汪") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      HNil
+    )
+
+    val piles: List[FPileAbstract[Option]] = mainPile :: appendPile :: Nil
+    val paths = piles.map(s => s.fShape.encodeColumn(s.pathPile)).flatten
 
     val resultGen = FPile.transformOpt { path =>
       FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
       .map(path) { case readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil =>
-        println(defaultOpt + "11111111    " + pile.fShape.dataLength)
+        println(defaultOpt + "11111111")
         val defaultValueOpt = path.data.fold(defaultOpt.map(_.value))(Option(_))
         new JsonWriterImpl {
           override type DataType = writer.JsonType
@@ -124,7 +131,7 @@ class ParTest extends FlatSpec
       }.toMap.asJson
     }
 
-    resultGen(paths.zip(pile.fShape.encodeData(pile.fShape.zero)).map { case (s, t) => FEntity.changeData(s)(t.asInstanceOf[Option[s.DataType]]) }) match {
+    resultGen(paths.zip(piles.map(s => s.fShape.encodeData(s.fShape.zero)).flatten).map { case (s, t) => FEntity.changeData(s)(t.asInstanceOf[Option[s.DataType]]) }) match {
       case Left(e) => throw e
       case Right(s) =>
         println(s)
