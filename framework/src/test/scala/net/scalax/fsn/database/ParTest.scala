@@ -4,8 +4,15 @@ import net.scalax.fsn.core._
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
-import net.scalax.fsn.mix.helpers.In
+import net.scalax.fsn.slick.atomic.SlickCreate
+import net.scalax.fsn.mix.helpers.{In, SlickCRUDImplicits}
 import shapeless._
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.parser._
+import io.circe.syntax._
+import net.scalax.fsn.common.atomic.{DefaultValue, FProperty}
+import scala.language.implicitConversions
 
 class ParTest extends FlatSpec
   with Matchers
@@ -44,6 +51,84 @@ class ParTest extends FlatSpec
 
     val path1 = FPathImpl(In.jWrite[Long])
     println(isReaderDefined(path1))
+  }
+
+  class FColumnStringImplicits(proName1: String) {
+    def column[D](converts: List[FAtomic[D]]): FPathImpl[D] = {
+      val proName = new FProperty[D] {
+        override val proName = proName1
+      }
+      FPathImpl(proName :: converts)
+    }
+    def column[D](converts: FAtomic[D]*): FPathImpl[D] = {
+      val proName = new FProperty[D] {
+        override val proName = proName1
+      }
+      FPathImpl(proName :: converts.toList)
+    }
+    def columns[D](converts: List[FAtomic[D]]*): FPathImpl[D] = {
+      val proName = new FProperty[D] {
+        override val proName = proName1
+      }
+      FPathImpl(proName :: converts.toList.flatten)
+    }
+  }
+
+  implicit def fColumnStringExtesionMethods(proName: String): FColumnStringImplicits = new FColumnStringImplicits(proName)
+
+  "FPile" should "work fine" in {
+
+    trait JsonWriterImpl {
+      type DataType
+      val key: String
+      val encoder: Encoder[DataType]
+      val isReaderDefined: Boolean //多余的
+      val data: DataType
+    }
+
+    val pile = FPile.applyOpt(
+      FPathImpl(In.property("我是") :: In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long]) ::
+      ("小莎莎" columns (In.default("1234") ::: In.jWrite[String])) ::
+      (("千反田" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) :: HNil) ::
+      (
+        ("的枕头" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) ::
+        ("喵喵喵" columns (In.jRead[Long] ::: In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
+          (
+            ("哈哈哈哈哈" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) ::
+            ("汪汪汪" columns (In.jRead[Long] ::: In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
+            HNil
+        ) ::
+        HNil
+      ) ::
+      HNil
+    )
+    val paths = pile.fShape.encodeColumn(pile.pathPile)
+
+    val resultGen = FPile.transform { path =>
+      FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomic[DefaultValue] :: needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+      .map(path) { case readerOpt :: writer :: (default :: defaultOpt :: HNil) :: property :: HNil =>
+        println(defaultOpt + "11111111    " + pile.fShape.dataLength)
+        new JsonWriterImpl {
+          override type DataType = writer.JsonType
+          override val key = property.proName
+          override val encoder = writer.writer
+          override val isReaderDefined = readerOpt.isDefined
+          override val data = writer.convert(default.value)
+        }: JsonWriterImpl
+      }
+    } { results =>
+      results.map { s =>
+        s.key -> s.data.asJson(s.encoder)
+      }.toMap.asJson
+    }
+
+    resultGen(paths) match {
+      case Left(e) => throw e
+      case Right(s) =>
+        println(s)
+        s
+    }
+
   }
 
 }
