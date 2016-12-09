@@ -40,8 +40,8 @@ object FPile {
     apply(paths)
   }
 
-  def transform[C[_], S, T](pathGen: FPath => Either[FAtomicException, S])(columnGen: List[S] => T): List[FPath] => Either[FAtomicException, T] = {
-    (initPaths: List[FPath]) => {
+  def transform[C[_], S, T](pathGen: FEntity[C] => Either[FAtomicException, S])(columnGen: List[S] => T): List[FEntity[C]] => Either[FAtomicException, T] = {
+    (initPaths: List[FEntity[C]]) => {
       initPaths.map(pathGen).foldLeft(Right(Nil): Either[FAtomicException, List[S]]) { (font, end) =>
         (font -> end) match {
           case (Left(s), Left(t)) =>
@@ -56,13 +56,10 @@ object FPile {
       }.right.map(columnGen)
     }
   }
-  /*def transformOpt(piles: List[FEntity[Option]] => List[Any]): List[FEntity[Option]] => List[FEntity[Option]] = {
-    (oldPiles: List[FEntity[Option]]) => {
-      oldPiles.zip(piles(oldPiles)).map { case (entity, data) =>
-        FEntity.changeData(entity)(data.asInstanceOf[Option[entity.DataType]])
-      }
-    }
-  }*/
+
+  def transformOpt[S, T](pathGen: FEntity[Option] => Either[FAtomicException, S])(columnGen: List[S] => T): List[FEntity[Option]] => Either[FAtomicException, T] = {
+    transform(pathGen)(columnGen)
+  }
 }
 
 trait FEntity[C[_]] extends FPath {

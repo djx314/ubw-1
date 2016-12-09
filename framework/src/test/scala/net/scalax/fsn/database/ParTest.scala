@@ -83,7 +83,7 @@ class ParTest extends FlatSpec
       val key: String
       val encoder: Encoder[DataType]
       val isReaderDefined: Boolean //多余的
-      val data: DataType
+      val data: Option[DataType]
     }
 
     val pile = FPile.applyOpt(
@@ -91,11 +91,11 @@ class ParTest extends FlatSpec
       ("小莎莎" columns (In.default("1234") ::: In.jWrite[String])) ::
       (("千反田" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) :: HNil) ::
       (
-        ("的枕头" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) ::
+        ("的枕头" columns (In.jRead[Int] ::: In.jWrite[Int])) ::
         ("喵喵喵" columns (In.jRead[Long] ::: In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
           (
             ("哈哈哈哈哈" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) ::
-            ("汪汪汪" columns (In.jRead[Long] ::: In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
+            ("汪汪汪" columns (In.jRead[Long] ::: In.jWrite[Long])) ::
             HNil
         ) ::
         HNil
@@ -104,25 +104,27 @@ class ParTest extends FlatSpec
     )
     val paths = pile.fShape.encodeColumn(pile.pathPile)
 
-    val resultGen = FPile.transform { path =>
-      FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomic[DefaultValue] :: needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
-      .map(path) { case readerOpt :: writer :: (default :: defaultOpt :: HNil) :: property :: HNil =>
+    val resultGen = FPile.transformOpt { path =>
+      FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+      .map(path) { case readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil =>
         println(defaultOpt + "11111111    " + pile.fShape.dataLength)
+        val defaultValueOpt = path.data.fold(defaultOpt.map(_.value))(Option(_))
         new JsonWriterImpl {
           override type DataType = writer.JsonType
           override val key = property.proName
           override val encoder = writer.writer
           override val isReaderDefined = readerOpt.isDefined
-          override val data = writer.convert(default.value)
+          override val data = defaultValueOpt.map(writer.convert)
         }: JsonWriterImpl
       }
     } { results =>
       results.map { s =>
-        s.key -> s.data.asJson(s.encoder)
+        implicit val encoderForOpt = s.encoder
+        s.key -> s.data.asJson
       }.toMap.asJson
     }
 
-    resultGen(paths) match {
+    resultGen(paths.zip(pile.fShape.encodeData(pile.fShape.zero)).map { case (s, t) => FEntity.changeData(s)(t.asInstanceOf[Option[s.DataType]]) }) match {
       case Left(e) => throw e
       case Right(s) =>
         println(s)
