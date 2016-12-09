@@ -2,7 +2,7 @@ package net.scalax.fsn.core
 
 import scala.reflect.runtime.universe._
 
-trait FAtomic[+D]
+trait FAtomic[D]
 
 trait FColumn {
 

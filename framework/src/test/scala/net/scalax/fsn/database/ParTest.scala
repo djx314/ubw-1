@@ -87,7 +87,7 @@ class ParTest extends FlatSpec
     }
 
     val pile = FPile.applyOpt(
-      FPathImpl(In.property("我是") :: In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long]) ::
+      ("我是" columns (In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
       ("小莎莎" columns (In.default("1234") ::: In.jWrite[String])) ::
       (("千反田" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) :: HNil) ::
       (

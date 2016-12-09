@@ -99,39 +99,51 @@ trait FsnShape[Packed_, DataType_, UnPacked_[_]] {
 
 }
 
+trait ZeroPile[T] {
+
+  def zero: T
+
+}
+
+object ZeroPile {
+  implicit def optionPileZero[T]: ZeroPile[Option[T]] = new ZeroPile[Option[T]] {
+    override def zero = None
+  }
+}
+
 object FsnShape {
 
-  val hlistFsnShape: FsnShape[HNil, HNil, Option] = new FsnShape[HNil, HNil, Option] {
+  implicit def hlistFsnShape[T[_]]: FsnShape[HNil, HNil, T] = new FsnShape[HNil, HNil, T] {
     override def encodeColumn(pile: HNil): List[FPath] = Nil
     override def decodeColumn(columns: List[FPath]): HNil = HNil
 
-    override def encodeData(pileData: HNil): List[Option[Any]] = Nil
-    override def decodeData(data: List[Option[Any]]): HNil = HNil
+    override def encodeData(pileData: HNil): List[T[Any]] = Nil
+    override def decodeData(data: List[T[Any]]): HNil = HNil
 
     override def zero = HNil
 
     override val dataLength = 0
   }
 
-  implicit def hlistFsnShapeaa[T]: FsnShape[FPathImpl[T], Option[T], Option] = new FsnShape[FPathImpl[T], Option[T], Option] {
+  implicit def hlistFsnShapeaa[T, U[_]](implicit zeroPile: ZeroPile[U[T]]): FsnShape[FPathImpl[T], U[T], U] = new FsnShape[FPathImpl[T], U[T], U] {
     override def encodeColumn(pile: FPathImpl[T]): List[FPath] = pile :: Nil
     override def decodeColumn(columns: List[FPath]): FPathImpl[T] = columns.head.asInstanceOf[FPathImpl[T]]
 
-    override def encodeData(pileData: Option[T]): List[Option[Any]] = pileData :: Nil
-    override def decodeData(data: List[Option[Any]]): Option[T] = data.head.asInstanceOf[Option[T]]
+    override def encodeData(pileData: U[T]): List[U[Any]] = pileData.asInstanceOf[U[Any]] :: Nil
+    override def decodeData(data: List[U[Any]]): U[T] = data.head.asInstanceOf[U[T]]
 
-    override def zero = None
+    override def zero = zeroPile.zero
 
     override val dataLength = 1
   }
 
-  implicit def jfkoajiroejhteiroth[S <: HList, T <: HList, U, W, V <: HList](
+  implicit def jfkoajiroejhteiroth[S <: HList, T <: HList, U, W, V <: HList, A[_]](
     implicit
     cv: S <:< (U :: T),
     reverseCv: (U :: T) <:< S,
-    subShape: FsnShape[U, W, Option],
-    tailShape: FsnShape[T, V, Option]
-  ): FsnShape[S, W :: V, Option] = new FsnShape[S, W :: V, Option] {
+    subShape: FsnShape[U, W, A],
+    tailShape: FsnShape[T, V, A]
+  ): FsnShape[S, W :: V, A] = new FsnShape[S, W :: V, A] {
     override def encodeColumn(pile: S): List[FPath] = {
       val headPile :: hlistPile = cv(pile)
       subShape.encodeColumn(headPile) ::: tailShape.encodeColumn(hlistPile)
@@ -140,11 +152,11 @@ object FsnShape {
       reverseCv(subShape.decodeColumn(columns.take(subShape.dataLength)) :: tailShape.decodeColumn(columns.drop(subShape.dataLength)))
     }
 
-    override def encodeData(pileData: W :: V): List[Option[Any]] = {
+    override def encodeData(pileData: W :: V): List[A[Any]] = {
       val headData :: tailData = pileData
       subShape.encodeData(headData) ::: tailShape.encodeData(tailData)
     }
-    override def decodeData(data: List[Option[Any]]): W :: V = {
+    override def decodeData(data: List[A[Any]]): W :: V = {
       subShape.decodeData(data.take(subShape.dataLength)) :: tailShape.decodeData(data.take(subShape.dataLength))
     }
 
@@ -152,7 +164,5 @@ object FsnShape {
 
     override val dataLength = subShape.dataLength + tailShape.dataLength
   }
-
-  implicit val hlistFsnShapeImplicit: FsnShape[HNil, HNil, Option] = hlistFsnShape
 
 }
