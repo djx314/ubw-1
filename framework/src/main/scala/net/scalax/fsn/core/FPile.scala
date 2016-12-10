@@ -15,25 +15,64 @@ trait FPileAbstract[C[_]] {
 
   val fShape: FsnShape[PathType, DataType, WrapType]
 
-  val prePile: FPile.SubPileType[DataType, WrapType]
+  val dataFromSub: List[Any] => DataType
+  val subs: List[FPileAbstract[WrapType]]
 
 }
 
 case class FPileImpl[E, U, C[_]](
   override val pathPile: E,
   override val fShape: FsnShape[E, U, C],
-  override val prePile: FPile.SubPileType[U, C]
+  override val dataFromSub: List[Any] => U,
+  override val subs: List[FPileAbstract[C]]
 ) extends FPileAbstract[C] {
+  override type PathType = E
+  override type DataType = U
+}
+
+trait FPileWithDataAbstract[C[_]] extends FPileAbstract[C] {
+  self =>
+
+  val dataListFromSubList: List[C[Any]] => List[C[Any]] = { list =>
+    def splitList[X](spList: List[X], length: Int*): List[List[X]] = {
+      val (result, leaveOver) = length.foldLeft(List.empty[List[X]] -> spList) { (a, b) =>
+        val (head, tail) = a._2.splitAt(b)
+        (head :: a._1) -> tail
+      }
+      if (leaveOver.isEmpty) throw new Exception("分离的数组还有剩下的元素")
+      result.reverse
+    }
+    fShape.encodeData(dataFromSub(subs.zip(splitList(list, subs.map(_.dataLengthSum): _*)).map { case (eachSub, subData) =>
+      if (eachSub.subs.isEmpty) {
+        eachSub.fShape.decodeData(subData)
+      } else {
+        eachSub.fShape.decodeData(eachSub.dataListFromSubList(subData))
+      }
+    }))
+  }
+  lazy val paths: List[FPath] = fShape.encodeColumn(pathPile)
+  val dataLengthSum: Int
+  override val subs: List[FPileWithDataAbstract[WrapType]]
+
+}
+
+case class FPileWithDataImpl[E, U, C[_]](
+  override val pathPile: E,
+  override val fShape: FsnShape[E, U, C],
+  override val dataLengthSum: Int,
+  override val dataFromSub: List[Any] => U,
+  override val subs: List[FPileWithDataAbstract[C]]
+) extends FPileWithDataAbstract[C] {
   override type PathType = E
   override type DataType = U
 }
 
 object FPile {
 
-  type SubPileType[DataType, WrapType[_]] = (List[Any] => DataType, List[FPileAbstract[WrapType]])
+  //type SubPileType[DataType, WrapType[_]] = (List[Any] => DataType, List[FPileAbstract[WrapType]])
 
   def apply[E, U, C[_]](paths: E)(implicit shape: FsnShape[E, U, C]): FPileImpl[E, U, C] = {
-    FPileImpl(paths, shape, { _: List[Any] => shape.zero } -> List.empty[FPileAbstract[C]])
+    FPileImpl(paths, shape, { _: List[Any] => shape.zero }, List.empty[FPileAbstract[C]])
   }
 
   def applyOpt[E, U](paths: E)(implicit shape: FsnShape[E, U, Option]): FPileImpl[E, U, Option] = {
@@ -44,10 +83,10 @@ object FPile {
     (piles: List[FPileAbstract[C]], data: List[Any]) => {
       val (pileDataList, tailData) = piles.foldLeft((List.empty[(FPileAbstract[C], List[Any])] -> data)) { case ((tuplelist, dataList), pile) =>
         def fetchTreeLeaf(tempPile: FPileAbstract[C]): Int = {
-          if (tempPile.prePile._2.isEmpty) {
+          if (tempPile.subs.isEmpty) {
             tempPile.fShape.dataLength
           } else {
-            tempPile.prePile._2.map(fetchTreeLeaf).sum
+            tempPile.subs.map(fetchTreeLeaf).sum
           }
         }
         val dataLength = fetchTreeLeaf(pile)
