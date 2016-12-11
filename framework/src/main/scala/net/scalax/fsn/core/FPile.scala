@@ -19,8 +19,7 @@ trait FPileAbstract[C[_]] {
   val subs: List[FPileAbstract[WrapType]]
 
 }
-
-case class FPileImpl[E, U, C[_]](
+/*case class FPileImpl[E, U, C[_]](
   override val pathPile: E,
   override val fShape: FsnShape[E, U, C],
   override val dataFromSub: List[Any] => U,
@@ -28,9 +27,8 @@ case class FPileImpl[E, U, C[_]](
 ) extends FPileAbstract[C] {
   override type PathType = E
   override type DataType = U
-}
-
-trait FPileWithDataAbstract[C[_]] extends FPileAbstract[C] {
+}*/
+trait FPile[C[_]] extends FPileAbstract[C] {
   self =>
 
   val dataListFromSubList: List[C[Any]] => List[C[Any]] = { list =>
@@ -50,19 +48,31 @@ trait FPileWithDataAbstract[C[_]] extends FPileAbstract[C] {
       }
     }))
   }
+
+  val entityListFromSubList: List[C[Any]] => List[FEntity[C]] = { list =>
+    paths.zip(dataListFromSubList(list)).map { case (eachPath, eachData) =>
+      FEntity.changeData(eachPath)(eachData.asInstanceOf[C[eachPath.DataType]])
+    }
+  }
+
   lazy val paths: List[FPath] = fShape.encodeColumn(pathPile)
-  val dataLengthSum: Int
-  override val subs: List[FPileWithDataAbstract[WrapType]]
+  val dataLengthSum: Int = {
+    if (subs.isEmpty) {
+      fShape.dataLength
+    } else {
+      subs.map(_.dataLengthSum).sum
+    }
+  }
+  override val subs: List[FPile[WrapType]]
 
 }
 
-case class FPileWithDataImpl[E, U, C[_]](
+case class FPileImpl[E, U, C[_]](
   override val pathPile: E,
   override val fShape: FsnShape[E, U, C],
-  override val dataLengthSum: Int,
   override val dataFromSub: List[Any] => U,
-  override val subs: List[FPileWithDataAbstract[C]]
-) extends FPileWithDataAbstract[C] {
+  override val subs: List[FPile[C]]
+) extends FPile[C] {
   override type PathType = E
   override type DataType = U
 }
@@ -72,15 +82,15 @@ object FPile {
   //type SubPileType[DataType, WrapType[_]] = (List[Any] => DataType, List[FPileAbstract[WrapType]])
 
   def apply[E, U, C[_]](paths: E)(implicit shape: FsnShape[E, U, C]): FPileImpl[E, U, C] = {
-    FPileImpl(paths, shape, { _: List[Any] => shape.zero }, List.empty[FPileAbstract[C]])
+    FPileImpl(paths, shape, { _: List[Any] => shape.zero }, List.empty[FPile[C]])
   }
 
   def applyOpt[E, U](paths: E)(implicit shape: FsnShape[E, U, Option]): FPileImpl[E, U, Option] = {
     apply(paths)
   }
 
-  def transformTree[C[_], S, T](pathGen: FEntity[C] => Either[FAtomicException, S])(columnGen: (List[S], List[FPileAbstract[C]]) => T): (List[FPileAbstract[C]], List[Any]) => Either[FAtomicException, T] = {
-    (piles: List[FPileAbstract[C]], data: List[Any]) => {
+  def transformTree[C[_], S, T](pathGen: FEntity[C] => Either[FAtomicException, S])(columnGen: (List[S], List[FPile[C]]) => T): (List[FPile[C]], List[Any]) => Either[FAtomicException, T] = {
+    (piles: List[FPile[C]], data: List[Any]) => {
       val (pileDataList, tailData) = piles.foldLeft((List.empty[(FPileAbstract[C], List[Any])] -> data)) { case ((tuplelist, dataList), pile) =>
         def fetchTreeLeaf(tempPile: FPileAbstract[C]): Int = {
           if (tempPile.subs.isEmpty) {
@@ -130,7 +140,21 @@ object FEntity {
   def changeData[C[_]](path: FPath)(newData: C[path.DataType]): FEntityImpl[path.DataType, C] = FEntityImpl(path.atomics, newData)
 
 }
+/*trait FAtomicTran {
+  def gen[S, T, R](pathGen: FPath { type DataType = S } => Either[FAtomicException, T])(cv: (S, T) => R): Either[FAtomicException, R]
+}
 
+object FAtomicTran {
+
+  def apply[S, T, R](pathGen: FPath { type DataType = S } => Either[FAtomicException, T])(cv: (S, T) => R): FAtomicTran = {
+    new FAtomicTran {
+      override def gen[S, T, R](pathGen: FPath { type DataType = S } => Either[FAtomicException, T])(cv: (S, T) => R): Either[FAtomicException, R] = {
+
+      }
+    }
+  }
+
+}*/
 case class FEntityImpl[D, E[_]](override val atomics: List[FAtomic[D]], override val data: E[D]) extends FEntity[E] {
   override type DataType = D
 }
