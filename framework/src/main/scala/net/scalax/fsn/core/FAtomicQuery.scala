@@ -14,11 +14,14 @@ trait AbstractFAtomicQuery[F[_]] {
 
 }
 
-/*trait FQueryTranform[U, X] {
+trait FQueryTranform[F[_], G[_], T] {
 
-  def apply(atomics: List[FAtomic[U]]): X
+  type DataType
 
-}*/
+  def gen(atomics: List[FAtomic[DataType]]): Either[FAtomicException, F[DataType]]
+  def apply(atomics: F[DataType], data: G[DataType]): T
+
+}
 
 trait FAtomicQuery[E, F[_]] extends AbstractFAtomicQuery[F] {
 
