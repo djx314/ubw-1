@@ -4,7 +4,7 @@ import scala.language.higherKinds
 import scala.language.existentials
 import shapeless._
 
-trait AbstractFAtomicQuery[F[_]] {
+trait AbstractFAtomicQuery[F[_]] { self =>
 
   def gen[D](atomics: List[FAtomic[D]]): Either[FAtomicException, F[D]]
 
@@ -12,14 +12,39 @@ trait AbstractFAtomicQuery[F[_]] {
     gen(path.atomics).right.map(cv)
   }
 
+  def mapToOption[T](path: FPath)(cv: (F[path.DataType], Option[path.DataType]) => T): FQueryTranform[T] = {
+    new FQueryTranformImpl[F, Option, T] {
+      override val fPath: path.type = path
+      override lazy val gen: Either[FAtomicException, QueryType[fPath.DataType]] = {
+        self.gen(path.atomics)
+      }
+      def apply(atomics: QueryType[fPath.DataType], data: WrapType[fPath.DataType]): T = {
+        cv(atomics, data)
+      }
+    }
+  }
+
 }
 
-trait FQueryTranform[F[_], G[_], T] {
+trait FQueryTranform[T] {
 
-  type DataType
+  type QueryType[_]
+  type WrapType[_]
 
-  def gen(atomics: List[FAtomic[DataType]]): Either[FAtomicException, F[DataType]]
-  def apply(atomics: F[DataType], data: G[DataType]): T
+  val fPath: FPath
+  val gen: Either[FAtomicException, QueryType[fPath.DataType]]
+  def apply(atomics: QueryType[fPath.DataType], data: WrapType[fPath.DataType]): T
+
+  def output(data: WrapType[fPath.DataType]): Either[FAtomicException, T] = {
+    gen.right.map(s => apply(s, data))
+  }
+
+}
+
+trait FQueryTranformImpl[F[_], G[_], T] extends FQueryTranform[T] {
+
+  override type QueryType[A] = F[A]
+  override type WrapType[A] = G[A]
 
 }
 

@@ -138,6 +138,33 @@ class ParTest extends FlatSpec
         s
     }
 
+    val resultGen1 = FPile.transformOfOpt { path =>
+      FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        .mapToOption(path) { case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
+          println(defaultOpt + "11111111")
+          val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
+          new JsonWriterImpl {
+            override type DataType = writer.JsonType
+            override val key = property.proName
+            override val encoder = writer.writer
+            override val isReaderDefined = readerOpt.isDefined
+            override val data = defaultValueOpt.map(writer.convert)
+          }: JsonWriterImpl
+        }
+    } { results =>
+      results.map { s =>
+        implicit val encoderForOpt = s.encoder
+        s.key -> s.data.asJson
+      }.toMap.asJson
+    }
+
+    /*resultGen1(paths.zip(piles.map(s => s.fShape.encodeData(s.fShape.zero)).flatten).map { case (s, t) => FEntity.changeData(s)(t.asInstanceOf[Option[s.DataType]]) }) match {
+      case Left(e) => throw e
+      case Right(s) =>
+        println(s)
+        s
+    }*/
+
   }
 
 }

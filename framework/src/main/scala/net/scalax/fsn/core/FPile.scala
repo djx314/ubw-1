@@ -127,6 +127,28 @@ object FPile {
   def transformOpt[S, T](pathGen: FEntity[Option] => Either[FAtomicException, S])(columnGen: List[S] => T): List[FEntity[Option]] => Either[FAtomicException, T] = {
     transform(pathGen)(columnGen)
   }
+
+  def transformOfOpt[S, T](pathGen: FPath => FQueryTranform[S])(columnGen: List[S] => T): List[FPath] => Either[FAtomicException, List[Any] => T] = {
+    transformOf(pathGen)(columnGen)
+  }
+
+  def transformOf[S, T](pathGen: FPath => FQueryTranform[S])(columnGen: List[S] => T): List[FPath] => Either[FAtomicException, List[Any] => T] = {
+    /*(initPaths: List[FPath]) => {
+      initPaths.map(pathGen).foldLeft(Right(Nil): Either[FAtomicException, List[Any] => T]) { (font, end) =>
+        (font -> end) match {
+          case (Left(s), Left(t)) =>
+            Left(FAtomicException(s.typeTags ::: t.typeTags))
+          case (Left(s), Right(_)) =>
+            Left(FAtomicException(s.typeTags))
+          case (Right(_), Left(s)) =>
+            Left(FAtomicException(s.typeTags))
+          case (Right(s), Right(t)) =>
+            Right(s ::: t :: Nil)
+        }
+      }.right.map(columnGen)
+    }*/
+    ???
+  }
 }
 
 trait FEntity[C[_]] extends FPath {
