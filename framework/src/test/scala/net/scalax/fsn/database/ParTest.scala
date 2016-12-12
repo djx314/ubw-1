@@ -110,8 +110,7 @@ class ParTest extends FlatSpec
 
     val piles: List[FPileAbstract[Option]] = mainPile :: appendPile :: Nil
     val paths = piles.map(s => s.fShape.encodeColumn(s.pathPile)).flatten
-
-    val resultGen = FPile.transformOpt { path =>
+    /*val resultGen = FPile.transformOpt { path =>
       FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
       .map(path) { case readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil =>
         println(defaultOpt + "11111111")
@@ -136,8 +135,7 @@ class ParTest extends FlatSpec
       case Right(s) =>
         println(s)
         s
-    }
-
+    }*/
     val resultGen1 = FPile.transformOf { path =>
       FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
         .mapToOption(path) { case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
@@ -158,12 +156,13 @@ class ParTest extends FlatSpec
       }.toMap.asJson
     }
 
-    /*resultGen1(paths.zip(piles.map(s => s.fShape.encodeData(s.fShape.zero)).flatten).map { case (s, t) => FEntity.changeData(s)(t.asInstanceOf[Option[s.DataType]]) }) match {
+    resultGen1(paths) match {
       case Left(e) => throw e
       case Right(s) =>
-        println(s)
-        s
-    }*/
+        val result = s(piles.map(s => s.fShape.encodeData(s.fShape.zero)).flatten)
+        println(result)
+        result
+    }
 
   }
 
