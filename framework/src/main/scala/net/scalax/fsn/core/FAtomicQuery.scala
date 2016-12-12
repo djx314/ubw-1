@@ -12,13 +12,25 @@ trait AbstractFAtomicQuery[F[_]] { self =>
     gen(path.atomics).right.map(cv)
   }
 
-  def mapToOption[T](path: FPath)(cv: (F[path.DataType], Option[path.DataType]) => T): FQueryTranform[T] = {
+  def mapTo[T, C[_]](path: FPath)(cv: (F[path.DataType], C[path.DataType]) => T): FQueryTranform[T, C] = {
+    new FQueryTranformImpl[F, C, T] {
+      override val fPath: path.type = path
+      override lazy val gen: Either[FAtomicException, QueryType[fPath.DataType]] = {
+        self.gen(path.atomics)
+      }
+      def apply(atomics: QueryType[fPath.DataType], data: C[fPath.DataType]): T = {
+        cv(atomics, data)
+      }
+    }
+  }
+
+  def mapToOption[T](path: FPath)(cv: (F[path.DataType], Option[path.DataType]) => T): FQueryTranform[T, Option] = {
     new FQueryTranformImpl[F, Option, T] {
       override val fPath: path.type = path
       override lazy val gen: Either[FAtomicException, QueryType[fPath.DataType]] = {
         self.gen(path.atomics)
       }
-      def apply(atomics: QueryType[fPath.DataType], data: WrapType[fPath.DataType]): T = {
+      def apply(atomics: QueryType[fPath.DataType], data: Option[fPath.DataType]): T = {
         cv(atomics, data)
       }
     }
@@ -26,23 +38,18 @@ trait AbstractFAtomicQuery[F[_]] { self =>
 
 }
 
-trait FQueryTranform[T] {
+trait FQueryTranform[T, C[_]] {
 
   type QueryType[_]
-  type WrapType[_]
 
   val fPath: FPath
   val gen: Either[FAtomicException, QueryType[fPath.DataType]]
-  def apply(atomics: QueryType[fPath.DataType], data: WrapType[fPath.DataType]): T
-  /*def output(data: WrapType[fPath.DataType]): Either[FAtomicException, T] = {
-    gen.right.map(s => apply(s, data))
-  }*/
+  def apply(atomics: QueryType[fPath.DataType], data: C[fPath.DataType]): T
 }
 
-trait FQueryTranformImpl[F[_], G[_], T] extends FQueryTranform[T] {
+trait FQueryTranformImpl[F[_], G[_], T] extends FQueryTranform[T, G] {
 
   override type QueryType[A] = F[A]
-  override type WrapType[A] = G[A]
 
 }
 
