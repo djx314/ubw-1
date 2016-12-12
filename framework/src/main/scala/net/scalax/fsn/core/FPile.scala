@@ -128,14 +128,14 @@ object FPile {
     transform(pathGen)(columnGen)
   }
 
-  def transformOfOpt[S, T](pathGen: FPath => FQueryTranform[S])(columnGen: List[S] => T): List[FPath] => Either[FAtomicException, List[Any] => T] = {
+  /*def transformOfOpt[S, T](pathGen: FPath => FQueryTranform[S])(columnGen: List[S] => T): List[FPath] => Either[FAtomicException, List[Any] => T] = {
     transformOf(pathGen)(columnGen)
-  }
+  }*/
 
-  def transformOf[S, T](pathGen: FPath => FQueryTranform[S])(columnGen: List[S] => T): List[FPath] => Either[FAtomicException, List[Any] => T] = {
-    /*(initPaths: List[FPath]) => {
-      initPaths.map(pathGen).foldLeft(Right(Nil): Either[FAtomicException, List[Any] => T]) { (font, end) =>
-        (font -> end) match {
+  def transformOf[S, T](pathGen: FPath => FQueryTranform[S])(columnGen: List[S] => T): List[FPath] => Either[FAtomicException, List[Option[Any]] => T] = {
+    (initPaths: List[FPath]) => {
+      initPaths.map(pathGen).zipWithIndex.foldLeft(Right { _: List[Option[Any]] => Nil }: Either[FAtomicException, List[Option[Any]] => List[S]]) { case (convert, (queryTranform, index)) =>
+        (convert -> queryTranform.gen) match {
           case (Left(s), Left(t)) =>
             Left(FAtomicException(s.typeTags ::: t.typeTags))
           case (Left(s), Right(_)) =>
@@ -143,11 +143,13 @@ object FPile {
           case (Right(_), Left(s)) =>
             Left(FAtomicException(s.typeTags))
           case (Right(s), Right(t)) =>
-            Right(s ::: t :: Nil)
+            Right { list: List[Option[Any]] =>
+              queryTranform.apply(t, list(index).asInstanceOf[queryTranform.WrapType[queryTranform.fPath.DataType]]) :: s(list)
+            }
         }
-      }.right.map(columnGen)
-    }*/
-    ???
+      }
+      ???
+    }
   }
 }
 

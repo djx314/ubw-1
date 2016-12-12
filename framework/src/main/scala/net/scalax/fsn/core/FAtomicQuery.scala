@@ -34,11 +34,9 @@ trait FQueryTranform[T] {
   val fPath: FPath
   val gen: Either[FAtomicException, QueryType[fPath.DataType]]
   def apply(atomics: QueryType[fPath.DataType], data: WrapType[fPath.DataType]): T
-
-  def output(data: WrapType[fPath.DataType]): Either[FAtomicException, T] = {
+  /*def output(data: WrapType[fPath.DataType]): Either[FAtomicException, T] = {
     gen.right.map(s => apply(s, data))
-  }
-
+  }*/
 }
 
 trait FQueryTranformImpl[F[_], G[_], T] extends FQueryTranform[T] {

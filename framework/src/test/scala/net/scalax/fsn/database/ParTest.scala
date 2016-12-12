@@ -138,7 +138,7 @@ class ParTest extends FlatSpec
         s
     }
 
-    val resultGen1 = FPile.transformOfOpt { path =>
+    val resultGen1 = FPile.transformOf { path =>
       FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
         .mapToOption(path) { case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
           println(defaultOpt + "11111111")
