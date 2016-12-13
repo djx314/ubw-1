@@ -24,22 +24,24 @@ trait FPile[C[_]] extends FPileAbstract[C] {
   self =>
 
   val dataListFromSubList: List[C[Any]] => List[C[Any]] = { list =>
-    fShape.encodeData(dataFromSub(subs.zip(FPile.splitList(list, subs.map(_.dataLengthSum): _*)).map { case (eachSub, subData) =>
+    /*fShape.encodeData(dataFromSub(subs.zip(FPile.splitList(list, subs.map(_.dataLengthSum): _*)).map { case (eachSub, subData) =>
       if (eachSub.subs.isEmpty) {
         eachSub.fShape.decodeData(subData)
       } else {
         eachSub.fShape.decodeData(eachSub.dataListFromSubList(subData))
       }
-    }))
+    }))*/
+    if (subs.isEmpty) {
+      list
+    } else {
+      fShape.encodeData(dataFromSub(subs.zip(FPile.splitList(list, subs.map(_.dataLengthSum): _*)).map { case (eachSub, subData) =>
+        eachSub.fShape.decodeData(eachSub.dataListFromSubList(subData))
+      }))
+    }
   }
 
-  /*val entityListFromSubList: List[C[Any]] => List[FEntity[C]] = { list =>
-    paths.zip(dataListFromSubList(list)).map { case (eachPath, eachData) =>
-      FEntity.changeData(eachPath)(eachData.asInstanceOf[C[eachPath.DataType]])
-    }
-  }*/
-
   lazy val paths: List[FPath] = fShape.encodeColumn(pathPile)
+
   val dataLengthSum: Int = {
     if (subs.isEmpty) {
       fShape.dataLength
@@ -47,6 +49,7 @@ trait FPile[C[_]] extends FPileAbstract[C] {
       subs.map(_.dataLengthSum).sum
     }
   }
+
   override val subs: List[FPile[WrapType]]
 
 }
@@ -104,10 +107,49 @@ object FPile {
     (pile: FPile[C]) => {
       genTree(pathGen, pile).right.map { case (rightPile, piles) =>
         rightPile -> { anyList: List[C[Any]] =>
+          println(splitList(anyList, piles.map(_.dataLengthSum): _*))
+          println(piles.head.dataLengthSum)
+          val newList = splitList(anyList, piles.map(_.dataLengthSum): _*).zip(piles).flatMap { case (data, eachPile) => eachPile.dataListFromSubList(data) }
+          transformOf(pathGen)(columnGen)(piles.map(_.paths).flatten).right.get.apply(newList)
+        }
+      }
+    }
+  }
+
+  def transformTreeList[C[_], S, T](pathGen: FPath => FQueryTranform[S, C])(columnGen: List[S] => T): List[FPile[C]] => Either[FAtomicException, (List[FPile[C]], List[C[Any]] => T)] = {
+    (piles: List[FPile[C]]) => {
+      /*genTree(pathGen, pile).right.map { case (rightPile, piles) =>
+        rightPile -> { anyList: List[C[Any]] =>
           val newList = splitList(anyList, piles.map(_.dataLengthSum): _*).flatten
           transformOf(pathGen)(columnGen)(piles.map(_.paths).flatten).right.get(newList)
         }
+      }*/
+      val calculatePiles = piles.map(s => genTree(pathGen, s)).foldLeft(Right(Nil): Either[FAtomicException, List[(FPile[C], List[FPile[C]])]]) {
+        (append, eitherResult) =>
+          (append -> eitherResult) match {
+            case (Left(s), Left(t)) =>
+              Left(FAtomicException(s.typeTags ::: t.typeTags))
+            case (Left(s), Right(_)) =>
+              Left(FAtomicException(s.typeTags))
+            case (Right(_), Left(s)) =>
+              Left(FAtomicException(s.typeTags))
+            case (Right(s), Right(t)) =>
+              Right(t :: s)
+          }
       }
+      calculatePiles.right.map { pileList =>
+        val (newPile, summaryPiles) = pileList.unzip
+        newPile -> { anyList: List[Any] =>
+          columnGen(FPile.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*).zip(summaryPiles).map { case (subList, subPiles) =>
+            FPile.splitList(subList, subPiles.map(_.dataLengthSum): _*).zip(subPiles).map { case (eachList, eachPiles) =>
+              eachPiles.paths.map(s => pathGen(s)).zip(eachList).map { case (tranform, data) =>
+                tranform.apply(tranform.gen.right.get, data.asInstanceOf[C[tranform.fPath.DataType]])
+              }
+            }
+          }.flatten.flatten)
+        }
+      }
+
     }
   }
 
