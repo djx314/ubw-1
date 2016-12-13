@@ -24,13 +24,6 @@ trait FPile[C[_]] extends FPileAbstract[C] {
   self =>
 
   val dataListFromSubList: List[C[Any]] => List[C[Any]] = { list =>
-    /*fShape.encodeData(dataFromSub(subs.zip(FPile.splitList(list, subs.map(_.dataLengthSum): _*)).map { case (eachSub, subData) =>
-      if (eachSub.subs.isEmpty) {
-        eachSub.fShape.decodeData(subData)
-      } else {
-        eachSub.fShape.decodeData(eachSub.dataListFromSubList(subData))
-      }
-    }))*/
     if (subs.isEmpty) {
       list
     } else {
@@ -118,12 +111,6 @@ object FPile {
 
   def transformTreeList[C[_], S, T](pathGen: FPath => FQueryTranform[S, C])(columnGen: List[S] => T): List[FPile[C]] => Either[FAtomicException, (List[FPile[C]], List[C[Any]] => T)] = {
     (piles: List[FPile[C]]) => {
-      /*genTree(pathGen, pile).right.map { case (rightPile, piles) =>
-        rightPile -> { anyList: List[C[Any]] =>
-          val newList = splitList(anyList, piles.map(_.dataLengthSum): _*).flatten
-          transformOf(pathGen)(columnGen)(piles.map(_.paths).flatten).right.get(newList)
-        }
-      }*/
       val calculatePiles = piles.map(s => genTree(pathGen, s)).foldLeft(Right(Nil): Either[FAtomicException, List[(FPile[C], List[FPile[C]])]]) {
         (append, eitherResult) =>
           (append -> eitherResult) match {
