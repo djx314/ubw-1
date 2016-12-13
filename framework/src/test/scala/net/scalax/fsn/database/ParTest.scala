@@ -86,7 +86,7 @@ class ParTest extends FlatSpec
       val data: Option[DataType]
     }
 
-    val pile = FPile.applyOpt(
+    val mainPile = FPile.applyOpt(
       ("我是" columns (In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
       ("小莎莎" columns (In.default("1234") ::: In.jWrite[String])) ::
       (("千反田" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) :: HNil) ::
@@ -102,21 +102,28 @@ class ParTest extends FlatSpec
       ) ::
       HNil
     )
-    val paths = pile.fShape.encodeColumn(pile.pathPile)
+    val appendPile = FPile.applyOpt(
+      ("jilen" columns (In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      ("kerr" columns (In.default("汪") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      HNil
+    )
 
-    val resultGen = FPile.transformOpt { path =>
+    val piles: List[FPileAbstract[Option]] = mainPile :: appendPile :: Nil
+    val paths = piles.map(s => s.fShape.encodeColumn(s.pathPile)).flatten
+
+    val resultGen1 = FPile.transformOf { path =>
       FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
-      .map(path) { case readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil =>
-        println(defaultOpt + "11111111    " + pile.fShape.dataLength)
-        val defaultValueOpt = path.data.fold(defaultOpt.map(_.value))(Option(_))
-        new JsonWriterImpl {
-          override type DataType = writer.JsonType
-          override val key = property.proName
-          override val encoder = writer.writer
-          override val isReaderDefined = readerOpt.isDefined
-          override val data = defaultValueOpt.map(writer.convert)
-        }: JsonWriterImpl
-      }
+        .mapToOption(path) { case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
+          val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
+          //println(property.proName + ":" + defaultValueOpt + "11111111")
+          new JsonWriterImpl {
+            override type DataType = writer.JsonType
+            override val key = property.proName
+            override val encoder = writer.writer
+            override val isReaderDefined = readerOpt.isDefined
+            override val data = defaultValueOpt.map(writer.convert)
+          }: JsonWriterImpl
+        }
     } { results =>
       results.map { s =>
         implicit val encoderForOpt = s.encoder
@@ -124,11 +131,56 @@ class ParTest extends FlatSpec
       }.toMap.asJson
     }
 
-    resultGen(paths.zip(pile.fShape.encodeData(pile.fShape.zero)).map { case (s, t) => FEntity.changeData(s)(t.asInstanceOf[Option[s.DataType]]) }) match {
+    resultGen1(paths) match {
       case Left(e) => throw e
       case Right(s) =>
-        println(s)
-        s
+        val result = s(piles.map(s => s.fShape.encodeData(s.fShape.zero)).flatten)
+        println(result)
+        result
+    }
+
+    val resultGen2 = FPile.transformTree { path =>
+      FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        .mapToOption(path) { case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
+          val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
+          new JsonWriterImpl {
+            override type DataType = writer.JsonType
+            override val key = property.proName
+            override val encoder = writer.writer
+            override val isReaderDefined = readerOpt.isDefined
+            override val data = defaultValueOpt.map(writer.convert)
+          }: JsonWriterImpl
+        }
+    } { results =>
+      results.map { s =>
+        implicit val encoderForOpt = s.encoder
+        s.key -> s.data.asJson
+      }.toMap.asJson
+    }
+
+    val jx3Pile = FPile.applyOpt(
+      ("小萌师父的徒弟个数" columns (In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+        ("徒弟的名字" columns (In.default("水山清风") ::: In.jWrite[String])) ::
+        (("茶馆任务要做多少遍才有奖品" columns (In.default(10) ::: In.jWrite[Int])) :: HNil) ::
+        (
+          ("狭义值" columns (In.jRead[Int] ::: In.jWrite[Int])) ::
+            ("江湖贡献值" columns (In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
+            (
+              ("大侠之路" columns (In.jRead[String] ::: In.default("跳出五行天地外") ::: In.jWrite[String])) ::
+                ("电信" columns (In.default(5L) ::: In.jWrite[Long])) ::
+                HNil
+              ) ::
+            HNil
+          ) ::
+        HNil
+    )
+
+    resultGen2(jx3Pile) match {
+      case Left(e) => throw e
+      case Right((outPile, s)) =>
+        val result = s(jx3Pile.fShape.encodeData(jx3Pile.fShape.zero))
+        println(result)
+        result
     }
 
   }
