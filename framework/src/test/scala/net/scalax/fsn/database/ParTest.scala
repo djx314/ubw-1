@@ -21,7 +21,8 @@ class ParTest extends FlatSpec
   with BeforeAndAfterAll
   with BeforeAndAfter
   with FAtomicGenImpl
-  with FAtomicShapeHelper {
+  with FAtomicShapeHelper
+  with PilesPolyHelper {
 
   "shapes" should "find readers in Atomic in FPath" in {
     val path = FPathImpl(In.jRead[Long] ::: In.jWrite[Long])
@@ -206,6 +207,33 @@ class ParTest extends FlatSpec
       case Left(e) => throw e
       case Right((outPile, s)) =>
         val result = s(jx3Pile.fShape.encodeData(jx3Pile.fShape.zero) ::: appendPile.fShape.encodeData(appendPile.fShape.zero))
+        println(result)
+        result
+    }
+
+    val mainPile1 = FPile.applyOpt(
+      ("我是" columns (In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+      ("小莎莎" columns (In.default("1234") ::: In.jWrite[String])) ::
+      HNil
+    )
+    val appendPile1 = FPile.applyOpt(
+      ("jilen" columns (In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      ("kerr" columns (In.default("汪") ::: In.jRead[String])) ::
+      HNil
+    )
+
+    val convertPile1 = (mainPile1 :: appendPile1 :: HNil).poly(FPile.applyOpt(
+      ("小萌师父" columns (In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      ("徒弟弟" columns (In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+      HNil
+    )) { case (longData :: stringData :: HNil) :: (stringData2 :: stringData3 :: HNil) :: HNil =>
+        stringData :: longData :: HNil
+    }
+
+    resultGen3(convertPile1 :: mainPile1 :: Nil) match {
+      case Left(e) => throw e
+      case Right((outPile, s)) =>
+        val result = s(convertPile1.fShape.encodeData(convertPile1.fShape.zero) ::: mainPile1.fShape.encodeData(mainPile1.fShape.zero))
         println(result)
         result
     }
