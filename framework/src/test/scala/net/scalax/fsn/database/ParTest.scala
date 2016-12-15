@@ -230,12 +230,49 @@ class ParTest extends FlatSpec
         stringData :: longData :: HNil
     }
 
-    resultGen3(convertPile1 :: mainPile1 :: Nil) match {
+    println("convertPile1:" + convertPile1)
+
+    val resultGen4 = FPile.transformTreeList { path =>
+      FAtomicQuery((needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: HNil) :: HNil)
+        .mapToOption(path) { case ((defaultOpt :: property :: HNil) :: HNil, data) =>
+          val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
+          println(defaultValueOpt)
+          println(property.proName)
+          defaultValueOpt: Option[Any]
+        }
+    }(identity)
+
+    val resultGen5 = FPile.transformTreeList { path =>
+      FAtomicQuery(needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        .mapToOption(path) { case (writer :: (defaultOpt :: HNil) :: property :: HNil, data1) =>
+          println(data1)
+          new JsonWriterImpl {
+            override type DataType = writer.JsonType
+            override val key = property.proName
+            override val encoder = writer.writer
+            override val isReaderDefined = defaultOpt.isDefined
+            override val data = data1.map(writer.convert)
+          }: JsonWriterImpl
+        }
+    } { results =>
+      results.map { s =>
+        implicit val encoderForOpt = s.encoder
+        s.key -> s.data.asJson
+      }.toMap.asJson
+    }
+
+    resultGen4(convertPile1 :: mainPile1 :: Nil) match {
       case Left(e) => throw e
       case Right((outPile, s)) =>
         val result = s(convertPile1.fShape.encodeData(convertPile1.fShape.zero) ::: mainPile1.fShape.encodeData(mainPile1.fShape.zero))
         println(result)
-        result
+        resultGen5(outPile) match {
+          case Left(e1) => throw e1
+          case Right((outPile1, s1)) =>
+            println(outPile1)
+            s1(result)
+            println(s1(result))
+        }
     }
 
   }

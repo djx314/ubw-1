@@ -18,6 +18,17 @@ trait FPileAbstract[C[_]] {
   val dataFromSub: List[Any] => DataType
   val subs: List[FPileAbstract[WrapType]]
 
+  override def toString: String = {
+    s"""Node: {
+      |${ fShape.encodeColumn(pathPile).mkString("\n").split("\\n").map(s => "  " + s).mkString("\n") }
+      |""".stripMargin +
+    s"""
+      |  Children: {
+      |${ subs.map(_.toString).mkString("\n").split("\\n").map(s => "    " + s).mkString("\n") }
+      |  }
+      |}""".stripMargin
+  }
+
 }
 
 trait FPile[C[_]] extends FPileAbstract[C] {
