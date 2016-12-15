@@ -35,8 +35,3 @@ object FPath {
 
   }
 }
-/*trait FPathShape[Source, Target] {
-
-  def apply(path: FPath, source: Source): Target
-
-}*/
