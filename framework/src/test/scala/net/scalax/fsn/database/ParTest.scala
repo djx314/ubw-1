@@ -21,27 +21,28 @@ class ParTest extends FlatSpec
   with BeforeAndAfterAll
   with BeforeAndAfter
   with FAtomicGenImpl
-  with FAtomicShapeHelper {
+  with FAtomicShapeHelper
+  with PilesPolyHelper {
 
   "shapes" should "find readers in Atomic in FPath" in {
     val path = FPathImpl(In.jRead[Long] ::: In.jWrite[Long])
     val bb: FAtomicGen[JsonReader] = needAtomic[JsonReader]
     val jsonReaderGen: AbstractFAtomicGen = needAtomic[JsonReader]
 
-    println(bb.gen(path.atomics).reader)
-    println(FAtomicQuery(HNil).gen(path.atomics))
-    println(FAtomicQuery(needAtomic[JsonReader]).gen(path.atomics).right.get.reader)
+    //println(bb.gen(path.atomics).reader)
+    //println(FAtomicQuery(HNil).gen(path.atomics))
+    //println(FAtomicQuery(needAtomic[JsonReader]).gen(path.atomics).right.get.reader)
 
     FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics)
-    println(FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics))
+    //println(FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics))
 
     val items: List[FAtomic[Long]] = path.atomics
     val Right(reader1 :: reader3 :: reader2 :: writer1 :: writer2 :: writer3 :: writer4 :: HNil) = FAtomicQuery(needAtomic[JsonReader] :: needAtomicOpt[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: HNil).gen(items)
-    println(reader2.reader)
-    println(writer1.writer)
-    println(writer4.writer)
-    println(reader3.get.reader)
-    println(FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics).right.get(2).writer)
+    //println(reader2.reader)
+    //println(writer1.writer)
+    //println(writer4.writer)
+    //println(reader3.get.reader)
+    //println(FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics).right.get(2).writer)
 
     val isReaderDefined = (myPath: FPath) => {
       FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: HNil).map(myPath) { case readerOpt2 :: writer1 :: HNil =>
@@ -50,7 +51,7 @@ class ParTest extends FlatSpec
     }
 
     val path1 = FPathImpl(In.jWrite[Long])
-    println(isReaderDefined(path1))
+    //println(isReaderDefined(path1))
   }
 
   class FColumnStringImplicits(proName1: String) {
@@ -135,7 +136,7 @@ class ParTest extends FlatSpec
       case Left(e) => throw e
       case Right(s) =>
         val result = s(piles.map(s => s.fShape.encodeData(s.fShape.zero)).flatten)
-        println(result)
+        //println(result)
         result
     }
 
@@ -179,8 +180,105 @@ class ParTest extends FlatSpec
       case Left(e) => throw e
       case Right((outPile, s)) =>
         val result = s(jx3Pile.fShape.encodeData(jx3Pile.fShape.zero))
-        println(result)
+        //println(result)
         result
+    }
+
+    val resultGen3 = FPile.transformTreeList { path =>
+      FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        .mapToOption(path) { case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
+          val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
+          new JsonWriterImpl {
+            override type DataType = writer.JsonType
+            override val key = property.proName
+            override val encoder = writer.writer
+            override val isReaderDefined = readerOpt.isDefined
+            override val data = defaultValueOpt.map(writer.convert)
+          }: JsonWriterImpl
+        }
+    } { results =>
+      results.map { s =>
+        implicit val encoderForOpt = s.encoder
+        s.key -> s.data.asJson
+      }.toMap.asJson
+    }
+
+    resultGen3(jx3Pile :: appendPile :: Nil) match {
+      case Left(e) => throw e
+      case Right((outPile, s)) =>
+        val result = s(jx3Pile.fShape.encodeData(jx3Pile.fShape.zero) ::: appendPile.fShape.encodeData(appendPile.fShape.zero))
+        //println(result)
+        result
+    }
+
+    //println("convertPile1:" + convertPile1)
+
+    val resultGen4 = FPile.transformTreeList { path =>
+      FAtomicQuery((needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: HNil) :: HNil)
+        .mapToOption(path) { case ((defaultOpt :: property :: HNil) :: HNil, data) =>
+          val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
+          //println(defaultValueOpt)
+          //println(property.proName)
+          defaultValueOpt: Option[Any]
+        }
+    } { result =>
+      //println(result)
+      result
+    }
+
+    val resultGen5 = FPile.transformTreeList { path =>
+      FAtomicQuery(needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        .mapToOption(path) { case (writer :: (defaultOpt :: HNil) :: property :: HNil, data1) =>
+          //println(data1)
+          new JsonWriterImpl {
+            override type DataType = writer.JsonType
+            override val key = property.proName
+            override val encoder = writer.writer
+            override val isReaderDefined = defaultOpt.isDefined
+            override val data = data1.map(writer.convert)
+          }: JsonWriterImpl
+        }
+    } { results =>
+      results.map { s =>
+        implicit val encoderForOpt = s.encoder
+        s.key -> s.data.asJson
+      }.toMap.asJson
+    }
+
+    val mainPile1 = FPile.applyOpt(
+      ("我是" columns (In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+      ("小莎莎" columns (In.default("1234") ::: In.jWrite[String])) ::
+      HNil
+    )
+    val appendPile1 = FPile.applyOpt(
+      ("jilen" columns (In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      ("kerr" columns (In.default("汪") ::: In.jRead[String])) ::
+      HNil
+    )
+
+    val convertPile1 = (mainPile1 :: appendPile1 :: HNil).poly(FPile.applyOpt(
+      ("小萌师父" columns (In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      ("徒弟弟" columns (In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+      HNil
+    )) { case (longData :: stringData :: HNil) :: (stringData2 :: stringData3 :: HNil) :: HNil =>
+      stringData :: longData :: HNil
+    }
+
+    try {
+      resultGen4(convertPile1 :: mainPile1 :: Nil) match {
+        case Left(e) => throw e
+        case Right((outPile, s)) =>
+          val result = (s(List(None, None, None, None, None, None)))//s(convertPile1.fShape.encodeData(convertPile1.fShape.zero) ::: mainPile1.fShape.encodeData(mainPile1.fShape.zero))
+          resultGen5(outPile) match {
+            case Left(e1) => throw e1
+            case Right((outPile1, s1)) =>
+              //println(outPile1)
+              s1(result)
+              println(s1(result))
+          }
+      }
+    } catch {
+      case e: Exception => e.printStackTrace
     }
 
   }

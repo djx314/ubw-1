@@ -7,6 +7,11 @@ import scala.language.implicitConversions
 trait FPath {
   type DataType
   val atomics: List[FAtomic[DataType]]
+
+  override def toString: String = {
+    s"""|paths:
+       |${ atomics.map(s => "  " + s.toString).mkString("\n") }""".stripMargin
+  }
 }
 
 case class FPathImpl[D](override val atomics: List[FAtomic[D]]) extends FPath {
@@ -30,8 +35,3 @@ object FPath {
 
   }
 }
-/*trait FPathShape[Source, Target] {
-
-  def apply(path: FPath, source: Source): Target
-
-}*/
