@@ -1,7 +1,6 @@
 package net.scalax.fsn.core
 
 import scala.language.higherKinds
-import scala.language.implicitConversions
 import shapeless._
 
 trait FPileAbstract[C[_]] {
@@ -45,7 +44,7 @@ trait FPile[C[_]] extends FPileAbstract[C] {
 
   def deepZero: List[C[Any]] = {
     if (subs.isEmpty) {
-      fShape.encodeData(fShape.zero)
+      fShape.encodeData(dataFromSub(Nil))
     } else {
       subs.flatMap(_.deepZero)
     }

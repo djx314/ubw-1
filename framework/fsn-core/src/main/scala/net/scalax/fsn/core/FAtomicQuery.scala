@@ -1,16 +1,11 @@
 package net.scalax.fsn.core
 
 import scala.language.higherKinds
-import scala.language.existentials
 import shapeless._
 
 trait AbstractFAtomicQuery[F[_]] { self =>
 
   def gen[D](atomics: List[FAtomic[D]]): Either[FAtomicException, F[D]]
-
-  def map[U, X](path: FPath)(cv: F[path.DataType] => X): Either[FAtomicException, X] = {
-    gen(path.atomics).right.map(cv)
-  }
 
   def mapTo[T, C[_]](path: FPath)(cv: (F[path.DataType], C[path.DataType]) => T): FQueryTranform[T, C] = {
     new FQueryTranformImpl[F, C, T] {
@@ -25,15 +20,7 @@ trait AbstractFAtomicQuery[F[_]] { self =>
   }
 
   def mapToOption[T](path: FPath)(cv: (F[path.DataType], Option[path.DataType]) => T): FQueryTranform[T, Option] = {
-    new FQueryTranformImpl[F, Option, T] {
-      override val fPath: path.type = path
-      override lazy val gen: Either[FAtomicException, QueryType[fPath.DataType]] = {
-        self.gen(path.atomics)
-      }
-      def apply(atomics: QueryType[fPath.DataType], data: Option[fPath.DataType]): T = {
-        cv(atomics, data)
-      }
-    }
+    mapTo(path)(cv)
   }
 
 }

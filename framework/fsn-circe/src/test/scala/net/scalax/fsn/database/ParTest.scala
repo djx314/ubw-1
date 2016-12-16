@@ -20,7 +20,7 @@ class ParTest extends FlatSpec
   with ScalaFutures
   with BeforeAndAfterAll
   with BeforeAndAfter
-  with FAtomicGenImpl
+  with FAtomicGenHelper
   with FAtomicShapeHelper
   with PilesPolyHelper {
 
@@ -44,11 +44,11 @@ class ParTest extends FlatSpec
     //println(reader3.get.reader)
     //println(FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics).right.get(2).writer)
 
-    val isReaderDefined = (myPath: FPath) => {
+    /*val isReaderDefined = (myPath: FPath) => {
       FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: HNil).map(myPath) { case readerOpt2 :: writer1 :: HNil =>
         readerOpt2.isDefined
       }
-    }
+    }*/
 
     val path1 = FPathImpl(In.jWrite[Long])
     //println(isReaderDefined(path1))
@@ -230,12 +230,13 @@ class ParTest extends FlatSpec
       FAtomicQuery(needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
         .mapToOption(path) { case (writer :: (defaultOpt :: HNil) :: property :: HNil, data1) =>
           //println(data1)
+          val defaultValueOpt = data1.fold(defaultOpt.map(_.value))(Option(_))
           new JsonWriterImpl {
             override type DataType = writer.JsonType
             override val key = property.proName
             override val encoder = writer.writer
             override val isReaderDefined = defaultOpt.isDefined
-            override val data = data1.map(writer.convert)
+            override val data = defaultValueOpt.map(writer.convert)
           }: JsonWriterImpl
         }
     } { results =>
@@ -261,10 +262,11 @@ class ParTest extends FlatSpec
       ("徒弟弟" columns (In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
       HNil
     )) { case (longData :: stringData :: HNil) :: (stringData2 :: stringData3 :: HNil) :: HNil =>
-      stringData :: longData :: HNil
+      None :: None :: HNil
     }
 
     val pileList = convertPile1 :: mainPile1 :: Nil
+    println(convertPile1.toString)
 
     try {
       resultGen4(pileList) match {
