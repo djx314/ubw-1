@@ -55,10 +55,16 @@ lazy val fsn = (project in file("."))
         ()
       }
     },
-    addCommandAlias("t", "fsn-json/test")
+    addCommandAlias("t", "allTest"),
+    addCommandAlias("allTest", "fsn-circe/test"),
+    addCommandAlias("allReport", "fsn-circe/coverageReport"),
+    addCommandAlias("allClean", ";fsn-core/clean;fsn-circe/clean;old/clean;framework/clean")
   )
   .dependsOn(LocalProject("fsn-core"))
   .dependsOn(LocalProject("old"))
+  //.dependsOn(framework)
   //.enablePlugins(JDKPackagerPlugin)
 
 lazy val framework = (project in file("./framework"))
+  .settings(CustomSettings.customSettings: _*)
+  .settings(name := "framework")

@@ -49,9 +49,9 @@ val slickVersion = "3.2.0-M2"
 val circeVersion = "0.6.1"
 val poiVersion = "3.15"
 
-lazy val `fsn-json` = (project in file("."))
+lazy val `fsn-circe` = (project in file("./fsn-circe"))
   .settings(CustomSettings.baseSettings: _*)
-  .settings(name := "fsn-json")
+  .settings(name := "fsn-circe")
   .dependsOn(tempBase)
   .aggregate(tempBase)
   .dependsOn(`fsn-core`)
@@ -83,7 +83,7 @@ lazy val `fsn-json` = (project in file("."))
     )
   )
 
-lazy val `fsn-core` = (project in file("./core"))
+lazy val `fsn-core` = (project in file("./fsn-core"))
   .settings(CustomSettings.baseSettings: _*)
   .settings(name := "fsn-core")
   .settings(
