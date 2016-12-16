@@ -17,8 +17,7 @@ trait FPath {
 case class FPathImpl[D](override val atomics: List[FAtomic[D]]) extends FPath {
   override type DataType = D
 }
-
-object FPath {
+/*object FPath {
   def findOpt[T](path: FPath)(par: PartialFunction[FAtomic[path.DataType], T]): Option[T] = {
     path.atomics.find(par.isDefinedAt).map(par.apply)
   }
@@ -34,4 +33,4 @@ object FPath {
   def translate[T](pathTran: FPath => T)(implicit aa: String) = {
 
   }
-}
+}*/
