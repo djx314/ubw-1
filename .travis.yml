@@ -9,6 +9,6 @@ jdk:
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION fsn-json/clean fsn-core/clean coverage fsn-json/test
-  - sbt ++$TRAVIS_SCALA_VERSION core/coverageReport
+  - sbt ++$TRAVIS_SCALA_VERSION fsn-json/coverageReport
 
 after_success: bash <(curl -s https://codecov.io/bash)
