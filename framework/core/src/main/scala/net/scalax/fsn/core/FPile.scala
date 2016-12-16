@@ -43,17 +43,25 @@ trait FPile[C[_]] extends FPileAbstract[C] {
     }
   }
 
+  def deepZero: List[C[Any]] = {
+    if (subs.isEmpty) {
+      fShape.encodeData(fShape.zero)
+    } else {
+      subs.flatMap(_.deepZero)
+    }
+  }
+
   override val subs: List[FPile[WrapType]]
 
   override def toString: String = {
     s"""Node(length:${dataLengthSum}): {
        |${ fShape.encodeColumn(pathPile).mkString("\n").split("\\n").map(s => "  " + s).mkString("\n") }
        |""".stripMargin +
-      s"""
-         |  Children: {
-         |${ subs.map(_.toString).mkString("\n").split("\\n").map(s => "    " + s).mkString("\n") }
-         |  }
-         |}""".stripMargin
+    s"""
+       |  Children: {
+       |${ subs.map(_.toString).mkString("\n").split("\\n").map(s => "    " + s).mkString("\n") }
+       |  }
+       |}""".stripMargin
   }
 
 }
@@ -137,9 +145,9 @@ object FPile {
             case (Right(_), Left(s)) =>
               Left(FAtomicException(s.typeTags))
             case (Right(s), Right(t)) =>
-              Right(s ::: t :: Nil)
+              Right(t :: s)
           }
-      }
+      }.right.map(_.reverse)
       calculatePiles.right.map { pileList =>
         val (newPile, summaryPiles) = pileList.unzip
         newPile -> { anyList: List[C[Any]] =>
