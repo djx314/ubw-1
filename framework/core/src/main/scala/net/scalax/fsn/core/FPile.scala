@@ -43,6 +43,14 @@ trait FPile[C[_]] extends FPileAbstract[C] {
     }
   }
 
+  def deepZero: List[C[Any]] = {
+    if (subs.isEmpty) {
+      fShape.encodeData(fShape.zero)
+    } else {
+      subs.flatMap(_.deepZero)
+    }
+  }
+
   override val subs: List[FPile[WrapType]]
 
   override def toString: String = {

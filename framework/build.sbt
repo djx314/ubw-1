@@ -49,11 +49,13 @@ val slickVersion = "3.2.0-M2"
 val circeVersion = "0.6.1"
 val poiVersion = "3.15"
 
-lazy val core = (project in file("."))
+lazy val `fsn-json` = (project in file("."))
   .settings(CustomSettings.baseSettings: _*)
-  .settings(name := "fsn-core")
+  .settings(name := "fsn-json")
   .dependsOn(tempBase)
   .aggregate(tempBase)
+  .dependsOn(`fsn-core`)
+  .aggregate(`fsn-core`)
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe.slick" %% "slick" % slickVersion,
@@ -78,5 +80,15 @@ lazy val core = (project in file("."))
       "org.scalatest" %% "scalatest" % "3.0.0" % "test",
       "com.h2database" % "h2" % "1.4.192" % "test",
       "org.slf4j" % "slf4j-simple" % "1.7.21" % "test"
+    )
+  )
+
+lazy val `fsn-core` = (project in file("./core"))
+  .settings(CustomSettings.baseSettings: _*)
+  .settings(name := "fsn-core")
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.chuusai" %% "shapeless" % "2.3.2",
+      scalaOrganization.value % "scala-reflect" % scalaVersion.value
     )
   )

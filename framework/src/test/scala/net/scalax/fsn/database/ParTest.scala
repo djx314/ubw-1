@@ -170,7 +170,7 @@ class ParTest extends FlatSpec
               ("大侠之路" columns (In.jRead[String] ::: In.default("跳出五行天地外") ::: In.jWrite[String])) ::
                 ("电信" columns (In.default(5L) ::: In.jWrite[Long])) ::
                 HNil
-              ) ::
+            ) ::
             HNil
           ) ::
         HNil
@@ -264,11 +264,13 @@ class ParTest extends FlatSpec
       stringData :: longData :: HNil
     }
 
+    val pileList = convertPile1 :: mainPile1 :: Nil
+
     try {
-      resultGen4(convertPile1 :: mainPile1 :: Nil) match {
+      resultGen4(pileList) match {
         case Left(e) => throw e
         case Right((outPile, s)) =>
-          val result = (s(List(None, None, None, None, None, None)))//s(convertPile1.fShape.encodeData(convertPile1.fShape.zero) ::: mainPile1.fShape.encodeData(mainPile1.fShape.zero))
+          val result = s(pileList.flatMap(_.deepZero))
           resultGen5(outPile) match {
             case Left(e1) => throw e1
             case Right((outPile1, s1)) =>

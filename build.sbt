@@ -55,9 +55,9 @@ lazy val fsn = (project in file("."))
         ()
       }
     },
-    addCommandAlias("t", "core/test")
+    addCommandAlias("t", "fsn-json/test")
   )
-  .dependsOn(LocalProject("core"))
+  .dependsOn(LocalProject("fsn-core"))
   .dependsOn(LocalProject("old"))
   //.enablePlugins(JDKPackagerPlugin)
 
