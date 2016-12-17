@@ -60,7 +60,7 @@ lazy val fsn = (project in file("."))
     addCommandAlias("allReport", ";fsn-core/coverageReport;fsn-circe/coverageReport"),
     addCommandAlias("allClean", ";fsn-core/clean;fsn-circe/clean;old/clean;framework/clean")
   )
-  .dependsOn(LocalProject("fsn-core"))
+  .dependsOn(LocalProject("fsn-circe"))
   .dependsOn(LocalProject("old"))
   //.dependsOn(framework)
   //.enablePlugins(JDKPackagerPlugin)
