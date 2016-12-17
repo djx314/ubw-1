@@ -1,14 +1,12 @@
 package net.scalax.fsn.json.operation
 
-import io.circe.Json
-import io.circe.syntax._
-import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.core.{FColumn, FsnColumn}
+import net.scalax.fsn.common.atomic.{DefaultValue, FProperty}
+import net.scalax.fsn.core._
 import net.scalax.fsn.excel.atomic.{PoiStyleTransform, PoiWriter}
-import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 import org.xarcher.cpoi.CellData
+import shapeless._
 
-object ExcelOperation {
+object ExcelOperation extends FAtomicGenHelper with FAtomicShapeHelper {
 
   /*def read(eachColumn: FColumn): Map[String, Json] => FColumn = { data: Map[String, Json] =>
     val jsonReader = FColumn.find(eachColumn)({ case s: JsonReader[eachColumn.DataType] => s })
@@ -77,6 +75,17 @@ object ExcelOperation {
     columns.map { eachColumn =>
       write(eachColumn)
     }.toMap
+  }
+
+  val writeGen = FPile.transformTreeList { path =>
+    FAtomicQuery(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
+    .mapToOption(path) { case (poiWriter :: transforms :: property :: defaultOpt :: HNil, data) => {
+      val exportData = data.fold(defaultOpt.map(_.value))(Option(_))
+      val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
+      property.proName -> CellData.gen(poiWriter.convert(eachColumnData))(poiWriter.writer).addTransform(transforms.toList.flatMap(_.transforms)): (String, CellData[_])
+    } }
+  } { cellDataTupleList =>
+    cellDataTupleList.toMap: Map[String, CellData[_]]
   }
 
 }

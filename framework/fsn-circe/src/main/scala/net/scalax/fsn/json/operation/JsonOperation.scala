@@ -2,11 +2,12 @@ package net.scalax.fsn.json.operation
 
 import io.circe.Json
 import io.circe.syntax._
-import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.core.{FColumn, FsnColumn}
+import net.scalax.fsn.common.atomic.{DefaultValue, FProperty}
+import net.scalax.fsn.core._
 import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
+import shapeless._
 
-object JsonOperation {
+object JsonOperation extends FAtomicGenHelper with FAtomicShapeHelper {
 
   def read(eachColumn: FColumn): Map[String, Json] => FColumn = { data: Map[String, Json] =>
     val jsonReader = FColumn.find(eachColumn)({ case s: JsonReader[eachColumn.DataType] => s })
@@ -46,6 +47,39 @@ object JsonOperation {
   def readJ(columns: List[FColumn]): Map[String, Json] => List[FColumn] = { data: Map[String, Json] =>
     columns.map { eachColumn =>
       read(eachColumn)(data)
+    }
+  }
+
+  val readGen = FPile.transformTreeList { path =>
+    FAtomicQuery(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
+    .mapToOption(path) { case (jsonReader :: property :: defaultOpt :: HNil, data) =>
+      val tran: Map[String, Json] => Option[path.DataType] = { sourceData: Map[String, Json] =>
+        sourceData.get(property.proName) match {
+          case Some(json) =>
+            json.as[jsonReader.JsonType](jsonReader.reader) match {
+              case Right(data) =>
+                Option(jsonReader.convert(data))
+              case _ =>
+                val ifEmptyData = data.fold(defaultOpt.map(_.value))(Option(_))
+                if (ifEmptyData.isEmpty) {
+                  throw new Exception(s"字段 ${ property.proName } 的值不能被正确转换")
+                }
+                ifEmptyData
+            }
+          case None =>
+            val ifEmptyData = data.fold(defaultOpt.map(_.value))(Option(_))
+            if (ifEmptyData.isEmpty) {
+              throw new Exception(s"字段 ${ property.proName } 未被定义")
+            }
+            ifEmptyData
+        }
+      }
+
+      tran: (Map[String, Json] => Option[Any])
+    }
+  } { readlerList =>
+    { sourceData: Map[String, Json] =>
+      readlerList.map(_.apply(sourceData))
     }
   }
 
@@ -103,6 +137,17 @@ object JsonOperation {
     columns.map { eachColumn =>
       write(eachColumn)
     }.toMap
+  }
+
+  val writeGen = FPile.transformTreeList { path =>
+    FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
+    .mapToOption(path) { case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
+      val exportData = data.fold(defaultOpt.map(_.value))(Option(_))
+      val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
+      property.proName -> jsonWriter.convert(eachColumnData).asJson(jsonWriter.writer)
+    } }
+  } { jsonTupleList =>
+    jsonTupleList.toMap: Map[String, Json]
   }
 
 }
