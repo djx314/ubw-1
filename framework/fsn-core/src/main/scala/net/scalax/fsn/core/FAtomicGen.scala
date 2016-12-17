@@ -2,11 +2,9 @@ package net.scalax.fsn.core
 
 import scala.reflect.runtime.universe._
 import scala.language.higherKinds
-import scala.language.implicitConversions
 
 trait AbstractFAtomicGen {
   type T[_]
-  def gen[U](atomics: List[FAtomic[U]]): T[U]
   def getBy[U](atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]]
 }
 
@@ -18,14 +16,9 @@ trait FAtomicGenOpt[S[_]] extends AbstractFAtomicGen {
   override type T[K] = Option[S[K]]
 }
 
-trait FAtomicGenImpl {
+trait FAtomicGenHelper {
 
   def needAtomic[T[_]](implicit parGen: FAtomicPartialFunctionGen[T], typeTag: WeakTypeTag[T[_]]): FAtomicGen[T] = new FAtomicGen[T] {
-    //override val weakTypeTag = typeTag
-    override def gen[U](atomics: List[FAtomic[U]]): T[U] = {
-      atomics.find(parGen.par[U].isDefinedAt).map(parGen.par[U].apply).getOrElse(throw new Exception(s"找不到匹配类型 ${typeTag.tpe} 的转换器"))
-    }
-
     override def getBy[U](atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]] = {
       atomics.find(parGen.par[U].isDefinedAt) match {
         case Some(s) =>
@@ -37,11 +30,6 @@ trait FAtomicGenImpl {
   }
 
   def needAtomicOpt[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenOpt[T] = new FAtomicGenOpt[T] {
-    //override val weakTypeTag = typeTag
-    override def gen[U](atomics: List[FAtomic[U]]): T[U] = {
-      atomics.find(parGen.par[U].isDefinedAt).map(parGen.par[U].apply)
-    }
-
     override def getBy[U](atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]] = {
       Right(atomics.find(parGen.par[U].isDefinedAt).map(parGen.par[U].apply))
     }
@@ -49,14 +37,11 @@ trait FAtomicGenImpl {
 
 }
 
-//目前的思路
+object FAtomicGenHelper extends FAtomicGenHelper
+
 trait FAtomicPartialFunctionGen[T[_]] {
   def par[U]: PartialFunction[FAtomic[U], T[U]]
 }
-//错误的思路
-/*trait FAtomicPartialFunctionGen[T] {
-  def par(path: FPath): PartialFunction[FAtomic[path.DataType], T]
-}*/
 
 object FAtomicPartialFunctionGen {
 
