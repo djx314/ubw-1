@@ -1,4 +1,4 @@
-package net.scalax.fsn.json.atomic_slick
+/*package net.scalax.fsn.json.atomic_slick
 
 import io.circe.{Encoder, Json}
 import io.circe.syntax._
@@ -266,4 +266,4 @@ trait PJsonSlickMonad {
     }
   }
 
-}
+}*/

@@ -14,7 +14,7 @@ lazy val logger = {
   LoggerFactory.getLogger("sbt init")
 }
 
-lazy val old = (project in file("./old"))
+/*lazy val old = (project in file("./old"))
   .settings(CustomSettings.baseSettings: _*)
   .settings(name := "fsn-old")
   .dependsOn(tempBase)
@@ -43,17 +43,18 @@ lazy val tempBase = (project in file("./temp-base"))
       "joda-time" % "joda-time" % "2.9.4",
       "org.joda" % "joda-convert" % "1.8.1"
     )
-  )
+  )*/
 
 val slickVersion = "3.2.0-M2"
 val circeVersion = "0.6.1"
 val poiVersion = "3.15"
+val scalazVersion = "7.3.0-M5"
 
 lazy val `fsn-circe` = (project in file("./fsn-circe"))
   .settings(CustomSettings.baseSettings: _*)
   .settings(name := "fsn-circe")
-  .dependsOn(tempBase)
-  .aggregate(tempBase)
+  //.dependsOn(tempBase)
+  //.aggregate(tempBase)
   .dependsOn(`fsn-core`)
   .aggregate(`fsn-core`)
   .settings(
@@ -80,6 +81,13 @@ lazy val `fsn-circe` = (project in file("./fsn-circe"))
       "org.scalatest" %% "scalatest" % "3.0.0" % "test",
       "com.h2database" % "h2" % "1.4.192" % "test",
       "org.slf4j" % "slf4j-simple" % "1.7.21" % "test"
+    ),
+    //scalaz
+    libraryDependencies ++= Seq(
+      "org.scalaz" %% "scalaz-core" % scalazVersion,
+      "org.scalaz" %% "scalaz-effect" % scalazVersion,
+      "org.scalaz" %% "scalaz-iteratee" % scalazVersion,
+      "org.scalaz" %% "scalaz-concurrent" % scalazVersion
     )
   )
 

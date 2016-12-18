@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick_common
+/*package net.scalax.fsn.slick_common
 
 import net.scalax.fsn.core.{FEffect, FEffectZero}
 import slick.lifted._
@@ -83,4 +83,4 @@ case class SReader[S, D, T](
   override type DataType = D
   override type TargetColumn = T
 
-}
+}*/

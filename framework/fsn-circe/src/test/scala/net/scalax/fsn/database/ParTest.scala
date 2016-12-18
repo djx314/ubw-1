@@ -22,7 +22,8 @@ class ParTest extends FlatSpec
   with BeforeAndAfter
   with FAtomicGenHelper
   with FAtomicShapeHelper
-  with PilesPolyHelper {
+  with PilesPolyHelper
+  with FPilesGenHelper {
 
   "shapes" should "find readers in Atomic in FPath" in {
     val path = FPathImpl(In.jRead[Long] ::: In.jWrite[Long])
@@ -247,7 +248,7 @@ class ParTest extends FlatSpec
     }
 
     val mainPile1 = FPile.applyOpt(
-      ("我是" columns (In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+      ("我是" columns (In.default(12345678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
       ("小莎莎" columns (In.default("1234") ::: In.jWrite[String])) ::
       HNil
     )
@@ -258,17 +259,29 @@ class ParTest extends FlatSpec
     )
 
     val convertPile1 = (mainPile1 :: appendPile1 :: HNil).poly(FPile.applyOpt(
-      ("小萌师父" columns (In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      ("小萌师父" columns (In.default("喵") ::: In.jRead[String])) ::
       ("徒弟弟" columns (In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
       HNil
     )) { case (longData :: stringData :: HNil) :: (stringData2 :: stringData3 :: HNil) :: HNil =>
       None :: None :: HNil
     }
 
-    val pileList = convertPile1 :: mainPile1 :: Nil
+    val convertPile2 = (convertPile1 :: mainPile1 :: HNil).poly(FPile.applyOpt(
+      ("喵喵喵" columns (In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+        ("汪汪汪" columns (In.default(5678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+        HNil
+    )) { case (stringData :: longData1 :: HNil) :: (longData2 :: stringData3 :: HNil) :: HNil =>
+      None :: longData2 :: HNil
+    }
+
+    val pileList = convertPile2 :: mainPile1 :: Nil
     println(convertPile1.toString)
 
-    try {
+    println(resultGen4.flatMap(resultGen5) { case (result, gen) =>
+      gen(result)
+    }.result(pileList))
+
+    /*try {
       resultGen4(pileList) match {
         case Left(e) => throw e
         case Right((outPile, s)) =>
@@ -283,7 +296,7 @@ class ParTest extends FlatSpec
       }
     } catch {
       case e: Exception => e.printStackTrace
-    }
+    }*/
 
   }
 

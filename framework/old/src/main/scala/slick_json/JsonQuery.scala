@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick_json
+/*package net.scalax.fsn.slick_json
 
 import io.circe.Json
 import net.scalax.fsn.slick.model.{ColumnOrder, JsonOut, SelectProperty, SlickParam}
@@ -46,4 +46,4 @@ trait JsonQuery {
       JsonOut(properties = properties, data = (slickParam: SlickParam) => CommonResult.commonResult(defaultOrders, uQuery, render, sortMap/*, properties*/).apply(slickParam))
   }
 
-}
+}*/
