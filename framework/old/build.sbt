@@ -1,4 +1,4 @@
-libraryDependencies ++= Seq(
+/*libraryDependencies ++= Seq(
   "com.chuusai" %% "shapeless" % "2.3.1"
 )
 
@@ -21,14 +21,4 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-core",
   "io.circe" %% "circe-generic",
   "io.circe" %% "circe-parser"
-).map(_ % circeVersion)
-/*libraryDependencies ++= Seq(
-  //poi
-  "org.apache.poi" % "poi" % poiVersion exclude("stax", "stax-api"),
-  "org.apache.poi" % "poi-ooxml" % poiVersion exclude("stax", "stax-api"),
-  "org.apache.poi" % "poi-ooxml-schemas" % poiVersion exclude("stax", "stax-api"),
-
-  //joda-time
-  "joda-time" % "joda-time" % "2.9.4",
-  "org.joda" % "joda-convert" % "1.8.1"
-)*/
+).map(_ % circeVersion)*/

@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick.model
+/*package net.scalax.fsn.slick.model
 
 import slick.lifted.{CanBeQueryCondition, Query, Rep}
 
@@ -10,4 +10,4 @@ trait FilterWrapper[E] {
   def genFilter[U](query: Query[E, U, Seq]): Query[E, U, Seq] = {
     query.filter(data => convert(data))(condition)
   }
-}
+}*/

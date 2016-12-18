@@ -1,14 +1,11 @@
 package net.scalax.fsn.mix.helpers
 
-import io.circe.{Decoder, Encoder, Json}
-import net.scalax.fsn.common.atomic.FProperty
+import io.circe.Json
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{ExcelOperation, JsonOperation}
-import net.scalax.fsn.mix.helpers.{Select => SSelect}
 import net.scalax.fsn.mix.operation.PropertiesOperation
-import net.scalax.fsn.mix.slickbase.{CrudQueryExtensionMethods, ListQueryExtensionMethods, ListQueryWrap, QueryWrap}
+import net.scalax.fsn.mix.slickbase.{ListQueryWrap, QueryWrap}
 import net.scalax.fsn.slick.atomic.{AutoInc, SlickRetrieve}
-import net.scalax.fsn.slick.helpers.{FRep, SlickUtils}
 import net.scalax.fsn.slick.model._
 import net.scalax.fsn.slick.operation._
 import slick.basic.BasicProfile
@@ -93,7 +90,6 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
       val outQueryWrap = OutSelectConvert.ubwGen(listQueryWrap.listQueryBind)
       val outJsonGen = outQueryWrap.flatMap(JsonOperation.writeGen) { (slickDBIO, jsonGen) =>
         { slickParam: SlickParam =>
-          println("1234" * 100)
           slickDBIO.slickResult(defaultOrders).apply(slickParam).map { result =>
             result._1.map(s => jsonGen(s)) -> result._2
           }

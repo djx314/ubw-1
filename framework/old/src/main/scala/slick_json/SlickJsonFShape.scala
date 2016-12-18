@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick_json
+/*package net.scalax.fsn.slick_json
 
 import io.circe.Json
 import net.scalax.fsn.core._
@@ -128,4 +128,4 @@ trait SlickJsonConvert extends FEffectConverter {
 
   override val convert: font.DataType => back.DataType
 
-}
+}*/

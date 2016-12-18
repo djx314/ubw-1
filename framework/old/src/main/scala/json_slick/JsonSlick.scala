@@ -1,4 +1,4 @@
-package net.scalax.fsn.json.atomic_slick
+/*package net.scalax.fsn.json.atomic_slick
 
 import io.circe.Json
 import net.scalax.fsn.core.{FEffect, FEffectConverter, FEffectZero}
@@ -303,3 +303,4 @@ case class JsonSlickInConvertImpl[A, B, C](
   override val second: FEffect.Aux[SlickWriter, C],
   override val convert: A => C
 ) extends JsonSlickInConvert
+*/

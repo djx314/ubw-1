@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick_common
+/*package net.scalax.fsn.slick_common
 
 import net.scalax.fsn.slick.model.{ColumnOrder, SlickPage, SlickParam, SlickRange}
 import slick.basic.BasicProfile
@@ -138,4 +138,4 @@ trait CommonResult {
 
 }
 
-object CommonResult extends CommonResult
+object CommonResult extends CommonResult*/

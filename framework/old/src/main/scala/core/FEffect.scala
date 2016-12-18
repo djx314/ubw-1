@@ -1,4 +1,4 @@
-package net.scalax.fsn.core
+/*package net.scalax.fsn.core
 
 import scala.language.higherKinds
 
@@ -28,4 +28,4 @@ trait FEffectConverter extends FEffConvert {
 
   val convert: font.DataType => back.DataType
 
-}
+}*/

@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick_poi
+/*package net.scalax.fsn.slick_poi
 
 import net.scalax.fsn.slick.model.{ColumnOrder, PoiOut, SelectProperty, SlickParam}
 import net.scalax.fsn.slick_common.CommonResult
@@ -46,4 +46,4 @@ trait PoiQuery {
       PoiOut(properties, (slickParam: SlickParam) => CommonResult.commonResult(defaultOrders, uQuery, render, sortMap/*, properties*/).apply(slickParam)/*.map(PoiOut.tupled)*/)
   }
 
-}
+}*/
