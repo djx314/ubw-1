@@ -139,6 +139,11 @@ object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
       new FSlickQuery {
         override val uQuery = selectQuery
         override val sortMap = finalOrderGen
+        override val lineConvert = { list: Seq[Any] =>
+          list.toStream.zip(genList).map { case (eachData, reader) =>
+            Option(reader.convert(eachData.asInstanceOf[reader.SlickType]))
+          }.toList
+        }
       }
     }
   }
@@ -191,6 +196,7 @@ trait FSlickQuery {
 
   val uQuery: Query[Seq[Any], Seq[Any], Seq]
   val sortMap: Map[String, Seq[Any] => ColumnOrdered[_]]
+  val lineConvert: Seq[Any] => List[Option[Any]]
 
   def slickResult(
     implicit
@@ -216,7 +222,7 @@ trait FSlickQuery {
     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
-    (slickParam: SlickParam) => CommonResult.commonResult(defaultOrders, uQuery, { seq: Seq[Any] => seq.toList.map(Option(_)) }, sortMap).apply(slickParam)
+    (slickParam: SlickParam) => CommonResult.commonResult(defaultOrders, uQuery, lineConvert, sortMap).apply(slickParam)
   }
 
 }

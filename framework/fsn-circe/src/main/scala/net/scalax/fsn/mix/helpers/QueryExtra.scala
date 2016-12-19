@@ -65,7 +65,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
                 jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
                 repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
                 ec: ExecutionContext
-              ): (JsonOut, PoiOut) = {
+              ): (() => JsonOut, () => PoiOut) = {
       lazy val withExtraCols = OutSelectConvert.extraSubCol(listQueryWrap.columns)
       lazy val queryWrap: JsonQuery = SelectOperation.encode(withExtraCols, listQueryWrap.listQueryBind)
 
@@ -102,14 +102,14 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
           }
         }
       }
-      JsonOut(withExtraCols.map(PropertiesOperation.convertProperty), outJsonGen.result(newPiles) match {
+      (() => JsonOut(withExtraCols.map(PropertiesOperation.convertProperty), outJsonGen.result(newPiles) match {
         case Left(e) => throw e
         case Right(s) => s
-      }) ->
-        PoiOut(withExtraCols.map(PropertiesOperation.convertProperty), outPoiGen.result(newPiles) match {
+      })) ->
+        (() => PoiOut(withExtraCols.map(PropertiesOperation.convertProperty), outPoiGen.result(newPiles) match {
           case Left(e) => throw e
           case Right(s) => s
-        })
+        }))
     }
 
     def jpResult(orderColumn: String, isDesc: Boolean = true)
@@ -118,7 +118,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
                 jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
                 repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
                 ec: ExecutionContext
-              ): (JsonOut, PoiOut) = {
+              ): (() => JsonOut, () => PoiOut) = {
       jpResult(List(ColumnOrder(orderColumn, isDesc)))
     }
 
@@ -128,7 +128,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
       jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
       repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
-    ): (JsonOut, PoiOut) = {
+    ): (() => JsonOut, () => PoiOut) = {
       jpResult(Nil)
     }
 
