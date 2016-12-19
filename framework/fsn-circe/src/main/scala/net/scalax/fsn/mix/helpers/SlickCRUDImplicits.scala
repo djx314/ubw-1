@@ -2,9 +2,9 @@ package net.scalax.fsn.mix.helpers
 
 import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.core.{FAtomic, FsnColumn}
+import net.scalax.fsn.core._
 import net.scalax.fsn.mix.helpers.{Select => SSelect}
-import net.scalax.fsn.mix.slickbase.{CrudQueryExtensionMethods, ListQueryExtensionMethods}
+import net.scalax.fsn.mix.slickbase.{CrudQueryExtensionMethods, ListQueryExtensionMethods, PileListQueryExtensionMethods}
 import net.scalax.fsn.slick.helpers.{FRep, SlickUtils}
 import slick.lifted.{FlatShapeLevel, Query, Rep, Shape}
 import slick.relational.RelationalProfile
@@ -32,6 +32,12 @@ trait SlickCRUDImplicits {
         override val proName = proName1
       }
       FsnColumn(proName :: converts.toList.flatten)
+    }
+    def columns1111[D](atomics: List[FAtomic[D]]*): FPileImpl[FPathImpl[D], Option[D], Option] = {
+      val proName = new FProperty[D] {
+        override val proName = proName1
+      }
+      FPile.applyOpt(FPathImpl(proName :: atomics.flatten.toList))(implicitly[FsnShape[FPathImpl[D], Option[D], Option]])
     }
   }
 
@@ -111,6 +117,7 @@ trait SlickCRUDImplicits {
   implicit class queryToUQueryExtendsionMethodGen[E, U](query: Query[E, U, Seq]) {
 
     def out = new ListQueryExtensionMethods[E, U](query)
+    def out2222 = new PileListQueryExtensionMethods[E, U](query)
 
   }
 

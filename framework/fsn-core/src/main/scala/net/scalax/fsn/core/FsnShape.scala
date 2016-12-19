@@ -47,6 +47,18 @@ object FsnShape {
     override val dataLength = 1
   }
 
+  /*implicit def fAtomicFsnShape[T, U[_]](implicit zeroPile: FZeroPile[U[T]]): FsnShape[List[FAtomic[T]], U[T], U] = new FsnShape[List[FAtomic[T]], U[T], U] {
+    override def encodeColumn(atomics: List[FAtomic[T]]): List[FPath] = FPathImpl(atomics) :: Nil
+    override def decodeColumn(columns: List[FPath]): List[FAtomic[T]] = columns.head.asInstanceOf[FPathImpl[T]].atomics
+
+    override def encodeData(pileData: U[T]): List[U[Any]] = pileData.asInstanceOf[U[Any]] :: Nil
+    override def decodeData(data: List[U[Any]]): U[T] = data.head.asInstanceOf[U[T]]
+
+    override def zero = zeroPile.zero
+
+    override val dataLength = 1
+  }*/
+
   implicit def jfkoajiroejhteiroth[S <: HList, T <: HList, U, W, V <: HList, A[_]](
     implicit
     cv: S <:< (U :: T),
