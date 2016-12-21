@@ -34,6 +34,15 @@ trait FQueryTranform[T, C[_]] {
   def apply(atomics: QueryType[fPath.DataType], data: C[fPath.DataType]): T
 }
 
+trait FQueryTranformWithOutData[T, C[_]] {
+
+  type QueryType[_]
+
+  val fPath: FPath
+  val gen: Either[FAtomicException, QueryType[fPath.DataType]]
+  def apply(atomics: QueryType[fPath.DataType]): T
+}
+
 trait FQueryTranformImpl[F[_], G[_], T] extends FQueryTranform[T, G] {
 
   override type QueryType[A] = F[A]
