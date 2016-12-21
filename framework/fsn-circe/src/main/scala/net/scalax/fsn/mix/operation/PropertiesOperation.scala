@@ -1,13 +1,18 @@
 package net.scalax.fsn.mix.operation
 
-import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.core.FColumn
+import net.scalax.fsn.common.atomic.{DefaultValue, FProperty}
+import net.scalax.fsn.core._
 import net.scalax.fsn.json.atomic.JsonWriter
 import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.model.RWProperty
-import net.scalax.fsn.slick.helpers.TypeHelpers
+import net.scalax.fsn.slick.helpers.{SlickQueryBindImpl, TypeHelpers}
+import net.scalax.fsn.slick.operation.OutSelectConvert
+import net.scalax.fsn.slick.operation.OutSelectConvert.{needAtomic, needAtomicOpt}
+import shapeless._
+import io.circe.syntax._
+import io.circe.Json
 
-object PropertiesOperation {
+object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with FPilesGenHelper {
 
   def convert(column: FColumn): RWProperty = {
     val jsonWriter = FColumn.find(column) { case s: JsonWriter[column.DataType] => s }
@@ -49,6 +54,34 @@ object PropertiesOperation {
     )
 
     slickCommonpropertyInfo
+  }
+
+  def slick2jsonOperation(wQuery: SlickQueryBindImpl) = {
+    OutSelectConvert.ubwGen(wQuery).flatMap {
+      FPile.transformTreeList { path =>
+        FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[OrderTargetName] :: HNil)
+          .mapToOption(path) { case (jsonWriter :: property :: defaultOpt :: defaultDescOpt :: orderTargetNameOpt :: HNil, data) => {
+            val exportData = data.fold(defaultOpt.map(_.value))(Option(_))
+            val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
+            (property.proName -> jsonWriter.convert(eachColumnData).asJson(jsonWriter.writer)) ->
+              (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true)) -> orderTargetNameOpt.map(_.orderTargetName))
+          } }
+      } { jsonTupleList =>
+        val (resultTuple, proInfoTuple) = jsonTupleList.unzip
+        (resultTuple.toMap: Map[String, Json]) -> proInfoTuple
+      }
+    } { ??? }
+
+    /*val jsonGen = FPile.transformTreeList { path: List[FPile[Option]] =>
+      FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[OrderTargetName] :: needAtomicOpt[DefaultValue] :: HNil)
+        .mapToOption(path) { case (jsonWriter :: property :: descParamOpt :: orderTargetNameOpt :: defaultOpt :: HNil, data) => {
+          val exportData = data.fold(defaultOpt.map(_.value))(Option(_))
+          val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
+          property.proName -> jsonWriter.convert(eachColumnData).asJson(jsonWriter.writer)
+      } }
+    } { jsonTupleList =>
+      jsonTupleList.toMap: Map[String, Json]
+    }*/
   }
 
 }

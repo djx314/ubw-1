@@ -119,7 +119,7 @@ object FPile {
     }
   }
 
-  def transformTreeList[C[_], S, T](pathGen: FPath => FQueryTranform[S, C])(columnGen: List[S] => T): List[FPile[C]] => Either[FAtomicException, (List[FPile[C]], List[C[Any]] => T)] = {
+  def transformTreeList[C[_], S, T](pathGen: FPath => FQueryTranform[S, C])(columnGen: List[S] => T): FPileSyntax.PileGen[C, T] = {
     (piles: List[FPile[C]]) => {
       val calculatePiles = piles.map { s =>
         genTree(pathGen, s)

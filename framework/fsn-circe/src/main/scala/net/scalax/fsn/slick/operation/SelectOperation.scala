@@ -87,7 +87,7 @@ object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
     }
   }
 
-  def ubwGen(wQuery: SlickQueryBindImpl) = {
+  def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[Option, FSlickQuery] = {
     FPile.transformTreeList { path =>
       FAtomicQuery(needAtomic[SlickSelect] :: needAtomicOpt[OrderNullsLast] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: HNil)
       .mapToOption(path) { case (slickSelect :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil, data) => {

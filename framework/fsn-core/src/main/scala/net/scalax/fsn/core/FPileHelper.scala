@@ -31,6 +31,12 @@ object FPileSyntax {
 
   type PileGen[C[_], T] = List[FPile[C]] => Either[FAtomicException, (List[FPile[C]], List[C[Any]] => T)]
 
+  def apply[C[_], T](piles: FPileSyntax.PileGen[C, T]): FPileSyntax[C, T] = {
+    new FPileSyntax[C, T] {
+      override val pilesGen = piles
+    }
+  }
+
 }
 
 trait FPilesGenHelper {
