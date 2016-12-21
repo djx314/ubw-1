@@ -179,7 +179,7 @@ object FPile {
     genTreeTailCallWithoutData(pathGen, pile, pile).right.map { case (oldPile, newPile, piles) => newPile -> piles }
   }
 
-  def transformTreeListWithoutData[C[_], S, T](pathGen: FPath => FQueryTranformWithOutData[S, C])(columnGen: List[S] => T): FPileSyntax.NoDataGen[C, T] = {
+  def transformTreeListWithoutData[C[_], S, T](pathGen: FPath => FQueryTranformWithOutData[S, C])(columnGen: List[S] => T): FPileSyntaxWithoutData.PileGen[C, T] = {
     (piles: List[FPile[C]]) => {
       val calculatePiles = piles.map { s =>
         genTreeWithoutData(pathGen, s)

@@ -29,14 +29,18 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
                     ec: ExecutionContext
                   ): JsonOut = {
       lazy val withExtraCols = OutSelectConvert.extraSubCol(listQueryWrap.columns)
-      lazy val queryWrap: JsonQuery = SelectOperation.encode(withExtraCols, listQueryWrap.listQueryBind)
+      /*lazy val queryWrap: JsonQuery = SelectOperation.encode(withExtraCols, listQueryWrap.listQueryBind)
 
       val gen = { slickParam: SlickParam =>
         queryWrap.jsonResult(defaultOrders).apply(slickParam).map { result =>
           result._1.map(JsonOperation.writeJ) -> result._2
         }
-      }
-      JsonOut(withExtraCols.map(PropertiesOperation.convertProperty), gen)
+      }*/
+
+      val newPiles = withExtraCols.map(col => FPile.applyOpt(FPathImpl(col.cols)))
+      lazy val outJsonGen = PropertiesOperation.slick2jsonOperation(listQueryWrap.listQueryBind).apply(newPiles)
+      outJsonGen
+      //JsonOut(withExtraCols.map(PropertiesOperation.convertProperty), gen)
     }
 
     def result(orderColumn: String, isDesc: Boolean = true)
@@ -67,7 +71,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
                 ec: ExecutionContext
               ): (() => JsonOut, () => PoiOut) = {
       lazy val withExtraCols = OutSelectConvert.extraSubCol(listQueryWrap.columns)
-      lazy val queryWrap: JsonQuery = SelectOperation.encode(withExtraCols, listQueryWrap.listQueryBind)
+      /*lazy val queryWrap: JsonQuery = SelectOperation.encode(withExtraCols, listQueryWrap.listQueryBind)
 
       val jsonGen = { slickParam: SlickParam =>
         queryWrap.jsonResult(defaultOrders).apply(slickParam).map { result =>
@@ -83,11 +87,11 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
       }
 
       JsonOut(withExtraCols.map(PropertiesOperation.convertProperty), jsonGen) ->
-      PoiOut(withExtraCols.map(PropertiesOperation.convertProperty), poiGen)
+      PoiOut(withExtraCols.map(PropertiesOperation.convertProperty), poiGen)*/
 
       //==========================================================================================
       val newPiles = withExtraCols.map(col => FPile.applyOpt(FPathImpl(col.cols)))
-      val outQueryWrap = OutSelectConvert.ubwGen(listQueryWrap.listQueryBind)
+      /*val outQueryWrap = OutSelectConvert.ubwGen(listQueryWrap.listQueryBind)
       val outJsonGen = outQueryWrap.flatMap(JsonOperation.writeGen) { (slickDBIO, jsonGen) =>
         { slickParam: SlickParam =>
           slickDBIO.slickResult(defaultOrders).apply(slickParam).map { result =>
@@ -109,7 +113,10 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
         (() => PoiOut(withExtraCols.map(PropertiesOperation.convertProperty), outPoiGen.result(newPiles) match {
           case Left(e) => throw e
           case Right(s) => s
-        }))
+        }))*/
+      lazy val outJsonGen = PropertiesOperation.slick2jsonOperation(listQueryWrap.listQueryBind).apply(newPiles)
+      lazy val outPoiGen = PropertiesOperation.slick2PoiOperation(listQueryWrap.listQueryBind).apply(newPiles)
+      (() => outJsonGen) -> (() => outPoiGen)
     }
 
     def jpResult(orderColumn: String, isDesc: Boolean = true)
@@ -201,31 +208,11 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
       //==========================================================================================
       //val newPiles = withExtraCols.map(col => FPile.applyOpt(FPathImpl(col.cols)))
-      val outQueryWrap = OutSelectConvert.ubwGen(listQueryWrap.listQueryBind)
-      val outJsonGen = outQueryWrap.flatMap(JsonOperation.writeGen) { (slickDBIO, jsonGen) =>
-      { slickParam: SlickParam =>
-        slickDBIO.slickResult(defaultOrders).apply(slickParam).map { result =>
-          result._1.map(s => jsonGen(s)) -> result._2
-        }
-      }
-      }
-      val outPoiGen = outQueryWrap.flatMap(ExcelOperation.writeGen) { (slickDBIO, poiGen) =>
-      { slickParam: SlickParam =>
-        slickDBIO.slickResult(defaultOrders).apply(slickParam).map { result =>
-          result._1.map(s => poiGen(s)) -> result._2
-        }
-      }
-      }
+      lazy val outJsonGen = PropertiesOperation.slick2jsonOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
 
-      lazy val withExtraCols = listQueryWrap.columns.map { s => s.paths.map(t => FsnColumn(t.atomics)) }.flatten
-      (() => JsonOut(withExtraCols.map(PropertiesOperation.convertProperty), outJsonGen.result(listQueryWrap.columns) match {
-        case Left(e) => throw e
-        case Right(s) => s
-      })) ->
-        (() => PoiOut(withExtraCols.map(PropertiesOperation.convertProperty), outPoiGen.result(listQueryWrap.columns) match {
-          case Left(e) => throw e
-          case Right(s) => s
-        }))
+      lazy val outPoiGen = PropertiesOperation.slick2PoiOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
+
+      (() => outJsonGen) -> (() => outPoiGen)
     }
 
     def jpResult(orderColumn: String, isDesc: Boolean = true)
