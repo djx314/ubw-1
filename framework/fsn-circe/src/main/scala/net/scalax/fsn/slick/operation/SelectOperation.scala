@@ -148,11 +148,16 @@ object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
     }
   }
 
-  def ubwGenWithoutData(wQuery: SlickQueryBindImpl): FPileSyntaxWithoutData.PileGen[Option, FSlickQuery] = {
+  def ubwGenWithoutData/*(wQuery: SlickQueryBindImpl)*/: FPileSyntaxWithoutData.PileGen[Option, List[String]] = {
     FPile.transformTreeListWithoutData { path =>
-      FAtomicQuery(needAtomic[SlickSelect] :: needAtomicOpt[OrderNullsLast] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: HNil)
-        .mapToOptionWithoutData(path) { case (slickSelect :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil) => {
-          val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
+      FAtomicQuery(needAtomic[SlickSelect] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: HNil)
+        .mapToOptionWithoutData(path) { case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
+          if (slickSelect.colToOrder.isDefined || orderTargetNameContent.isDefined) {
+            Option(property.proName)
+          } else {
+            None
+          }
+          /*val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
           val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
           def slickReaderGen: SReader[slickSelect.SourceType, slickSelect.SlickType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
             SReader(
@@ -171,10 +176,11 @@ object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
               slickSelect.outConvert
             )
 
-          slickReaderGen: SlickReader
-        } }
+          slickReaderGen: SlickReader*/
+        }
     } { genList =>
-      val gensWithIndex = genList.zipWithIndex
+      genList.flatten
+      /*val gensWithIndex = genList.zipWithIndex
       val genSortMap: Map[String, Seq[Any] => ColumnOrdered[_]] = {
         gensWithIndex
           .toStream
@@ -205,7 +211,7 @@ object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
             Option(reader.convert(eachData.asInstanceOf[reader.SlickType]))
           }.toList
         }
-      }
+      }*/
     }
   }
 

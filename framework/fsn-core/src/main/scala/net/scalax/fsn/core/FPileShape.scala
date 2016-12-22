@@ -56,10 +56,10 @@ trait PilesPolyHelper {
 
   implicit class pilesPolyFuction[E, U, C[_]](piles: E)(implicit fPileShape: FPileShape[E, U, C]) {
 
-    def poly[X, Y](parentPile: FPileImpl[X, Y, C])(cv: U => Y): FPileImpl[X, Y, C] = {
+    def poly[X, Y](parentPile: X)(implicit fsnShape: FsnShape[X, Y, C]): (U => Y) => FPileImpl[X, Y, C] = { cv: (U => Y) =>
       FPileImpl(
-        parentPile.pathPile,
-        parentPile.fShape,
+        parentPile,
+        fsnShape,
         { list: List[Any] =>
           cv(fPileShape.decodeData(list))
         },

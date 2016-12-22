@@ -39,6 +39,13 @@ trait SlickCRUDImplicits {
       }
       FPile.applyOpt(FPathImpl(proName :: atomics.flatten.toList))(implicitly[FsnShape[FPathImpl[D], Option[D], Option]])
     }
+
+    def ofPath[D](atomics: List[FAtomic[D]]*): FPathImpl[D] = {
+      val proName = new FProperty[D] {
+        override val proName = proName1
+      }
+      FPathImpl(proName :: atomics.flatten.toList)
+    }
   }
 
   implicit def fColumnStringExtesionMethods(proName: String): FColumnStringImplicits = new FColumnStringImplicits(proName)

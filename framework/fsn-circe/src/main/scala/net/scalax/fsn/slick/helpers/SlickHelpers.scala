@@ -12,7 +12,7 @@ trait FSSelectAtomicHelper {
     val shape: Shape[_ <: FlatShapeLevel, S, D, T]
     val convert: D => E
 
-    def out1111: SSelect[S, D, T, E] = SSelect(
+    def out3333: SSelect[S, D, T, E] = SSelect(
       shape,
       convert,
       rep,
@@ -20,7 +20,7 @@ trait FSSelectAtomicHelper {
     )
   }
 
-  implicit def slickOutHelper[S, D, T](rep1: S)(shape1: Shape[_ <: FlatShapeLevel, S, D, T]): SSelectHelper[S, D, T, D] = {
+  implicit def slickOutHelper[S, D, T](rep1: S)(implicit shape1: Shape[_ <: FlatShapeLevel, S, D, T]): SSelectHelper[S, D, T, D] = {
     new SSelectHelper[S, D, T, D] {
       override val rep = rep1
       override val shape = shape1

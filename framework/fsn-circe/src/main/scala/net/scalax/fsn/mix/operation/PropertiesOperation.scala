@@ -69,7 +69,6 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): List[FPile[Option]] => JsonOut = { optPiles: List[FPile[Option]] =>
-    println("1234" * 100)
 
     val jsonGen: FPileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]] = OutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.writeGen) { (slickQuery, jsonGen) =>
       { slickParam: SlickParam =>
@@ -79,7 +78,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       }
     }
 
-    val propertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData(wQuery).flatMap {
+    val propertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData/*(wQuery)*/.flatMap {
       FPile.transformTreeListWithoutData { path =>
         FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
         .mapToOptionWithoutData(path) { case (jsonWriter :: property :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
@@ -89,13 +88,13 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       } { jsonTupleList =>
         jsonTupleList
       }
-    } { (slickQuery, jsonGen) => {
+    } { (sortProNames, jsonGen) => {
       val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName)) =>
         SelectProperty(
           proName,
           typeName,
           inRetrieve,
-          slickQuery.sortMap.contains(proName),
+          sortProNames.contains(proName),
           defaultDesc
         )
       }
@@ -117,7 +116,6 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): List[FPile[Option]] => PoiOut = { optPiles: List[FPile[Option]] =>
-    println("5678" * 100)
 
     val poiGen/*: FPileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]]*/= OutSelectConvert.ubwGen(wQuery).flatMap(ExcelOperation.writeGen) { (slickQuery, poiGen) =>
       { slickParam: SlickParam =>
@@ -127,7 +125,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       }
     }
 
-    val propertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData(wQuery).flatMap {
+    val propertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData/*(wQuery)*/.flatMap {
       FPile.transformTreeListWithoutData { path =>
         FAtomicQuery(needAtomic[PoiWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
           .mapToOptionWithoutData(path) { case (jsonWriter :: property :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
@@ -137,13 +135,13 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       } { jsonTupleList =>
         jsonTupleList
       }
-    } { (slickQuery, jsonGen) => {
+    } { (sortProNames, jsonGen) => {
       val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName)) =>
         SelectProperty(
           proName,
           typeName,
           inRetrieve,
-          slickQuery.sortMap.contains(proName),
+          sortProNames.contains(proName),
           defaultDesc
         )
       }
