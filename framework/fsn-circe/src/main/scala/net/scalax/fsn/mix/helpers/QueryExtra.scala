@@ -142,22 +142,15 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
   }
 
   implicit class slick2jsonExtraClass1111(listQueryWrap: PileListQueryWrap) {
-    /*def result(defaultOrders: List[ColumnOrder])
+    def result(defaultOrders: List[ColumnOrder])
               (
                 implicit
                 jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
                 repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
                 ec: ExecutionContext
               ): JsonOut = {
-      lazy val withExtraCols = OutSelectConvert.extraSubCol(listQueryWrap.columns)
-      lazy val queryWrap: JsonQuery = SelectOperation.encode(withExtraCols, listQueryWrap.listQueryBind)
-
-      val gen = { slickParam: SlickParam =>
-        queryWrap.jsonResult(defaultOrders).apply(slickParam).map { result =>
-          result._1.map(JsonOperation.writeJ) -> result._2
-        }
-      }
-      JsonOut(withExtraCols.map(PropertiesOperation.convertProperty), gen)
+      lazy val outJsonGen = PropertiesOperation.slick2jsonOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
+      outJsonGen
     }
 
     def result(orderColumn: String, isDesc: Boolean = true)
@@ -178,7 +171,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
       ec: ExecutionContext
     ): JsonOut = {
       result(Nil)
-    }*/
+    }
 
     def jpResult(defaultOrders: List[ColumnOrder])
                 (
