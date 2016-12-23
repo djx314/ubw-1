@@ -258,19 +258,19 @@ class ParTest extends FlatSpec
       HNil
     )
 
-    val convertPile1 = (mainPile1 :: appendPile1 :: HNil).poly(FPile.applyOpt(
+    val convertPile1 = (mainPile1 :: appendPile1 :: HNil).poly(
       ("小萌师父" columns (In.default("喵") ::: In.jRead[String])) ::
       ("徒弟弟" columns (In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
       HNil
-    )) { case (longData :: stringData :: HNil) :: (stringData2 :: stringData3 :: HNil) :: HNil =>
+    ).apply { case (longData :: stringData :: HNil) :: (stringData2 :: stringData3 :: HNil) :: HNil =>
       None :: None :: HNil
     }
 
-    val convertPile2 = (convertPile1 :: mainPile1 :: HNil).poly(FPile.applyOpt(
+    val convertPile2 = (convertPile1 :: mainPile1 :: HNil).poly(
       ("喵喵喵" columns (In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
         ("汪汪汪" columns (In.default(5678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
         HNil
-    )) { case (stringData :: longData1 :: HNil) :: (longData2 :: stringData3 :: HNil) :: HNil =>
+    ).apply { case (stringData :: longData1 :: HNil) :: (longData2 :: stringData3 :: HNil) :: HNil =>
       None :: longData2 :: HNil
     }
 

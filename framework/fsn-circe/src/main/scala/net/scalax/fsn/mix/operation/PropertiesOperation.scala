@@ -1,13 +1,25 @@
 package net.scalax.fsn.mix.operation
 
-import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.core.FColumn
+import net.scalax.fsn.common.atomic.{DefaultValue, FProperty}
+import net.scalax.fsn.core._
 import net.scalax.fsn.json.atomic.JsonWriter
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.model.RWProperty
-import net.scalax.fsn.slick.helpers.TypeHelpers
+import net.scalax.fsn.slick.model.{JsonOut, PoiOut, JsonView, RWProperty, SelectProperty, SlickParam}
+import net.scalax.fsn.slick.helpers.{SlickQueryBindImpl, TypeHelpers}
+import net.scalax.fsn.slick.operation.OutSelectConvert
+import net.scalax.fsn.slick.operation.OutSelectConvert
+import net.scalax.fsn.json.operation.{ExcelOperation, JsonOperation}
+import net.scalax.fsn.excel.atomic.PoiWriter
+import shapeless._
+import io.circe.syntax._
+import io.circe.Json
+import slick.basic.BasicProfile
+import slick.dbio._
+import slick.lifted.{Query, Rep}
 
-object PropertiesOperation {
+import scala.concurrent.ExecutionContext
+
+object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with FPilesGenHelper {
 
   def convert(column: FColumn): RWProperty = {
     val jsonWriter = FColumn.find(column) { case s: JsonWriter[column.DataType] => s }
@@ -49,6 +61,100 @@ object PropertiesOperation {
     )
 
     slickCommonpropertyInfo
+  }
+
+  def slick2jsonOperation(wQuery: SlickQueryBindImpl)(
+    implicit
+    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+    ec: ExecutionContext
+  ): List[FPile[Option]] => JsonOut = { optPiles: List[FPile[Option]] =>
+
+    val jsonGen: FPileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]] = OutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.writeGen) { (slickQuery, jsonGen) =>
+      { slickParam: SlickParam =>
+        slickQuery.slickResult.apply(slickParam).map { case (dataList, sum) =>
+          dataList.map(s => jsonGen(s).toMap) -> sum
+        }
+      }
+    }
+
+    val propertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData/*(wQuery)*/.flatMap {
+      FPile.transformTreeListWithoutData { path =>
+        FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
+        .mapToOptionWithoutData(path) { case (jsonWriter :: property :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
+          val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
+          (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, jsonWriter.typeTag.tpe.toString))
+        }
+      } { jsonTupleList =>
+        jsonTupleList
+      }
+    } { (sortProNames, jsonGen) => {
+      val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName)) =>
+        SelectProperty(
+          proName,
+          typeName,
+          inRetrieve,
+          sortProNames.contains(proName),
+          defaultDesc
+        )
+      }
+      properties
+    } }
+
+    propertiesGen.result(optPiles) -> jsonGen.result(optPiles) match {
+      case (Left(e1), Left(e2)) => throw e1
+      case (Left(e), Right(_)) => throw e
+      case (Right(_), Left(e)) => throw e
+      case (Right(properties), Right(data)) =>
+        JsonOut(properties, data)
+    }
+  }
+
+  def slick2PoiOperation(wQuery: SlickQueryBindImpl)(
+    implicit
+    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+    ec: ExecutionContext
+  ): List[FPile[Option]] => PoiOut = { optPiles: List[FPile[Option]] =>
+
+    val poiGen/*: FPileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]]*/= OutSelectConvert.ubwGen(wQuery).flatMap(ExcelOperation.writeGen) { (slickQuery, poiGen) =>
+      { slickParam: SlickParam =>
+        slickQuery.slickResult.apply(slickParam).map { case (dataList, sum) =>
+          dataList.map(s => poiGen(s).toMap) -> sum
+        }
+      }
+    }
+
+    val propertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData/*(wQuery)*/.flatMap {
+      FPile.transformTreeListWithoutData { path =>
+        FAtomicQuery(needAtomic[PoiWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
+          .mapToOptionWithoutData(path) { case (jsonWriter :: property :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
+            val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
+            (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, jsonWriter.writer.typeTag.tpe.toString))
+          }
+      } { jsonTupleList =>
+        jsonTupleList
+      }
+    } { (sortProNames, jsonGen) => {
+      val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName)) =>
+        SelectProperty(
+          proName,
+          typeName,
+          inRetrieve,
+          sortProNames.contains(proName),
+          defaultDesc
+        )
+      }
+      properties
+    } }
+
+    propertiesGen.result(optPiles) -> poiGen.result(optPiles) match {
+      case (Left(e1), Left(e2)) => throw e1
+      case (Left(e), Right(_)) => throw e
+      case (Right(_), Left(e)) => throw e
+      case (Right(properties), Right(data)) =>
+        PoiOut(properties, data)
+    }
   }
 
 }

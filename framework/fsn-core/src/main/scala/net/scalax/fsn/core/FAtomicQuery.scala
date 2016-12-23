@@ -23,6 +23,22 @@ trait AbstractFAtomicQuery[F[_]] { self =>
     mapTo(path)(cv)
   }
 
+  def mapToWithoutData[T, C[_]](path: FPath)(cv: F[path.DataType] => T): FQueryTranformWithOutData[T, C] = {
+    new FQueryTranformWithOutDataImpl[F, C, T] {
+      override val fPath: path.type = path
+      override lazy val gen: Either[FAtomicException, QueryType[fPath.DataType]] = {
+        self.gen(path.atomics)
+      }
+      def apply(atomics: QueryType[fPath.DataType]): T = {
+        cv(atomics)
+      }
+    }
+  }
+
+  def mapToOptionWithoutData[T](path: FPath)(cv: F[path.DataType] => T): FQueryTranformWithOutData[T, Option] = {
+    mapToWithoutData(path)(cv)
+  }
+
 }
 
 trait FQueryTranform[T, C[_]] {
@@ -35,6 +51,21 @@ trait FQueryTranform[T, C[_]] {
 }
 
 trait FQueryTranformImpl[F[_], G[_], T] extends FQueryTranform[T, G] {
+
+  override type QueryType[A] = F[A]
+
+}
+
+trait FQueryTranformWithOutData[T, C[_]] {
+
+  type QueryType[_]
+
+  val fPath: FPath
+  val gen: Either[FAtomicException, QueryType[fPath.DataType]]
+  def apply(atomics: QueryType[fPath.DataType]): T
+}
+
+trait FQueryTranformWithOutDataImpl[F[_], G[_], T] extends FQueryTranformWithOutData[T, G] {
 
   override type QueryType[A] = F[A]
 

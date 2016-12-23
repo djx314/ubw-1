@@ -25,6 +25,10 @@ case class SSelect[S, D, T, E](
   override type SourceType = S
   override type SlickType = D
   override type TargetType = T
+
+  def order(implicit cv: T => ColumnOrdered[_]): SSelect[S, D, T, E] = {
+    this.copy(colToOrder = Option(cv))
+  }
 }
 
 trait OrderNullsLast[E] extends FAtomic[E] {
