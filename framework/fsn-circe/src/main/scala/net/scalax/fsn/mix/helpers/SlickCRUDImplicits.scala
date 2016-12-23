@@ -33,7 +33,7 @@ trait SlickCRUDImplicits {
       }
       FsnColumn(proName :: converts.toList.flatten)
     }
-    def columns1111[D](atomics: List[FAtomic[D]]*): FPileImpl[FPathImpl[D], Option[D], Option] = {
+    def ofPile[D](atomics: List[FAtomic[D]]*): FPileImpl[FPathImpl[D], Option[D], Option] = {
       val proName = new FProperty[D] {
         override val proName = proName1
       }
