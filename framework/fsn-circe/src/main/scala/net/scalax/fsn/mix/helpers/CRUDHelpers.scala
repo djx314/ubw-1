@@ -293,8 +293,7 @@ object Select {
   ): Embber[S, D, T] = {
     Embber(repLike)(shape1)
   }
-
-  def out[S, D, T](repLike: S)(
+  /*def out[S, D, T](repLike: S)(
     implicit
     shape1: Shape[_ <: FlatShapeLevel, S, D, T],
     encoder: Encoder[D],
@@ -323,5 +322,5 @@ object Select {
       None
     )
 
-  }
+  }*/
 }

@@ -50,7 +50,7 @@ trait SlickCRUDImplicits {
 
   implicit def fColumnStringExtesionMethods(proName: String): FColumnStringImplicits = new FColumnStringImplicits(proName)
 
-  implicit class slickColumn2OutputColumn[S, D, T](repLike: S)(
+  /*implicit class slickColumn2OutputColumn[S, D, T](repLike: S)(
     implicit
     shape1: Shape[_ <: FlatShapeLevel, S, D, T],
     encoder: Encoder[D],
@@ -59,7 +59,7 @@ trait SlickCRUDImplicits {
     def out: SSelect[S, D, T, D] = {
       SSelect.out(repLike)
     }
-  }
+  }*/
 
   implicit class slickColumn2CommonColumn[S, D, T](repLike: S)(
     implicit
