@@ -243,7 +243,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
     (
       implicit
       jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-      repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+      //repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       retrieve: Query[_, String, Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[String], String],
       insertConv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
       deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
@@ -252,9 +252,9 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
     ): QueryJsonInfo = {
       QueryJsonInfo(
         properties = properties,
-        jsonGen = {
+        /*jsonGen = {
           crudQueryWrap.listQueryWrap.result(defaultOrders)
-        },
+        },*/
         retrieveGen = { v: Map[String, Json] =>
           val jsonData = JsonOperation.readWithFilter(columns) { eachColumn =>
             FColumn.findOpt(eachColumn) { case s: SlickRetrieve[eachColumn.DataType] => s }.map(_.primaryGen.isDefined).getOrElse(false)
@@ -310,7 +310,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
     (
       implicit
       jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-      repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+      //repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       retrieve: Query[_, String, Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[String], String],
       insertConv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
       deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
@@ -324,7 +324,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
     (
       implicit
       jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-      repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+      //repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       retrieve: Query[_, String, Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[String], String],
       insertConv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
       deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,

@@ -39,7 +39,7 @@ case class StaticManyUbw(
 
 case class QueryJsonInfo(
                           properties: List[RWProperty],
-                          jsonGen: JsonOut,
+                          //jsonGen: JsonOut,
                           retrieveGen: Map[String, Json] => DBIO[StaticManyInfo],
                           insertGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
                           deleteGen: Map[String, Json] => DBIO[Int],
