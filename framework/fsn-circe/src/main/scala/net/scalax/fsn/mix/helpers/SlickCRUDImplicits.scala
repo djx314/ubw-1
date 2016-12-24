@@ -33,7 +33,7 @@ trait SlickCRUDImplicits {
       }
       FsnColumn(proName :: converts.toList.flatten)
     }
-    def columns1111[D](atomics: List[FAtomic[D]]*): FPileImpl[FPathImpl[D], Option[D], Option] = {
+    def ofPile[D](atomics: List[FAtomic[D]]*): FPileImpl[FPathImpl[D], Option[D], Option] = {
       val proName = new FProperty[D] {
         override val proName = proName1
       }
@@ -50,7 +50,7 @@ trait SlickCRUDImplicits {
 
   implicit def fColumnStringExtesionMethods(proName: String): FColumnStringImplicits = new FColumnStringImplicits(proName)
 
-  implicit class slickColumn2OutputColumn[S, D, T](repLike: S)(
+  /*implicit class slickColumn2OutputColumn[S, D, T](repLike: S)(
     implicit
     shape1: Shape[_ <: FlatShapeLevel, S, D, T],
     encoder: Encoder[D],
@@ -59,7 +59,7 @@ trait SlickCRUDImplicits {
     def out: SSelect[S, D, T, D] = {
       SSelect.out(repLike)
     }
-  }
+  }*/
 
   implicit class slickColumn2CommonColumn[S, D, T](repLike: S)(
     implicit

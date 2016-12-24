@@ -83,7 +83,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
         FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
         .mapToOptionWithoutData(path) { case (jsonWriter :: property :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
           val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
-          (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, jsonWriter.typeTag.tpe.toString))
+          (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString))
         }
       } { jsonTupleList =>
         jsonTupleList

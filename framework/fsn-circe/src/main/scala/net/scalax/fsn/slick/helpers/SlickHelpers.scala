@@ -12,7 +12,7 @@ trait FSSelectAtomicHelper {
     val shape: Shape[_ <: FlatShapeLevel, S, D, T]
     val convert: D => E
 
-    def out3333: SSelect[S, D, T, E] = SSelect(
+    def out: SSelect[S, D, T, E] = SSelect(
       shape,
       convert,
       rep,
