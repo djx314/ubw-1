@@ -1,5 +1,6 @@
 package net.scalax.fsn.mix.slickbase
 
+import net.scalax.fsn.core.FColumn
 import net.scalax.fsn.slick.helpers.{SlickQueryBindImpl, SlickUtils}
 import slick.ast.{AnonSymbol, Ref}
 import slick.lifted._
@@ -8,7 +9,7 @@ import slick.relational.RelationalProfile
 //TODO 看日后能否去掉 table 的绑定
 class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToExt: Query[E, U, Seq]) {
 
-  def flatMap[A, B](f: E => QueryWrap): QueryWrap = {
+  def flatMap[A, B](f: E => FQueryWrap): FQueryWrap = {
     val generator = new AnonSymbol
     val aliased = queryToExt.shaped.encodeRef(Ref(generator)).value
     val fv = f(aliased)
@@ -20,10 +21,10 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
     val deleteWrap =
       (SlickUtils.getTableIdFromTable(aliased) -> slickJsonQuery) :: fv.binds
 
-    QueryWrap(deleteWrap, fv.listQueryWrap)
+    FQueryWrap(deleteWrap, fv.columns)
   }
 
-  def map[A, B](f: E => ListQueryWrap): QueryWrap = {
+  def map[A, B](f: E => List[FColumn]): FQueryWrap = {
     val generator = new AnonSymbol
     val aliased = queryToExt.shaped.encodeRef(Ref(generator)).value
     val fv = f(aliased)
@@ -35,7 +36,7 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
     val deleteWrap =
       List(SlickUtils.getTableIdFromTable(aliased) -> slickJsonQuery)
 
-    QueryWrap(deleteWrap, fv)
+    FQueryWrap(deleteWrap, fv)
   }
 
   def filter[T <: Rep[_] : CanBeQueryCondition](f: E => T): CrudQueryExtensionMethods[E, U] = {

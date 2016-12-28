@@ -4,7 +4,7 @@ import io.circe.Json
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{ExcelOperation, JsonOperation}
 import net.scalax.fsn.mix.operation.PropertiesOperation
-import net.scalax.fsn.mix.slickbase.{ListQueryWrap, PileListQueryWrap, QueryWrap}
+import net.scalax.fsn.mix.slickbase.{FQueryWrap, ListQueryWrap, PileListQueryWrap}
 import net.scalax.fsn.slick.atomic.{AutoInc, SlickRetrieve}
 import net.scalax.fsn.slick.model._
 import net.scalax.fsn.slick.operation._
@@ -234,8 +234,8 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
 trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
 
-  implicit class slick2crudExtraClass(crudQueryWrap: QueryWrap) {
-    val columns = crudQueryWrap.listQueryWrap.columns
+  implicit class slick2crudExtraClass(crudQueryWrap: FQueryWrap) {
+    val columns = crudQueryWrap.columns
     lazy val properties = PropertiesOperation.convertColumn(columns)
 
     def result

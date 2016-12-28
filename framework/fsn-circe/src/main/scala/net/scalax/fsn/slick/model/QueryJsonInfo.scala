@@ -48,18 +48,18 @@ case class QueryJsonInfo(
                         )
 
 case class RWInfo(
-                          properties: List[RWProperty],
-                          retrieveGen: Map[String, Json] => DBIO[StaticManyInfo],
-                          insertGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
-                          deleteGen: Map[String, Json] => DBIO[Int],
-                          updateGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
-                          staticMany: Future[List[StaticManyUbw]]
-                        ) {
+  properties: List[RWProperty],
+  retrieveGen: Map[String, Json] => DBIO[StaticManyInfo],
+  insertGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
+  deleteGen: Map[String, Json] => DBIO[Int],
+  updateGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
+  staticMany: Future[List[StaticManyUbw]]
+) {
 
-  def withJsonOut(jsonInfo: JsonOut): QueryJsonInfo = {
+  def withJsonOut(jOut: JsonOut): QueryJsonInfo = {
     QueryJsonInfo(
       properties,
-      jsonInfo,
+      jOut,
       retrieveGen,
       insertGen,
       deleteGen,
@@ -68,16 +68,10 @@ case class RWInfo(
     )
   }
 
-  def withJsonOutF(jsonInfo: Future[JsonOut])(implicit ec: ExecutionContext): Future[QueryJsonInfo] = {
-    jsonInfo.map(s => QueryJsonInfo(
-      properties,
-      s,
-      retrieveGen,
-      insertGen,
-      deleteGen,
-      updateGen,
-      staticMany
-    ))
+  def withJsonOutF(jOut: Future[JsonOut])(implicit ec: ExecutionContext): Future[QueryJsonInfo] = {
+    jOut.map { s =>
+      withJsonOut(s)
+    }
   }
 
 }
