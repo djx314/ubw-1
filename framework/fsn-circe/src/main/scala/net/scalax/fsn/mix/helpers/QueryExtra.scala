@@ -249,8 +249,8 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
       deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
       updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]],
       ec: ExecutionContext
-    ): QueryJsonInfo = {
-      QueryJsonInfo(
+    ): RWInfo = {
+      RWInfo(
         properties = properties,
         /*jsonGen = {
           crudQueryWrap.listQueryWrap.result(defaultOrders)
@@ -316,7 +316,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
       deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
       updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]],
       ec: ExecutionContext
-    ): QueryJsonInfo = {
+    ): RWInfo = {
       result(List(ColumnOrder(orderColumn, isDesc)))
     }
 
@@ -330,7 +330,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
       deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
       updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]],
       ec: ExecutionContext
-    ): QueryJsonInfo = {
+    ): RWInfo = {
       result(Nil)
     }
   }
