@@ -17,11 +17,11 @@ trait SlickSelect[E] extends FAtomic[E] {
 }
 
 case class SSelect[S, D, T, E](
-                                override val shape: Shape[_ <: FlatShapeLevel, S, D, T],
-                                override val outConvert: D => E,
-                                override val outCol: S,
-                                override val colToOrder: Option[T => ColumnOrdered[_]]
-                              ) extends SlickSelect[E] {
+  override val shape: Shape[_ <: FlatShapeLevel, S, D, T],
+  override val outConvert: D => E,
+  override val outCol: S,
+  override val colToOrder: Option[T => ColumnOrdered[_]]
+) extends SlickSelect[E] {
   override type SourceType = S
   override type SlickType = D
   override type TargetType = T

@@ -1,6 +1,6 @@
 package net.scalax.fsn.mix.slickbase
 
-import net.scalax.fsn.core.FColumn
+import net.scalax.fsn.core.{FColumn, FPile, FsnColumn}
 import net.scalax.fsn.slick.helpers.{SlickQueryBindImpl, SlickUtils}
 import slick.ast.{AnonSymbol, Ref}
 import slick.lifted._
@@ -24,7 +24,7 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
     FQueryWrap(deleteWrap, fv.columns)
   }
 
-  def map[A, B](f: E => List[FColumn]): FQueryWrap = {
+  def map[A, B](f: E => List[FPile[Option]]): FQueryWrap = {
     val generator = new AnonSymbol
     val aliased = queryToExt.shaped.encodeRef(Ref(generator)).value
     val fv = f(aliased)
@@ -36,7 +36,11 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
     val deleteWrap =
       List(SlickUtils.getTableIdFromTable(aliased) -> slickJsonQuery)
 
-    FQueryWrap(deleteWrap, fv)
+    val columns = fv.flatMap { eachPile =>
+      eachPile.paths.map { path => FsnColumn(path.atomics) }
+    }
+
+    FQueryWrap(deleteWrap, columns)
   }
 
   def filter[T <: Rep[_] : CanBeQueryCondition](f: E => T): CrudQueryExtensionMethods[E, U] = {
