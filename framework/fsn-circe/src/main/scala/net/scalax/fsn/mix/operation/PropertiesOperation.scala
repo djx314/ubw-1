@@ -1,10 +1,10 @@
 package net.scalax.fsn.mix.operation
 
-import net.scalax.fsn.common.atomic.{DefaultValue, FProperty}
+import net.scalax.fsn.common.atomic.{DefaultValue, FDescribe, FProperty}
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.atomic.JsonWriter
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.model.{JsonOut, PoiOut, JsonView, RWProperty, SelectProperty, SlickParam}
+import net.scalax.fsn.slick.model.{JsonOut, JsonView, PoiOut, RWProperty, SelectProperty, SlickParam}
 import net.scalax.fsn.slick.helpers.{SlickQueryBindImpl, TypeHelpers}
 import net.scalax.fsn.slick.operation.OutSelectConvert
 import net.scalax.fsn.slick.operation.OutSelectConvert
@@ -80,22 +80,23 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
 
     val propertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData/*(wQuery)*/.flatMap {
       FPile.transformTreeListWithoutData { path =>
-        FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
-        .mapToOptionWithoutData(path) { case (jsonWriter :: property :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
+        FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
+        .mapToOptionWithoutData(path) { case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
           val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
-          (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString))
+          (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString, describeOpt.map(_.describe)))
         }
       } { jsonTupleList =>
         jsonTupleList
       }
     } { (sortProNames, jsonGen) => {
-      val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName)) =>
+      val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName, describeOpt)) =>
         SelectProperty(
           proName,
           typeName,
           inRetrieve,
           sortProNames.contains(proName),
-          defaultDesc
+          defaultDesc,
+          describeOpt
         )
       }
       properties
@@ -127,22 +128,23 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
 
     val propertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData/*(wQuery)*/.flatMap {
       FPile.transformTreeListWithoutData { path =>
-        FAtomicQuery(needAtomic[PoiWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
-          .mapToOptionWithoutData(path) { case (jsonWriter :: property :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
+        FAtomicQuery(needAtomic[PoiWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
+          .mapToOptionWithoutData(path) { case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
             val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
-            (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, jsonWriter.writer.typeTag.tpe.toString))
+            (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, jsonWriter.writer.typeTag.tpe.toString, describeOpt.map(_.describe)))
           }
       } { jsonTupleList =>
         jsonTupleList
       }
     } { (sortProNames, jsonGen) => {
-      val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName)) =>
+      val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName, describeOpt)) =>
         SelectProperty(
           proName,
           typeName,
           inRetrieve,
           sortProNames.contains(proName),
-          defaultDesc
+          defaultDesc,
+          describeOpt
         )
       }
       properties
