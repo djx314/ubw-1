@@ -1,15 +1,20 @@
 package net.scalax.fsn.mix.operation
 
-import net.scalax.fsn.common.atomic.{DefaultValue, FProperty}
+import net.scalax.fsn.common.atomic.{DefaultValue, FDescribe, FProperty}
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.atomic.JsonWriter
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.model.{JsonOut, PoiOut, JsonView, RWProperty, SelectProperty, SlickParam}
+import net.scalax.fsn.slick.model.{JsonOut, JsonView, PoiOut, RWProperty, SelectProperty, SlickParam}
 import net.scalax.fsn.slick.helpers.{SlickQueryBindImpl, TypeHelpers}
 import net.scalax.fsn.slick.operation.OutSelectConvert
 import net.scalax.fsn.slick.operation.OutSelectConvert
 import net.scalax.fsn.json.operation.{ExcelOperation, JsonOperation}
 import net.scalax.fsn.excel.atomic.PoiWriter
+import net.scalax.fsn.slick.model.UpdateStaticManyInfo
+import net.scalax.fsn.slick.operation.InUpdateConvert2
+import net.scalax.fsn.slick.model.QueryJsonInfo
+import net.scalax.fsn.slick.operation.StaticManyOperation
+import slick.jdbc.JdbcActionComponent
 import shapeless._
 import io.circe.syntax._
 import io.circe.Json
@@ -17,6 +22,7 @@ import slick.basic.BasicProfile
 import slick.dbio._
 import slick.lifted.{Query, Rep}
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 
 object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with FPilesGenHelper {
@@ -80,22 +86,23 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
 
     val propertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData/*(wQuery)*/.flatMap {
       FPile.transformTreeListWithoutData { path =>
-        FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
-        .mapToOptionWithoutData(path) { case (jsonWriter :: property :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
+        FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
+        .mapToOptionWithoutData(path) { case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
           val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
-          (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString))
+          (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString, describeOpt.map(_.describe)))
         }
       } { jsonTupleList =>
         jsonTupleList
       }
     } { (sortProNames, jsonGen) => {
-      val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName)) =>
+      val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName, describeOpt)) =>
         SelectProperty(
           proName,
           typeName,
           inRetrieve,
           sortProNames.contains(proName),
-          defaultDesc
+          defaultDesc,
+          describeOpt
         )
       }
       properties
@@ -127,22 +134,23 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
 
     val propertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData/*(wQuery)*/.flatMap {
       FPile.transformTreeListWithoutData { path =>
-        FAtomicQuery(needAtomic[PoiWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
-          .mapToOptionWithoutData(path) { case (jsonWriter :: property :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
+        FAtomicQuery(needAtomic[PoiWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
+          .mapToOptionWithoutData(path) { case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
             val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
-            (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, jsonWriter.writer.typeTag.tpe.toString))
+            (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, jsonWriter.writer.typeTag.tpe.toString, describeOpt.map(_.describe)))
           }
       } { jsonTupleList =>
         jsonTupleList
       }
     } { (sortProNames, jsonGen) => {
-      val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName)) =>
+      val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName, describeOpt)) =>
         SelectProperty(
           proName,
           typeName,
           inRetrieve,
           sortProNames.contains(proName),
-          defaultDesc
+          defaultDesc,
+          describeOpt
         )
       }
       properties
@@ -154,6 +162,31 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       case (Right(_), Left(e)) => throw e
       case (Right(properties), Right(data)) =>
         PoiOut(properties, data)
+    }
+  }
+
+  def json2SlickUpdateOperation(binds: List[(Any, SlickQueryBindImpl)])(
+    implicit
+    ec: ExecutionContext,
+    updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
+  ): List[FPile[Option]] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
+  { optPiles: List[FPile[Option]] =>
+      { data: Map[String, Json] =>
+        JsonOperation.readGen.flatMap(InUpdateConvert2.updateGen) { (jsonReader, slickWriterGen) =>
+          slickWriterGen(jsonReader.apply(data))
+      }.result(optPiles).right.get(binds)
+    }
+  }
+
+  def staticManyOperation(
+    implicit
+    ec: ExecutionContext
+  ): List[FPile[Option]] => Map[String, Json] => Future[Map[String, QueryJsonInfo]] =
+  { optPiles: List[FPile[Option]] =>
+    { data: Map[String, Json] =>
+      JsonOperation.readGen.flatMap(StaticManyOperation.updateGen) { (jsonReader, staticMayGen) =>
+        staticMayGen(jsonReader.apply(data))
+      }.result(optPiles).right.get
     }
   }
 

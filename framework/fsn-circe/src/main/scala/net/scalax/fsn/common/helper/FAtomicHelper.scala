@@ -1,6 +1,6 @@
 package net.scalax.fsn.json.operation
 
-import net.scalax.fsn.common.atomic.{DefaultValue, FProperty}
+import net.scalax.fsn.common.atomic.{DefaultValue, FDescribe, FProperty}
 import net.scalax.fsn.core.FAtomic
 
 trait FAtomicHelper[D] {
@@ -17,6 +17,12 @@ trait FPropertyAtomicHelper[D] extends FAtomicHelper[D] {
   def named(name: String) = {
     append(new FProperty[D] {
       override val proName = name
+    })
+  }
+
+  def describe(describe1: String) = {
+    append(new FDescribe[D] {
+      override val describe = describe1
     })
   }
 

@@ -3,7 +3,7 @@ package net.scalax.fsn.slick.model
 import io.circe.Json
 import slick.dbio.DBIO
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 case class StaticManyInfo(
                            propertyInfo: List[RWProperty],
@@ -46,3 +46,32 @@ case class QueryJsonInfo(
                           updateGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
                           staticMany: Future[List[StaticManyUbw]]
                         )
+
+case class RWInfo(
+  properties: List[RWProperty],
+  retrieveGen: Map[String, Json] => DBIO[StaticManyInfo],
+  insertGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
+  deleteGen: Map[String, Json] => DBIO[Int],
+  updateGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
+  staticMany: Future[List[StaticManyUbw]]
+) {
+
+  def withJsonOut(jOut: JsonOut): QueryJsonInfo = {
+    QueryJsonInfo(
+      properties,
+      jOut,
+      retrieveGen,
+      insertGen,
+      deleteGen,
+      updateGen,
+      staticMany
+    )
+  }
+
+  def withJsonOutF(jOut: Future[JsonOut])(implicit ec: ExecutionContext): Future[QueryJsonInfo] = {
+    jOut.map { s =>
+      withJsonOut(s)
+    }
+  }
+
+}

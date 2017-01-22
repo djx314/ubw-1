@@ -4,7 +4,7 @@ import io.circe.Json
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{ExcelOperation, JsonOperation}
 import net.scalax.fsn.mix.operation.PropertiesOperation
-import net.scalax.fsn.mix.slickbase.{ListQueryWrap, PileListQueryWrap, QueryWrap}
+import net.scalax.fsn.mix.slickbase.{FQueryWrap, ListQueryWrap, PileListQueryWrap}
 import net.scalax.fsn.slick.atomic.{AutoInc, SlickRetrieve}
 import net.scalax.fsn.slick.model._
 import net.scalax.fsn.slick.operation._
@@ -234,8 +234,8 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
 trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
 
-  implicit class slick2crudExtraClass(crudQueryWrap: QueryWrap) {
-    val columns = crudQueryWrap.listQueryWrap.columns
+  implicit class slick2crudExtraClass(crudQueryWrap: FQueryWrap) {
+    val columns = crudQueryWrap.columns
     lazy val properties = PropertiesOperation.convertColumn(columns)
 
     def result
@@ -243,18 +243,18 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
     (
       implicit
       jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-      repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+      //repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       retrieve: Query[_, String, Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[String], String],
       insertConv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
       deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
       updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]],
       ec: ExecutionContext
-    ): QueryJsonInfo = {
-      QueryJsonInfo(
+    ): RWInfo = {
+      RWInfo(
         properties = properties,
-        jsonGen = {
+        /*jsonGen = {
           crudQueryWrap.listQueryWrap.result(defaultOrders)
-        },
+        },*/
         retrieveGen = { v: Map[String, Json] =>
           val jsonData = JsonOperation.readWithFilter(columns) { eachColumn =>
             FColumn.findOpt(eachColumn) { case s: SlickRetrieve[eachColumn.DataType] => s }.map(_.primaryGen.isDefined).getOrElse(false)
@@ -292,10 +292,19 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
           }
         },
         updateGen = (v: Map[String, Json]) => {
-          val jsonData = JsonOperation.readJ(columns)(v)
+          //val staticMany = StaticManyOperation.convertList2Query(jsonData)
+          /*val jsonData = JsonOperation.readJ(columns)(v)
           val staticMany = StaticManyOperation.convertList2Query(jsonData)
           for {
             updateInfo <- UpdateOperation.parseInsert(crudQueryWrap.binds, jsonData)
+            staticM <- DBIO.from(staticMany)
+          } yield {
+            updateInfo.copy(many = staticM)
+          }*/
+          val staticMany = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+          val updateInfoDBIO = PropertiesOperation.json2SlickUpdateOperation(crudQueryWrap.binds).apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+          for {
+            updateInfo <- updateInfoDBIO
             staticM <- DBIO.from(staticMany)
           } yield {
             updateInfo.copy(many = staticM)
@@ -310,13 +319,13 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
     (
       implicit
       jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-      repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+      //repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       retrieve: Query[_, String, Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[String], String],
       insertConv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
       deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
       updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]],
       ec: ExecutionContext
-    ): QueryJsonInfo = {
+    ): RWInfo = {
       result(List(ColumnOrder(orderColumn, isDesc)))
     }
 
@@ -324,13 +333,13 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
     (
       implicit
       jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-      repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+      //repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       retrieve: Query[_, String, Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[String], String],
       insertConv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
       deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
       updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]],
       ec: ExecutionContext
-    ): QueryJsonInfo = {
+    ): RWInfo = {
       result(Nil)
     }
   }

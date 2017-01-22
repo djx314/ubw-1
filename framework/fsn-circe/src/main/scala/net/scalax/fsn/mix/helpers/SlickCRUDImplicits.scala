@@ -15,7 +15,7 @@ import scala.language.implicitConversions
 trait SlickCRUDImplicits {
 
   class FColumnStringImplicits(proName1: String) {
-    def column[D](converts: List[FAtomic[D]]): FsnColumn[D] = {
+    /*def column[D](converts: List[FAtomic[D]]): FsnColumn[D] = {
       val proName = new FProperty[D] {
         override val proName = proName1
       }
@@ -32,7 +32,7 @@ trait SlickCRUDImplicits {
         override val proName = proName1
       }
       FsnColumn(proName :: converts.toList.flatten)
-    }
+    }*/
     def ofPile[D](atomics: List[FAtomic[D]]*): FPileImpl[FPathImpl[D], Option[D], Option] = {
       val proName = new FProperty[D] {
         override val proName = proName1

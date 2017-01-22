@@ -5,5 +5,6 @@ case class SelectProperty(
   typeName: String,
   inRetrieve: Boolean,
   canOrder: Boolean,
-  isDefaultDesc: Boolean
+  isDefaultDesc: Boolean,
+  describe: Option[String] = None
 )

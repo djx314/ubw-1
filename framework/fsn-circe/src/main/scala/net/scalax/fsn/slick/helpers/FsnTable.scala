@@ -12,7 +12,7 @@ trait FRep[C] {
 
 object FRep {
 
-  implicit def fRep2CommonRep[C](fRep: FRep[C]): C = fRep.rep
+  //implicit def fRep2CommonRep[C](fRep: FRep[C]): C = fRep.rep
 
   def apply[C](repLike: C, owner1: RelationalProfile#Table[_]): FRep[C] = {
     new FRep[C] {
