@@ -308,8 +308,7 @@ object UpdateOperation2222 {
   }
 
 }
-
-object UpdateOperation {
+/*object UpdateOperation {
 
   def parseInsertGen(
     binds: List[(Any, SlickQueryBindImpl)],
@@ -428,4 +427,4 @@ object UpdateOperation {
       })
     }
   }
-}
+}*/

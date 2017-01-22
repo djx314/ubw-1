@@ -10,6 +10,11 @@ import net.scalax.fsn.slick.operation.OutSelectConvert
 import net.scalax.fsn.slick.operation.OutSelectConvert
 import net.scalax.fsn.json.operation.{ExcelOperation, JsonOperation}
 import net.scalax.fsn.excel.atomic.PoiWriter
+import net.scalax.fsn.slick.model.UpdateStaticManyInfo
+import net.scalax.fsn.slick.operation.InUpdateConvert2
+import net.scalax.fsn.slick.model.QueryJsonInfo
+import net.scalax.fsn.slick.operation.StaticManyOperation
+import slick.jdbc.JdbcActionComponent
 import shapeless._
 import io.circe.syntax._
 import io.circe.Json
@@ -17,6 +22,7 @@ import slick.basic.BasicProfile
 import slick.dbio._
 import slick.lifted.{Query, Rep}
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 
 object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with FPilesGenHelper {
@@ -156,6 +162,31 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       case (Right(_), Left(e)) => throw e
       case (Right(properties), Right(data)) =>
         PoiOut(properties, data)
+    }
+  }
+
+  def json2SlickUpdateOperation(binds: List[(Any, SlickQueryBindImpl)])(
+    implicit
+    ec: ExecutionContext,
+    updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
+  ): List[FPile[Option]] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
+  { optPiles: List[FPile[Option]] =>
+      { data: Map[String, Json] =>
+        JsonOperation.readGen.flatMap(InUpdateConvert2.updateGen) { (jsonReader, slickWriterGen) =>
+          slickWriterGen(jsonReader.apply(data))
+      }.result(optPiles).right.get(binds)
+    }
+  }
+
+  def staticManyOperation(
+    implicit
+    ec: ExecutionContext
+  ): List[FPile[Option]] => Map[String, Json] => Future[Map[String, QueryJsonInfo]] =
+  { optPiles: List[FPile[Option]] =>
+    { data: Map[String, Json] =>
+      JsonOperation.readGen.flatMap(StaticManyOperation.updateGen) { (jsonReader, staticMayGen) =>
+        staticMayGen(jsonReader.apply(data))
+      }.result(optPiles).right.get
     }
   }
 

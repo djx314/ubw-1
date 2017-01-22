@@ -1,13 +1,36 @@
 package net.scalax.fsn.slick.operation
 
-import net.scalax.fsn.core.FColumn
+import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.slick.atomic.StaticMany
-import net.scalax.fsn.slick.model.{QueryJsonInfo, StaticManyUbw}
+import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate, StaticMany}
+import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
+import net.scalax.fsn.slick.model.{QueryJsonInfo, StaticManyUbw, UpdateStaticManyInfo}
+import net.scalax.fsn.slick.operation.InUpdateConvert2.{needAtomic, needAtomicOpt}
+import slick.dbio.DBIO
+import slick.jdbc.JdbcActionComponent
+import slick.lifted.Query
+import shapeless._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object StaticManyOperation {
+object StaticManyOperation extends FAtomicGenHelper with FAtomicShapeHelper {
+
+  def updateGen(implicit ec: ExecutionContext): FPileSyntax.PileGen[Option, Future[Map[String, QueryJsonInfo]]] = {
+    FPile.transformTreeList { path =>
+      FAtomicQuery(needAtomicOpt[StaticMany] :: HNil)
+        .mapToOption(path) { case (staticMayOpt :: HNil, data) =>
+          Future.sequence(staticMayOpt.toList.map { eachStatic =>
+            eachStatic.staticMany.map { _.map { eachMany =>
+              eachMany.proName -> eachMany.gen(data.get)
+            } }
+          }).map(_.flatten.toMap)
+        }
+    } { staticManyList =>
+      Future.sequence(staticManyList).map(_.foldLeft(Map.empty[String, QueryJsonInfo]) { (font, back) =>
+        font ++ back
+      })
+    }
+  }
 
   def convert2Query(columns: FColumn)(implicit ec: ExecutionContext): Future[Map[String, QueryJsonInfo]] = {
     val staticManyCol = FColumn.filter(columns)({ case s: StaticMany[columns.DataType] => s })

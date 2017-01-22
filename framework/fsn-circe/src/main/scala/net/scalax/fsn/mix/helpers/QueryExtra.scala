@@ -292,10 +292,19 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
           }
         },
         updateGen = (v: Map[String, Json]) => {
-          val jsonData = JsonOperation.readJ(columns)(v)
+          //val staticMany = StaticManyOperation.convertList2Query(jsonData)
+          /*val jsonData = JsonOperation.readJ(columns)(v)
           val staticMany = StaticManyOperation.convertList2Query(jsonData)
           for {
             updateInfo <- UpdateOperation.parseInsert(crudQueryWrap.binds, jsonData)
+            staticM <- DBIO.from(staticMany)
+          } yield {
+            updateInfo.copy(many = staticM)
+          }*/
+          val staticMany = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+          val updateInfoDBIO = PropertiesOperation.json2SlickUpdateOperation(crudQueryWrap.binds).apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+          for {
+            updateInfo <- updateInfoDBIO
             staticM <- DBIO.from(staticMany)
           } yield {
             updateInfo.copy(many = staticM)

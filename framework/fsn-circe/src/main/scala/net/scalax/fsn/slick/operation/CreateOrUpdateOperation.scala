@@ -21,9 +21,10 @@ object CreateOrUpdateOperation {
   ): DBIO[ExecInfo] = {
     RetrieveOperation.parseInsert(insertQuerytWrap, columns).asTry.flatMap {
       case Success(_) =>
-        UpdateOperation.parseInsert(insertQuerytWrap, columns).map { s =>
+        /*UpdateOperation.parseInsert(insertQuerytWrap, columns).map { s =>
           ExecInfo(s.effectRows, Nil)
-        }
+        }*/
+        ???
       case s =>
         CreateOperation.parseInsert(insertQuerytWrap, columns).map { s =>
           ExecInfo(s.effectRows, Nil)
