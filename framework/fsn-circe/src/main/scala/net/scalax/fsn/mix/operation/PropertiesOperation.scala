@@ -14,6 +14,7 @@ import net.scalax.fsn.slick.model.UpdateStaticManyInfo
 import net.scalax.fsn.slick.operation.InUpdateConvert2
 import net.scalax.fsn.slick.model.QueryJsonInfo
 import net.scalax.fsn.slick.operation.StaticManyOperation
+import net.scalax.fsn.slick.operation.InDeleteConvert2222
 import slick.jdbc.JdbcActionComponent
 import shapeless._
 import io.circe.syntax._
@@ -21,6 +22,7 @@ import io.circe.Json
 import slick.basic.BasicProfile
 import slick.dbio._
 import slick.lifted.{Query, Rep}
+import slick.relational.RelationalProfile
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
@@ -174,6 +176,19 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       { data: Map[String, Json] =>
         JsonOperation.readGen.flatMap(InUpdateConvert2.updateGen) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
+      }.result(optPiles).right.get(binds)
+    }
+  }
+
+  def json2SlickDeleteOperation(binds: List[(Any, SlickQueryBindImpl)])(
+    implicit
+    ec: ExecutionContext,
+    deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
+  ): List[FPile[Option]] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
+  { optPiles: List[FPile[Option]] =>
+    { data: Map[String, Json] =>
+      JsonOperation.readGen.flatMap(InDeleteConvert2222.convert) { (jsonReader, slickWriterGen) =>
+        slickWriterGen(jsonReader.apply(data))
       }.result(optPiles).right.get(binds)
     }
   }

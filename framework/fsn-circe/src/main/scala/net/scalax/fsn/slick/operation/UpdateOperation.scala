@@ -131,9 +131,7 @@ object InUpdateConvert2 extends FAtomicGenHelper with FAtomicShapeHelper {
       }
     }
   }
-
-
-  def convert(columns: FColumn)(implicit ec: ExecutionContext): USlickWriter2 = {
+  /*def convert(columns: FColumn)(implicit ec: ExecutionContext): USlickWriter2 = {
     val slickWriter = FColumn.find(columns)({ case s: SlickUpdate[columns.DataType] => s })
     val oneToOneUpdateOpt = FColumn.findOpt(columns)({ case s: OneToOneUpdate[columns.DataType] => s })
 
@@ -183,8 +181,7 @@ object InUpdateConvert2 extends FAtomicGenHelper with FAtomicShapeHelper {
       subGen = uSlickSubGen
     )
     uSlickWriter
-  }
-
+  }*/
 }
 
 object UpdateOperation2222 {
