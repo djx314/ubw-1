@@ -15,6 +15,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object StaticManyOperation extends FAtomicGenHelper with FAtomicShapeHelper {
 
+  //TODO change option selector to list selector
   def updateGen(implicit ec: ExecutionContext): FPileSyntax.PileGen[Option, Future[Map[String, QueryJsonInfo]]] = {
     FPile.transformTreeList { path =>
       FAtomicQuery(needAtomicOpt[StaticMany] :: HNil)
@@ -32,7 +33,7 @@ object StaticManyOperation extends FAtomicGenHelper with FAtomicShapeHelper {
     }
   }
 
-  def convert2Query(columns: FColumn)(implicit ec: ExecutionContext): Future[Map[String, QueryJsonInfo]] = {
+  /*def convert2Query(columns: FColumn)(implicit ec: ExecutionContext): Future[Map[String, QueryJsonInfo]] = {
     val staticManyCol = FColumn.filter(columns)({ case s: StaticMany[columns.DataType] => s })
     Future.sequence(staticManyCol.map { eachStatic =>
       eachStatic.staticMany.map { _.map { eachMany =>
@@ -47,9 +48,9 @@ object StaticManyOperation extends FAtomicGenHelper with FAtomicShapeHelper {
     }).map(_.foldLeft(Map.empty[String, QueryJsonInfo]) { (font, back) =>
       font ++ back
     })
-  }
+  }*/
 
-  def convert2Ubw(columns: FColumn)(implicit ec: ExecutionContext): Future[List[StaticManyUbw]] = {
+  /*def convert2Ubw(columns: FColumn)(implicit ec: ExecutionContext): Future[List[StaticManyUbw]] = {
     val staticManyCol = FColumn.filter(columns)({ case s: StaticMany[columns.DataType] => s })
     val property = FColumn.find(columns)({ case s: FProperty[columns.DataType] => s })
     Future.sequence(
@@ -62,6 +63,24 @@ object StaticManyOperation extends FAtomicGenHelper with FAtomicShapeHelper {
     Future.sequence(columns.map { eachColumn =>
       convert2Ubw(eachColumn)
     }).map(_.flatten)
+  }*/
+
+  //TODO change option selector to list selector
+  def ubwStaticManyGen(implicit ec: ExecutionContext): FPileSyntaxWithoutData.PileGen[Option, Future[List[StaticManyUbw]]] = {
+    FPile.transformTreeListWithoutData { path =>
+      FAtomicQuery(needAtomicOpt[StaticMany] :: needAtomic[FProperty] :: HNil)
+        .mapToOptionWithoutData(path) { case (staticManyCol :: property :: HNil) =>
+          Future.sequence(
+            staticManyCol
+              .map(_.staticMany.map(s => s.map(t => StaticManyUbw(t.proName, property.proName, t.slaveryIdField, t.ubwGen)))).toList
+          ).map(_.flatten)
+        }
+    } { staticManyList =>
+      /*staticManyList.map(_.map(_.foldLeft(List.empty[StaticManyUbw]) { (font, back) =>
+        font ++: back
+      }))*/
+      Future.sequence(staticManyList).map(_.flatten)
+    }
   }
 
 }

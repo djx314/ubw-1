@@ -69,11 +69,11 @@ case class USWriter2[MS, MD, MT](
 
 object InUpdateConvert2 extends FAtomicGenHelper with FAtomicShapeHelper {
 
-    def updateGen(
-      implicit
-      ec: ExecutionContext,
-      updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-    ): FPileSyntax.PileGen[Option, List[(Any, SlickQueryBindImpl)] => DBIO[UpdateStaticManyInfo]] = {
+  def updateGen(
+    implicit
+    ec: ExecutionContext,
+    updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
+  ): FPileSyntax.PileGen[Option, List[(Any, SlickQueryBindImpl)] => DBIO[UpdateStaticManyInfo]] = {
     FPile.transformTreeList { path =>
       FAtomicQuery(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: HNil)
         .mapToOption(path) { case (slickWriter :: oneToOneUpdateOpt :: HNil, data) => {
