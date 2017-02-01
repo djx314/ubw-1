@@ -236,7 +236,8 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
 
   implicit class slick2crudExtraClass(crudQueryWrap: FQueryWrap) {
     val columns = crudQueryWrap.columns
-    lazy val properties = PropertiesOperation.convertColumn(columns)
+    //lazy val properties = PropertiesOperation.convertColumn(columns)
+    lazy val properties = PropertiesOperation.RWPropertiesGen(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).right.get._2
 
     def result
     (defaultOrders: List[ColumnOrder])
@@ -256,17 +257,19 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
           crudQueryWrap.listQueryWrap.result(defaultOrders)
         },*/
         retrieveGen = { v: Map[String, Json] =>
-          val jsonData = JsonOperation.readWithFilter(columns) { eachColumn =>
+          /*val jsonData = JsonOperation.readWithFilter(columns) { eachColumn =>
             FColumn.findOpt(eachColumn) { case s: SlickRetrieve[eachColumn.DataType] => s }.map(_.primaryGen.isDefined).getOrElse(false)
           } (v)
-          val staticManyFuture = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+          val staticManyFuture = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)*/
+          val retrieveDBIO = PropertiesOperation.json2SlickRetrieveOperation(crudQueryWrap.binds).apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+
           for {
-            execInfo <- RetrieveOperation.parseInsert(crudQueryWrap.binds, jsonData)
+            (statcMany, jsonData) <- retrieveDBIO
             //staticMany = StaticManyOperation.convertList2Query(execInfo.columns)
-            staticM <- DBIO.from(staticManyFuture)
+            //staticM <- DBIO.from(staticManyFuture)
           } yield {
-            val jsonResult = JsonOperation.writeJ(execInfo.columns)
-            StaticManyInfo(properties, jsonResult, staticM)
+            //val jsonResult = JsonOperation.writeJ(execInfo.columns)
+            StaticManyInfo(properties, jsonData, statcMany)
           }
         },
         insertGen = { v: Map[String, Json] =>
