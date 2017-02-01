@@ -69,11 +69,11 @@ case class USWriter2[MS, MD, MT](
 
 object InUpdateConvert2 extends FAtomicGenHelper with FAtomicShapeHelper {
 
-    def updateGen(
-      implicit
-      ec: ExecutionContext,
-      updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-    ): FPileSyntax.PileGen[Option, List[(Any, SlickQueryBindImpl)] => DBIO[UpdateStaticManyInfo]] = {
+  def updateGen(
+    implicit
+    ec: ExecutionContext,
+    updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
+  ): FPileSyntax.PileGen[Option, List[(Any, SlickQueryBindImpl)] => DBIO[UpdateStaticManyInfo]] = {
     FPile.transformTreeList { path =>
       FAtomicQuery(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: HNil)
         .mapToOption(path) { case (slickWriter :: oneToOneUpdateOpt :: HNil, data) => {
@@ -131,9 +131,7 @@ object InUpdateConvert2 extends FAtomicGenHelper with FAtomicShapeHelper {
       }
     }
   }
-
-
-  def convert(columns: FColumn)(implicit ec: ExecutionContext): USlickWriter2 = {
+  /*def convert(columns: FColumn)(implicit ec: ExecutionContext): USlickWriter2 = {
     val slickWriter = FColumn.find(columns)({ case s: SlickUpdate[columns.DataType] => s })
     val oneToOneUpdateOpt = FColumn.findOpt(columns)({ case s: OneToOneUpdate[columns.DataType] => s })
 
@@ -183,8 +181,7 @@ object InUpdateConvert2 extends FAtomicGenHelper with FAtomicShapeHelper {
       subGen = uSlickSubGen
     )
     uSlickWriter
-  }
-
+  }*/
 }
 
 object UpdateOperation2222 {

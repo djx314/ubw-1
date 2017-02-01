@@ -259,37 +259,57 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
           val jsonData = JsonOperation.readWithFilter(columns) { eachColumn =>
             FColumn.findOpt(eachColumn) { case s: SlickRetrieve[eachColumn.DataType] => s }.map(_.primaryGen.isDefined).getOrElse(false)
           } (v)
+          val staticManyFuture = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
           for {
             execInfo <- RetrieveOperation.parseInsert(crudQueryWrap.binds, jsonData)
-            staticMany = StaticManyOperation.convertList2Query(execInfo.columns)
-            staticM <- DBIO.from(staticMany)
+            //staticMany = StaticManyOperation.convertList2Query(execInfo.columns)
+            staticM <- DBIO.from(staticManyFuture)
           } yield {
             val jsonResult = JsonOperation.writeJ(execInfo.columns)
             StaticManyInfo(properties, jsonResult, staticM)
           }
         },
         insertGen = { v: Map[String, Json] =>
-          val jsonData = JsonOperation.readWithFilter(columns){ eachColumn =>
+          /*val jsonData = JsonOperation.readWithFilter(columns){ eachColumn =>
             ! FColumn.findOpt(eachColumn) { case s: AutoInc[eachColumn.DataType] => s }.map(_.isAutoInc).getOrElse(false)
-          }(v)
+          }(v)*/
+          //val staticManyFuture = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+          val createInfoDBIO = PropertiesOperation.json2SlickCreateOperation(crudQueryWrap.binds).apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+
           for {
-            execInfo <- CreateOperation.parseInsert(crudQueryWrap.binds, jsonData)
-            staticMany = StaticManyOperation.convertList2Query(execInfo.columns)
-            staticM <- DBIO.from(staticMany)
+            updateStaticManyInfo <- createInfoDBIO
+            //staticMany = StaticManyOperation.convertList2Query(execInfo.columns)
+            //staticM <- DBIO.from(staticManyFuture)
           } yield {
-            UpdateStaticManyInfo(execInfo.effectRows, staticM)
+            /*execInfo.columns.sortBy(_.index).map { s =>
+              println(s)
+            }
+            UpdateStaticManyInfo(execInfo.effectRows, Map())*/
+            updateStaticManyInfo
           }
         },
         deleteGen = (v: Map[String, Json]) => {
-          val primaryColumns = columns.filter { col => FColumn.findOpt(col) { case retrieve: SlickRetrieve[col.DataType] => retrieve }.map(_.primaryGen.isDefined).getOrElse(false) }
+          val staticMany = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+          val updateInfoDBIO = PropertiesOperation.json2SlickDeleteOperation(crudQueryWrap.binds).apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+          /*val primaryColumns = columns.filter { col => FColumn.findOpt(col) { case retrieve: SlickRetrieve[col.DataType] => retrieve }.map(_.primaryGen.isDefined).getOrElse(false) }
           val jsonData = JsonOperation.readJ(primaryColumns)(v)
-          val staticMany = StaticManyOperation.convertList2Query(jsonData)
+          val staticMany = StaticManyOperation.convertList2Query(jsonData)*/
           for {
-            updateInfo <- DeleteOperation.parseInsert(crudQueryWrap.binds, jsonData)
+            updateInfo <- updateInfoDBIO
             staticM <- DBIO.from(staticMany)
           } yield {
             updateInfo.copy(many = staticM).effectRows
           }
+          /*val primaryColumns = columns.filter { col => FColumn.findOpt(col) { case retrieve: SlickRetrieve[col.DataType] => retrieve }.map(_.primaryGen.isDefined).getOrElse(false) }
+          val jsonData = JsonOperation.readJ(primaryColumns)(v)
+          //val staticMany = StaticManyOperation.convertList2Query(jsonData)
+          val staticManyFuture = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+          for {
+            updateInfo <- DeleteOperation.parseInsert(crudQueryWrap.binds, jsonData)
+            staticM <- DBIO.from(staticManyFuture)
+          } yield {
+            updateInfo.copy(many = staticM).effectRows
+          }*/
         },
         updateGen = (v: Map[String, Json]) => {
           //val staticMany = StaticManyOperation.convertList2Query(jsonData)
@@ -310,7 +330,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
             updateInfo.copy(many = staticM)
           }
         },
-        staticMany = StaticManyOperation.convertList2Ubw(columns)
+        staticMany = StaticManyOperation.ubwStaticManyGen.result(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).right.get
       )
     }
 

@@ -83,6 +83,39 @@ object JsonOperation extends FAtomicGenHelper with FAtomicShapeHelper {
     }
   }
 
+  val unfullReadGen = FPile.transformTreeList { path =>
+    FAtomicQuery(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
+      .mapToOption(path) { case (jsonReader :: property :: defaultOpt :: HNil, data) =>
+        val tran: Map[String, Json] => Option[path.DataType] = { sourceData: Map[String, Json] =>
+          sourceData.get(property.proName) match {
+            case Some(json) =>
+              json.as[jsonReader.JsonType](jsonReader.reader) match {
+                case Right(data) =>
+                  Option(jsonReader.convert(data))
+                case _ =>
+                  val ifEmptyData = data.fold(defaultOpt.map(_.value))(Option(_))
+                  /*if (ifEmptyData.isEmpty) {
+                    throw new Exception(s"字段 ${ property.proName } 的值不能被正确转换")
+                  }*/
+                  ifEmptyData
+              }
+            case None =>
+              val ifEmptyData = data.fold(defaultOpt.map(_.value))(Option(_))
+              /*if (ifEmptyData.isEmpty) {
+                throw new Exception(s"字段 ${ property.proName } 未被定义")
+              }*/
+              ifEmptyData
+          }
+        }
+
+        tran: (Map[String, Json] => Option[Any])
+      }
+  } { readlerList =>
+  { sourceData: Map[String, Json] =>
+    readlerList.map(_.apply(sourceData))
+  }
+  }
+
   /*def readJNotInc(columns: List[FColumn]): Map[String, Json] => List[FColumn] = { data: Map[String, Json] =>
     columns.map { eachColumn =>
       val isAutoInc = FColumn.findOpt(eachColumn) { case s: AutoInc[eachColumn.DataType] => s }.map(_.isAutoInc).getOrElse(false)

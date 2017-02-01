@@ -26,9 +26,10 @@ object CreateOrUpdateOperation {
         }*/
         ???
       case s =>
-        CreateOperation.parseInsert(insertQuerytWrap, columns).map { s =>
+        /*CreateOperation.parseInsert(insertQuerytWrap, columns).map { s =>
           ExecInfo(s.effectRows, Nil)
-        }
+        }*/
+        ???
     }
   }
 }

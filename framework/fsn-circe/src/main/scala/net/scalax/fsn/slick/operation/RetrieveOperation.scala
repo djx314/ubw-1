@@ -1,12 +1,14 @@
 package net.scalax.fsn.slick.operation
 
-import net.scalax.fsn.core.{FColumn, FsnColumn}
+import net.scalax.fsn.core._
 import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
 import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
 import slick.basic.BasicProfile
 import slick.dbio.DBIO
 import slick.lifted._
 import slick.relational.RelationalProfile
+
+import shapeless._
 
 import scala.concurrent.ExecutionContext
 import scala.language.existentials
@@ -52,7 +54,61 @@ case class ISReader2[S, D, T](
   type MainTColumn = T
 
 }
+/*object InRetrieveConvert2222 extends FAtomicGenHelper with FAtomicShapeHelper {
+  def convert(columns: FColumn)(implicit ec: ExecutionContext) = {
+    /*val slickReader = FColumn.find(columns)({ case s: SlickRetrieve[columns.DataType] => s })
+    val oneToOneRetrieveOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })*/
 
+    FPile.transformTreeList { path =>
+      FAtomicQuery(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: HNil)
+        .mapToOption(path) { case (slickReader :: oneToOneRetrieveOpt :: HNil, data) => {
+          val iSlickReader = ISReader2(
+            mainCol = (slickReader.mainCol: slickReader.SourceType),
+            table = slickReader.owner,
+            mainShape = slickReader.mainShape,
+            autalColumn = { s: slickReader.SlickType => FsnColumn(columns.cols, Option(slickReader.convert(s))) },
+            primaryGen = slickReader.primaryGen.map(eachPri => new FilterColumnGen[slickReader.TargetType] {
+              override type BooleanTypeRep = eachPri.BooleanTypeRep
+              override val dataToCondition = (sourceCol: slickReader.TargetType) => {
+                eachPri.dataToCondition(sourceCol)(
+                  slickReader.filterConvert(columns.data.get)
+                )
+              }
+              override val wt = eachPri.wt
+            }),
+            subGen = oneToOneRetrieveOpt.map { oneToOneRetrieve =>
+              new IWrapTran2[slickReader.SlickType] {
+                override val table = oneToOneRetrieve.owner
+                override def convert(data: slickReader.SlickType, source: RetrieveQuery): RetrieveQuery = {
+                  new RetrieveQuery {
+                    override val bind = source.bind
+                    override val cols = source.cols ::: oneToOneRetrieve.mainCol :: Nil
+                    override val shapes = source.shapes ::: oneToOneRetrieve.mainShape :: Nil
+                    override lazy val filters = source.filters ::: {
+                      val index = cols.indexOf(oneToOneRetrieve.mainCol)
+                      new FilterColumnGen[Seq[Any]] {
+                        override type BooleanTypeRep = oneToOneRetrieve.primaryGen.BooleanTypeRep
+                        override val dataToCondition = { cols: Seq[Any] =>
+                          val col = cols(index).asInstanceOf[oneToOneRetrieve.TargetType]
+                          val slickData = oneToOneRetrieve.filterConvert(slickReader.convert(data))
+                          oneToOneRetrieve.primaryGen.dataToCondition(col)(slickData)
+                        }
+                        override val wt = oneToOneRetrieve.primaryGen.wt
+                      }
+                    } :: Nil
+                  }
+                }
+              }
+
+            }
+          )
+          iSlickReader: ISlickReader2
+      } }
+    } { genList =>
+      genList
+    }
+  }
+}*/
 object InRetrieveConvert2 {
   def convert(columns: FColumn)(implicit ec: ExecutionContext): ISlickReader2 = {
     val slickReader = FColumn.find(columns)({ case s: SlickRetrieve[columns.DataType] => s })
