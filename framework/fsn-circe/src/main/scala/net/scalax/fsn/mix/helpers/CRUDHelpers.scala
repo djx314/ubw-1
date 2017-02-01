@@ -206,8 +206,7 @@ object SCRUD {
   }*/
 
 }
-
-case class Select[S, D, T, E](
+/*case class Select[S, D, T, E](
  select: SSelect[S, D, T, E],
  jsonWriter: JsonWriter[E],
  orderNullsLast: Boolean,
@@ -323,4 +322,4 @@ object Select {
     )
 
   }*/
-}
+}*/

@@ -19,17 +19,16 @@ object CreateOrUpdateOperation {
     implicit
     ec: ExecutionContext
   ): DBIO[ExecInfo] = {
-    RetrieveOperation.parseInsert(insertQuerytWrap, columns).asTry.flatMap {
+    ???
+    /*RetrieveOperation.parseInsert(insertQuerytWrap, columns).asTry.flatMap {
       case Success(_) =>
-        /*UpdateOperation.parseInsert(insertQuerytWrap, columns).map { s =>
+        UpdateOperation.parseInsert(insertQuerytWrap, columns).map { s =>
           ExecInfo(s.effectRows, Nil)
-        }*/
-        ???
+        }
       case s =>
-        /*CreateOperation.parseInsert(insertQuerytWrap, columns).map { s =>
+        CreateOperation.parseInsert(insertQuerytWrap, columns).map { s =>
           ExecInfo(s.effectRows, Nil)
-        }*/
-        ???
-    }
+        }
+    }*/
   }
 }

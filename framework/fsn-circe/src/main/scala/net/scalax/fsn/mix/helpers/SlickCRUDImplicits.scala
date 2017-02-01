@@ -3,7 +3,7 @@ package net.scalax.fsn.mix.helpers
 import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.core._
-import net.scalax.fsn.mix.helpers.{Select => SSelect}
+//import net.scalax.fsn.mix.helpers.{Select => SSelect}
 import net.scalax.fsn.mix.slickbase.{CrudQueryExtensionMethods, ListQueryExtensionMethods, PileListQueryExtensionMethods}
 import net.scalax.fsn.slick.helpers.{FRep, SlickUtils}
 import slick.lifted.{FlatShapeLevel, Query, Rep, Shape}
@@ -117,9 +117,9 @@ trait SlickCRUDImplicits {
     SSelect.out(repLike).result
   }*/
 
-  implicit def Select2FAtomin[T](crud: SSelect[_, _, _, T]): List[FAtomic[T]] = {
+  /*implicit def Select2FAtomin[T](crud: SSelect[_, _, _, T]): List[FAtomic[T]] = {
     crud.result
-  }
+  }*/
 
   implicit class queryToUQueryExtendsionMethodGen[E, U](query: Query[E, U, Seq]) {
 

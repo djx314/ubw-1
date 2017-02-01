@@ -12,6 +12,7 @@ import net.scalax.fsn.json.operation.{ExcelOperation, JsonOperation}
 import net.scalax.fsn.excel.atomic.PoiWriter
 import net.scalax.fsn.slick.model.UpdateStaticManyInfo
 import net.scalax.fsn.slick.operation.InUpdateConvert2
+import net.scalax.fsn.slick.operation.InRetrieveConvert2222
 import net.scalax.fsn.slick.model.QueryJsonInfo
 import net.scalax.fsn.slick.operation.StaticManyOperation
 import net.scalax.fsn.slick.operation.InDeleteConvert2222
@@ -31,7 +32,23 @@ import scala.concurrent.ExecutionContext
 
 object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with FPilesGenHelper {
 
-  def convert(column: FColumn): RWProperty = {
+  val RWPropertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[RWProperty]] = {
+    FPile.transformTreeListWithoutData { path =>
+      FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[InRetrieve] :: needAtomicOpt[AutoInc] :: needAtomic[SlickRetrieve] :: HNil)
+        .mapToOptionWithoutData(path) { case (jsonWriter :: property :: inRetrieveOpt :: isAutoIncOpt :: slickRetrieve :: HNil) =>
+          RWProperty(
+            property = property.proName,
+            typeName = TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString,
+            inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true),
+            isAutoInc = isAutoIncOpt.map(_.isAutoInc).getOrElse(false),
+            isPrimaryKey = slickRetrieve.primaryGen.isDefined
+          )
+        }
+    } { rwProperties =>
+      rwProperties
+    }
+  }
+  /*def convert(column: FColumn): RWProperty = {
     val jsonWriter = FColumn.find(column) { case s: JsonWriter[column.DataType] => s }
     val isInRetrieve = FColumn.findOpt(column) { case s: InRetrieve[column.DataType] => s }.map(_.isInRetrieve).getOrElse(true)
     val isAutoInc = FColumn.findOpt(column) { case s : AutoInc[column.DataType] => s }.map(_.isAutoInc).getOrElse(false)
@@ -52,9 +69,8 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
     columns.map { eachColumn =>
       convert(eachColumn)
     }
-  }
-
-  def convertProperty(columns: FColumn): net.scalax.fsn.slick.model.SelectProperty = {
+  }*/
+  /*def convertProperty(columns: FColumn): net.scalax.fsn.slick.model.SelectProperty = {
     val property = FColumn.find(columns) { case s: FProperty[columns.DataType] => s }
     val jsonWriter = FColumn.find(columns) { case s: JsonWriter[columns.DataType] => s }
     val slickSelect = FColumn.find(columns) { case s: SlickSelect[columns.DataType] => s }
@@ -71,7 +87,30 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
     )
 
     slickCommonpropertyInfo
-  }
+  }*/
+  val jsonPropertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData.flatMap {
+    FPile.transformTreeListWithoutData { path =>
+      FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
+        .mapToOptionWithoutData(path) { case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
+          val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
+          (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString, describeOpt.map(_.describe)))
+        }
+    } { jsonTupleList =>
+      jsonTupleList
+    }
+  } { (sortProNames, jsonGen) => {
+    val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName, describeOpt)) =>
+      SelectProperty(
+        proName,
+        typeName,
+        inRetrieve,
+        sortProNames.contains(proName),
+        defaultDesc,
+        describeOpt
+      )
+    }
+    properties
+  } }
 
   def slick2jsonOperation(wQuery: SlickQueryBindImpl)(
     implicit
@@ -88,31 +127,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       }
     }
 
-    val propertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData/*(wQuery)*/.flatMap {
-      FPile.transformTreeListWithoutData { path =>
-        FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
-        .mapToOptionWithoutData(path) { case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
-          val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
-          (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString, describeOpt.map(_.describe)))
-        }
-      } { jsonTupleList =>
-        jsonTupleList
-      }
-    } { (sortProNames, jsonGen) => {
-      val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName, describeOpt)) =>
-        SelectProperty(
-          proName,
-          typeName,
-          inRetrieve,
-          sortProNames.contains(proName),
-          defaultDesc,
-          describeOpt
-        )
-      }
-      properties
-    } }
-
-    propertiesGen.result(optPiles) -> jsonGen.result(optPiles) match {
+    jsonPropertiesGen.result(optPiles) -> jsonGen.result(optPiles) match {
       case (Left(e1), Left(e2)) => throw e1
       case (Left(e), Right(_)) => throw e
       case (Right(_), Left(e)) => throw e
@@ -120,6 +135,30 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
         JsonOut(properties, data)
     }
   }
+
+  val poiPropertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData/*(wQuery)*/.flatMap {
+    FPile.transformTreeListWithoutData { path =>
+      FAtomicQuery(needAtomic[PoiWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
+        .mapToOptionWithoutData(path) { case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
+          val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
+          (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, jsonWriter.writer.typeTag.tpe.toString, describeOpt.map(_.describe)))
+        }
+    } { jsonTupleList =>
+      jsonTupleList
+    }
+  } { (sortProNames, jsonGen) => {
+    val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName, describeOpt)) =>
+      SelectProperty(
+        proName,
+        typeName,
+        inRetrieve,
+        sortProNames.contains(proName),
+        defaultDesc,
+        describeOpt
+      )
+    }
+    properties
+  } }
 
   def slick2PoiOperation(wQuery: SlickQueryBindImpl)(
     implicit
@@ -136,31 +175,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       }
     }
 
-    val propertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData/*(wQuery)*/.flatMap {
-      FPile.transformTreeListWithoutData { path =>
-        FAtomicQuery(needAtomic[PoiWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
-          .mapToOptionWithoutData(path) { case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
-            val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
-            (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, jsonWriter.writer.typeTag.tpe.toString, describeOpt.map(_.describe)))
-          }
-      } { jsonTupleList =>
-        jsonTupleList
-      }
-    } { (sortProNames, jsonGen) => {
-      val properties = jsonGen.map { case (proName, (defaultDesc, inRetrieve, typeName, describeOpt)) =>
-        SelectProperty(
-          proName,
-          typeName,
-          inRetrieve,
-          sortProNames.contains(proName),
-          defaultDesc,
-          describeOpt
-        )
-      }
-      properties
-    } }
-
-    propertiesGen.result(optPiles) -> poiGen.result(optPiles) match {
+    poiPropertiesGen.result(optPiles) -> poiGen.result(optPiles) match {
       case (Left(e1), Left(e2)) => throw e1
       case (Left(e), Right(_)) => throw e
       case (Right(_), Left(e)) => throw e
@@ -214,6 +229,31 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
         }
       }.result(optPiles).right.get
     }
+  }
+
+  def json2SlickRetrieveOperation(binds: List[(Any, SlickQueryBindImpl)])(
+    implicit
+    ec: ExecutionContext,
+    retrieveCv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+  ): List[FPile[Option]] => Map[String, Json] => DBIO[(Map[String, QueryJsonInfo], Map[String, Json])] =
+  { optPiles: List[FPile[Option]] =>
+  { data: Map[String, Json] =>
+    JsonOperation.unfullReadGen.flatMap(InRetrieveConvert2222.convert) { (jsonReader, slickWriterGen) =>
+      slickWriterGen(jsonReader.apply(data))
+    }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
+      execInfoDBIO.apply(binds).flatMap { execInfo =>
+        val rowData = execInfo.columns.sortBy(_.index).map(s => Option(s.data))
+        for {
+          staticMany <- DBIO.from(staticManyReader(rowData))
+        } yield
+          staticMany -> rowData
+      }
+    }.flatMap(JsonOperation.writeGen) { (statManyWithDataDBIO, jsonWriter) =>
+      statManyWithDataDBIO.map { case (statMany, rowData) =>
+        statMany -> jsonWriter(rowData)
+      }
+    }.result(optPiles).right.get
+  }
   }
 
   def staticManyOperation(
