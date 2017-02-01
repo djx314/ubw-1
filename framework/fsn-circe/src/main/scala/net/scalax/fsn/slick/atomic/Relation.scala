@@ -1,19 +1,16 @@
 package net.scalax.fsn.slick.atomic
 
-import net.scalax.fsn.core.{FAtomic, FColumn}
+import net.scalax.fsn.core.FAtomic
 import net.scalax.fsn.slick.helpers.FilterWrapper
 import net.scalax.fsn.slick.model.StaticManyGen
 import slick.lifted.{FlatShapeLevel, Shape}
-import slick.relational.RelationalProfile
 
 import scala.language.existentials
 import scala.language.implicitConversions
 import scala.concurrent.Future
-
-trait SubUbw[E] extends FAtomic[E] {
+/*trait SubUbw[E] extends FAtomic[E] {
   val subCols: List[FColumn]
-}
-
+}*/
 trait OneToOneRetrieve[E] extends FAtomic[E] {
 
   type SourceType

@@ -59,8 +59,7 @@ object ExcelOperation extends FAtomicGenHelper with FAtomicShapeHelper {
       }
     }
   }*/
-
-  def write(eachColumn: FColumn): (String, CellData[_]) = {
+  /*def write(eachColumn: FColumn): (String, CellData[_]) = {
     val poiWriter = FColumn.find(eachColumn)({ case s: PoiWriter[eachColumn.DataType] => s })
     val trans = FColumn.filter(eachColumn)({ case s: PoiStyleTransform[eachColumn.DataType] => s }).map(_.transforms).flatten
     val property = FColumn.find(eachColumn)({ case s: FProperty[eachColumn.DataType] => s })
@@ -75,8 +74,7 @@ object ExcelOperation extends FAtomicGenHelper with FAtomicShapeHelper {
     columns.map { eachColumn =>
       write(eachColumn)
     }.toMap
-  }
-
+  }*/
   val writeGen = FPile.transformTreeList { path =>
     FAtomicQuery(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
     .mapToOption(path) { case (poiWriter :: transforms :: property :: defaultOpt :: HNil, data) => {

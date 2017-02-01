@@ -1,13 +1,13 @@
 package net.scalax.fsn.mix.slickbase
 
-import net.scalax.fsn.core.{FColumn, FPile}
+import net.scalax.fsn.core.FPile
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import slick.ast.{AnonSymbol, Ref}
 import slick.lifted._
 
 import scala.concurrent.ExecutionContext
 
-class ListQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
+/*class ListQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
 
   def flatMap[A, B](f: E => ListQueryWrap): ListQueryWrap = {
     val generator = new AnonSymbol
@@ -54,8 +54,7 @@ class ListQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
     new ListQueryExtensionMethods(newQuery)
   }
 
-}
-
+}*/
 class PileListQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
 
   def flatMap[A, B](f: E => PileListQueryWrap): PileListQueryWrap = {

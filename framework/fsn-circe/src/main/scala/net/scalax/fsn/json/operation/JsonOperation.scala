@@ -8,8 +8,7 @@ import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
 import shapeless._
 
 object JsonOperation extends FAtomicGenHelper with FAtomicShapeHelper {
-
-  def read(eachColumn: FColumn): Map[String, Json] => FColumn = { data: Map[String, Json] =>
+  /*def read(eachColumn: FColumn): Map[String, Json] => FColumn = { data: Map[String, Json] =>
     val jsonReader = FColumn.find(eachColumn)({ case s: JsonReader[eachColumn.DataType] => s })
     val property = FColumn.find(eachColumn)({ case s: FProperty[eachColumn.DataType] => s })
     //lazy val defaultValue = FColumn.findOpt(eachColumn)({ case s: DefaultValue[eachColumn.DataType] => s }).map(_.value)
@@ -48,8 +47,7 @@ object JsonOperation extends FAtomicGenHelper with FAtomicShapeHelper {
     columns.map { eachColumn =>
       read(eachColumn)(data)
     }
-  }
-
+  }*/
   val readGen = FPile.transformTreeList { path =>
     FAtomicQuery(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
     .mapToOption(path) { case (jsonReader :: property :: defaultOpt :: HNil, data) =>
@@ -138,7 +136,7 @@ object JsonOperation extends FAtomicGenHelper with FAtomicShapeHelper {
     }
   }*/
 
-  def readWithFilter(columns: List[FColumn])(filter: FColumn => Boolean): Map[String, Json] => List[FColumn] = { data: Map[String, Json] =>
+  /*def readWithFilter(columns: List[FColumn])(filter: FColumn => Boolean): Map[String, Json] => List[FColumn] = { data: Map[String, Json] =>
     columns.map { eachColumn =>
       val isNeed = filter(eachColumn)
       if (isNeed) {
@@ -147,9 +145,8 @@ object JsonOperation extends FAtomicGenHelper with FAtomicShapeHelper {
         eachColumn
       }
     }
-  }
-
-  def write(eachColumn: FColumn): (String, Json) = {
+  }*/
+  /*def write(eachColumn: FColumn): (String, Json) = {
     val jsonWriter = FColumn.find(eachColumn)({ case s: JsonWriter[eachColumn.DataType] => s })
     val property = FColumn.find(eachColumn)({ case s: FProperty[eachColumn.DataType] => s })
     //lazy val defaultValue = FColumn.findOpt(eachColumn)({ case s: DefaultValue[eachColumn.DataType] => s }).map(_.value)
@@ -170,8 +167,7 @@ object JsonOperation extends FAtomicGenHelper with FAtomicShapeHelper {
     columns.map { eachColumn =>
       write(eachColumn)
     }.toMap
-  }
-
+  }*/
   val writeGen = FPile.transformTreeList { path =>
     FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
     .mapToOption(path) { case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
