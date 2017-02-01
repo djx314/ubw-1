@@ -15,6 +15,8 @@ import net.scalax.fsn.slick.operation.InUpdateConvert2
 import net.scalax.fsn.slick.model.QueryJsonInfo
 import net.scalax.fsn.slick.operation.StaticManyOperation
 import net.scalax.fsn.slick.operation.InDeleteConvert2222
+import net.scalax.fsn.slick.operation.ExecInfo3
+import net.scalax.fsn.slick.operation.InCreateConvert2222
 import slick.jdbc.JdbcActionComponent
 import shapeless._
 import io.circe.syntax._
@@ -190,6 +192,27 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       JsonOperation.readGen.flatMap(InDeleteConvert2222.convert) { (jsonReader, slickWriterGen) =>
         slickWriterGen(jsonReader.apply(data))
       }.result(optPiles).right.get(binds)
+    }
+  }
+
+  def json2SlickCreateOperation(binds: List[(Any, SlickQueryBindImpl)])(
+    implicit
+    ec: ExecutionContext,
+    cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
+    retrieveCv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+  ): List[FPile[Option]] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
+  { optPiles: List[FPile[Option]] =>
+    { data: Map[String, Json] =>
+      JsonOperation.unfullReadGen.flatMap(InCreateConvert2222.createGen) { (jsonReader, slickWriterGen) =>
+        slickWriterGen(jsonReader.apply(data))
+      }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
+        execInfoDBIO.apply(binds).flatMap { execInfo =>
+          for {
+            staticMany <- DBIO.from(staticManyReader(execInfo.columns.sortBy(_.index).map(s => Option(s.data))))
+          } yield
+            UpdateStaticManyInfo(execInfo.effectRows, staticMany)
+        }
+      }.result(optPiles).right.get
     }
   }
 
