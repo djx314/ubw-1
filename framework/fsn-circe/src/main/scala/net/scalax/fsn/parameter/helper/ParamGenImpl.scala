@@ -26,7 +26,7 @@ class ParamGenImpl(val c: scala.reflect.macros.blackbox.Context) {
        }
      """
     )
-    println(expr.toString())
+    //println(expr.toString())
     expr
   }
 }

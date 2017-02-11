@@ -1,4 +1,4 @@
-package net.scalax.fsn.core
+/*package net.scalax.fsn.core
 
 import scala.reflect.runtime.universe._
 
@@ -30,4 +30,4 @@ object FColumn {
     column.cols.filter(par.isDefinedAt).map(par.apply)
   }
 
-}
+}*/

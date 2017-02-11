@@ -2,7 +2,7 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.slick.atomic.{OrderNullsLast, OrderTargetName, SlickSelect, SubUbw}
+import net.scalax.fsn.slick.atomic.{OrderNullsLast, OrderTargetName, SlickSelect}
 import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl}
 import net.scalax.fsn.slick.model.{ColumnOrder, SlickPage, SlickParam, SlickRange}
 import shapeless._
@@ -72,7 +72,7 @@ object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
     slickReaderGen
   }*/
 
-  def extraSubCol(column: List[FColumn]): List[FColumn] = {
+  /*def extraSubCol(column: List[FColumn]): List[FColumn] = {
     val extraColumns = column.map { s =>
       val subCols = FColumn.findOpt(s) { case t: SubUbw[s.DataType] => t }
       subCols match {
@@ -85,7 +85,7 @@ object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
     } else {
       extraColumns
     }
-  }
+  }*/
 
   def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[Option, FSlickQuery] = {
     FPile.transformTreeList { path =>

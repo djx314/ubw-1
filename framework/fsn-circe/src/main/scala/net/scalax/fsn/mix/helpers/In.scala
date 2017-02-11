@@ -1,6 +1,5 @@
 package net.scalax.fsn.mix.helpers
 
-import net.scalax.fsn.core.FColumn
 import io.circe.{Decoder, Encoder}
 import net.scalax.fsn.common.atomic.{DefaultValue, FProperty}
 import net.scalax.fsn.core.FAtomic
@@ -17,15 +16,13 @@ import scala.concurrent.Future
 import scala.reflect.runtime.universe._
 
 object In {
-
-  def subUbw[T](cols: FColumn*): List[FAtomic[T]] = new SubUbw[T] {
+  /*def subUbw[T](cols: FColumn*): List[FAtomic[T]] = new SubUbw[T] {
     override val subCols = cols.toList
   } :: Nil
 
   def subUbw[T](cols: List[FColumn]): List[FAtomic[T]] = new SubUbw[T] {
     override val subCols = cols
-  } :: Nil
-
+  } :: Nil*/
   def property[E](name: String) = new FProperty[E] {
     override val proName = name
   }

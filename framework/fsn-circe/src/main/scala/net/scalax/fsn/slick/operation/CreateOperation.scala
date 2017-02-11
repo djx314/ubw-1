@@ -11,15 +11,12 @@ import shapeless._
 
 import scala.concurrent.ExecutionContext
 import scala.language.existentials
-
-case class ExecInfo(effectRows: Int, columns: List[ColumnWithIndex]) {
+/*case class ExecInfo(effectRows: Int, columns: List[ColumnWithIndex]) {
 
   def fColumns = columns.map(_.column)
 
-}
-
-case class ColumnWithIndex(column: FColumn, index: Int)
-
+}*/
+//case class ColumnWithIndex(column: FColumn, index: Int)
 case class DataWithIndex(data: Any, index: Int)
 case class ExecInfo3(effectRows: Int, columns: List[DataWithIndex])
 

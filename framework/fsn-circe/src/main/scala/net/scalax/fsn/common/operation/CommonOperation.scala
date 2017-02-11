@@ -1,6 +1,5 @@
 package net.scalax.fsn.json.operation
-
-import net.scalax.fsn.common.atomic.DefaultValue
+/*import net.scalax.fsn.common.atomic.DefaultValue
 import net.scalax.fsn.core.{FColumn, FsnColumn}
 
 object CommonOperation {
@@ -30,4 +29,4 @@ object CommonOperation {
     }
   }
 
-}
+}*/

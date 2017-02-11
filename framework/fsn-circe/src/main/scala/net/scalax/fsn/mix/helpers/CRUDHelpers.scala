@@ -28,6 +28,8 @@ case class SCRUD[S, D, T, E](
     )
   }
 
+  List
+
   def autoInc: SCRUD[S, D, T, E] = {
     this.copy(isAutoInc = true)
   }
