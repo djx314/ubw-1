@@ -67,13 +67,18 @@ case class USWriter2[MS, MD, MT](
 
 }
 
+trait ISlickUpdaterWithData {
+  val writer: USlickWriter2
+  val data: DataWithIndex
+}
+
 object InUpdateConvert2 extends FAtomicGenHelper with FAtomicShapeHelper {
 
   def updateGen(
     implicit
     ec: ExecutionContext,
     updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-  ): FPileSyntax.PileGen[Option, List[(Any, SlickQueryBindImpl)] => DBIO[UpdateStaticManyInfo]] = {
+  ): FPileSyntax.PileGen[Option, List[(Any, SlickQueryBindImpl)] => DBIO[ExecInfo3]] = {
     FPile.transformTreeList { path =>
       FAtomicQuery(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: HNil)
         .mapToOption(path) { case (slickWriter :: oneToOneUpdateOpt :: HNil, data) => {
@@ -127,7 +132,13 @@ object InUpdateConvert2 extends FAtomicGenHelper with FAtomicShapeHelper {
         } }
     } { genList =>
       { binds: List[(Any, SlickQueryBindImpl)] =>
-        UpdateOperation2222.parseInsert(binds, genList)
+        val genListWithData = genList.zipWithIndex.map { case (s, index) =>
+          new ISlickUpdaterWithData {
+            override val writer = s
+            override val data = DataWithIndex(writer.data, index)
+          }
+        }
+        UpdateOperation2222.parseInsert(binds, genListWithData)
       }
     }
   }
@@ -189,36 +200,38 @@ object UpdateOperation2222 {
   def parseInsertGen(
                       binds: List[(Any, SlickQueryBindImpl)],
                       //updateList: List[FColumn],
-                      wrapList: List[USlickWriter2],
+                      wrapList: List[ISlickUpdaterWithData],
                       converts: List[UUpdateTran2]
                     )(
                       implicit
                       ec: ExecutionContext,
                       updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-                    ): DBIO[UpdateStaticManyInfo] = {
+                    ): DBIO[ExecInfo3] = {
     //val wrapList = updateList.map(InUpdateConvert2.convert)
 
-    val currents = wrapList.groupBy(_.table).filter { case (key, s) => converts.exists(t => key == t.table) }
+    val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => converts.exists(t => key == t.table) }
     val results = currents.map { case (table, eachWrap) =>
       val initUpdateQuery: UpdateQuery = new UpdateQuery {
         override val bind = binds.find(_._1 == table).get._2
-        override val cols = eachWrap.map(_.mainCol)
-        override val shapes = eachWrap.map(_.mainShape)
+        override val cols = eachWrap.map(_.writer.mainCol)
+        override val shapes = eachWrap.map(_.writer.mainShape)
         override val filters = eachWrap.zipWithIndex.map { case (gen, index) =>
-          gen.primaryGen.map { priGen =>
+          gen.writer.primaryGen.map { priGen =>
             new FilterColumnGen[Seq[Any]] {
               override type BooleanTypeRep = priGen.BooleanTypeRep
               override val dataToCondition = { cols: Seq[Any] =>
-                priGen.dataToCondition(cols(index).asInstanceOf[gen.MainTColumn])
+                priGen.dataToCondition(cols(index).asInstanceOf[gen.writer.MainTColumn])
               }
               override val wt = priGen.wt
             }
           }.toList: List[FilterColumnGen[Seq[Any]]]
         }.flatten
-        override val updateIndices = eachWrap.toStream.zipWithIndex.filter(_._1.primaryGen.isEmpty).map(_._2).toList
-        override val updateShapes = eachWrap.toStream.filter(_.primaryGen.isEmpty).map(_.mainShape.packedShape).toList
-        override val updateData = eachWrap.toStream.filter(_.primaryGen.isEmpty).map(_.data).toList
+        override val updateIndices = eachWrap.toStream.zipWithIndex.filter(_._1.writer.primaryGen.isEmpty).map(_._2).toList
+        override val updateShapes = eachWrap.toStream.filter(_.writer.primaryGen.isEmpty).map(_.writer.mainShape.packedShape).toList
+        override val updateData = eachWrap.toStream.filter(_.writer.primaryGen.isEmpty).map(_.writer.data).toList
       }
+
+      val data = eachWrap.map(_.data)
       val convertRetrieveQuery = converts.filter(_.table == table).foldLeft(initUpdateQuery) { (x, y) =>
         y.convert(x)
       }
@@ -231,53 +244,55 @@ object UpdateOperation2222 {
         .update(initUpdateQuery.updateData)
       for {
         effectRows <- updateDBIO
-        subs = eachWrap.map(_.subGen.toList).flatten
+        subs = eachWrap.map(_.writer.subGen.toList).flatten
         subResult <- parseInsertGen(binds, wrapList, subs)
       } yield {
-        UpdateStaticManyInfo(effectRows + subResult.effectRows, subResult.many)
+        ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
       }
     }
-    results.foldLeft(DBIO.successful(UpdateStaticManyInfo(0, Map())): DBIO[UpdateStaticManyInfo]) { (s, t) =>
+    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
       (for {
         s1 <- s
         t1 <- t
       } yield {
-        UpdateStaticManyInfo(s1.effectRows + t1.effectRows, s1.many ++ t1.many)
+        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
       })
     }
   }
 
   def parseInsert(
                    binds: List[(Any, SlickQueryBindImpl)],
-                   wrapList: List[USlickWriter2]
+                   wrapList: List[ISlickUpdaterWithData]
                  )(
                    implicit
                    ec: ExecutionContext,
                    updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-                 ): DBIO[UpdateStaticManyInfo] = {
+                 ): DBIO[ExecInfo3] = {
     //val wrapList = updateList.map(InUpdateConvert2.convert)
-    val subGensTables = wrapList.flatMap { t => t.subGen.toList.map(_.table) }
-    val currents = wrapList.groupBy(_.table).filter { case (key, s) => subGensTables.forall(t => key != t) }
+    val subGensTables = wrapList.flatMap { t => t.writer.subGen.toList.map(_.table) }
+    val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => subGensTables.forall(t => key != t) }
     val results = currents.map { case (table, eachWrap) =>
       val initUpdateQuery: UpdateQuery = new UpdateQuery {
         override val bind = binds.find(_._1 == table).get._2
-        override val cols = eachWrap.map(_.mainCol)
-        override val shapes = eachWrap.map(_.mainShape)
+        override val cols = eachWrap.map(_.writer.mainCol)
+        override val shapes = eachWrap.map(_.writer.mainShape)
         override val filters = eachWrap.zipWithIndex.map { case (gen, index) =>
-          gen.primaryGen.map { priGen =>
+          gen.writer.primaryGen.map { priGen =>
             new FilterColumnGen[Seq[Any]] {
               override type BooleanTypeRep = priGen.BooleanTypeRep
               override val dataToCondition = { cols: Seq[Any] =>
-                priGen.dataToCondition(cols(index).asInstanceOf[gen.MainTColumn])
+                priGen.dataToCondition(cols(index).asInstanceOf[gen.writer.MainTColumn])
               }
               override val wt = priGen.wt
             }
           }.toList: List[FilterColumnGen[Seq[Any]]]
         }.flatten
-        override val updateIndices = eachWrap.toStream.zipWithIndex.filter(_._1.primaryGen.isEmpty).map(_._2).toList
-        override val updateShapes = eachWrap.toStream.filter(_.primaryGen.isEmpty).map(_.mainShape.packedShape).toList
-        override val updateData = eachWrap.toStream.filter(_.primaryGen.isEmpty).map(_.data).toList
+        override val updateIndices = eachWrap.toStream.zipWithIndex.filter(_._1.writer.primaryGen.isEmpty).map(_._2).toList
+        override val updateShapes = eachWrap.toStream.filter(_.writer.primaryGen.isEmpty).map(_.writer.mainShape.packedShape).toList
+        override val updateData = eachWrap.toStream.filter(_.writer.primaryGen.isEmpty).map(_.writer.data).toList
       }
+
+      val data = eachWrap.map(_.data)
       val convertRetrieveQuery = initUpdateQuery
       val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
       val bindQuery = convertRetrieveQuery.bind.bind(query)
@@ -288,18 +303,18 @@ object UpdateOperation2222 {
         .update(initUpdateQuery.updateData)
       for {
         effectRows <- updateDBIO
-        subs = eachWrap.map(_.subGen.toList).flatten
+        subs = eachWrap.map(_.writer.subGen.toList).flatten
         subResult <- parseInsertGen(binds, wrapList, subs)
       } yield {
-        UpdateStaticManyInfo(effectRows + subResult.effectRows, subResult.many)
+        ExecInfo3(effectRows + subResult.effectRows, subResult.columns ::: data)
       }
     }
-    results.foldLeft(DBIO.successful(UpdateStaticManyInfo(0, Map())): DBIO[UpdateStaticManyInfo]) { (s, t) =>
+    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
       (for {
         s1 <- s
         t1 <- t
       } yield {
-        UpdateStaticManyInfo(s1.effectRows + t1.effectRows, s1.many ++ t1.many)
+        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
       })
     }
   }

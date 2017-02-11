@@ -26,7 +26,7 @@ object SlickUtils {
     } else {
       val repShapes = shapes.filter(s => s == RepShape).map(_ => RepShape)
       val hShapes = shapes.collect { case s: ProductNodeShape[ShapeLevel @unchecked, _, _, _, _] =>
-        s.shapes.map(_.asInstanceOf[Shape[ShapeLevel, _, _, _]])
+        s.shapes
       }.flatten
       countColumns(repShapes ++: columns, hShapes)
     }

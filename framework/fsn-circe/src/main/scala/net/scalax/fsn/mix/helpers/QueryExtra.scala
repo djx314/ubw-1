@@ -292,17 +292,17 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
           }
         },
         deleteGen = (v: Map[String, Json]) => {
-          val staticMany = PropertiesOperation.staticManyOperation.apply(columns).apply(v)
-          val updateInfoDBIO = PropertiesOperation.json2SlickDeleteOperation(crudQueryWrap.binds).apply(columns).apply(v)
+          //val staticMany = PropertiesOperation.staticManyOperation.apply(columns).apply(v)
+          /*val updateInfoDBIO =*/PropertiesOperation.json2SlickDeleteOperation(crudQueryWrap.binds).apply(columns).apply(v)
           /*val primaryColumns = columns.filter { col => FColumn.findOpt(col) { case retrieve: SlickRetrieve[col.DataType] => retrieve }.map(_.primaryGen.isDefined).getOrElse(false) }
           val jsonData = JsonOperation.readJ(primaryColumns)(v)
           val staticMany = StaticManyOperation.convertList2Query(jsonData)*/
-          for {
+          /*for {
             updateInfo <- updateInfoDBIO
             staticM <- DBIO.from(staticMany)
           } yield {
             updateInfo.copy(many = staticM).effectRows
-          }
+          }*/
           /*val primaryColumns = columns.filter { col => FColumn.findOpt(col) { case retrieve: SlickRetrieve[col.DataType] => retrieve }.map(_.primaryGen.isDefined).getOrElse(false) }
           val jsonData = JsonOperation.readJ(primaryColumns)(v)
           //val staticMany = StaticManyOperation.convertList2Query(jsonData)
@@ -324,14 +324,14 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
           } yield {
             updateInfo.copy(many = staticM)
           }*/
-          val staticMany = PropertiesOperation.staticManyOperation.apply(columns).apply(v)
-          val updateInfoDBIO = PropertiesOperation.json2SlickUpdateOperation(crudQueryWrap.binds).apply(columns).apply(v)
-          for {
+          //val staticMany = PropertiesOperation.staticManyOperation.apply(columns).apply(v)
+          /*val updateInfoDBIO =*/PropertiesOperation.json2SlickUpdateOperation(crudQueryWrap.binds).apply(columns).apply(v)
+          /*for {
             updateInfo <- updateInfoDBIO
             staticM <- DBIO.from(staticMany)
           } yield {
             updateInfo.copy(many = staticM)
-          }
+          }*/
         },
         staticMany = StaticManyOperation.ubwStaticManyGen.result(columns).right.get
       )

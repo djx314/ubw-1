@@ -193,20 +193,41 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       { data: Map[String, Json] =>
         JsonOperation.readGen.flatMap(InUpdateConvert2.updateGen) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
-      }.result(optPiles).right.get(binds)
+      }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
+        execInfoDBIO.apply(binds).flatMap { execInfo =>
+          for {
+            staticMany <- DBIO.from(staticManyReader(execInfo.columns.sortBy(_.index).map(s => Option(s.data))))
+          } yield
+            UpdateStaticManyInfo(execInfo.effectRows, staticMany)
+        }
+      }.result(optPiles).right.get
     }
   }
 
   def json2SlickDeleteOperation(binds: List[(Any, SlickQueryBindImpl)])(
     implicit
     ec: ExecutionContext,
-    deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
-  ): List[FPile[Option]] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
+    deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
+    retrieveCv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+  ): List[FPile[Option]] => Map[String, Json] => DBIO[Int] =
   { optPiles: List[FPile[Option]] =>
     { data: Map[String, Json] =>
-      JsonOperation.readGen.flatMap(InDeleteConvert2222.convert) { (jsonReader, slickWriterGen) =>
+      JsonOperation.unfullReadGen.flatMap(InRetrieveConvert2222.convert) { (jsonReader, slickWriterGen) =>
         slickWriterGen(jsonReader.apply(data))
-      }.result(optPiles).right.get(binds)
+      }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
+        execInfoDBIO.apply(binds).flatMap { execInfo =>
+          val data = execInfo.columns.sortBy(_.index).map(s => Option(s.data))
+          DBIO.from(staticManyReader(data)).flatMap { staticMany =>
+            DBIO.sequence(staticMany.map { case (key, query) => query.jsonGen.toView(SlickParam()).flatMap { s => DBIO.sequence(s.data.map { eachData => query.deleteGen(eachData) }) } })
+          }.map { s =>
+            (s, data)
+          }
+        }
+      }.flatMap(InDeleteConvert2222.convert) { case (dataList, slickWriterGen) =>
+        dataList.flatMap { case (execInfo, data) =>
+          slickWriterGen(data).apply(binds).map(_.effectRows)
+        }
+      }.result(optPiles).right.get
     }
   }
 

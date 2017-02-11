@@ -32,6 +32,7 @@ trait DSlickWriter2 {
   type MainSColumn
   type MainDColumn
   type MainTColumn
+  type DataType
 
   val mainCol: MainSColumn
 
@@ -40,22 +41,31 @@ trait DSlickWriter2 {
   val table: Any
   val primaryGen: Option[FilterColumnGen[MainTColumn]]
 
+  val data: DataType
+
   val subGen: Option[DeleteTran2]
 
 }
 
 case class DSWriter2[MS, MD, MT, D](
-                                    override val mainCol: MS,
-                                    override val mainShape: Shape[_ <: FlatShapeLevel, MS, MD, MT],
-                                    override val table: Any,
-                                    override val primaryGen: Option[FilterColumnGen[MT]],
-                                    override val subGen: Option[DeleteTran2]
-                                  ) extends DSlickWriter2 {
+  override val mainCol: MS,
+  override val mainShape: Shape[_ <: FlatShapeLevel, MS, MD, MT],
+  override val table: Any,
+  override val primaryGen: Option[FilterColumnGen[MT]],
+  override val data: D,
+  override val subGen: Option[DeleteTran2]
+) extends DSlickWriter2 {
 
   override type MainSColumn = MS
   override type MainDColumn = MD
   override type MainTColumn = MT
+  override type DataType = D
 
+}
+
+trait ISlickDeleteWithData {
+  val writer: DSlickWriter2
+  val data: DataWithIndex
 }
 
 object InDeleteConvert2222 extends FAtomicGenHelper with FAtomicShapeHelper {
@@ -105,12 +115,19 @@ object InDeleteConvert2222 extends FAtomicGenHelper with FAtomicShapeHelper {
               }
               override val wt = eachPri.wt
             }) },
+            data = data.get,
             subGen = subGenOpt
           ): DSlickWriter2
         } }
     } { genList =>
       { binds: List[(Any, SlickQueryBindImpl)] =>
-        DeleteOperation2222.parseInsert(binds, genList)
+        val genListWithData = genList.zipWithIndex.map { case (gen, index) =>
+          new ISlickDeleteWithData {
+            override val writer = gen
+            override val data = DataWithIndex(writer.data, index)
+          }
+        }
+        DeleteOperation2222.parseInsert(binds, genListWithData)
       }
     }
   }
@@ -167,33 +184,35 @@ object DeleteOperation2222 {
 
   def parseInsertGen(
                       binds: List[(Any, SlickQueryBindImpl)],
-                      updateList: List[DSlickWriter2],
+                      updateList: List[ISlickDeleteWithData],
                       converts: List[DeleteTran2]
                     )(
                       implicit
                       ec: ExecutionContext,
                       deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
-                    ): DBIO[UpdateStaticManyInfo] = {
+                    ): DBIO[ExecInfo3] = {
     val wrapList = updateList
 
-    val currents = wrapList.groupBy(_.table).filter { case (key, s) => converts.exists(t => key == t.table) }
+    val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => converts.exists(t => key == t.table) }
     val results = currents.map { case (table, eachWrap) =>
       val initDeleteQuery: DeleteQuery = new DeleteQuery {
         override val bind = binds.find(_._1 == table).get._2
-        override val cols = eachWrap.map(_.mainCol)
-        override val shapes = eachWrap.map(_.mainShape)
+        override val cols = eachWrap.map(_.writer.mainCol)
+        override val shapes = eachWrap.map(_.writer.mainShape)
         override val filters = eachWrap.zipWithIndex.map { case (gen, index) =>
-          gen.primaryGen.map { priGen =>
+          gen.writer.primaryGen.map { priGen =>
             new FilterColumnGen[Seq[Any]] {
               override type BooleanTypeRep = priGen.BooleanTypeRep
               override val dataToCondition = { cols: Seq[Any] =>
-                priGen.dataToCondition(cols(index).asInstanceOf[gen.MainTColumn])
+                priGen.dataToCondition(cols(index).asInstanceOf[gen.writer.MainTColumn])
               }
               override val wt = priGen.wt
             }
           }.toList: List[FilterColumnGen[Seq[Any]]]
         }.flatten
       }
+
+      val data = eachWrap.map(_.data)
       val convertRetrieveQuery = converts.filter(_.table == table).foldLeft(initDeleteQuery) { (x, y) =>
         y.convert(x)
       }
@@ -205,51 +224,53 @@ object DeleteOperation2222 {
       val updateDBIO = filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]].delete
       for {
         effectRows <- updateDBIO
-        subs = eachWrap.map(_.subGen.toList).flatten
+        subs = eachWrap.map(_.writer.subGen.toList).flatten
         subResult <- parseInsertGen(binds, updateList, subs)
       } yield {
-        UpdateStaticManyInfo(effectRows + subResult.effectRows, subResult.many)
+        ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
       }
     }
-    results.foldLeft(DBIO.successful(UpdateStaticManyInfo(0, Map())): DBIO[UpdateStaticManyInfo]) { (s, t) =>
+    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
       (for {
         s1 <- s
         t1 <- t
       } yield {
-        UpdateStaticManyInfo(s1.effectRows + t1.effectRows, s1.many ++ t1.many)
+        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
       })
     }
   }
 
   def parseInsert(
                    binds: List[(Any, SlickQueryBindImpl)],
-                   updateList: List[DSlickWriter2]
+                   updateList: List[ISlickDeleteWithData]
                  )(
                    implicit
                    ec: ExecutionContext,
                    deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
-                 ): DBIO[UpdateStaticManyInfo] = {
+                 ): DBIO[ExecInfo3] = {
     val wrapList = updateList
 
-    val subGensTables = wrapList.flatMap { t => t.subGen.toList.map(_.table) }
-    val currents = wrapList.groupBy(_.table).filter { case (key, s) => subGensTables.forall(t => key != t) }
+    val subGensTables = wrapList.flatMap { t => t.writer.subGen.toList.map(_.table) }
+    val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => subGensTables.forall(t => key != t) }
     val results = currents.map { case (table, eachWrap) =>
       val initDeleteQuery: DeleteQuery = new DeleteQuery {
         override val bind = binds.find(_._1 == table).get._2
-        override val cols = eachWrap.map(_.mainCol)
-        override val shapes = eachWrap.map(_.mainShape)
+        override val cols = eachWrap.map(_.writer.mainCol)
+        override val shapes = eachWrap.map(_.writer.mainShape)
         override val filters = eachWrap.zipWithIndex.map { case (gen, index) =>
-          gen.primaryGen.map { priGen =>
+          gen.writer.primaryGen.map { priGen =>
             new FilterColumnGen[Seq[Any]] {
               override type BooleanTypeRep = priGen.BooleanTypeRep
               override val dataToCondition = { cols: Seq[Any] =>
-                priGen.dataToCondition(cols(index).asInstanceOf[gen.MainTColumn])
+                priGen.dataToCondition(cols(index).asInstanceOf[gen.writer.MainTColumn])
               }
               override val wt = priGen.wt
             }
           }.toList: List[FilterColumnGen[Seq[Any]]]
         }.flatten
       }
+
+      val data = eachWrap.map(_.data)
       val convertRetrieveQuery = initDeleteQuery
       val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
       val bindQuery = convertRetrieveQuery.bind.bind(query)
@@ -259,18 +280,18 @@ object DeleteOperation2222 {
       val updateDBIO = filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]].delete
       for {
         effectRows <- updateDBIO
-        subs = eachWrap.map(_.subGen.toList).flatten
+        subs = eachWrap.map(_.writer.subGen.toList).flatten
         subResult <- parseInsertGen(binds, updateList, subs)
       } yield {
-        UpdateStaticManyInfo(effectRows + subResult.effectRows, subResult.many)
+        ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
       }
     }
-    results.foldLeft(DBIO.successful(UpdateStaticManyInfo(0, Map())): DBIO[UpdateStaticManyInfo]) { (s, t) =>
+    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
       (for {
         s1 <- s
         t1 <- t
       } yield {
-        UpdateStaticManyInfo(s1.effectRows + t1.effectRows, s1.many ++ t1.many)
+        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
       })
     }
   }
