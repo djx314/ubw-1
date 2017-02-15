@@ -1,15 +1,15 @@
 package net.scalax.fsn.mix.helpers
 
-import io.circe.{Decoder, Encoder}
-import net.scalax.fsn.common.atomic.{DefaultValue, FProperty}
+import io.circe.{ Decoder, Encoder }
+import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
 import net.scalax.fsn.core.FAtomic
-import net.scalax.fsn.excel.atomic.{PoiReader, PoiStyleTransform, PoiWriter}
-import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
+import net.scalax.fsn.excel.atomic.{ PoiReader, PoiStyleTransform, PoiWriter }
+import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.helpers.{FilterWrapper, SlickUtils}
+import net.scalax.fsn.slick.helpers.{ FilterWrapper, SlickUtils }
 import net.scalax.fsn.slick.model.StaticManyGen
-import org.xarcher.cpoi.{ReadableCellOperationAbs, StyleTransform, WriteableCellContentOperationAbs, WriteableCellOperationAbs}
-import slick.lifted.{FlatShapeLevel, Rep, Shape}
+import org.xarcher.cpoi.{ ReadableCellOperationAbs, StyleTransform, WriteableCellContentOperationAbs, WriteableCellOperationAbs }
+import slick.lifted.{ FlatShapeLevel, Rep, Shape }
 import slick.relational.RelationalProfile
 
 import scala.concurrent.Future

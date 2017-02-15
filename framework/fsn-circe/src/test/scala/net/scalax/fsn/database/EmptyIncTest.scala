@@ -1,24 +1,24 @@
 package net.scalax.fsn.database.test
 
 import net.scalax.fsn.mix.helpers.SlickCRUDImplicits
-import net.scalax.fsn.slick.helpers.{FilterRepImplicitHelper, SlickUtils}
-import net.scalax.fsn.slick.model.{RWProperty, SlickParam}
+import net.scalax.fsn.slick.helpers.{ FilterRepImplicitHelper, SlickUtils }
+import net.scalax.fsn.slick.model.{ RWProperty, SlickParam }
 import org.h2.jdbcx.JdbcDataSource
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import org.slf4j.LoggerFactory
-import slick.ast.{CompiledStatement, ProductNode, Pure, ResultSetMapping}
+import slick.ast.{ CompiledStatement, ProductNode, Pure, ResultSetMapping }
 import slick.jdbc.PositionedResult
-import slick.lifted.{ProductNodeShape, RepShape}
+import slick.lifted.{ ProductNodeShape, RepShape }
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ShapeTest extends FlatSpec
-  with Matchers
-  with EitherValues
-  with ScalaFutures
-  with BeforeAndAfterAll {
+    with Matchers
+    with EitherValues
+    with ScalaFutures
+    with BeforeAndAfterAll {
 
   import slick.jdbc.H2Profile.api._
 

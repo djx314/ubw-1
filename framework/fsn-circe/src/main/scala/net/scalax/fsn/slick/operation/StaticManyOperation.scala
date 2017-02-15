@@ -2,16 +2,16 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate, StaticMany}
+import net.scalax.fsn.slick.atomic.{ OneToOneUpdate, SlickUpdate, StaticMany }
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
-import net.scalax.fsn.slick.model.{QueryJsonInfo, StaticManyUbw, UpdateStaticManyInfo}
-import net.scalax.fsn.slick.operation.InUpdateConvert2.{needAtomic, needAtomicOpt}
+import net.scalax.fsn.slick.model.{ QueryJsonInfo, StaticManyUbw, UpdateStaticManyInfo }
+import net.scalax.fsn.slick.operation.InUpdateConvert2.{ needAtomic, needAtomicOpt }
 import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent
 import slick.lifted.Query
 import shapeless._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 object StaticManyOperation extends FAtomicGenHelper with FAtomicShapeHelper {
 
@@ -19,12 +19,15 @@ object StaticManyOperation extends FAtomicGenHelper with FAtomicShapeHelper {
   def updateGen(implicit ec: ExecutionContext): FPileSyntax.PileGen[Option, Future[Map[String, QueryJsonInfo]]] = {
     FPile.transformTreeList { path =>
       FAtomicQuery(needAtomicOpt[StaticMany] :: HNil)
-        .mapToOption(path) { case (staticMayOpt :: HNil, data) =>
-          Future.sequence(staticMayOpt.toList.map { eachStatic =>
-            eachStatic.staticMany.map { _.map { eachMany =>
-              eachMany.proName -> eachMany.gen(data.get)
-            } }
-          }).map(_.flatten.toMap)
+        .mapToOption(path) {
+          case (staticMayOpt :: HNil, data) =>
+            Future.sequence(staticMayOpt.toList.map { eachStatic =>
+              eachStatic.staticMany.map {
+                _.map { eachMany =>
+                  eachMany.proName -> eachMany.gen(data.get)
+                }
+              }
+            }).map(_.flatten.toMap)
         }
     } { staticManyList =>
       Future.sequence(staticManyList).map(_.foldLeft(Map.empty[String, QueryJsonInfo]) { (font, back) =>
@@ -69,11 +72,12 @@ object StaticManyOperation extends FAtomicGenHelper with FAtomicShapeHelper {
   def ubwStaticManyGen(implicit ec: ExecutionContext): FPileSyntaxWithoutData.PileGen[Option, Future[List[StaticManyUbw]]] = {
     FPile.transformTreeListWithoutData { path =>
       FAtomicQuery(needAtomicOpt[StaticMany] :: needAtomic[FProperty] :: HNil)
-        .mapToOptionWithoutData(path) { case (staticManyCol :: property :: HNil) =>
-          Future.sequence(
-            staticManyCol
+        .mapToOptionWithoutData(path) {
+          case (staticManyCol :: property :: HNil) =>
+            Future.sequence(
+              staticManyCol
               .map(_.staticMany.map(s => s.map(t => StaticManyUbw(t.proName, property.proName, t.slaveryIdField, t.ubwGen)))).toList
-          ).map(_.flatten)
+            ).map(_.flatten)
         }
     } { staticManyList =>
       /*staticManyList.map(_.map(_.foldLeft(List.empty[StaticManyUbw]) { (font, back) =>

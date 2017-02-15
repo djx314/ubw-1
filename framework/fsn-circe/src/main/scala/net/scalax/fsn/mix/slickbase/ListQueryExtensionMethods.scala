@@ -2,7 +2,7 @@ package net.scalax.fsn.mix.slickbase
 
 import net.scalax.fsn.core.FPile
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
-import slick.ast.{AnonSymbol, Ref}
+import slick.ast.{ AnonSymbol, Ref }
 import slick.lifted._
 
 import scala.concurrent.ExecutionContext
@@ -82,17 +82,17 @@ class PileListQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
     PileListQueryWrap(columns, slickJsonQuery)
   }
 
-  def filter[T <: Rep[_] : CanBeQueryCondition](f: E => T): PileListQueryExtensionMethods[E, U] = {
+  def filter[T <: Rep[_]: CanBeQueryCondition](f: E => T): PileListQueryExtensionMethods[E, U] = {
     val cv = implicitly[CanBeQueryCondition[T]]
     new PileListQueryExtensionMethods(queryToExt.filter(f)(cv))
   }
 
-  def withFilter[T : CanBeQueryCondition](f: E => T): PileListQueryExtensionMethods[E, U] = {
+  def withFilter[T: CanBeQueryCondition](f: E => T): PileListQueryExtensionMethods[E, U] = {
     val cv = implicitly[CanBeQueryCondition[T]]
     new PileListQueryExtensionMethods(queryToExt.withFilter(f)(cv))
   }
 
-  def filterNot[T <: Rep[_] : CanBeQueryCondition](f: E => T): PileListQueryExtensionMethods[E, U] = {
+  def filterNot[T <: Rep[_]: CanBeQueryCondition](f: E => T): PileListQueryExtensionMethods[E, U] = {
     val cv = implicitly[CanBeQueryCondition[T]]
     new PileListQueryExtensionMethods(queryToExt.filterNot(f)(cv))
   }

@@ -8,8 +8,7 @@ import scala.annotation.tailrec
 
 case class RichBRep[P](rep: Option[Rep[P]]) {
 
-  def &&&[P2, R](rRep2: RichBRep[P2])
-  (implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
+  def &&&[P2, R](rRep2: RichBRep[P2])(implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
     (rep -> rRep2.rep) match {
       case (Some(subRep1), Some(subRep2)) =>
         RichBRep(Option(new BooleanColumnExtensionMethods(subRep1).&&(subRep2)(om)))
@@ -22,8 +21,7 @@ case class RichBRep[P](rep: Option[Rep[P]]) {
     }
   }
 
-  def |||[P2, R](rRep2: RichBRep[P2])
-    (implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
+  def |||[P2, R](rRep2: RichBRep[P2])(implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
     (rep -> rRep2.rep) match {
       case (Some(subRep1), Some(subRep2)) =>
         RichBRep(Option(new BooleanColumnExtensionMethods(subRep1).||(subRep2)(om)))
@@ -36,8 +34,7 @@ case class RichBRep[P](rep: Option[Rep[P]]) {
     }
   }
 
-  def &&&[P2, R](when: Boolean, rRep2: => Rep[P2])
-    (implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
+  def &&&[P2, R](when: Boolean, rRep2: => Rep[P2])(implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
     if (when) {
       &&&(RichBRep(Option(rRep2)))
     } else {
@@ -45,8 +42,7 @@ case class RichBRep[P](rep: Option[Rep[P]]) {
     }
   }
 
-  def |||[P2, R](when: Boolean, rRep2: => Rep[P2])
-    (implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
+  def |||[P2, R](when: Boolean, rRep2: => Rep[P2])(implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
     if (when) {
       |||(RichBRep(Option(rRep2)))
     } else {
@@ -54,28 +50,23 @@ case class RichBRep[P](rep: Option[Rep[P]]) {
     }
   }
 
-  def &&&[P2, R](rRep2: Option[Rep[P2]])
-    (implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
+  def &&&[P2, R](rRep2: Option[Rep[P2]])(implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
     &&&(RichBRep(rRep2))
   }
 
-  def |||[P2, R](rRep2: Option[Rep[P2]])
-    (implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
+  def |||[P2, R](rRep2: Option[Rep[P2]])(implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
     |||(RichBRep(rRep2))
   }
 
-  def &&&[P2, R](rRep2: Rep[P2])
-    (implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
+  def &&&[P2, R](rRep2: Rep[P2])(implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
     &&&(RichBRep(Option(rRep2)))
   }
 
-  def |||[P2, R](rRep2: Rep[P2])
-                (implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
+  def |||[P2, R](rRep2: Rep[P2])(implicit om: OptionMapperDSL.arg[Boolean, P]#arg[Boolean, P2]#to[Boolean, R], convertP: Rep[P] => Rep[R], convertP2: Rep[P2] => Rep[R]): RichBRep[R] = {
     |||(RichBRep(Option(rRep2)))
   }
 
-  def ||=>[P2](rRep2: Rep[P2])
-                 (implicit convertP: Rep[P] => Rep[Option[Boolean]], convertP2: Rep[P2] => Rep[Option[Boolean]]): Rep[Option[Boolean]] = {
+  def ||=>[P2](rRep2: Rep[P2])(implicit convertP: Rep[P] => Rep[Option[Boolean]], convertP2: Rep[P2] => Rep[Option[Boolean]]): Rep[Option[Boolean]] = {
     rep.map(convertP(_)).getOrElse(convertP2(rRep2))
   }
 

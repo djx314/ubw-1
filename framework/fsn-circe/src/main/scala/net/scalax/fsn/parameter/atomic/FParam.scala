@@ -1,6 +1,6 @@
 package net.scalax.fsn.parameter.atomic
 
-import io.circe.{Decoder, HCursor}
+import io.circe.{ Decoder, HCursor }
 import io.circe.generic.auto._
 
 sealed trait FParam[T] {
@@ -14,7 +14,7 @@ object FParam {
     final def apply(c: HCursor): Decoder.Result[FParam[T]] = {
       c.as[FInParam[T]]
     }
-  }/*new Decoder[FParam[T]] {
+  } /*new Decoder[FParam[T]] {
     case class TempDecoder(FInParam: FInParam[T])
     final def apply(c: HCursor): Decoder.Result[FParam[T]] = {
       c.as[TempDecoder].map(_.FInParam)
@@ -40,7 +40,7 @@ object FComponent {
 }
 
 case class FInParam[T](
-  override val data: T
+    override val data: T
 ) extends FParam[T] {
   override def paramComp: FCompAbs = throw new Exception("该实现没有提供组件信息")
 }
@@ -55,4 +55,4 @@ case class FInParam[T](
     }
   }*/
 
-}*/
+}*/ 

@@ -1,7 +1,7 @@
 package net.scalax.fsn.excel.atomic
 
 import net.scalax.fsn.core.FAtomic
-import org.xarcher.cpoi.{StyleTransform, WriteableCellOperationAbs}
+import org.xarcher.cpoi.{ StyleTransform, WriteableCellOperationAbs }
 
 trait PoiWriter[E] extends FAtomic[E] {
   type PoiType

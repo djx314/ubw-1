@@ -1,8 +1,8 @@
 package net.scalax.fsn.mix.slickbase
 
 import net.scalax.fsn.core.FPile
-import net.scalax.fsn.slick.helpers.{SlickQueryBindImpl, SlickUtils}
-import slick.ast.{AnonSymbol, Ref}
+import net.scalax.fsn.slick.helpers.{ SlickQueryBindImpl, SlickUtils }
+import slick.ast.{ AnonSymbol, Ref }
 import slick.lifted._
 import slick.relational.RelationalProfile
 
@@ -40,17 +40,17 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
     FQueryWrap(deleteWrap, fv)
   }
 
-  def filter[T <: Rep[_] : CanBeQueryCondition](f: E => T): CrudQueryExtensionMethods[E, U] = {
+  def filter[T <: Rep[_]: CanBeQueryCondition](f: E => T): CrudQueryExtensionMethods[E, U] = {
     val cv = implicitly[CanBeQueryCondition[T]]
     new CrudQueryExtensionMethods(queryToExt.filter(f)(cv))
   }
 
-  def withFilter[T : CanBeQueryCondition](f: E => T): CrudQueryExtensionMethods[E, U] = {
+  def withFilter[T: CanBeQueryCondition](f: E => T): CrudQueryExtensionMethods[E, U] = {
     val cv = implicitly[CanBeQueryCondition[T]]
     new CrudQueryExtensionMethods(queryToExt.withFilter(f)(cv))
   }
 
-  def filterNot[T <: Rep[_] : CanBeQueryCondition](f: E => T): CrudQueryExtensionMethods[E, U] = {
+  def filterNot[T <: Rep[_]: CanBeQueryCondition](f: E => T): CrudQueryExtensionMethods[E, U] = {
     val cv = implicitly[CanBeQueryCondition[T]]
     new CrudQueryExtensionMethods(queryToExt.filterNot(f)(cv))
   }

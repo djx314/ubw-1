@@ -21,4 +21,4 @@ case class FQueryWrap(
 case class QueryWrap(
   binds: List[(Any, SlickQueryBindImpl)],
   listQueryWrap: ListQueryWrap
-)*/
+)*/ 

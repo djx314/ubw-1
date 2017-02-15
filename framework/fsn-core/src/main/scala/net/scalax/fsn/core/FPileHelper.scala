@@ -8,15 +8,18 @@ trait FPileSyntax[C[_], T] {
   val pilesGen: FPileSyntax.PileGen[C, T]
 
   def flatMap[S, U](mapPiles: FPileSyntax.PileGen[C, S])(cv: (T, List[C[Any]] => S) => U): FPileSyntax.PileGen[C, U] = {
-    (piles: List[FPile[C]]) => {
-      pilesGen(piles).right.flatMap { case (newPiles, gen) =>
-        mapPiles(newPiles).right.map { case (anOtherNewPiles, anOtherGen) =>
-          anOtherNewPiles -> { list: List[C[Any]] =>
-            cv(gen(list), anOtherGen)
-          }
+    (piles: List[FPile[C]]) =>
+      {
+        pilesGen(piles).right.flatMap {
+          case (newPiles, gen) =>
+            mapPiles(newPiles).right.map {
+              case (anOtherNewPiles, anOtherGen) =>
+                anOtherNewPiles -> { list: List[C[Any]] =>
+                  cv(gen(list), anOtherGen)
+                }
+            }
         }
       }
-    }
   }
 
   def result(piles: List[FPile[C]]): Either[FAtomicException, T] = {
@@ -44,15 +47,18 @@ trait FPileSyntaxWithoutData[C[_], T] {
   val pilesGen: FPileSyntaxWithoutData.PileGen[C, T]
 
   def flatMap[S, U](mapPiles: FPileSyntaxWithoutData.PileGen[C, S])(cv: (T, S) => U): FPileSyntaxWithoutData.PileGen[C, U] = {
-    (piles: List[FPile[C]]) => {
-      pilesGen(piles).right.flatMap { case (newPiles, gen) =>
-        mapPiles(newPiles).right.map { case (anOtherNewPiles, anOtherGen) =>
-          anOtherNewPiles -> {
-            cv(gen, anOtherGen)
-          }
+    (piles: List[FPile[C]]) =>
+      {
+        pilesGen(piles).right.flatMap {
+          case (newPiles, gen) =>
+            mapPiles(newPiles).right.map {
+              case (anOtherNewPiles, anOtherGen) =>
+                anOtherNewPiles -> {
+                  cv(gen, anOtherGen)
+                }
+            }
         }
       }
-    }
   }
 
   def result(piles: List[FPile[C]]): Either[FAtomicException, T] = {
