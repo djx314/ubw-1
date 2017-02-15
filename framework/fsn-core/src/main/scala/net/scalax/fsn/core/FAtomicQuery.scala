@@ -170,9 +170,7 @@ trait FAtomicShapeHelper {
     }
   }
 
-  implicit def hListAtomicShape[S <: HList, E, A <: HList]
-  (implicit repConvert: S <:< (E :: A), subShape: FAtomicShape[E], tailShape: FAtomicShape.AuxHList[A])
-  : FAtomicShapeImpl[S, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] = {
+  implicit def hListAtomicShape[S <: HList, E, A <: HList](implicit repConvert: S <:< (E :: A), subShape: FAtomicShape[E], tailShape: FAtomicShape.AuxHList[A]): FAtomicShapeImpl[S, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] = {
     new FAtomicShapeImpl[S, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] {
 
       override val needWrapLength = subShape.needWrapLength + tailShape.needWrapLength

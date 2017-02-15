@@ -2,12 +2,12 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.slick.atomic.{OrderNullsLast, OrderTargetName, SlickSelect}
-import net.scalax.fsn.slick.helpers.{ListAnyShape, SlickQueryBindImpl}
-import net.scalax.fsn.slick.model.{ColumnOrder, SlickPage, SlickParam, SlickRange}
+import net.scalax.fsn.slick.atomic.{ OrderNullsLast, OrderTargetName, SlickSelect }
+import net.scalax.fsn.slick.helpers.{ ListAnyShape, SlickQueryBindImpl }
+import net.scalax.fsn.slick.model.{ ColumnOrder, SlickPage, SlickParam, SlickRange }
 import shapeless._
 import slick.basic.BasicProfile
-import slick.dbio.{DBIO, NoStream}
+import slick.dbio.{ DBIO, NoStream }
 import slick.lifted._
 
 import scala.language.existentials
@@ -30,11 +30,11 @@ trait SlickReader {
 }
 
 case class SReader[S, U, T, D](
-  override val sourceCol: S,
-  override val mainShape: Shape[_ <: FlatShapeLevel, S, U, T],
-  override val orderGen: Option[(String, T => ColumnOrdered[_])],
-  override val orderTargetGen: Option[(String, String)],
-  override val convert: U => D
+    override val sourceCol: S,
+    override val mainShape: Shape[_ <: FlatShapeLevel, S, U, T],
+    override val orderGen: Option[(String, T => ColumnOrdered[_])],
+    override val orderTargetGen: Option[(String, String)],
+    override val convert: U => D
 ) extends SlickReader {
 
   override type SourceColumn = S
@@ -90,46 +90,50 @@ object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
   def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[Option, FSlickQuery] = {
     FPile.transformTreeList { path =>
       FAtomicQuery(needAtomic[SlickSelect] :: needAtomicOpt[OrderNullsLast] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: HNil)
-      .mapToOption(path) { case (slickSelect :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil, data) => {
-        val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
-        val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
-        def slickReaderGen: SReader[slickSelect.SourceType, slickSelect.SlickType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
-          SReader(
-            slickSelect.outCol,
-            slickSelect.shape,
-            slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
-            orderTargetName.map(s => property.proName -> s),
-            slickSelect.outConvert
-          )
-        else
-          SReader(
-            slickSelect.outCol,
-            slickSelect.shape,
-            slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
-            orderTargetName.map(s => property.proName -> s),
-            slickSelect.outConvert
-          )
+        .mapToOption(path) {
+          case (slickSelect :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil, data) => {
+            val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
+            val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
+            def slickReaderGen: SReader[slickSelect.SourceType, slickSelect.SlickType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
+              SReader(
+                slickSelect.outCol,
+                slickSelect.shape,
+                slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
+                orderTargetName.map(s => property.proName -> s),
+                slickSelect.outConvert
+              )
+            else
+              SReader(
+                slickSelect.outCol,
+                slickSelect.shape,
+                slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
+                orderTargetName.map(s => property.proName -> s),
+                slickSelect.outConvert
+              )
 
-          slickReaderGen: SlickReader
-        } }
+            slickReaderGen: SlickReader
+          }
+        }
     } { genList =>
       val gensWithIndex = genList.zipWithIndex
       val genSortMap: Map[String, Seq[Any] => ColumnOrdered[_]] = {
         gensWithIndex
           .toStream
-          .map { case (gen, index) =>
-            gen.orderGen.map { order =>
-              order._1 -> { cols: Seq[Any] =>
-                order._2(cols(index).asInstanceOf[gen.TargetColumn])
+          .map {
+            case (gen, index) =>
+              gen.orderGen.map { order =>
+                order._1 -> { cols: Seq[Any] =>
+                  order._2(cols(index).asInstanceOf[gen.TargetColumn])
+                }
               }
-            }
           }
           .collect { case Some(s) => s }
           .toMap
       }
       val baseOrderTarget = genList.toStream.filter(_.orderTargetGen.isDefined).map(_.orderTargetGen.get).toMap
-      val finalOrderGen: Map[String, Seq[Any] => ColumnOrdered[_]] = baseOrderTarget.map { case (key, value) =>
-        key -> genSortMap.get(value).getOrElse(throw new Exception(s"$key 需要映射 $value 的排序方案，但找不到 $value 对应的列的排序"))
+      val finalOrderGen: Map[String, Seq[Any] => ColumnOrdered[_]] = baseOrderTarget.map {
+        case (key, value) =>
+          key -> genSortMap.get(value).getOrElse(throw new Exception(s"$key 需要映射 $value 的排序方案，但找不到 $value 对应的列的排序"))
       } ++ genSortMap
 
       val cols: Seq[Any] = genList.map(_.sourceCol)
@@ -140,23 +144,25 @@ object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
         override val uQuery = selectQuery
         override val sortMap = finalOrderGen
         override val lineConvert = { list: Seq[Any] =>
-          list.toStream.zip(genList).map { case (eachData, reader) =>
-            Option(reader.convert(eachData.asInstanceOf[reader.SlickType]))
+          list.toStream.zip(genList).map {
+            case (eachData, reader) =>
+              Option(reader.convert(eachData.asInstanceOf[reader.SlickType]))
           }.toList
         }
       }
     }
   }
 
-  def ubwGenWithoutData/*(wQuery: SlickQueryBindImpl)*/: FPileSyntaxWithoutData.PileGen[Option, List[String]] = {
+  def ubwGenWithoutData /*(wQuery: SlickQueryBindImpl)*/ : FPileSyntaxWithoutData.PileGen[Option, List[String]] = {
     FPile.transformTreeListWithoutData { path =>
       FAtomicQuery(needAtomic[SlickSelect] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: HNil)
-        .mapToOptionWithoutData(path) { case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
-          if (slickSelect.colToOrder.isDefined || orderTargetNameContent.isDefined) {
-            Option(property.proName)
-          } else {
-            None
-          }
+        .mapToOptionWithoutData(path) {
+          case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
+            if (slickSelect.colToOrder.isDefined || orderTargetNameContent.isDefined) {
+              Option(property.proName)
+            } else {
+              None
+            }
           /*val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
           val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
           def slickReaderGen: SReader[slickSelect.SourceType, slickSelect.SlickType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
@@ -340,20 +346,21 @@ object CommonResult {
     val result: SlickParam => DBIO[CommonRType[T]] = slickParam => {
       val autualOrders = defaultOrders ::: slickParam.orders
       val baseQuery = {
-        autualOrders.foldLeft(mappedQuery) { case (eachQuery, ColumnOrder(eachOrderName, eachIsDesc)) =>
-          sortMap.get(eachOrderName) match {
-            case Some(convert) =>
-              eachQuery.sortBy { s =>
-                val colOrder = convert(s)
+        autualOrders.foldLeft(mappedQuery) {
+          case (eachQuery, ColumnOrder(eachOrderName, eachIsDesc)) =>
+            sortMap.get(eachOrderName) match {
+              case Some(convert) =>
+                eachQuery.sortBy { s =>
+                  val colOrder = convert(s)
 
-                if (eachIsDesc)
-                  colOrder.desc
-                else
-                  colOrder.asc
-              }
-            case _ =>
-              eachQuery
-          }
+                  if (eachIsDesc)
+                    colOrder.desc
+                  else
+                    colOrder.asc
+                }
+              case _ =>
+                eachQuery
+            }
         }
       }
 

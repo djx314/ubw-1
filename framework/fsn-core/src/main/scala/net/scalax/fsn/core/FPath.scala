@@ -6,7 +6,7 @@ trait FPath {
 
   override def toString: String = {
     s"""|paths:
-       |${ atomics.map(s => "  " + s.toString).mkString("\n") }""".stripMargin
+       |${atomics.map(s => "  " + s.toString).mkString("\n")}""".stripMargin
   }
 }
 

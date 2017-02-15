@@ -1,12 +1,12 @@
 package net.scalax.fsn.mix.helpers
 
-import io.circe.{Decoder, Encoder}
+import io.circe.{ Decoder, Encoder }
 import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.core._
 //import net.scalax.fsn.mix.helpers.{Select => SSelect}
-import net.scalax.fsn.mix.slickbase.{CrudQueryExtensionMethods, PileListQueryExtensionMethods}
-import net.scalax.fsn.slick.helpers.{FRep, SlickUtils}
-import slick.lifted.{FlatShapeLevel, Query, Rep, Shape}
+import net.scalax.fsn.mix.slickbase.{ CrudQueryExtensionMethods, PileListQueryExtensionMethods }
+import net.scalax.fsn.slick.helpers.{ FRep, SlickUtils }
+import slick.lifted.{ FlatShapeLevel, Query, Rep, Shape }
 import slick.relational.RelationalProfile
 
 import scala.reflect.runtime.universe._
@@ -62,11 +62,11 @@ trait SlickCRUDImplicits {
   }*/
 
   implicit class slickColumn2CommonColumn[S, D, T](repLike: S)(
-    implicit
-    shape: Shape[_ <: FlatShapeLevel, S, D, T],
-    encoder: Encoder[D],
-    decoder: Decoder[D],
-    weakTypeTag: WeakTypeTag[D]
+      implicit
+      shape: Shape[_ <: FlatShapeLevel, S, D, T],
+      encoder: Encoder[D],
+      decoder: Decoder[D],
+      weakTypeTag: WeakTypeTag[D]
   ) {
     def crud: SCRUD[S, D, T, D] = {
       SCRUD.in(repLike, SlickUtils.getTableIdFromCol(repLike)(shape))
@@ -74,11 +74,11 @@ trait SlickCRUDImplicits {
   }
 
   implicit class slickColumn2CRUDColumn[S, D, T](fRepLike: FRep[S])(
-    implicit
-    shape: Shape[_ <: FlatShapeLevel, S, D, T],
-    encoder: Encoder[D],
-    decoder: Decoder[D],
-    weakTypeTag: WeakTypeTag[D]
+      implicit
+      shape: Shape[_ <: FlatShapeLevel, S, D, T],
+      encoder: Encoder[D],
+      decoder: Decoder[D],
+      weakTypeTag: WeakTypeTag[D]
   ) {
     def crud: SCRUD[S, D, T, D] = {
       SCRUD.in(fRepLike.rep, SlickUtils.getTableIdFromTable(fRepLike.owner))

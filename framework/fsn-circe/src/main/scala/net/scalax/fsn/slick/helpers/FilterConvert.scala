@@ -75,19 +75,23 @@ object FilterWrapper {
   def fromIBaseConvert[S, T](convert1: FilterBaseConvertGen[S, T]): FilterWrapper[S, T] = {
     new FilterWrapper[convert1.SourceRep, convert1.FilterType] {
       override type BooleanTypeRep = Rep[convert1.BooleanType]
-      override val dataToCondition = { baseRep1: convert1.SourceRep => { data: convert1.FilterType =>
+      override val dataToCondition = { baseRep1: convert1.SourceRep =>
+        { data: convert1.FilterType =>
           convert1.colImplicit(convert1.typeGen(baseRep1)).===(LiteralColumn(data)(convert1.baseType))(convert1.om)
-      } }
+        }
+      }
       override val wt = convert1.wt
     }
   }
 
   def fromIOptConvert[S, T](convert1: FilterOptConvertGen[S, T]): FilterWrapper[S, Option[T]] = {
-     new FilterWrapper[convert1.SourceRep, Option[convert1.NoneOptType]] {
+    new FilterWrapper[convert1.SourceRep, Option[convert1.NoneOptType]] {
       override type BooleanTypeRep = Rep[convert1.BooleanType]
-      override val dataToCondition = { baseRep1: convert1.SourceRep => { data: Option[convert1.NoneOptType] =>
-        convert1.colImplicit(convert1.typeGen(baseRep1)).===(LiteralColumn(data)(convert1.baseType.optionType))(convert1.om)
-      } }
+      override val dataToCondition = { baseRep1: convert1.SourceRep =>
+        { data: Option[convert1.NoneOptType] =>
+          convert1.colImplicit(convert1.typeGen(baseRep1)).===(LiteralColumn(data)(convert1.baseType.optionType))(convert1.om)
+        }
+      }
       override val wt = convert1.wt
     }
   }
