@@ -1,7 +1,7 @@
 import net.scalax.sbt.CustomSettings
 import org.slf4j.LoggerFactory
 
-libraryDependencies += "com.lihaoyi" % "ammonite" % "0.7.7" % "test" cross CrossVersion.full
+libraryDependencies += "com.lihaoyi" % "ammonite" % "0.8.2" % "test" cross CrossVersion.full
 
 if (scala.util.Properties.isWin)
   initialCommands in (Test, console) += s"""ammonite.repl.Main.run("repl.frontEnd() = ammonite.repl.frontend.FrontEnd.JLineWindows");""" //Node that it doesn't work in ammonite 0.7.7
@@ -48,7 +48,7 @@ lazy val tempBase = (project in file("./temp-base"))
 val slickVersion = "3.2.0-RC1"
 val circeVersion = "0.7.0"
 val poiVersion = "3.15"
-val scalazVersion = "7.3.0-M5"
+val scalazVersion = "7.3.0-M7"
 
 lazy val `fsn-circe` = (project in file("./fsn-circe"))
   .settings(CustomSettings.baseSettings: _*)
