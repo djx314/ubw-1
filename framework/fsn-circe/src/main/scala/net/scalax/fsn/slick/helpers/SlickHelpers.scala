@@ -2,7 +2,7 @@ package net.scalax.fsn.slick.helpers
 
 import net.scalax.fsn.json.operation.FAtomicHelper
 import net.scalax.fsn.slick.atomic._
-import slick.lifted.{FlatShapeLevel, Shape}
+import slick.lifted.{ FlatShapeLevel, Shape }
 import scala.language.implicitConversions
 
 trait FSSelectAtomicHelper {

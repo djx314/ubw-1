@@ -1,24 +1,24 @@
 package net.scalax.fsn.mix.helpers
 
-import io.circe.{Decoder, Encoder}
+import io.circe.{ Decoder, Encoder }
 import net.scalax.fsn.core.FAtomic
-import net.scalax.fsn.json.atomic.{JsonReader, JsonWriter}
+import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.helpers.{FRep, FilterWrapper, SlickUtils}
-import slick.lifted.{ColumnOrdered, FlatShapeLevel, Rep, Shape}
+import net.scalax.fsn.slick.helpers.{ FRep, FilterWrapper, SlickUtils }
+import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Rep, Shape }
 import slick.relational.RelationalProfile
 
 import scala.reflect.runtime.universe._
 import scala.language.existentials
 
 case class SCRUD[S, D, T, E](
-  create: SCreate[S, D, T, E],
-  retrieve: SRetrieve[S, D, T, D, E],
-  update: SUpdate[S, D, T, D, E],
-  delete: SDelete[S, D, T, D, E],
-  jRead: JsonReader[E],
-  jWrite: JsonWriter[E],
-  isAutoInc: Boolean
+    create: SCreate[S, D, T, E],
+    retrieve: SRetrieve[S, D, T, D, E],
+    update: SUpdate[S, D, T, D, E],
+    delete: SDelete[S, D, T, D, E],
+    jRead: JsonReader[E],
+    jWrite: JsonWriter[E],
+    isAutoInc: Boolean
 ) { self =>
   def primary(implicit priFilter: FilterWrapper[T, D]): SCRUD[S, D, T, E] = {
     this.copy(
@@ -116,10 +116,8 @@ object SCRUD {
     )
   }
 
-  case class Embber[S, D, T]
-  (repLike: S, owner1: Any)
-  (
-    shape: Shape[_ <: FlatShapeLevel, S, D, T]
+  case class Embber[S, D, T](repLike: S, owner1: Any)(
+      shape: Shape[_ <: FlatShapeLevel, S, D, T]
   ) {
     def convert[E](out: D => E)(in: E => D)(
       implicit
@@ -324,4 +322,4 @@ object Select {
     )
 
   }*/
-}*/
+}*/ 

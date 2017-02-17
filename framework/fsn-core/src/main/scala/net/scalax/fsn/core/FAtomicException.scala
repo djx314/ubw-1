@@ -7,7 +7,8 @@ case class FAtomicException(typeTags: List[WeakTypeTag[_]]) extends Exception(
      |以下类型对应的 FAtomic 没能找到:
      |${typeTags.map(_.tpe.toString).mkString("\n")}
      |
-   """.stripMargin) {
+   """.stripMargin
+) {
 
   def :::(exception: FAtomicException): FAtomicException = FAtomicException(exception.typeTags ::: typeTags)
 

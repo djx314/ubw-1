@@ -1,8 +1,8 @@
 package net.scalax.fsn.parameter.atomic
 
-import io.circe.{Encoder, Json}
+import io.circe.{ Encoder, Json }
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import io.circe.generic.auto._
 import io.circe.syntax._
 

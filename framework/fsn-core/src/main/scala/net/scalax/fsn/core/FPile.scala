@@ -25,8 +25,9 @@ trait FPile[C[_]] extends FPileAbstract[C] {
     if (subs.isEmpty) {
       list
     } else {
-      fShape.encodeData(dataFromSub(subs.zip(ListUtils.splitList(list, subs.map(_.dataLengthSum): _*)).map { case (eachSub, subData) =>
-        eachSub.fShape.decodeData(eachSub.dataListFromSubList(subData))
+      fShape.encodeData(dataFromSub(subs.zip(ListUtils.splitList(list, subs.map(_.dataLengthSum): _*)).map {
+        case (eachSub, subData) =>
+          eachSub.fShape.decodeData(eachSub.dataListFromSubList(subData))
       }))
     }
   }
@@ -53,11 +54,11 @@ trait FPile[C[_]] extends FPileAbstract[C] {
 
   override def toString: String = {
     s"""Node(length:${dataLengthSum}): {
-       |${ fShape.encodeColumn(pathPile).mkString("\n").split("\\n").map(s => "  " + s).mkString("\n") }
+       |${fShape.encodeColumn(pathPile).mkString("\n").split("\\n").map(s => "  " + s).mkString("\n")}
        |""".stripMargin +
-    s"""
+      s"""
        |  Children: {
-       |${ subs.map(_.toString).mkString("\n").split("\\n").map(s => "    " + s).mkString("\n") }
+       |${subs.map(_.toString).mkString("\n").split("\\n").map(s => "    " + s).mkString("\n")}
        |  }
        |}""".stripMargin
   }
@@ -65,10 +66,10 @@ trait FPile[C[_]] extends FPileAbstract[C] {
 }
 
 case class FPileImpl[E, U, C[_]](
-  override val pathPile: E,
-  override val fShape: FsnShape[E, U, C],
-  override val dataFromSub: List[Any] => U,
-  override val subs: List[FPile[C]]
+    override val pathPile: E,
+    override val fShape: FsnShape[E, U, C],
+    override val dataFromSub: List[Any] => U,
+    override val subs: List[FPile[C]]
 ) extends FPile[C] {
   override type PathType = E
   override type DataType = U
@@ -109,50 +110,55 @@ object FPile {
   }
 
   def transformTree[C[_], S, T](pathGen: FPath => FQueryTranform[S, C])(columnGen: List[S] => T): FPile[C] => Either[FAtomicException, (FPile[C], List[C[Any]] => T)] = {
-    (pile: FPile[C]) => {
-      genTree(pathGen, pile).right.map { case (rightPile, piles) =>
-        rightPile -> { anyList: List[C[Any]] =>
-          val newList = ListUtils.splitList(anyList, piles.map(_.dataLengthSum): _*).zip(piles).flatMap { case (data, eachPile) => eachPile.dataListFromSubList(data) }
-          transformOf(pathGen)(columnGen)(piles.map(_.paths).flatten).right.get.apply(newList)
+    (pile: FPile[C]) =>
+      {
+        genTree(pathGen, pile).right.map {
+          case (rightPile, piles) =>
+            rightPile -> { anyList: List[C[Any]] =>
+              val newList = ListUtils.splitList(anyList, piles.map(_.dataLengthSum): _*).zip(piles).flatMap { case (data, eachPile) => eachPile.dataListFromSubList(data) }
+              transformOf(pathGen)(columnGen)(piles.map(_.paths).flatten).right.get.apply(newList)
+            }
         }
       }
-    }
   }
 
   def transformTreeList[C[_], S, T](pathGen: FPath => FQueryTranform[S, C])(columnGen: List[S] => T): FPileSyntax.PileGen[C, T] = {
-    (piles: List[FPile[C]]) => {
-      val calculatePiles = piles.map { s =>
-        genTree(pathGen, s)
-      }.foldLeft(Right(Nil): Either[FAtomicException, List[(FPile[C], List[FPile[C]])]]) {
-        (append, eitherResult) =>
-          (append -> eitherResult) match {
-            case (Left(s), Left(t)) =>
-              Left(FAtomicException(s.typeTags ::: t.typeTags))
-            case (Left(s), Right(_)) =>
-              Left(FAtomicException(s.typeTags))
-            case (Right(_), Left(s)) =>
-              Left(FAtomicException(s.typeTags))
-            case (Right(s), Right(t)) =>
-              Right(t :: s)
+    (piles: List[FPile[C]]) =>
+      {
+        val calculatePiles = piles.map { s =>
+          genTree(pathGen, s)
+        }.foldLeft(Right(Nil): Either[FAtomicException, List[(FPile[C], List[FPile[C]])]]) {
+          (append, eitherResult) =>
+            (append -> eitherResult) match {
+              case (Left(s), Left(t)) =>
+                Left(FAtomicException(s.typeTags ::: t.typeTags))
+              case (Left(s), Right(_)) =>
+                Left(FAtomicException(s.typeTags))
+              case (Right(_), Left(s)) =>
+                Left(FAtomicException(s.typeTags))
+              case (Right(s), Right(t)) =>
+                Right(t :: s)
+            }
+        }.right.map(_.reverse)
+        calculatePiles.right.map { pileList =>
+          val (newPile, summaryPiles) = pileList.unzip
+          newPile -> { anyList: List[C[Any]] =>
+            columnGen(ListUtils.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*)
+              .zip(summaryPiles)
+              .map {
+                case (subList, subPiles) =>
+                  ListUtils.splitList(subList, subPiles.map(_.dataLengthSum): _*).zip(subPiles).map {
+                    case (eachList, eachPiles) =>
+                      eachPiles.paths.map(s => pathGen(s)).zip(eachPiles.dataListFromSubList(eachList)).map {
+                        case (tranform, data) =>
+                          tranform.apply(tranform.gen.right.get, data.asInstanceOf[C[tranform.fPath.DataType]])
+                      }
+                  }
+              }.flatten.flatten)
           }
-      }.right.map(_.reverse)
-      calculatePiles.right.map { pileList =>
-        val (newPile, summaryPiles) = pileList.unzip
-        newPile -> { anyList: List[C[Any]] =>
-          columnGen(ListUtils.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*)
-            .zip(summaryPiles)
-            .map { case (subList, subPiles) =>
-              ListUtils.splitList(subList, subPiles.map(_.dataLengthSum): _*).zip(subPiles).map { case (eachList, eachPiles) =>
-                eachPiles.paths.map(s => pathGen(s)).zip(eachPiles.dataListFromSubList(eachList)).map { case (tranform, data) =>
-                  tranform.apply(tranform.gen.right.get, data.asInstanceOf[C[tranform.fPath.DataType]])
-                }
-              }
-            }.flatten.flatten
-          )
         }
-      }
 
-    }
+      }
   }
 
   def genTreeTailCallWithoutData[C[_], S](pathGen: FPath => FQueryTranformWithOutData[S, C], oldPile: FPile[C], newPile: FPile[C]): Either[FAtomicException, (FPile[C], FPile[C], List[FPile[C]])] = {
@@ -180,55 +186,59 @@ object FPile {
   }
 
   def transformTreeListWithoutData[C[_], S, T](pathGen: FPath => FQueryTranformWithOutData[S, C])(columnGen: List[S] => T): FPileSyntaxWithoutData.PileGen[C, T] = {
-    (piles: List[FPile[C]]) => {
-      val calculatePiles = piles.map { s =>
-        genTreeWithoutData(pathGen, s)
-      }.foldLeft(Right(Nil): Either[FAtomicException, List[(FPile[C], List[FPile[C]])]]) {
-        (append, eitherResult) =>
-          (append -> eitherResult) match {
-            case (Left(s), Left(t)) =>
-              Left(FAtomicException(s.typeTags ::: t.typeTags))
-            case (Left(s), Right(_)) =>
-              Left(FAtomicException(s.typeTags))
-            case (Right(_), Left(s)) =>
-              Left(FAtomicException(s.typeTags))
-            case (Right(s), Right(t)) =>
-              Right(t :: s)
-          }
-      }.right.map(_.reverse)
-      calculatePiles.right.map { pileList =>
-        val (newPile, summaryPiles) = pileList.unzip
-        newPile -> {
-          columnGen(summaryPiles.map { subPiles => subPiles.map { eachPiles =>
-            eachPiles.paths.map(s => pathGen(s)).map { tranform =>
-              tranform.apply(tranform.gen.right.get)
+    (piles: List[FPile[C]]) =>
+      {
+        val calculatePiles = piles.map { s =>
+          genTreeWithoutData(pathGen, s)
+        }.foldLeft(Right(Nil): Either[FAtomicException, List[(FPile[C], List[FPile[C]])]]) {
+          (append, eitherResult) =>
+            (append -> eitherResult) match {
+              case (Left(s), Left(t)) =>
+                Left(FAtomicException(s.typeTags ::: t.typeTags))
+              case (Left(s), Right(_)) =>
+                Left(FAtomicException(s.typeTags))
+              case (Right(_), Left(s)) =>
+                Left(FAtomicException(s.typeTags))
+              case (Right(s), Right(t)) =>
+                Right(t :: s)
             }
-          } }.flatten.flatten)
+        }.right.map(_.reverse)
+        calculatePiles.right.map { pileList =>
+          val (newPile, summaryPiles) = pileList.unzip
+          newPile -> {
+            columnGen(summaryPiles.map { subPiles =>
+              subPiles.map { eachPiles =>
+                eachPiles.paths.map(s => pathGen(s)).map { tranform =>
+                  tranform.apply(tranform.gen.right.get)
+                }
+              }
+            }.flatten.flatten)
+          }
         }
       }
-    }
   }
 
   def transformOf[S, T, C[_]](pathGen: FPath => FQueryTranform[S, C])(columnGen: List[S] => T): List[FPath] => Either[FAtomicException, List[C[Any]] => T] = {
-    (initPaths: List[FPath]) => {
-      initPaths.map(pathGen).zipWithIndex.foldLeft(Right { _: List[C[Any]] => Nil }: Either[FAtomicException, List[C[Any]] => List[S]]) { case (convert, (queryTranform, index)) =>
-        (convert -> queryTranform.gen) match {
-          case (Left(s), Left(t)) =>
-            Left(FAtomicException(s.typeTags ::: t.typeTags))
-          case (Left(s), Right(_)) =>
-            Left(FAtomicException(s.typeTags))
-          case (Right(_), Left(s)) =>
-            Left(FAtomicException(s.typeTags))
-          case (Right(s), Right(t)) =>
-            Right { list: List[C[Any]] =>
-              queryTranform.apply(t, list(index).asInstanceOf[C[queryTranform.fPath.DataType]]) :: s(list)
+    (initPaths: List[FPath]) =>
+      {
+        initPaths.map(pathGen).zipWithIndex.foldLeft(Right { _: List[C[Any]] => Nil }: Either[FAtomicException, List[C[Any]] => List[S]]) {
+          case (convert, (queryTranform, index)) =>
+            (convert -> queryTranform.gen) match {
+              case (Left(s), Left(t)) =>
+                Left(FAtomicException(s.typeTags ::: t.typeTags))
+              case (Left(s), Right(_)) =>
+                Left(FAtomicException(s.typeTags))
+              case (Right(_), Left(s)) =>
+                Left(FAtomicException(s.typeTags))
+              case (Right(s), Right(t)) =>
+                Right { list: List[C[Any]] =>
+                  queryTranform.apply(t, list(index).asInstanceOf[C[queryTranform.fPath.DataType]]) :: s(list)
+                }
             }
-        }
-      }.right.map { s =>
-        (t: List[C[Any]]) => {
+        }.right.map { s => (t: List[C[Any]]) => {
           columnGen(s(t))
         }
+        }
       }
-    }
   }
 }

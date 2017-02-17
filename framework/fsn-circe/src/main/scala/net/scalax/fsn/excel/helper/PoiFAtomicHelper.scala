@@ -1,8 +1,8 @@
 package net.scalax.fsn.excel.operation
 
-import net.scalax.fsn.excel.atomic.{PoiReader, PoiStyleTransform, PoiWriter}
+import net.scalax.fsn.excel.atomic.{ PoiReader, PoiStyleTransform, PoiWriter }
 import net.scalax.fsn.json.operation.FAtomicHelper
-import org.xarcher.cpoi.{ReadableCellOperationAbs, StyleTransform, WriteableCellOperationAbs}
+import org.xarcher.cpoi.{ ReadableCellOperationAbs, StyleTransform, WriteableCellOperationAbs }
 
 trait ExcelOperation[E] extends FAtomicHelper[E] {
 

@@ -1,8 +1,8 @@
 package net.scalax.fsn.database.test
 
 import net.scalax.fsn.mix.helpers.SlickCRUDImplicits
-import net.scalax.fsn.slick.helpers.{FRep, FilterRepImplicitHelper}
-import net.scalax.fsn.slick.model.{RWProperty, SlickParam}
+import net.scalax.fsn.slick.helpers.{ FRep, FilterRepImplicitHelper }
+import net.scalax.fsn.slick.model.{ RWProperty, SlickParam }
 import org.h2.jdbcx.JdbcDataSource
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
@@ -12,11 +12,11 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class CreateTest extends FlatSpec
-  with Matchers
-  with EitherValues
-  with ScalaFutures
-  with BeforeAndAfterAll
-  with BeforeAndAfter {
+    with Matchers
+    with EitherValues
+    with ScalaFutures
+    with BeforeAndAfterAll
+    with BeforeAndAfter {
 
   val t = 10.seconds
   override implicit val patienceConfig = PatienceConfig(timeout = t)
@@ -33,7 +33,7 @@ class CreateTest extends FlatSpec
   lazy val db = {
     val datasource = new JdbcDataSource()
     datasource.setUrl(s"jdbc:h2:mem:hfTest;DB_CLOSE_DELAY=-1")
-    Database.forDataSource(datasource)
+    Database.forDataSource(datasource, None)
   }
 
   override def beforeAll = {
