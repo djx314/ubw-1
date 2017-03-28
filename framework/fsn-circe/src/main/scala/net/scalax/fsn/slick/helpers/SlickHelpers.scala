@@ -57,3 +57,53 @@ trait FSelectExtAtomicHelper[E] extends FAtomicHelper[E] {
   })
 
 }
+
+trait FStrSelectExtAtomicHelper[E] extends FAtomicHelper[E] {
+
+  def hidden = append(new StrNeededFetch[E] {
+    override val isInRetrieve = false
+  })
+
+  def orderTarget(name: String) = append(new StrOrderTargetName[E] {
+    override val orderTargetName = name
+  })
+
+  def desc = append(new StrDefaultDesc[E] {
+    override val isDefaultDesc = true
+  })
+
+  def asc = append(new StrDefaultDesc[E] {
+    override val isDefaultDesc = false
+  })
+
+  def nullsLast = append(new StrOrderNullsLast[E] {
+    override val isOrderNullsLast = true
+  })
+
+  def nullsFirst = append(new StrOrderNullsLast[E] {
+    override val isOrderNullsLast = false
+  })
+
+}
+
+trait StrFSSelectAtomicHelper {
+
+  trait SSelectHelper[S, D, T] {
+    val rep: S
+    val shape: Shape[_ <: FlatShapeLevel, S, D, T]
+
+    def out: StrSSelect[S, D, T] = StrSSelect(
+      shape,
+      rep,
+      None
+    )
+  }
+
+  implicit def slickOutHelper[S, D, T](rep1: S)(implicit shape1: Shape[_ <: FlatShapeLevel, S, D, T]): SSelectHelper[S, D, T] = {
+    new SSelectHelper[S, D, T] {
+      override val rep = rep1
+      override val shape = shape1
+    }
+  }
+
+}
