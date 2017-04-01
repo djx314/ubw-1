@@ -16,6 +16,10 @@ trait FAtomicGenOpt[S[_]] extends AbstractFAtomicGen {
   override type T[K] = Option[S[K]]
 }
 
+trait FAtomicGenList[S[_]] extends AbstractFAtomicGen {
+  override type T[K] = List[S[K]]
+}
+
 trait FAtomicGenHelper {
 
   def needAtomic[T[_]](implicit parGen: FAtomicPartialFunctionGen[T], typeTag: WeakTypeTag[T[_]]): FAtomicGen[T] = new FAtomicGen[T] {
@@ -32,6 +36,12 @@ trait FAtomicGenHelper {
   def needAtomicOpt[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenOpt[T] = new FAtomicGenOpt[T] {
     override def getBy[U](atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]] = {
       Right(atomics.find(parGen.par[U].isDefinedAt).map(parGen.par[U].apply))
+    }
+  }
+
+  def needAtomicList[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenList[T] = new FAtomicGenList[T] {
+    override def getBy[U](atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]] = {
+      Right(atomics.filter(parGen.par[U].isDefinedAt).map(parGen.par[U].apply))
     }
   }
 

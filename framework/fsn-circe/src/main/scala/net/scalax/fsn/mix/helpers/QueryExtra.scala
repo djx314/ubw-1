@@ -20,128 +20,35 @@ import scala.language.implicitConversions
 
 trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
-  /*implicit class slick2jsonExtraClass(listQueryWrap: ListQueryWrap) {
-    def result(defaultOrders: List[ColumnOrder])
-                  (
-                    implicit
-                    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-                    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
-                    ec: ExecutionContext
-                  ): JsonOut = {
-      lazy val withExtraCols = OutSelectConvert.extraSubCol(listQueryWrap.columns)
-      /*lazy val queryWrap: JsonQuery = SelectOperation.encode(withExtraCols, listQueryWrap.listQueryBind)
-
-      val gen = { slickParam: SlickParam =>
-        queryWrap.jsonResult(defaultOrders).apply(slickParam).map { result =>
-          result._1.map(JsonOperation.writeJ) -> result._2
-        }
-      }*/
-
-      val newPiles = withExtraCols.map(col => FPile.applyOpt(FPathImpl(col.cols)))
-      lazy val outJsonGen = PropertiesOperation.slick2jsonOperation(listQueryWrap.listQueryBind).apply(newPiles)
-      outJsonGen
-      //JsonOut(withExtraCols.map(PropertiesOperation.convertProperty), gen)
-    }
-
-    def result(orderColumn: String, isDesc: Boolean = true)
-                  (
-                    implicit
-                    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-                    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
-                    ec: ExecutionContext
-                  ): JsonOut = {
-      result(List(ColumnOrder(orderColumn, isDesc)))
-    }
-
-    def result
-              (
-                implicit
-                jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-                repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
-                ec: ExecutionContext
-              ): JsonOut = {
-      result(Nil)
-    }
-
-    def jpResult(defaultOrders: List[ColumnOrder])
-              (
-                implicit
-                jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-                repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
-                ec: ExecutionContext
-              ): (() => JsonOut, () => PoiOut) = {
-      lazy val withExtraCols = OutSelectConvert.extraSubCol(listQueryWrap.columns)
-      /*lazy val queryWrap: JsonQuery = SelectOperation.encode(withExtraCols, listQueryWrap.listQueryBind)
-
-      val jsonGen = { slickParam: SlickParam =>
-        queryWrap.jsonResult(defaultOrders).apply(slickParam).map { result =>
-          result._1.map(JsonOperation.writeJ) -> result._2
-        }
-      }
-
-      val poiGen = { slickParam: SlickParam =>
-        queryWrap.jsonResult(defaultOrders).apply(slickParam).map { result =>
-          //TODO 下面的实现补上 InRetrieveOperation.filterInRetrieve
-          result._1.map(InRetrieveOperation.filterInRetrieve).map(ExcelOperation.writeP) -> result._2
-        }
-      }
-
-      JsonOut(withExtraCols.map(PropertiesOperation.convertProperty), jsonGen) ->
-      PoiOut(withExtraCols.map(PropertiesOperation.convertProperty), poiGen)*/
-
-      //==========================================================================================
-      val newPiles = withExtraCols.map(col => FPile.applyOpt(FPathImpl(col.cols)))
-      /*val outQueryWrap = OutSelectConvert.ubwGen(listQueryWrap.listQueryBind)
-      val outJsonGen = outQueryWrap.flatMap(JsonOperation.writeGen) { (slickDBIO, jsonGen) =>
-        { slickParam: SlickParam =>
-          slickDBIO.slickResult(defaultOrders).apply(slickParam).map { result =>
-            result._1.map(s => jsonGen(s)) -> result._2
-          }
-        }
-      }
-      val outPoiGen = outQueryWrap.flatMap(ExcelOperation.writeGen) { (slickDBIO, poiGen) =>
-        { slickParam: SlickParam =>
-          slickDBIO.slickResult(defaultOrders).apply(slickParam).map { result =>
-            result._1.map(s => poiGen(s)) -> result._2
-          }
-        }
-      }
-      (() => JsonOut(withExtraCols.map(PropertiesOperation.convertProperty), outJsonGen.result(newPiles) match {
-        case Left(e) => throw e
-        case Right(s) => s
-      })) ->
-        (() => PoiOut(withExtraCols.map(PropertiesOperation.convertProperty), outPoiGen.result(newPiles) match {
-          case Left(e) => throw e
-          case Right(s) => s
-        }))*/
-      lazy val outJsonGen = PropertiesOperation.slick2jsonOperation(listQueryWrap.listQueryBind).apply(newPiles)
-      lazy val outPoiGen = PropertiesOperation.slick2PoiOperation(listQueryWrap.listQueryBind).apply(newPiles)
-      (() => outJsonGen) -> (() => outPoiGen)
-    }
-
-    def jpResult(orderColumn: String, isDesc: Boolean = true)
-              (
-                implicit
-                jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-                repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
-                ec: ExecutionContext
-              ): (() => JsonOut, () => PoiOut) = {
-      jpResult(List(ColumnOrder(orderColumn, isDesc)))
-    }
-
-    def jpResult
-    (
+  implicit class slick2jsonExtraClass1111(listQueryWrap: PileListQueryWrap) {
+    def strResult(defaultOrders: List[ColumnOrder])(
       implicit
       jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
       repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
-    ): (() => JsonOut, () => PoiOut) = {
-      jpResult(Nil)
+    ): JsonOut = {
+      lazy val outJsonGen = PropertiesOperation.strSlick2jsonOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
+      outJsonGen
     }
 
-  }*/
+    def strResult(orderColumn: String, isDesc: Boolean = true)(
+      implicit
+      jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+      repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+      ec: ExecutionContext
+    ): JsonOut = {
+      strResult(List(ColumnOrder(orderColumn, isDesc)))
+    }
 
-  implicit class slick2jsonExtraClass1111(listQueryWrap: PileListQueryWrap) {
+    def strResult(
+      implicit
+      jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+      repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+      ec: ExecutionContext
+    ): JsonOut = {
+      strResult(Nil)
+    }
+
     def result(defaultOrders: List[ColumnOrder])(
       implicit
       jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],

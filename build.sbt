@@ -13,7 +13,7 @@ lazy val fsn = (project in file("."))
     name := "fsn-parent",
     libraryDependencies ++= {
       val jgitVersion = "4.4.1.201607150455-r"
-      ("org.scalafx" %% "scalafx" % "8.0.92-R10") ::
+      ("org.scalafx" %% "scalafx" % "8.0.102-R11") ::
       (
         List(
           "org.eclipse.jgit" % "org.eclipse.jgit",
