@@ -4,10 +4,11 @@ import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.slick.atomic.{ StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
 import net.scalax.fsn.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
-import net.scalax.fsn.slick.model.{ ColumnOrder, SlickPage, SlickParam, SlickRange }
+import net.scalax.fsn.slick.model._
 import shapeless._
 import slick.basic.BasicProfile
 import slick.dbio.{ DBIO, NoStream }
+import slick.jdbc.JdbcActionComponent
 import slick.lifted._
 
 import scala.language.existentials
@@ -158,28 +159,28 @@ trait StrSlickQuery {
 
   def slickResult(
     implicit
-    jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
-  ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
+  ): SlickParam => ListAnyWrap = {
     slickResult(Nil)
   }
 
   def slickResult(orderColumn: String, isDesc: Boolean = true)(
     implicit
-    jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
-  ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
+  ): SlickParam => ListAnyWrap = {
     slickResult(List(ColumnOrder(orderColumn, isDesc)))
   }
 
   def slickResult(defaultOrders: List[ColumnOrder])(
     implicit
-    jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
-  ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
+  ): SlickParam => ListAnyWrap = {
     (slickParam: SlickParam) =>
       val cols: List[Any] = readers.map(_.reader.sourceCol)
       val shape: Shape[FlatShapeLevel, List[Any], List[Any], List[Any]] = new ListColumnShape[FlatShapeLevel](readers.map(_.reader.mainShape))
@@ -205,14 +206,15 @@ trait StrSlickQuery {
             }(identity)
         }
 
-      CommonResult1111.commonResult(selectQuery.to[List], sortedQuery.to[List]).apply(slickParam)
+      val sortbyQuery2 = sortedQuery.to[List]
+      val rs = CommonResult1111.commonResult(selectQuery.to[List], sortbyQuery2).apply(slickParam)
         .map { s =>
-          s.copy(_1 = s._1.map(t => t.map(u => Option(u))))
+          ListAnyCollection(s._1.map(t => t.map(u => Option(u))), Option(s._2))
         }
+      ListAnyWrap(rs, sortbyQuery2.result.statements.toList)
   }
 }
-
-trait StrFSlickQuery {
+/*trait StrFSlickQuery {
 
   val uQuery: Query[Seq[Any], Seq[Any], Seq]
   val sortMap: Map[String, Seq[Any] => ColumnOrdered[_]]
@@ -220,8 +222,8 @@ trait StrFSlickQuery {
 
   def slickResult(
     implicit
-    jsonEv: Query[_, Seq[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[Seq[Any]], Seq[Any]],
-    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+    jsonEv: Query[_, Seq[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[Seq[Any]], Seq[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
     slickResult(Nil)
@@ -229,8 +231,8 @@ trait StrFSlickQuery {
 
   def slickResult(orderColumn: String, isDesc: Boolean = true)(
     implicit
-    jsonEv: Query[_, Seq[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[Seq[Any]], Seq[Any]],
-    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+    jsonEv: Query[_, Seq[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[Seq[Any]], Seq[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
     slickResult(List(ColumnOrder(orderColumn, isDesc)))
@@ -238,8 +240,8 @@ trait StrFSlickQuery {
 
   def slickResult(defaultOrders: List[ColumnOrder])(
     implicit
-    jsonEv: Query[_, Seq[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[Seq[Any]], Seq[Any]],
-    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+    jsonEv: Query[_, Seq[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[Seq[Any]], Seq[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
     (slickParam: SlickParam) =>
@@ -247,16 +249,15 @@ trait StrFSlickQuery {
         .map(s => s.copy(_1 = s._1.map(t => t.toList.map(u => Option(u)))))
   }
 
-}
-
+}*/
 object CommonResult1111 {
 
   type CommonRType[T] = (List[T], Int)
 
   def commonResult[E, U](commonQuery: Query[E, U, List], sortedQuery: Query[E, U, List])(
     implicit
-    jsonEv: Query[E, U, List] => BasicProfile#StreamingQueryActionExtensionMethods[List[U], U],
-    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+    jsonEv: Query[E, U, List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[U], U],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): SlickParam => DBIO[CommonRType[U]] = {
     val mappedQuery = commonQuery
