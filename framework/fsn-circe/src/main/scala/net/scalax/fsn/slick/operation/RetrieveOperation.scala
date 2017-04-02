@@ -6,8 +6,8 @@ import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryB
 import slick.basic.BasicProfile
 import slick.dbio.DBIO
 import slick.lifted._
-
 import shapeless._
+import slick.jdbc.JdbcActionComponent
 
 import scala.concurrent.ExecutionContext
 import scala.language.existentials
@@ -96,7 +96,7 @@ object InRetrieveConvert2222 extends FAtomicGenHelper with FAtomicShapeHelper {
   def convert(
     implicit
     ec: ExecutionContext,
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+    jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ) = {
     /*val slickReader = FColumn.find(columns)({ case s: SlickRetrieve[columns.DataType] => s })
     val oneToOneRetrieveOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })*/
@@ -235,7 +235,7 @@ object RetrieveOperation2222 {
   )(
     implicit
     ec: ExecutionContext,
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+    jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ): DBIO[ExecInfo3] = try {
     val wrapList = retrieveList //.map(InRetrieveConvert2.convert)
 
@@ -309,7 +309,7 @@ object RetrieveOperation2222 {
   )(
     implicit
     ec: ExecutionContext,
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+    jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ): DBIO[ExecInfo3] = try {
     val wrapList = retrieveList //.map(InRetrieveConvert2.convert)
 

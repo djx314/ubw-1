@@ -4,16 +4,14 @@ import net.scalax.fsn.common.atomic.{ DefaultValue, FDescribe, FProperty }
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.atomic.JsonWriter
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.model.{ JsonOut, JsonView, PoiOut, RWProperty, SelectProperty, SlickParam }
+import net.scalax.fsn.slick.model._
 import net.scalax.fsn.slick.helpers.{ SlickQueryBindImpl, TypeHelpers }
 import net.scalax.fsn.slick.operation.OutSelectConvert
 import net.scalax.fsn.slick.operation.StrOutSelectConvert
 import net.scalax.fsn.json.operation.{ ExcelOperation, JsonOperation }
 import net.scalax.fsn.excel.atomic.PoiWriter
-import net.scalax.fsn.slick.model.UpdateStaticManyInfo
 import net.scalax.fsn.slick.operation.InUpdateConvert2
 import net.scalax.fsn.slick.operation.InRetrieveConvert2222
-import net.scalax.fsn.slick.model.QueryJsonInfo
 import net.scalax.fsn.slick.operation.StaticManyOperation
 import net.scalax.fsn.slick.operation.InDeleteConvert2222
 import net.scalax.fsn.slick.operation.ExecInfo3
@@ -120,17 +118,19 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
 
   def strSlick2jsonOperation(wQuery: SlickQueryBindImpl)(
     implicit
-    jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): List[FPile[Option]] => JsonOut = { optPiles: List[FPile[Option]] =>
 
-    val jsonGen: FPileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.writeGen) { (slickQuery, jsonGen) =>
+    val jsonGen: FPileSyntax.PileGen[Option, SlickParam => ResultWrap] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.writeGen) { (slickQuery, jsonGen) =>
       { slickParam: SlickParam =>
-        slickQuery.slickResult.apply(slickParam).map {
-          case (dataList, sum) =>
-            dataList.map(s => jsonGen(s)) -> sum
+        val result = slickQuery.slickResult.apply(slickParam)
+        val collection = result.resultAction.map {
+          case ListAnyCollection(dataList, sum) =>
+            ResultCollection(dataList.map(s => jsonGen(s)), sum)
         }
+        ResultWrap(collection, result.statements)
       }
     }
 
@@ -173,17 +173,17 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
 
   def slick2jsonOperation(wQuery: SlickQueryBindImpl)(
     implicit
-    jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): List[FPile[Option]] => JsonOut = { optPiles: List[FPile[Option]] =>
 
-    val jsonGen: FPileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]] = OutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.writeGen) { (slickQuery, jsonGen) =>
+    val jsonGen: FPileSyntax.PileGen[Option, SlickParam => ResultWrap] = OutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.writeGen) { (slickQuery, jsonGen) =>
       { slickParam: SlickParam =>
-        slickQuery.slickResult.apply(slickParam).map {
+        ResultWrap(slickQuery.slickResult.apply(slickParam).map {
           case (dataList, sum) =>
-            dataList.map(s => jsonGen(s).toMap) -> sum
-        }
+            ResultCollection(dataList.map(s => jsonGen(s)), Option(sum))
+        }, List.empty[String])
       }
     }
 
@@ -226,8 +226,8 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
 
   def slick2PoiOperation(wQuery: SlickQueryBindImpl)(
     implicit
-    jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
+    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): List[FPile[Option]] => PoiOut = { optPiles: List[FPile[Option]] =>
 
@@ -272,7 +272,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
     implicit
     ec: ExecutionContext,
     deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
-    retrieveCv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ): List[FPile[Option]] => Map[String, Json] => DBIO[Int] =
     { optPiles: List[FPile[Option]] =>
       { data: Map[String, Json] =>
@@ -301,7 +301,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
     implicit
     ec: ExecutionContext,
     cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-    retrieveCv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ): List[FPile[Option]] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
     { optPiles: List[FPile[Option]] =>
       { data: Map[String, Json] =>
@@ -320,7 +320,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
   def json2SlickRetrieveOperation(binds: List[(Any, SlickQueryBindImpl)])(
     implicit
     ec: ExecutionContext,
-    retrieveCv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ): List[FPile[Option]] => Map[String, Json] => DBIO[(Map[String, QueryJsonInfo], Map[String, Json])] =
     { optPiles: List[FPile[Option]] =>
       { data: Map[String, Json] =>
