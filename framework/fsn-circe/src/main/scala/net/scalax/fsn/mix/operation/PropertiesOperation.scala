@@ -120,7 +120,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
 
   def strSlick2jsonOperation(wQuery: SlickQueryBindImpl)(
     implicit
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+    jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): List[FPile[Option]] => JsonOut = { optPiles: List[FPile[Option]] =>
@@ -129,7 +129,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       { slickParam: SlickParam =>
         slickQuery.slickResult.apply(slickParam).map {
           case (dataList, sum) =>
-            dataList.map(s => jsonGen(s).toMap) -> sum
+            dataList.map(s => jsonGen(s)) -> sum
         }
       }
     }
@@ -173,7 +173,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
 
   def slick2jsonOperation(wQuery: SlickQueryBindImpl)(
     implicit
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+    jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): List[FPile[Option]] => JsonOut = { optPiles: List[FPile[Option]] =>
@@ -226,7 +226,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
 
   def slick2PoiOperation(wQuery: SlickQueryBindImpl)(
     implicit
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+    jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): List[FPile[Option]] => PoiOut = { optPiles: List[FPile[Option]] =>
@@ -235,7 +235,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
       { slickParam: SlickParam =>
         slickQuery.slickResult.apply(slickParam).map {
           case (dataList, sum) =>
-            dataList.map(s => poiGen(s).toMap) -> sum
+            dataList.map(s => poiGen(s)) -> sum
         }
       }
     }

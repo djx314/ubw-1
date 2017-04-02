@@ -23,7 +23,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
   implicit class slick2jsonExtraClass1111(listQueryWrap: PileListQueryWrap) {
     def strResult(defaultOrders: List[ColumnOrder])(
       implicit
-      jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+      jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
       repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): JsonOut = {
@@ -33,7 +33,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def strResult(orderColumn: String, isDesc: Boolean = true)(
       implicit
-      jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+      jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
       repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): JsonOut = {
@@ -42,7 +42,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def strResult(
       implicit
-      jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+      jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
       repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): JsonOut = {
@@ -51,7 +51,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def result(defaultOrders: List[ColumnOrder])(
       implicit
-      jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+      jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
       repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): JsonOut = {
@@ -61,7 +61,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def result(orderColumn: String, isDesc: Boolean = true)(
       implicit
-      jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+      jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
       repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): JsonOut = {
@@ -70,7 +70,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def result(
       implicit
-      jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+      jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
       repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): JsonOut = {
@@ -79,7 +79,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def jpResult(defaultOrders: List[ColumnOrder])(
       implicit
-      jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+      jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
       repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): (() => JsonOut, () => PoiOut) = {
@@ -113,7 +113,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def jpResult(orderColumn: String, isDesc: Boolean = true)(
       implicit
-      jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+      jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
       repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): (() => JsonOut, () => PoiOut) = {
@@ -122,7 +122,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def jpResult(
       implicit
-      jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+      jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
       repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): (() => JsonOut, () => PoiOut) = {
