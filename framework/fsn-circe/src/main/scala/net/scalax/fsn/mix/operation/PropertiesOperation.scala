@@ -116,7 +116,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
     }
   }
 
-  def strSlick2jsonOperation(wQuery: SlickQueryBindImpl)(
+  def strSlick2jsonOperation(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
     implicit
     jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
@@ -125,7 +125,8 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
 
     val jsonGen: FPileSyntax.PileGen[Option, SlickParam => ResultWrap] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.writeGen) { (slickQuery, jsonGen) =>
       { slickParam: SlickParam =>
-        val result = slickQuery.slickResult.apply(slickParam)
+        val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
+        val result = slickQuery.slickResult.apply(addedParam)
         val collection = result.resultAction.map {
           case ListAnyCollection(dataList, sum) =>
             ResultCollection(dataList.map(s => jsonGen(s)), sum)

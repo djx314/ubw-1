@@ -1,6 +1,7 @@
 package net.scalax.fsn.database.test
 
-import net.scalax.fsn.mix.helpers.SlickCRUDImplicits
+import net.scalax.fsn.core.PilesPolyHelper
+import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
 import net.scalax.fsn.slick.helpers.{ FRep, FilterRepImplicitHelper }
 import net.scalax.fsn.slick.model.{ RWProperty, SlickParam }
 import org.h2.jdbcx.JdbcDataSource
@@ -26,7 +27,6 @@ class CreateTest extends FlatSpec
 
   import io.circe.generic.auto._, io.circe.syntax._, io.circe.parser._, io.circe._
   import slick.jdbc.H2Profile.api._
-  import SlickCRUDImplicits._
 
   val friendTq = TableQuery[FriendTable]
 
@@ -40,11 +40,68 @@ class CreateTest extends FlatSpec
     db.run(friendTq.schema.create).futureValue
   }
 
+  override def afterAll = {
+    db.run(friendTq.schema.drop).futureValue
+  }
+
   after {
     db.run(friendTq.delete).futureValue
   }
 
-  /*"model" should "insert with json data" in {
+  object helper extends Slick2JsonFsnImplicit
+      with net.scalax.fsn.mix.slickbase.SqlRepImplicits
+      with PilesPolyHelper
+      with net.scalax.fsn.slick.helpers.StrFSSelectAtomicHelper
+      with SlickCRUDImplicits {
+
+    import net.scalax.fsn.core.{ FAtomic }
+    import net.scalax.fsn.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
+    import net.scalax.fsn.slick.helpers.FStrSelectExtAtomicHelper
+    import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper }
+
+    implicit def fPilesOptionImplicit[D](columns: List[FAtomic[D]]) = {
+      new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
+        override val atomics = columns
+      }
+    }
+
+    implicit def atomicExtensionMethod2[D](atomic: FAtomic[D]) = {
+      new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
+        override val atomics = atomic :: Nil
+      }
+    }
+
+    implicit def atomicExtensionMethod3[D](atomic: FAtomic[D]): List[FAtomic[D]] = {
+      atomic :: Nil
+    }
+  }
+
+  import helper._
+
+  "model" should "insert with json data" in {
+    val plan11 = for {
+      friend <- friendTq.out2222
+    } yield {
+      List(
+        "abc" ofPile friend.id.out.order.writeJ.describe("喵喵"),
+        "name" ofPile friend.name.out.order.nullsLast.writeJ.describe("喵喵"),
+        "nick" ofPile friend.nick.out.order.nullsFirst.writeJ.describe("喵喵")
+      )
+    }
+
+    println(plan11.strResult("abc", true).statement(SlickParam()))
+    val compare1 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._1.desc.nullsLast)
+    val compare2 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._2.asc.nullsLast)
+    val compare3 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._3.asc.nullsFirst)
+
+    (plan11.strResult("abc", true).statement(SlickParam())) shouldEqual (compare1.result.statements.toList)
+    (plan11.strResult("name", false).statement(SlickParam())) shouldEqual (compare2.result.statements.toList)
+    (plan11.strResult("nick", false).statement(SlickParam())) shouldEqual (compare3.result.statements.toList)
+  }
+
+}
+
+/*"model" should "insert with json data" in {
     val friendQuery = for {
       inFriend <- friendTq.crud
     } yield for {
@@ -131,6 +188,4 @@ class CreateTest extends FlatSpec
     friendFromDB.id.isDefined shouldBe false
     friendFromDB == friendFromJson shouldBe true
 
-  }*/
-
-}
+  }*/ 

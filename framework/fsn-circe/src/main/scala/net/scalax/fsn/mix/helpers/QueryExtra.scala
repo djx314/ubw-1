@@ -27,7 +27,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
       repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): JsonOut = {
-      lazy val outJsonGen = PropertiesOperation.strSlick2jsonOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
+      lazy val outJsonGen = PropertiesOperation.strSlick2jsonOperation(listQueryWrap.listQueryBind, defaultOrders).apply(listQueryWrap.columns)
       outJsonGen
     }
 
