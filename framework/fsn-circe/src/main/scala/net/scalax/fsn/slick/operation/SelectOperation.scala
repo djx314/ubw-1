@@ -3,7 +3,7 @@ package net.scalax.fsn.slick.operation
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.slick.atomic.{ OrderNullsLast, OrderTargetName, SlickSelect }
-import net.scalax.fsn.slick.helpers.{ ListAnyShape, SlickQueryBindImpl }
+import net.scalax.fsn.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
 import net.scalax.fsn.slick.model.{ ColumnOrder, SlickPage, SlickParam, SlickRange }
 import shapeless._
 import slick.basic.BasicProfile
@@ -136,12 +136,12 @@ object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
           key -> genSortMap.get(value).getOrElse(throw new Exception(s"$key 需要映射 $value 的排序方案，但找不到 $value 对应的列的排序"))
       } ++ genSortMap
 
-      val cols: Seq[Any] = genList.map(_.sourceCol)
-      val shape = new ListAnyShape[FlatShapeLevel](genList.map(_.mainShape))
+      val cols: List[Any] = genList.map(_.sourceCol)
+      val shape = new ListColumnShape[FlatShapeLevel](genList.map(_.mainShape))
       val selectQuery = wQuery.bind(Query(cols)(shape))
 
       new FSlickQuery {
-        override val uQuery = selectQuery
+        override val uQuery = selectQuery.to[List]
         override val sortMap = finalOrderGen
         override val lineConvert = { list: Seq[Any] =>
           list.toStream.zip(genList).map {
@@ -265,13 +265,13 @@ object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
 }*/
 trait FSlickQuery {
 
-  val uQuery: Query[Seq[Any], Seq[Any], Seq]
+  val uQuery: Query[List[Any], List[Any], List]
   val sortMap: Map[String, Seq[Any] => ColumnOrdered[_]]
   val lineConvert: Seq[Any] => List[Option[Any]]
 
   def slickResult(
     implicit
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+    jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
@@ -280,7 +280,7 @@ trait FSlickQuery {
 
   def slickResult(orderColumn: String, isDesc: Boolean = true)(
     implicit
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+    jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
@@ -289,7 +289,7 @@ trait FSlickQuery {
 
   def slickResult(defaultOrders: List[ColumnOrder])(
     implicit
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+    jsonEv: Query[_, List[Any], List] => BasicProfile#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
@@ -335,9 +335,9 @@ object CommonResult {
 
   type CommonRType[T] = (List[T], Int)
 
-  def commonResult[E, U, T](defaultOrders: List[ColumnOrder], query: Query[E, U, Seq], modelConvert: U => T, sortMap: Map[String, E => ColumnOrdered[_]])(
+  def commonResult[E, U, T](defaultOrders: List[ColumnOrder], query: Query[E, U, List], modelConvert: U => T, sortMap: Map[String, E => ColumnOrdered[_]])(
     implicit
-    jsonEv: Query[E, U, Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[U], U],
+    jsonEv: Query[E, U, List] => BasicProfile#StreamingQueryActionExtensionMethods[List[U], U],
     repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): SlickParam => DBIO[CommonRType[T]] = {
@@ -385,7 +385,7 @@ object CommonResult {
             val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(autalLimit)
 
             limitQuery.result.map(s => {
-              val dataGen = s.toList.map(t => {
+              val dataGen = s.map(t => {
                 modelConvert(t)
               })
               (dataGen, endCount - startCount)
@@ -397,7 +397,7 @@ object CommonResult {
           val dropQuery = mappedQuery.drop(drop)
 
           baseQuery.drop(drop).take(take - drop).result.map(s => {
-            val dataGen = s.toList.map(t => {
+            val dataGen = s.map(t => {
               modelConvert(t)
             })
             (dataGen, s.size)
@@ -417,7 +417,7 @@ object CommonResult {
             val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(pageSize)
 
             limitQuery.result.map(s => {
-              val dataGen = s.toList.map(t => {
+              val dataGen = s.map(t => {
                 modelConvert(t)
               })
               (dataGen, sum)
@@ -427,7 +427,7 @@ object CommonResult {
 
         case SlickParam(_, Some(SlickRange(drop, None)), None) =>
           baseQuery.drop(drop).result.map(s => {
-            val dataGen = s.toList.map(t => {
+            val dataGen = s.map(t => {
               modelConvert(t)
             })
             (dataGen, s.size)
@@ -441,14 +441,14 @@ object CommonResult {
             sum <- mappedQuery.size.result
             s <- takeQuery.result
           } yield {
-            val dataGen = s.toList.map(t => {
+            val dataGen = s.map(t => {
               modelConvert(t)
             })
             (dataGen, sum)
           }
         case _ =>
           baseQuery.result.map(s => {
-            val dataGen = s.toList.map(t => {
+            val dataGen = s.map(t => {
               modelConvert(t)
             })
             (dataGen, s.size)

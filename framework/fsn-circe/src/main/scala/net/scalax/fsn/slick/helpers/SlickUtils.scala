@@ -1,6 +1,6 @@
 package net.scalax.fsn.slick.helpers
 
-import slick.ast.{ Ref, Select, TableNode }
+import slick.ast._
 import slick.lifted._
 import slick.relational.RelationalProfile
 
@@ -73,4 +73,21 @@ final class ListAnyShape[Level <: ShapeLevel](override val shapes: Seq[Shape[_ <
   override def buildValue(elems: IndexedSeq[Any]): Any = elems
   override def copy(shapes: Seq[Shape[_ <: ShapeLevel, _, _, _]]): Shape[Level, _, _, _] = new ListAnyShape(shapes)
   override val classTag: ClassTag[Seq[Any]] = implicitly[ClassTag[Seq[Any]]]
+}
+
+final class ListColumnShape[Level <: ShapeLevel](override val shapes: Seq[Shape[_ <: ShapeLevel, _, _, _]])
+    extends MappedProductShape[Level, List[Any], List[Any], List[Any], List[Any]] {
+
+  override def getIterator(value: List[Any]): Iterator[Any] = {
+    value.toIterator
+  }
+  override def getElement(value: List[Any], idx: Int): Any = {
+    value(idx)
+  }
+  override def buildValue(elems: IndexedSeq[Any]): Any = {
+    elems.toList
+  }
+  override def copy(shapes: Seq[Shape[_ <: ShapeLevel, _, _, _]]): Shape[Level, _, _, _] = new ListColumnShape(shapes)
+  override val classTag: ClassTag[List[Any]] = implicitly[ClassTag[List[Any]]]
+
 }
