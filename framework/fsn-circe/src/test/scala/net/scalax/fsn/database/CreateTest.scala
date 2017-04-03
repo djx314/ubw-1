@@ -3,7 +3,7 @@ package net.scalax.fsn.database.test
 import net.scalax.fsn.core.PilesPolyHelper
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
 import net.scalax.fsn.slick.helpers.{ FRep, FilterRepImplicitHelper }
-import net.scalax.fsn.slick.model.{ RWProperty, SlickParam }
+import net.scalax.fsn.slick.model.{ ColumnOrder, RWProperty, SlickParam }
 import org.h2.jdbcx.JdbcDataSource
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
@@ -93,10 +93,12 @@ class CreateTest extends FlatSpec
     val compare1 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._1.desc.nullsLast)
     val compare2 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._2.asc.nullsLast)
     val compare3 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._3.asc.nullsFirst)
+    val compare4 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._2.desc.nullsLast).sortBy(_._1.asc.nullsLast).sortBy(_._3.asc.nullsFirst)
 
     (plan11.strResult("abc", true).statement(SlickParam())) shouldEqual (compare1.result.statements.toList)
     (plan11.strResult("name", false).statement(SlickParam())) shouldEqual (compare2.result.statements.toList)
     (plan11.strResult("nick", false).statement(SlickParam())) shouldEqual (compare3.result.statements.toList)
+    (plan11.strResult("nick", false).statement(SlickParam(List(ColumnOrder("name", true), ColumnOrder("abc", false))))) shouldEqual (compare4.result.statements.toList)
   }
 
 }
