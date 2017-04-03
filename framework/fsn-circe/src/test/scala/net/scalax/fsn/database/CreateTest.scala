@@ -88,6 +88,7 @@ class CreateTest extends FlatSpec
         "nick" ofPile friend.nick.out.order.nullsFirst.writeJ.describe("喵喵")
       )
     }
+    friendTq.map(_.id).sum
 
     println(plan11.strResult("abc", true).statement(SlickParam()))
     val compare1 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._1.desc.nullsLast)
