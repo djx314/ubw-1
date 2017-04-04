@@ -178,25 +178,18 @@ trait FGroupQuery {
                     case "sum" =>
                       helper.singleColumnQueryExtensionMethods(eachValue)(a.baseTypedType).sum(a.typedType)
                   }
-                /*trait GroupWraperWithOption[T] extends GroupWraperBase[T] {
-                  val targetColConvert: T => Rep[Option[RepDataType]]
-                  }
-                  trait GroupWraperWithNonOption[T] extends GroupWraperBase[T] {
-                  val targetColConvert: T => Rep[RepDataType]
-                  }*/
               }
           }
     } {
       val aa = keyIndexs.map(index => readers(index)._1.selectModel.shape.packedShape.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]])
       val bb = aggregateIndexsAndMethods.map {
-        case (method, reader) =>
+        case (_, reader) =>
           reader._1.groupModel.get.groupModel.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]]
       }
       new ListColumnShape[FlatShapeLevel](aa ::: bb)
     }
 
     val action = jsonEv(resultQuery.to[List]).result.map { s =>
-      //val sumSize = keySize + aggregateIndexsAndMethods.size
       val result = s.map { t =>
         val initArray = Array.fill[Option[Any]](readers.size)(Option.empty[Any])
         keyIndexs.zipWithIndex.map {
@@ -214,168 +207,3 @@ trait FGroupQuery {
     GroupResult(action, resultQuery.to[List].result.statements.toList)
   }
 }
-/*trait FSlickQuery {
-
-  val uQuery: Query[List[Any], List[Any], List]
-  val sortMap: Map[String, Seq[Any] => ColumnOrdered[_]]
-  val lineConvert: Seq[Any] => List[Option[Any]]
-
-  def slickResult(
-    implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-    ec: ExecutionContext
-  ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
-    slickResult(Nil)
-  }
-
-  def slickResult(orderColumn: String, isDesc: Boolean = true)(
-    implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-    ec: ExecutionContext
-  ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
-    slickResult(List(ColumnOrder(orderColumn, isDesc)))
-  }
-
-  def slickResult(defaultOrders: List[ColumnOrder])(
-    implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-    ec: ExecutionContext
-  ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
-    (slickParam: SlickParam) => CommonResult.commonResult(defaultOrders, uQuery, lineConvert, sortMap).apply(slickParam)
-  }
-
-}
-
-object CommonResult {
-
-  type CommonRType[T] = (List[T], Int)
-
-  def commonResult[E, U, T](defaultOrders: List[ColumnOrder], query: Query[E, U, List], modelConvert: U => T, sortMap: Map[String, E => ColumnOrdered[_]])(
-    implicit
-    jsonEv: Query[E, U, List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[U], U],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-    ec: ExecutionContext
-  ): SlickParam => DBIO[CommonRType[T]] = {
-    val mappedQuery = query
-
-    val result: SlickParam => DBIO[CommonRType[T]] = slickParam => {
-      val autualOrders = defaultOrders ::: slickParam.orders
-      val baseQuery = {
-        autualOrders.foldLeft(mappedQuery) {
-          case (eachQuery, ColumnOrder(eachOrderName, eachIsDesc)) =>
-            sortMap.get(eachOrderName) match {
-              case Some(convert) =>
-                eachQuery.sortBy { s =>
-                  val colOrder = convert(s)
-
-                  if (eachIsDesc)
-                    colOrder.desc
-                  else
-                    colOrder.asc
-                }
-              case _ =>
-                eachQuery
-            }
-        }
-      }
-
-      slickParam match {
-        case SlickParam(_, Some(SlickRange(drop1, Some(take1))), Some(SlickPage(pageIndex1, pageSize1))) =>
-          val startCount = Math.max(0, drop1)
-          val pageIndex = Math.max(0, pageIndex1)
-          val pageSize = Math.max(0, pageSize1)
-
-          val dropQuery = mappedQuery.drop(startCount)
-
-          (for {
-            sum <- dropQuery.size.result
-          } yield {
-            val pageStart = startCount + pageIndex * pageSize
-            val pageEnd = pageStart + pageSize
-            val endCount = Math.min(take1, startCount + sum)
-            val autalStart = Math.max(pageStart, startCount)
-            val autalEnd = Math.min(pageEnd, endCount)
-            val autalLimit = Math.max(0, autalEnd - autalStart)
-
-            val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(autalLimit)
-
-            limitQuery.result.map(s => {
-              val dataGen = s.map(t => {
-                modelConvert(t)
-              })
-              (dataGen, endCount - startCount)
-            })
-          })
-            .flatMap(s => s)
-
-        case SlickParam(_, Some(SlickRange(drop, Some(take))), None) =>
-          val dropQuery = mappedQuery.drop(drop)
-
-          baseQuery.drop(drop).take(take - drop).result.map(s => {
-            val dataGen = s.map(t => {
-              modelConvert(t)
-            })
-            (dataGen, s.size)
-          })
-
-        case SlickParam(_, Some(SlickRange(drop1, None)), Some(SlickPage(pageIndex1, pageSize1))) =>
-          val startCount = Math.max(0, drop1)
-          val pageIndex = Math.max(0, pageIndex1)
-          val pageSize = Math.max(0, pageSize1)
-
-          val dropQuery = mappedQuery.drop(startCount)
-
-          (for {
-            sum <- dropQuery.size.result
-          } yield {
-
-            val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(pageSize)
-
-            limitQuery.result.map(s => {
-              val dataGen = s.map(t => {
-                modelConvert(t)
-              })
-              (dataGen, sum)
-            })
-          })
-            .flatMap(s => s)
-
-        case SlickParam(_, Some(SlickRange(drop, None)), None) =>
-          baseQuery.drop(drop).result.map(s => {
-            val dataGen = s.map(t => {
-              modelConvert(t)
-            })
-            (dataGen, s.size)
-          })
-
-        case SlickParam(_, None, Some(SlickPage(pageIndex, pageSize))) =>
-          val dropQuery = baseQuery.drop(pageIndex * pageSize)
-          val takeQuery = dropQuery.take(pageSize)
-
-          for {
-            sum <- mappedQuery.size.result
-            s <- takeQuery.result
-          } yield {
-            val dataGen = s.map(t => {
-              modelConvert(t)
-            })
-            (dataGen, sum)
-          }
-        case _ =>
-          baseQuery.result.map(s => {
-            val dataGen = s.map(t => {
-              modelConvert(t)
-            })
-            (dataGen, s.size)
-          })
-      }
-    }
-
-    result
-
-  }
-
-}*/ 
