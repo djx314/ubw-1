@@ -191,4 +191,4 @@ class CreateTest extends FlatSpec
     friendFromDB.id.isDefined shouldBe false
     friendFromDB == friendFromJson shouldBe true
 
-  }*/ 
+  }*/
