@@ -107,3 +107,24 @@ trait StrFSSelectAtomicHelper {
   }
 
 }
+
+trait GroupFSSelectAtomicHelper {
+
+  trait GroupSSelectHelper[S, D, T] {
+    val rep: S
+    val shape: Shape[_ <: FlatShapeLevel, S, D, T]
+
+    def groupOutput: GroupSSelect[S, D, T] = GroupSSelect(
+      shape,
+      rep
+    )
+  }
+
+  implicit def slickGroupOutHelper[S, D, T](rep1: S)(implicit shape1: Shape[_ <: FlatShapeLevel, S, D, T]): GroupSSelectHelper[S, D, T] = {
+    new GroupSSelectHelper[S, D, T] {
+      override val rep = rep1
+      override val shape = shape1
+    }
+  }
+
+}

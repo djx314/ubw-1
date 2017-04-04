@@ -43,7 +43,7 @@ case class GroupSSelect[S, D, T](
     }
   }
 
-  def groupWithNonOpt[U](
+  def groupWithOpt[U](
     implicit
     colConvert: T => Rep[Option[U]],
     baseTypedType1: BaseTypedType[U],
@@ -68,6 +68,7 @@ sealed trait GroupableColumnBase[E] extends FAtomic[Option[E]] {
   type SourceType
   type TargetType
   type DataType
+  type RepType = E
 
   val selectModel: GroupSSelect[SourceType, DataType, TargetType]
   val groupModel: Shape[_ <: FlatShapeLevel, Rep[Option[E]], Option[E], Rep[Option[E]]]
@@ -78,11 +79,9 @@ sealed trait GroupableColumnBase[E] extends FAtomic[Option[E]] {
 }
 
 trait GroupableNoOptionColumn[E] extends GroupableColumnBase[E] {
-  //override type DataType = E
   val targetColConvert: TargetType => Rep[E]
 }
 
 trait GroupableOptionColumn[E] extends GroupableColumnBase[E] {
-  //override type DataType = Option[E]
   val targetColConvert: TargetType => Rep[Option[E]]
 }
