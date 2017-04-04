@@ -21,13 +21,24 @@ import scala.language.implicitConversions
 trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
   implicit class slick2jsonExtraClass1111(listQueryWrap: PileListQueryWrap) {
+
+    def groupResult(defaultOrders: GroupParam)(
+      implicit
+      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+      //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      ec: ExecutionContext
+    ): ResultWrap = {
+      lazy val outJsonGen = PropertiesOperation.slick2jsonGroupOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns).apply(defaultOrders)
+      outJsonGen
+    }
+
     def strResult(defaultOrders: List[ColumnOrder])(
       implicit
       jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
       repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): JsonOut = {
-      lazy val outJsonGen = PropertiesOperation.strSlick2jsonOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
+      lazy val outJsonGen = PropertiesOperation.strSlick2jsonOperation(listQueryWrap.listQueryBind, defaultOrders).apply(listQueryWrap.columns)
       outJsonGen
     }
 

@@ -3,7 +3,7 @@ package net.scalax.fsn.database.test
 import net.scalax.fsn.core.PilesPolyHelper
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
 import net.scalax.fsn.slick.helpers.{ FRep, FilterRepImplicitHelper }
-import net.scalax.fsn.slick.model.{ ColumnOrder, RWProperty, SlickParam }
+import net.scalax.fsn.slick.model._
 import org.h2.jdbcx.JdbcDataSource
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class CreateTest extends FlatSpec
+class GroupTest extends FlatSpec
     with Matchers
     with EitherValues
     with ScalaFutures
@@ -32,7 +32,7 @@ class CreateTest extends FlatSpec
 
   lazy val db = {
     val datasource = new JdbcDataSource()
-    datasource.setUrl(s"jdbc:h2:mem:hfTest;DB_CLOSE_DELAY=-1")
+    datasource.setUrl(s"jdbc:h2:mem:groupTest;DB_CLOSE_DELAY=-1")
     Database.forDataSource(datasource, None)
   }
 
@@ -44,6 +44,19 @@ class CreateTest extends FlatSpec
     db.run(friendTq.schema.drop).futureValue
   }
 
+  before {
+    db.run(friendTq ++= {
+      List(
+        Friend(None, "miaomiaomiaomiao", "abcjfiohgohgerg"),
+        Friend(None, "miaomiaomiaomiao", "abcjfiohgohgerg"),
+        Friend(None, "miaomiaomiaomiao", "afafewrgt"),
+        Friend(None, "hahahahaha", "afafewrgt"),
+        Friend(None, "hahahahaha", "afafewrgt"),
+        Friend(None, "啊啊啊啊啊", "afafewrgt")
+      )
+    }).futureValue
+  }
+
   after {
     db.run(friendTq.delete).futureValue
   }
@@ -52,6 +65,7 @@ class CreateTest extends FlatSpec
       with net.scalax.fsn.mix.slickbase.SqlRepImplicits
       with PilesPolyHelper
       with net.scalax.fsn.slick.helpers.StrFSSelectAtomicHelper
+      with net.scalax.fsn.slick.helpers.GroupFSSelectAtomicHelper
       with SlickCRUDImplicits {
 
     import net.scalax.fsn.core.{ FAtomic }
@@ -83,15 +97,23 @@ class CreateTest extends FlatSpec
       friend <- friendTq.out2222
     } yield {
       List(
-        "abc" ofPile friend.id.out.order.writeJ.describe("喵喵"),
-        "name" ofPile friend.name.out.order.nullsLast.writeJ.describe("喵喵"),
-        "nick" ofPile friend.nick.out.order.nullsFirst.writeJ.describe("喵喵")
+        "abc" ofPile friend.id.groupOutput.groupWithNonOpt.writeJ.describe("喵喵"),
+        "name" ofPile friend.name.groupOutput.nullsLast.writeJ.describe("喵喵"),
+        "nick" ofPile friend.nick.groupOutput.nullsFirst.writeJ.describe("喵喵")
       )
     }
     friendTq.map(_.id).sum
 
-    println(plan11.strResult("abc", true).statement(SlickParam()))
-    val compare1 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._1.desc.nullsLast)
+    val groupResult = plan11.groupResult(GroupParam(List("name", "nick"), List(GroupColumn("abc", "avg"), GroupColumn("abc", "sum"))))
+    try {
+      println(db.run(groupResult.resultAction).futureValue)
+    } catch {
+      case e: Exception =>
+        e.printStackTrace
+        throw e
+    }
+
+    /*val compare1 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._1.desc.nullsLast)
     val compare2 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._2.asc.nullsLast)
     val compare3 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._3.asc.nullsFirst)
     val compare4 = friendTq.map(s => (s.id, s.name, s.nick)).sortBy(_._2.desc.nullsLast).sortBy(_._1.asc.nullsLast).sortBy(_._3.asc.nullsFirst)
@@ -99,7 +121,7 @@ class CreateTest extends FlatSpec
     (plan11.strResult("abc", true).statement(SlickParam())) shouldEqual (compare1.result.statements.toList)
     (plan11.strResult("name", false).statement(SlickParam())) shouldEqual (compare2.result.statements.toList)
     (plan11.strResult("nick", false).statement(SlickParam())) shouldEqual (compare3.result.statements.toList)
-    (plan11.strResult("nick", false).statement(SlickParam(List(ColumnOrder("name", true), ColumnOrder("abc", false))))) shouldEqual (compare4.result.statements.toList)
+    (plan11.strResult("nick", false).statement(SlickParam(List(ColumnOrder("name", true), ColumnOrder("abc", false))))) shouldEqual (compare4.result.statements.toList)*/
   }
 
 }
@@ -191,4 +213,4 @@ class CreateTest extends FlatSpec
     friendFromDB.id.isDefined shouldBe false
     friendFromDB == friendFromJson shouldBe true
 
-  }*/
+  }*/ 
