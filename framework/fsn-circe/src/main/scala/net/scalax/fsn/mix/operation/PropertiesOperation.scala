@@ -197,7 +197,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
     ec: ExecutionContext
   ): List[FPile[Option]] => GroupParam => ResultWrap = { optPiles: List[FPile[Option]] =>
 
-    val jsonGen: FPileSyntax.PileGen[Option, GroupParam => ResultWrap] = GroupSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.writeGen) { (slickQuery, jsonGen) =>
+    val jsonGen: FPileSyntax.PileGen[Option, GroupParam => ResultWrap] = GroupSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen) { (slickQuery, jsonGen) =>
       { slickParam: GroupParam =>
         val result = slickQuery.result(slickParam)
         ResultWrap(result.action.map {
