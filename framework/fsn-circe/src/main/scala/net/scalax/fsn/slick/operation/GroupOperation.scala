@@ -19,7 +19,7 @@ sealed abstract trait GroupWraperBase[T] {
   type TargetType = T
   type RepDataType
 
-  val groupModel: Shape[_ <: FlatShapeLevel, Rep[Option[RepDataType]], Option[RepDataType], Rep[Option[RepDataType]]]
+  val groupShape: Shape[_ <: FlatShapeLevel, Rep[Option[RepDataType]], Option[RepDataType], Rep[Option[RepDataType]]]
   val colToOrder: Option[Rep[Option[RepDataType]] => ColumnOrdered[_]]
   val baseTypedType: BaseTypedType[RepDataType]
   val typedType: TypedType[Option[RepDataType]]
@@ -52,11 +52,11 @@ object GroupSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
 
   def ubwGen(wQuery1: SlickQueryBindImpl): FPileSyntax.PileGen[Option, FGroupQuery] = {
     FPile.transformTreeList { path =>
-      FAtomicQuery(needAtomicOpt[GroupSlickSelect] :: needAtomicOpt[GroupableColumnBase] :: needAtomic[FProperty] :: HNil)
+      FAtomicQuery(needAtomicOpt[GroupSlickSelect] :: needAtomicOpt[GroupableColumnBase] :: needAtomicOpt[CountableGroupColumn] :: needAtomic[FProperty] :: HNil)
         .mapToOption(path) {
-          case (selectOpt :: groupColOpt :: property :: HNil, data) => {
-            val aa = (selectOpt -> groupColOpt) match {
-              case (Some(t), None) =>
+          case (selectOpt :: groupColOpt :: countOpt :: property :: HNil, data) => {
+            val aa = (selectOpt, groupColOpt, countOpt) match {
+              case (Some(t), None, None) =>
                 new GroupSlickReader {
 
                   override val propertyName = property.proName
@@ -66,7 +66,7 @@ object GroupSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
                   override val groupModel = Option.empty[GroupWraperBase[selectModel.TargetType]]
 
                 }
-              case (_, Some(t)) =>
+              case (None, Some(t), None) =>
                 new GroupSlickReader {
 
                   override val propertyName = property.proName
@@ -79,7 +79,7 @@ object GroupSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
                         new GroupWraperWithNonOption[selectModel.TargetType] {
                           override type RepDataType = a.RepType
 
-                          override val groupModel = a.groupModel
+                          override val groupShape = a.groupModel
                           override val colToOrder = a.colToOrder
                           override val baseTypedType = a.baseTypedType
                           override val typedType = a.typedType
@@ -89,7 +89,7 @@ object GroupSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
                         new GroupWraperWithOption[selectModel.TargetType] {
                           override type RepDataType = a.RepType
 
-                          override val groupModel = a.groupModel
+                          override val groupShape = a.groupModel
                           override val colToOrder = a.colToOrder
                           override val baseTypedType = a.baseTypedType
                           override val typedType = a.typedType
@@ -97,6 +97,16 @@ object GroupSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
                         }
                     }
                   }
+
+                }
+              case (None, None, Some(t)) =>
+                new GroupSlickReader {
+
+                  override val propertyName = property.proName
+                  override type BaseDataType = t.selectModel.DataType
+                  override val selectModel = t.selectModel
+
+                  override val groupModel = Option.empty[GroupWraperBase[selectModel.TargetType]]
 
                 }
               case _ => throw new Exception("不可预测的原子集合")
@@ -123,6 +133,7 @@ trait FGroupQuery {
   def result(param: GroupParam)(
     implicit
     jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    intTyped: BaseTypedType[Int],
     //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): GroupResult = {
@@ -146,6 +157,11 @@ trait FGroupQuery {
       case (keys, queries) =>
         keys :::
           aggregateIndexsAndMethods.map {
+            case ("count", reader) =>
+              val eachValue = queries.map { values =>
+                values(reader._2).asInstanceOf[reader._1.selectModel.TargetType]
+              }(reader._1.selectModel.shape.packedShape)
+              eachValue.length
             case (method, reader) =>
               val helper = new ExtensionMethodConversions {}
               val groupModel = reader._1.groupModel
@@ -153,7 +169,7 @@ trait FGroupQuery {
                 case Some(a: GroupWraperWithOption[reader._1.selectModel.TargetType]) =>
                   val eachValue = queries.map { values =>
                     a.targetColConvert(values(reader._2).asInstanceOf[a.TargetType])
-                  }(a.groupModel)
+                  }(a.groupShape)
                   method match {
                     case "min" =>
                       helper.singleOptionColumnQueryExtensionMethods(eachValue)(a.baseTypedType).min(a.typedType)
@@ -183,8 +199,11 @@ trait FGroupQuery {
     } {
       val aa = keyIndexs.map(index => readers(index)._1.selectModel.shape.packedShape.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]])
       val bb = aggregateIndexsAndMethods.map {
+        case ("count", reader) =>
+          Shape.repColumnShape[Int, FlatShapeLevel](intTyped)
+        //reader._1.groupModel.get.groupShape.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]]
         case (_, reader) =>
-          reader._1.groupModel.get.groupModel.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]]
+          reader._1.groupModel.get.groupShape.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]]
       }
       new ListColumnShape[FlatShapeLevel](aa ::: bb)
     }

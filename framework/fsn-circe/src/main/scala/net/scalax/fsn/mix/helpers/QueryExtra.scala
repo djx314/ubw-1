@@ -8,6 +8,7 @@ import net.scalax.fsn.mix.slickbase.{ FQueryWrap, PileListQueryWrap }
 import net.scalax.fsn.slick.atomic.{ AutoInc, SlickRetrieve }
 import net.scalax.fsn.slick.model._
 import net.scalax.fsn.slick.operation._
+import slick.ast.BaseTypedType
 import slick.basic.BasicProfile
 import slick.dbio._
 import slick.jdbc.JdbcActionComponent
@@ -25,6 +26,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
     def groupResult(defaultOrders: GroupParam)(
       implicit
       jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+      intTyped: BaseTypedType[Int],
       //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): ResultWrap = {

@@ -62,15 +62,36 @@ case class GroupSSelect[S, D, T](
       override val typedType = typedType1
     }
   }
+
+  def countable: CountableGroupColumn[Nothing] = {
+    new CountableGroupColumn[Nothing] {
+      override type SourceType = S
+      override type TargetType = T
+      override type DataType = D
+
+      override val selectModel = self
+    }
+  }
+
 }
 
-sealed trait GroupableColumnBase[E] extends FAtomic[Option[E]] {
+sealed trait GroupableColumnAbs[E] extends FAtomic[E] {
   type SourceType
   type TargetType
   type DataType
-  type RepType = E
 
   val selectModel: GroupSSelect[SourceType, DataType, TargetType]
+}
+
+trait CountableGroupColumn[E] extends GroupableColumnAbs[Int]
+
+abstract trait GroupableColumnBase[E] extends GroupableColumnAbs[Option[E]] {
+  override type SourceType
+  override type TargetType
+  override type DataType
+  type RepType = E
+
+  override val selectModel: GroupSSelect[SourceType, DataType, TargetType]
   val groupModel: Shape[_ <: FlatShapeLevel, Rep[Option[E]], Option[E], Rep[Option[E]]]
 
   val colToOrder: Option[Rep[Option[E]] => ColumnOrdered[_]]

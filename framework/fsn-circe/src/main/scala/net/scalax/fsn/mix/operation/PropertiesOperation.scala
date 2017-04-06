@@ -13,6 +13,7 @@ import slick.jdbc.JdbcActionComponent
 import shapeless._
 import io.circe.syntax._
 import io.circe.Json
+import slick.ast.BaseTypedType
 import slick.basic.BasicProfile
 import slick.dbio._
 import slick.lifted.{ Query, Rep }
@@ -193,6 +194,7 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
   def slick2jsonGroupOperation(wQuery: SlickQueryBindImpl)(
     implicit
     jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    intTyped: BaseTypedType[Int],
     //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): List[FPile[Option]] => GroupParam => ResultWrap = { optPiles: List[FPile[Option]] =>
