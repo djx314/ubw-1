@@ -170,13 +170,27 @@ object JsonOperation extends FAtomicGenHelper with FAtomicShapeHelper {
       write(eachColumn)
     }.toMap
   }*/
-  val writeGen = FPile.transformTreeList { path =>
+  def writeGen = FPile.transformTreeList { path =>
     FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
       .mapToOption(path) {
         case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
           val exportData = data.fold(defaultOpt.map(_.value))(Option(_))
           val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
           property.proName -> jsonWriter.convert(eachColumnData).asJson(jsonWriter.writer)
+        }
+      }
+  } { jsonTupleList =>
+    jsonTupleList.toMap: Map[String, Json]
+  }
+
+  def unSafewriteGen = FPile.transformTreeList { path =>
+    FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
+      .mapToOption(path) {
+        case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
+          val exportData = data.fold(defaultOpt.map(_.value))(Option(_))
+          //val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
+          implicit val writerJ = jsonWriter.writer
+          property.proName -> exportData.map(s => jsonWriter.convert(s)).asJson
         }
       }
   } { jsonTupleList =>

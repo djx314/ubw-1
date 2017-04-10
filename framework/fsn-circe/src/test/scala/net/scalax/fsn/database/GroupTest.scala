@@ -1,8 +1,8 @@
 package net.scalax.fsn.database.test
 
-import net.scalax.fsn.core.PilesPolyHelper
-import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
-import net.scalax.fsn.slick.helpers.{ FRep, FilterRepImplicitHelper }
+import net.scalax.fsn.core.{FPathImpl, PilesPolyHelper}
+import net.scalax.fsn.mix.helpers.{Slick2JsonFsnImplicit, SlickCRUDImplicits}
+import net.scalax.fsn.slick.helpers.{FRep, FilterRepImplicitHelper}
 import net.scalax.fsn.slick.model._
 import org.h2.jdbcx.JdbcDataSource
 import org.scalatest._
@@ -73,20 +73,11 @@ class GroupTest extends FlatSpec
     import net.scalax.fsn.slick.helpers.FStrSelectExtAtomicHelper
     import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper }
 
-    implicit def fPilesOptionImplicit[D](columns: List[FAtomic[D]]) = {
+    implicit def fPilesOptionImplicit[D](path: FPathImpl[D]) = {
+      val path1 = path
       new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
-        override val atomics = columns
+        override val path = path1
       }
-    }
-
-    implicit def atomicExtensionMethod2[D](atomic: FAtomic[D]) = {
-      new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
-        override val atomics = atomic :: Nil
-      }
-    }
-
-    implicit def atomicExtensionMethod3[D](atomic: FAtomic[D]): List[FAtomic[D]] = {
-      atomic :: Nil
     }
   }
 
@@ -99,12 +90,13 @@ class GroupTest extends FlatSpec
       List(
         "abc" ofPile friend.id.groupOutput.groupWithNonOpt.writeJ.describe("喵喵"),
         "name" ofPile friend.name.groupOutput.nullsLast.writeJ.describe("喵喵"),
-        "nick" ofPile friend.nick.groupOutput.nullsFirst.writeJ.describe("喵喵")
+        "nick" ofPile friend.nick.groupOutput.nullsFirst.writeJ.describe("喵喵"),
+        "intTest" ofPile 3.groupOutput.nullsLast.writeJ
       )
     }
     friendTq.map(_.id).sum
 
-    val groupResult = plan11.groupResult(GroupParam(List("name", "nick"), List(GroupColumn("abc", "avg"), GroupColumn("abc", "sum"))))
+    val groupResult = plan11.groupResult(GroupParam(List("name", "nick", "intTest"), List(GroupColumn("abc", "avg"), GroupColumn("abc", "sum") /*, GroupColumn("paowa", "sum")*/ )))
     try {
       println(db.run(groupResult.resultAction).futureValue)
     } catch {

@@ -6,19 +6,19 @@ import org.xarcher.cpoi.{ ReadableCellOperationAbs, StyleTransform, WriteableCel
 
 trait ExcelOperation[E] extends FAtomicHelper[E] {
 
-  def writeP(implicit writer1: WriteableCellOperationAbs[E]) = append(new PoiWriter[E] {
+  def writeP(implicit writer1: WriteableCellOperationAbs[E]) = path.appendAtomic(new PoiWriter[E] {
     override type PoiType = E
     override val writer = writer1
     override val convert = identity[E] _
   })
 
-  def readP(implicit reader1: ReadableCellOperationAbs[E]) = append(new PoiReader[E] {
+  def readP(implicit reader1: ReadableCellOperationAbs[E]) = path.appendAtomic(new PoiReader[E] {
     override type PoiType = E
     override val reader = reader1
     override val convert = identity[E] _
   })
 
-  def withTransform(trans: StyleTransform*) = append(new PoiStyleTransform[E] {
+  def withTransform(trans: StyleTransform*) = path.appendAtomic(new PoiStyleTransform[E] {
     override val transforms = trans.toList
   })
 

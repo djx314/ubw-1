@@ -1,6 +1,6 @@
 package net.scalax.fsn.slick.atomic
 
-import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.core.{ FAtomic, FPathImpl }
 import slick.ast.{ BaseTypedType, TypedType }
 import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Rep, Shape }
 
@@ -18,10 +18,13 @@ trait GroupSlickSelect[D] extends FAtomic[D] {
 case class GroupSSelect[S, D, T](
     override val shape: Shape[_ <: FlatShapeLevel, S, D, T],
     override val outCol: S
-) extends GroupSlickSelect[D] {
+) extends GroupSlickSelect[D] with FPathImpl[D] {
   self =>
   override type SourceType = S
   override type TargetType = T
+  override type DataType = D
+
+  override val atomics = this :: Nil
 
   def groupWithNonOpt[U](
     implicit
@@ -32,7 +35,7 @@ case class GroupSSelect[S, D, T](
     new GroupableNoOptionColumn[U] {
       override type SourceType = S
       override type TargetType = T
-      override type DataType = D
+      override type DType = D
 
       override val selectModel = self
       override val groupModel = implicitly[Shape[FlatShapeLevel, Rep[Option[U]], Option[U], Rep[Option[U]]]]
@@ -52,7 +55,7 @@ case class GroupSSelect[S, D, T](
     new GroupableOptionColumn[U] {
       override type SourceType = S
       override type TargetType = T
-      override type DataType = D
+      override type DType = D
 
       override val selectModel = self
       override val groupModel = implicitly[Shape[FlatShapeLevel, Rep[Option[U]], Option[U], Rep[Option[U]]]]
@@ -62,15 +65,38 @@ case class GroupSSelect[S, D, T](
       override val typedType = typedType1
     }
   }
+
+  def countable: CountableGroupColumn[Nothing] = {
+    new CountableGroupColumn[Nothing] {
+      override type SourceType = S
+      override type TargetType = T
+      override type DType = D
+
+      override val selectModel = self
+    }
+  }
+
 }
 
-sealed trait GroupableColumnBase[E] extends FAtomic[Option[E]] {
+sealed trait GroupableColumnAbs[E] extends FAtomic[E] {
   type SourceType
   type TargetType
-  type DataType
+  type DType
+
+  val selectModel: GroupSSelect[SourceType, DType, TargetType]
+}
+
+trait CountableGroupColumn[E] extends GroupableColumnAbs[Int] with FPathImpl[Int] {
+  override val atomics = this :: Nil
+}
+
+abstract trait GroupableColumnBase[E] extends GroupableColumnAbs[Option[E]] {
+  override type SourceType
+  override type TargetType
+  override type DType
   type RepType = E
 
-  val selectModel: GroupSSelect[SourceType, DataType, TargetType]
+  override val selectModel: GroupSSelect[SourceType, DType, TargetType]
   val groupModel: Shape[_ <: FlatShapeLevel, Rep[Option[E]], Option[E], Rep[Option[E]]]
 
   val colToOrder: Option[Rep[Option[E]] => ColumnOrdered[_]]
@@ -78,10 +104,14 @@ sealed trait GroupableColumnBase[E] extends FAtomic[Option[E]] {
   val typedType: TypedType[Option[E]]
 }
 
-trait GroupableNoOptionColumn[E] extends GroupableColumnBase[E] {
+trait GroupableNoOptionColumn[E] extends GroupableColumnBase[E] with FPathImpl[Option[E]] {
   val targetColConvert: TargetType => Rep[E]
+
+  override val atomics = this :: Nil
 }
 
-trait GroupableOptionColumn[E] extends GroupableColumnBase[E] {
+trait GroupableOptionColumn[E] extends GroupableColumnBase[E] with FPathImpl[Option[E]] {
   val targetColConvert: TargetType => Rep[Option[E]]
+
+  override val atomics = this :: Nil
 }

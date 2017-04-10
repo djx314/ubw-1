@@ -1,7 +1,8 @@
 package net.scalax.fsn.slick.atomic
 
-import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.core.{ FAtomic, FPathImpl }
 import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Shape }
+
 import scala.language.existentials
 
 trait StrSlickSelect[D] extends FAtomic[D] {
@@ -18,9 +19,12 @@ case class StrSSelect[S, D, T](
     override val shape: Shape[_ <: FlatShapeLevel, S, D, T],
     override val outCol: S,
     override val colToOrder: Option[T => ColumnOrdered[_]]
-) extends StrSlickSelect[D] {
+) extends StrSlickSelect[D] with FPathImpl[D] {
   override type SourceType = S
   override type TargetType = T
+  override type DataType = D
+
+  override val atomics = this :: Nil
 
   def order(implicit cv: T => ColumnOrdered[_]): StrSSelect[S, D, T] = {
     this.copy(colToOrder = Option(cv))

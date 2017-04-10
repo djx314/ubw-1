@@ -32,27 +32,27 @@ trait FSSelectAtomicHelper {
 
 trait FSelectExtAtomicHelper[E] extends FAtomicHelper[E] {
 
-  def hidden = append(new InRetrieve[E] {
+  def hidden = path.appendAtomic(new InRetrieve[E] {
     override val isInRetrieve = false
   })
 
-  def orderTarget(name: String) = append(new OrderTargetName[E] {
+  def orderTarget(name: String) = path.appendAtomic(new OrderTargetName[E] {
     override val orderTargetName = name
   })
 
-  def desc = append(new DefaultDesc[E] {
+  def desc = path.appendAtomic(new DefaultDesc[E] {
     override val isDefaultDesc = true
   })
 
-  def asc = append(new DefaultDesc[E] {
+  def asc = path.appendAtomic(new DefaultDesc[E] {
     override val isDefaultDesc = false
   })
 
-  def nullsLast = append(new OrderNullsLast[E] {
+  def nullsLast = path.appendAtomic(new OrderNullsLast[E] {
     override val isOrderNullsLast = true
   })
 
-  def nullsFirst = append(new OrderNullsLast[E] {
+  def nullsFirst = path.appendAtomic(new OrderNullsLast[E] {
     override val isOrderNullsLast = false
   })
 
@@ -60,27 +60,27 @@ trait FSelectExtAtomicHelper[E] extends FAtomicHelper[E] {
 
 trait FStrSelectExtAtomicHelper[E] extends FAtomicHelper[E] {
 
-  def hidden = append(new StrNeededFetch[E] {
+  def hidden = path.appendAtomic(new StrNeededFetch[E] {
     override val isInRetrieve = false
   })
 
-  def orderTarget(name: String) = append(new StrOrderTargetName[E] {
+  def orderTarget(name: String) = path.appendAtomic(new StrOrderTargetName[E] {
     override val orderTargetName = name
   })
 
-  def desc = append(new StrDefaultDesc[E] {
+  def desc = path.appendAtomic(new StrDefaultDesc[E] {
     override val isDefaultDesc = true
   })
 
-  def asc = append(new StrDefaultDesc[E] {
+  def asc = path.appendAtomic(new StrDefaultDesc[E] {
     override val isDefaultDesc = false
   })
 
-  def nullsLast = append(new StrOrderNullsLast[E] {
+  def nullsLast = path.appendAtomic(new StrOrderNullsLast[E] {
     override val isOrderNullsLast = true
   })
 
-  def nullsFirst = append(new StrOrderNullsLast[E] {
+  def nullsFirst = path.appendAtomic(new StrOrderNullsLast[E] {
     override val isOrderNullsLast = false
   })
 
