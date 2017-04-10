@@ -7,7 +7,7 @@ import scala.reflect.runtime.universe._
 
 trait FJsonAtomicHelper[E] extends FAtomicHelper[E] {
 
-  def writeJ(implicit encoder: Encoder[E], tag: WeakTypeTag[E]) = append(new JsonWriter[E] {
+  def writeJ(implicit encoder: Encoder[E], tag: WeakTypeTag[E]) = path.appendAtomic(new JsonWriter[E] {
     override type JsonType = E
     override val writer = encoder
     override val convert = identity[E] _
