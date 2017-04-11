@@ -1,8 +1,8 @@
 package net.scalax.fsn.database.test
 
-import net.scalax.fsn.core.{FPathImpl, PilesPolyHelper}
-import net.scalax.fsn.mix.helpers.{Slick2JsonFsnImplicit, SlickCRUDImplicits}
-import net.scalax.fsn.slick.helpers.{FRep, FilterRepImplicitHelper}
+import net.scalax.fsn.core.{ FPathImpl, PilesPolyHelper }
+import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
+import net.scalax.fsn.slick.helpers.{ FRep, FilterRepImplicitHelper }
 import net.scalax.fsn.slick.model._
 import org.h2.jdbcx.JdbcDataSource
 import org.scalatest._
