@@ -89,7 +89,7 @@ class GroupTest extends FlatSpec
     } yield {
       List(
         "abc" ofPile friend.id.groupOutput.groupWithNonOpt.writeJ.describe("喵喵"),
-        "name" ofPile friend.name.groupOutput.nullsLast.writeJ.describe("喵喵"),
+        "name" ofPile (friend.name -> friend.nick).groupOutput.nullsLast.writeJ.describe("喵喵"),
         "nick" ofPile friend.nick.groupOutput.nullsFirst.writeJ.describe("喵喵"),
         "intTest" ofPile 3.groupOutput.nullsLast.writeJ
       )
