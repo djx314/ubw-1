@@ -6,7 +6,7 @@ import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
 import net.scalax.fsn.slick.model._
 import shapeless._
-import slick.ast.{ BaseTypedType, TypedType }
+import slick.ast.{ BaseTypedType, Ordering, TypedType }
 import slick.basic.BasicProfile
 import slick.dbio.{ DBIO, NoStream }
 import slick.jdbc.JdbcActionComponent
@@ -19,7 +19,7 @@ sealed abstract trait GroupWraperBase {
   type RepDataType
 
   val groupShape: Shape[_ <: FlatShapeLevel, Rep[Option[RepDataType]], Option[RepDataType], Rep[Option[RepDataType]]]
-  val colToOrder: Option[Rep[Option[RepDataType]] => ColumnOrdered[_]]
+  val colToOrder: Rep[Option[RepDataType]] => ColumnOrdered[_]
   val baseTypedType: BaseTypedType[RepDataType]
   val typedType: TypedType[Option[RepDataType]]
 
@@ -63,7 +63,7 @@ object GroupSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
 
                   override val propertyName = property.proName
                   override val selectModel = select
-
+                  slick.jdbc.MySQLProfile
                   override val groupModel = Option {
                     t match {
                       case a: GroupableNoOptionColumn[path.DataType] =>
@@ -73,7 +73,7 @@ object GroupSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
                             implicit val typedTypeImplicit = a.baseTypedType
                             implicitly[Shape[FlatShapeLevel, Rep[Option[RepDataType]], Option[RepDataType], Rep[Option[RepDataType]]]]
                           }
-                          override val colToOrder = a.colToOrder
+                          override val colToOrder = (rep: Rep[Option[RepDataType]]) => ColumnOrdered[Option[RepDataType]](rep, Ordering())
                           override val baseTypedType = a.baseTypedType
                           override val typedType = a.baseTypedType.optionType
                           override val targetColConvert = a.targetColConvert
@@ -86,7 +86,7 @@ object GroupSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
                             implicit val typedTypeImplicit = a.baseTypedType
                             implicitly[Shape[FlatShapeLevel, Rep[Option[RepDataType]], Option[RepDataType], Rep[Option[RepDataType]]]]
                           }
-                          override val colToOrder = a.colToOrder
+                          override val colToOrder = (rep: Rep[Option[RepDataType]]) => ColumnOrdered[Option[RepDataType]](rep, Ordering())
                           override val baseTypedType = a.baseTypedType
                           override val typedType = a.baseTypedType.optionType
                           override val targetColConvert = a.targetColConvert

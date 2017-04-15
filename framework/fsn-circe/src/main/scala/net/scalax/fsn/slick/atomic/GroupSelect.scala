@@ -24,55 +24,101 @@ case class GroupSSelect[S, D, T](
     override val outCol = self.outCol
   }
 
-  def groupWithNonOpt[U](
+  /*def groupWithNonOpt[U](
     implicit
     colConvert: T => Rep[U],
     baseTypedType1: BaseTypedType[U]
-  ): GroupableNoOptionColumn[U] = {
-    new GroupableNoOptionColumn[U] {
+  ): GroupByColumnWrap[Option[U]] = {
+    val col = new GroupableNoOptionColumn[U] {
       override val targetColConvert = colConvert.asInstanceOf[Any => Rep[U]]
-      override val colToOrder = None
       override val baseTypedType = baseTypedType1
-      override val atomics = (this: GroupableNoOptionColumn[U]) :: selectWithType[Option[U]] :: Nil
+    }
+    new GroupByColumnWrap[Option[U]] {
+      override val atomics = col :: selectWithType[Option[U]] :: selectWithType[Option[U]] :: Nil
+    }
+  }*/
+
+  def groupValue[U](implicit groupColAbs: GroupColImplicit[T, U]): GroupByColumnWrap[Option[U]] = {
+    new GroupByColumnWrap[Option[U]] {
+      override val atomics = groupColAbs.toGroupColumn :: selectWithType[Option[U]] :: Nil
     }
   }
 
-  def groupWithOpt[U](
+  /*def groupWithOpt[U](
     implicit
     colConvert: T => Rep[Option[U]],
     baseTypedType1: BaseTypedType[U]
-  ): GroupableOptionColumn[U] = {
-    new GroupableOptionColumn[U] {
+  ): GroupByColumnWrap[Option[U]] = {
+    val col = new GroupableOptionColumn[U] {
       override val targetColConvert = colConvert.asInstanceOf[Any => Rep[Option[U]]]
-      override val colToOrder = None
       override val baseTypedType = baseTypedType1
-      override val atomics = (this: GroupableOptionColumn[U]) :: selectWithType[Option[U]] :: Nil
     }
-  }
+    new GroupByColumnWrap[Option[U]] {
+      override val atomics = col :: selectWithType[Option[U]] :: Nil
+    }
+  }*/
 
-  def countable: CountableGroupColumn[Nothing] = {
-    new CountableGroupColumn[Nothing] {
-      override val atomics = (this: CountableGroupColumn[Nothing]) :: selectWithType[Int] :: Nil
+  def countable: GroupByColumnWrap[Int] = {
+    val col = new CountableGroupColumn[Nothing] {
+    }
+
+    new GroupByColumnWrap[Int] {
+      override val atomics = col :: selectWithType[Int] :: Nil
     }
   }
 
 }
 
-sealed trait GroupableColumnAbs[E] extends FAtomic[E] {
+object GroupColImplicit {
+  implicit def aaaa[T](implicit by: BaseTypedType[T]): GroupColImplicit[Rep[T], T] = {
+    new GroupColImplicit[Rep[T], T] {
+      self =>
+      val targetColConvert = identity[Rep[T]] _
+      val baseTypedType = implicitly[BaseTypedType[T]]
+      override def toGroupColumn: GroupableColumnBase[T] = {
+        new GroupableNoOptionColumn[T] {
+          override val targetColConvert = self.targetColConvert.asInstanceOf[Any => Rep[T]]
+          override val baseTypedType = self.baseTypedType
+        }
+      }
+    }
+  }
+
+  implicit def bbbb[T](implicit by: BaseTypedType[T]): GroupColImplicit[Rep[Option[T]], T] = {
+    new GroupColImplicit[Rep[Option[T]], T] {
+      self =>
+      val targetColConvert = identity[Rep[Option[T]]] _
+      val baseTypedType = implicitly[BaseTypedType[T]]
+      override def toGroupColumn: GroupableColumnBase[T] = {
+        new GroupableOptionColumn[T] {
+          override val targetColConvert = self.targetColConvert.asInstanceOf[Any => Rep[Option[T]]]
+          override val baseTypedType = self.baseTypedType
+        }
+      }
+    }
+  }
 }
 
-trait CountableGroupColumn[E] extends GroupableColumnAbs[Int] with FPathImpl[Int] {
+trait GroupColImplicit[T, U] {
+  def toGroupColumn: GroupableColumnBase[U]
+}
+
+trait GroupByColumnWrap[T] extends FPathImpl[T]
+
+sealed abstract trait GroupableColumnAbs[E] extends FAtomic[E] {
+}
+
+trait CountableGroupColumn[E] extends GroupableColumnAbs[Int] {
 }
 
 abstract trait GroupableColumnBase[E] extends GroupableColumnAbs[Option[E]] {
-  val colToOrder: Option[Rep[Option[E]] => ColumnOrdered[_]]
   val baseTypedType: BaseTypedType[E]
 }
 
-trait GroupableNoOptionColumn[E] extends GroupableColumnBase[E] with FPathImpl[Option[E]] {
+trait GroupableNoOptionColumn[E] extends GroupableColumnBase[E] {
   val targetColConvert: Any => Rep[E]
 }
 
-trait GroupableOptionColumn[E] extends GroupableColumnBase[E] with FPathImpl[Option[E]] {
+trait GroupableOptionColumn[E] extends GroupableColumnBase[E] {
   val targetColConvert: Any => Rep[Option[E]]
 }

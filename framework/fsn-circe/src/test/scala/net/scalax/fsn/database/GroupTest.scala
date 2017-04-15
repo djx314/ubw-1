@@ -2,6 +2,7 @@ package net.scalax.fsn.database.test
 
 import net.scalax.fsn.core.{ FPathImpl, PilesPolyHelper }
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
+import net.scalax.fsn.slick.atomic.GroupColImplicit
 import net.scalax.fsn.slick.helpers.{ FRep, FilterRepImplicitHelper }
 import net.scalax.fsn.slick.model._
 import org.h2.jdbcx.JdbcDataSource
@@ -88,7 +89,8 @@ class GroupTest extends FlatSpec
       friend <- friendTq.out2222
     } yield {
       List(
-        "abc" ofPile friend.id.groupOutput.groupWithNonOpt.writeJ.describe("喵喵"),
+        "abc" ofPile friend.id.groupOutput.groupValue.writeJ.describe("喵喵"),
+        "def" ofPile friend.id.?.groupOutput.groupValue.writeJ.describe("喵喵"),
         "name" ofPile (friend.name -> friend.nick).groupOutput.nullsLast.writeJ.describe("喵喵"),
         "nick" ofPile friend.nick.groupOutput.nullsFirst.writeJ.describe("喵喵"),
         "intTest" ofPile 3.groupOutput.nullsLast.writeJ
@@ -96,7 +98,7 @@ class GroupTest extends FlatSpec
     }
     friendTq.map(_.id).sum
 
-    val groupResult = plan11.groupResult(GroupParam(List("name", "nick", "intTest"), List(GroupColumn("abc", "avg"), GroupColumn("abc", "sum") /*, GroupColumn("paowa", "sum")*/ )))
+    val groupResult = plan11.groupResult(GroupParam(List("name", "nick", "intTest"), List(GroupColumn("abc", "avg"), GroupColumn("def", "sum") /*, GroupColumn("paowa", "sum")*/ )))
     try {
       println(db.run(groupResult.resultAction).futureValue)
     } catch {
