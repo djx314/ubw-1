@@ -91,14 +91,20 @@ class GroupTest extends FlatSpec
       List(
         "abc" ofPile friend.id.groupOutput.groupValue.writeJ.describe("喵喵"),
         "def" ofPile friend.id.?.groupOutput.groupValue.writeJ.describe("喵喵"),
-        "name" ofPile (friend.name -> friend.nick).groupOutput.nullsLast.writeJ.describe("喵喵"),
-        "nick" ofPile friend.nick.groupOutput.nullsFirst.writeJ.describe("喵喵"),
+        "name" ofPile (friend.name -> friend.nick).groupOutput.order.writeJ.describe("喵喵"),
+        "nick" ofPile friend.nick.groupOutput.order.writeJ.describe("喵喵"),
         "intTest" ofPile 3.groupOutput.nullsLast.writeJ
       )
     }
     friendTq.map(_.id).sum
 
-    val groupResult = plan11.groupResult(GroupParam(List("name", "nick", "intTest"), List(GroupColumn("abc", "avg"), GroupColumn("def", "sum") /*, GroupColumn("paowa", "sum")*/ )))
+    val groupResult = plan11.groupResult(
+      GroupParam(
+        List("name", "nick", "intTest"),
+        List(GroupColumn("abc", "avg"), GroupColumn("def", "sum") /*, GroupColumn("paowa", "sum")*/ ),
+        orders = List(ColumnOrder("def", false), ColumnOrder("name", true) /*ColumnOrder("abc", true),*/ )
+      )
+    )
     try {
       println(db.run(groupResult.resultAction).futureValue)
     } catch {

@@ -7,4 +7,4 @@ case class ColumnOrder(columnName: String, isDesc: Boolean)
 case class SlickParam(orders: List[ColumnOrder] = Nil, range: Option[SlickRange] = None, page: Option[SlickPage] = None)
 
 case class GroupColumn(property: String, method: String)
-case class GroupParam(keys: List[String] = Nil, aggregates: List[GroupColumn] = Nil)
+case class GroupParam(keys: List[String] = Nil, aggregates: List[GroupColumn] = Nil, orders: List[ColumnOrder] = Nil)

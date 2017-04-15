@@ -19,7 +19,7 @@ sealed abstract trait GroupWraperBase {
   type RepDataType
 
   val groupShape: Shape[_ <: FlatShapeLevel, Rep[Option[RepDataType]], Option[RepDataType], Rep[Option[RepDataType]]]
-  val colToOrder: Rep[Option[RepDataType]] => ColumnOrdered[_]
+  val colToOrder: Rep[Option[RepDataType]] => Ordered
   val baseTypedType: BaseTypedType[RepDataType]
   val typedType: TypedType[Option[RepDataType]]
 
@@ -207,7 +207,35 @@ trait FGroupQuery {
       new ListColumnShape[FlatShapeLevel](aa ::: bb)
     }
 
-    val action = jsonEv(resultQuery.to[List]).result.map { s =>
+    val sortByInfoMap = aggregateIndexsAndMethods.zipWithIndex.map {
+      case ((_, (reader, _)), repIndex) =>
+        (reader.propertyName, (keySize + repIndex, reader.groupModel.get.colToOrder.asInstanceOf[Any => ColumnOrdered[_]]))
+    }.toMap
+
+    val sortWithKeyInfoMap = keyIndexs.zipWithIndex.map {
+      case (keyIndex, repIndex) =>
+        val (reader, _) = readers(keyIndex)
+        reader.selectModel.colToOrder.map { colToOrder =>
+          (reader.propertyName, (repIndex, colToOrder))
+        }.toList
+    }.flatten.toMap
+
+    val orderedQuery = param.orders.foldLeft(resultQuery) { (query, eachOrder) =>
+      (sortByInfoMap ++ sortWithKeyInfoMap).get(eachOrder.columnName).map {
+        case (index, colToOrder) =>
+          query.sortBy { reps =>
+            println(reps)
+            val orderCol = colToOrder(reps(index))
+            if (eachOrder.isDesc) {
+              new Ordered(orderCol.columns.map(s => s._1 -> s._2.desc))
+            } else {
+              new Ordered(orderCol.columns.map(s => s._1 -> s._2.asc))
+            }
+          }(identity)
+      }.getOrElse(query)
+    }
+
+    val action = jsonEv(orderedQuery.to[List]).result.map { s =>
       val result = s.map { t =>
         val initArray = Array.fill[Option[Any]](readers.size)(Option.empty[Any])
         keyIndexs.zipWithIndex.map {
@@ -222,6 +250,6 @@ trait FGroupQuery {
       }
       result
     }
-    GroupResult(action, resultQuery.to[List].result.statements.toList)
+    GroupResult(action, orderedQuery.to[List].result.statements.toList)
   }
 }
