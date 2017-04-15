@@ -2,26 +2,31 @@ package net.scalax.fsn.slick.atomic
 
 import net.scalax.fsn.core.{ FAtomic, FPathImpl }
 import slick.ast.BaseTypedType
-import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Rep, Shape }
+import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Ordered, Rep, Shape }
 
 import scala.language.existentials
 
 trait GroupSlickSelect[D] extends FAtomic[D] {
   val shape: Shape[_ <: FlatShapeLevel, Any, Any, Any]
   val outCol: Any
+  val colToOrder: Option[Any => Ordered]
 }
 
 case class GroupSSelect[S, D, T](
     shape: Shape[_ <: FlatShapeLevel, S, D, T],
-    outCol: S
+    outCol: S,
+    colToOrder: Option[T => Ordered] = None
 ) extends FPathImpl[D] {
   self =>
 
   override val atomics = selectWithType[D] :: Nil
 
+  def order(implicit orderCv: T => Ordered): GroupSSelect[S, D, T] = self.copy(colToOrder = Option(orderCv))
+
   private def selectWithType[E]: GroupSlickSelect[E] = new GroupSlickSelect[E] {
     override val shape = self.shape.asInstanceOf[Shape[_ <: FlatShapeLevel, Any, Any, Any]]
     override val outCol = self.outCol
+    override val colToOrder = self.colToOrder.asInstanceOf[Option[Any => ColumnOrdered[_]]]
   }
 
   /*def groupWithNonOpt[U](
