@@ -2,6 +2,7 @@ package net.scalax.fsn.core
 
 import scala.language.higherKinds
 import shapeless._
+import shapeless.ops.hlist.IsHCons
 
 trait AbstractFAtomicQuery[F[_]] { self =>
 
@@ -103,7 +104,7 @@ object FAtomicQuery {
 
 }
 
-trait FAtomicShape[-E] {
+trait FAtomicShape[E] {
 
   type U[_]
 
@@ -118,7 +119,7 @@ object FAtomicShape {
   type AuxHList[E] = FAtomicShape[E] { type U[K] <: HList }
 }
 
-trait FAtomicShapeImpl[-E, F[_]] extends FAtomicShape[E] {
+trait FAtomicShapeImpl[E, F[_]] extends FAtomicShape[E] {
 
   type U[K] = F[K]
 
@@ -170,13 +171,15 @@ trait FAtomicShapeHelper {
     }
   }
 
-  implicit def hListAtomicShape[S <: HList, E, A <: HList](implicit repConvert: S <:< (E :: A), subShape: FAtomicShape[E], tailShape: FAtomicShape.AuxHList[A]): FAtomicShapeImpl[S, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] = {
+  implicit def hListAtomicShape[S <: HList, E, A <: HList](implicit repConvert: IsHCons.Aux[S, E, A], subShape: FAtomicShape[E], tailShape: FAtomicShape.AuxHList[A]): FAtomicShapeImpl[S, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] = {
     new FAtomicShapeImpl[S, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] {
 
       override val needWrapLength = subShape.needWrapLength + tailShape.needWrapLength
 
       override def unwrap(rep: S): List[AbstractFAtomicGen] = {
-        val subRep :: tailRep = repConvert(rep)
+        //val subRep :: tailRep = repConvert(rep)
+        val subRep = repConvert.head(rep)
+        val tailRep = repConvert.tail(rep)
         subShape.unwrap(subRep) ::: tailShape.unwrap(tailRep)
       }
 
