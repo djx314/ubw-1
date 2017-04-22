@@ -4,7 +4,57 @@ import scala.language.higherKinds
 import shapeless._
 import shapeless.ops.hlist.IsHCons
 
-trait AbstractFAtomicQuery[F[_]] { self =>
+import scala.reflect.runtime.universe._
+
+trait FAtomicQuery {
+
+  val path: FPath
+
+  def apply[U, T](rep: U)(implicit fAtomicGenShape: FAtomicGenShape[U, path.DataType, T]): Abc[U] = {
+    new Abc[U] {
+      override def mapTo[C[_], R](cv: (T, C[path.DataType]) => R): FQueryTranform[path.DataType, C, R] = {
+        val t = fAtomicGenShape.unwrap(rep).getBy(path.atomics)
+        new FQueryTranform[path.DataType, C, R] {
+          override def apply(data: C[path.DataType]): Either[FAtomicException, R] = {
+            t.right.map(s => cv(s, data))
+          }
+        }
+      }
+    }
+  }
+
+  /*override def mapToOption[R](cv: (T, Option[path.DataType]) => R): FQueryTranform[T, Option, R]
+
+    override def mapToWithoutData[R](cv: T => R): FQueryTranformWithOutData[R]
+
+    override def mapToOptionWithoutData[R](cv: T => R): FQueryTranformWithOutData[R]
+    }*/
+
+  trait Abc[A] {
+    def mapTo[C[_], R](cv: (A, C[path.DataType]) => R): FQueryTranform[path.DataType, C, R]
+
+    /*def mapToOption[R](cv: (T, Option[path.DataType]) => R): FQueryTranform[T, Option, R]
+
+    def mapToWithoutData[R](cv: T => R): FQueryTranformWithOutData[R]
+
+    def mapToOptionWithoutData[R](cv: T => R): FQueryTranformWithOutData[R]*/
+  }
+
+  def needAtomic[T[_]](implicit parGen: FAtomicPartialFunctionGen[T], typeTag: WeakTypeTag[T[_]]): FAtomicGen[path.DataType, T] = FAtomicGenHelper.needAtomic[path.DataType, T](parGen, typeTag)
+  def needAtomicOpt[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenOpt[path.DataType, T] = FAtomicGenHelper.needAtomicOpt[path.DataType, T](parGen)
+  def needAtomicList[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenList[path.DataType, T] = FAtomicGenHelper.needAtomicList[path.DataType, T](parGen)
+
+}
+
+trait FQueryTranform[T, C[_], U] {
+  def apply(data: C[T]): Either[FAtomicException, U]
+}
+
+trait FQueryTranformWithOutData[T] {
+  def apply: Either[FAtomicException, T]
+}
+
+/*trait AbstractFAtomicQuery[F[_]] { self =>
 
   def gen[D](atomics: List[FAtomic[D]]): Either[FAtomicException, F[D]]
 
@@ -210,4 +260,4 @@ object Aaa extends FAtomicGenHelper with FAtomicShapeHelper {
   }
   FAtomicQuery(needAtomic[Bbb] :: HNil)(hListAtomicShape(repLikeAtomicShape, hNilHListAtomicShape))
   hListAtomicShape(repLikeAtomicShape[Bbb], hNilHListAtomicShape)
-}
+}*/ 

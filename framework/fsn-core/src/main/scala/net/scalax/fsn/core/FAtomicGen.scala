@@ -2,6 +2,7 @@ package net.scalax.fsn.core
 
 import scala.reflect.runtime.universe._
 import scala.language.higherKinds
+import shapeless._
 
 trait AbstractFAtomicGen[U, T] {
   def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, T]
@@ -17,6 +18,53 @@ trait FAtomicGenOpt[U, S[_]] extends AbstractFAtomicGen[U, Option[S[U]]] {
 
 trait FAtomicGenList[U, S[_]] extends AbstractFAtomicGen[U, List[S[U]]] {
   override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, List[S[U]]]
+}
+
+trait FAtomicGenShape[Input, U, T] {
+  def unwrap(input: Input): AbstractFAtomicGen[U, T]
+}
+
+object FAtomicGenShape extends FAtomicGenShapeImpl {
+
+}
+
+trait FAtomicGenShapeImpl {
+  implicit def hnilShape[U]: FAtomicGenShape[HNil, U, HNil] = new FAtomicGenShape[HNil, U, HNil] {
+    override def unwrap(input: HNil): AbstractFAtomicGen[U, HNil] = new AbstractFAtomicGen[U, HNil] {
+      override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, HNil] = {
+        Right(HNil)
+      }
+    }
+  }
+
+  implicit def commonGenShape[U, T]: FAtomicGenShape[AbstractFAtomicGen[U, T], U, T] = new FAtomicGenShape[AbstractFAtomicGen[U, T], U, T] {
+    override def unwrap(input: AbstractFAtomicGen[U, T]): AbstractFAtomicGen[U, T] = input
+  }
+
+  implicit def hlistShape[U, Sub, Tail <: HList, SubRe, TailRe <: HList](
+    implicit
+    sub: FAtomicGenShape[Sub, U, SubRe],
+    tail: FAtomicGenShape[Tail, U, TailRe]
+  ): FAtomicGenShape[Sub :: Tail, U, SubRe :: TailRe] = new FAtomicGenShape[Sub :: Tail, U, SubRe :: TailRe] {
+    override def unwrap(input: Sub :: Tail): AbstractFAtomicGen[U, SubRe :: TailRe] = new AbstractFAtomicGen[U, SubRe :: TailRe] {
+      val subInput :: tailInput = input
+      override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, SubRe :: TailRe] = {
+        val subGen = sub.unwrap(subInput)
+        val tailGen = tail.unwrap(tailInput)
+        (subGen.getBy(atomics): Either[FAtomicException, SubRe]) -> (tailGen.getBy(atomics): Either[FAtomicException, TailRe]) match {
+          case (Left(s), Left(t)) =>
+            Left(FAtomicException(s.typeTags ::: t.typeTags))
+          case (Left(s), Right(_)) =>
+            Left(FAtomicException(s.typeTags))
+          case (Right(_), Left(s)) =>
+            Left(FAtomicException(s.typeTags))
+          case (Right(s), Right(t)) =>
+            Right(s :: t)
+        }
+      }
+    }
+  }
+
 }
 
 trait FAtomicGenHelper {
