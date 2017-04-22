@@ -106,6 +106,8 @@ object FAtomicQuery {
 
 trait FAtomicShape[E] {
 
+  type G[_]
+
   type U[_]
 
   val needWrapLength: Int
@@ -120,6 +122,8 @@ object FAtomicShape {
 }
 
 trait FAtomicShapeImpl[E, F[_]] extends FAtomicShape[E] {
+
+  override type G[K] = List[K]
 
   type U[K] = F[K]
 
@@ -171,20 +175,20 @@ trait FAtomicShapeHelper {
     }
   }
 
-  implicit def hListAtomicShape[S <: HList, E, F[_], A <: HList, B[_] <: HList](
+  implicit def hListAtomicShape[ /*S <: HList,*/ E, F[_], A <: HList, B[_] <: HList](
     implicit
-    repConvert: IsHCons.Aux[S, E, A],
+    //repConvert: IsHCons.Aux[S, E, A],
     subShape: FAtomicShape[E],
-    tailShape: FAtomicShape.AuxHList[A]
-  ): FAtomicShapeImpl[S, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] = {
-    new FAtomicShapeImpl[S, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] {
+    tailShape: FAtomicShape[A] { type U[K] <: HList } //FAtomicShape.AuxHList[A]
+  ): FAtomicShapeImpl[E :: A, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] = {
+    new FAtomicShapeImpl[E :: A, FAtomicShapeTypeHelper[subShape.U, tailShape.U]#U] {
 
       override val needWrapLength = subShape.needWrapLength + tailShape.needWrapLength
 
-      override def unwrap(rep: S): List[AbstractFAtomicGen] = {
-        //val subRep :: tailRep = repConvert(rep)
-        val subRep = repConvert.head(rep)
-        val tailRep = repConvert.tail(rep)
+      override def unwrap(rep: E :: A): List[AbstractFAtomicGen] = {
+        val subRep :: tailRep = rep
+        //val subRep = repConvert.head(rep)
+        //val tailRep = repConvert.tail(rep)
         subShape.unwrap(subRep) ::: tailShape.unwrap(tailRep)
       }
 
@@ -204,4 +208,11 @@ trait FAtomicShapeHelper {
     }
   }
 
+}
+
+object Aaa extends FAtomicGenHelper with FAtomicShapeHelper {
+  trait Bbb[T] extends FAtomic[T] {
+    val ccc: String = "1234"
+  }
+  FAtomicQuery(needAtomic[Bbb] :: HNil)(hListAtomicShape)
 }
