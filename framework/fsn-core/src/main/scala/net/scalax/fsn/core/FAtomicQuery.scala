@@ -13,30 +13,7 @@ trait FAtomicQueryImpl {
 
   def withRep[U, S, Y](rep: U)(implicit fAtomicGenShape: FAtomicGenShape[U, path.DataType, Y]): Abc[Y] = {
     new Abc[Y] {
-      override def mapTo[C[_], R](cv: (Y, C[path.DataType]) => R): FQueryTranform[R, C] = {
-        val t = fAtomicGenShape.unwrap(rep).getBy(path.atomics)
-        new FQueryTranform[R, C] {
-          override type QueryType = Y
-          override lazy val path: self.path.type = self.path
-          override val gen = t
-          override def apply(rep: Y, data: C[path.DataType]): R = {
-            //t.right.map(s => cv(s, data))
-            cv(rep, data)
-          }
-        }
-      }
-
-      override def mapToWithoutData[C[_], R](cv: Y => R): FQueryTranformWithOutData[R, C] = {
-        val t = fAtomicGenShape.unwrap(rep).getBy(path.atomics)
-        new FQueryTranformWithOutData[R, C] {
-          override type QueryType = Y
-          override val gen = t
-          override def apply(rep: Y): R = {
-            cv(rep)
-          }
-        }
-      }
-
+      override val queryResult = fAtomicGenShape.unwrap(rep).getBy(path.atomics)
     }
   }
 
@@ -48,11 +25,31 @@ trait FAtomicQueryImpl {
     }*/
 
   trait Abc[A] {
-    def mapTo[C[_], R](cv: (A, C[path.DataType]) => R): FQueryTranform[R, C]
+    val queryResult: Either[FAtomicException, A]
+
+    def mapTo[C[_], R](cv: (A, C[path.DataType]) => R): FQueryTranform[R, C] = {
+      new FQueryTranform[R, C] {
+        override type QueryType = A
+        override lazy val path: self.path.type = self.path
+        override val gen = queryResult
+        override def apply(rep: A, data: C[path.DataType]): R = {
+          //t.right.map(s => cv(s, data))
+          cv(rep, data)
+        }
+      }
+    }
 
     def mapToOption[R](cv: (A, Option[path.DataType]) => R): FQueryTranform[R, Option] = mapTo[Option, R](cv)
 
-    def mapToWithoutData[C[_], R](cv: A => R): FQueryTranformWithOutData[R, C]
+    def mapToWithoutData[C[_], R](cv: A => R): FQueryTranformWithOutData[R, C] = {
+      new FQueryTranformWithOutData[R, C] {
+        override type QueryType = A
+        override val gen = queryResult
+        override def apply(rep: A): R = {
+          cv(rep)
+        }
+      }
+    }
 
     def mapToOptionWithoutData[R](cv: A => R): FQueryTranformWithOutData[R, Option] = mapToWithoutData[Option, R](cv)
   }

@@ -13,6 +13,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
 import scala.language.implicitConversions
+import scala.language.existentials
 
 class ParTest extends FlatSpec
     with Matchers
@@ -20,25 +21,27 @@ class ParTest extends FlatSpec
     with ScalaFutures
     with BeforeAndAfterAll
     with BeforeAndAfter
-    with FAtomicGenHelper
-    with FAtomicShapeHelper
     with PilesPolyHelper
     with FPilesGenHelper {
 
   "shapes" should "find readers in Atomic in FPath" in {
     val path = FPathImpl(In.jRead[Long] ::: In.jWrite[Long])
-    val bb: FAtomicGen[JsonReader] = needAtomic[JsonReader]
-    val jsonReaderGen: AbstractFAtomicGen = needAtomic[JsonReader]
+    //val bb: FAtomicGen[JsonReader] = needAtomic[JsonReader]
+    //val jsonReaderGen: AbstractFAtomicGen = needAtomic[JsonReader]
 
     //println(bb.gen(path.atomics).reader)
     //println(FAtomicQuery(HNil).gen(path.atomics))
     //println(FAtomicQuery(needAtomic[JsonReader]).gen(path.atomics).right.get.reader)
 
-    FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics)
+    new FAtomicQuery(path) {
+      val aa = withRep(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil)
+    }
     //println(FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics))
 
-    val items: List[FAtomic[Long]] = path.atomics
-    val Right(reader1 :: reader3 :: reader2 :: writer1 :: writer2 :: writer3 :: writer4 :: HNil) = FAtomicQuery(needAtomic[JsonReader] :: needAtomicOpt[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: HNil).gen(items)
+    //val items: List[FAtomic[Long]] = path.atomics
+    val Right(reader1 :: reader3 :: reader2 :: writer1 :: writer2 :: writer3 :: writer4 :: HNil) = new FAtomicQuery(path) {
+      val aa = withRep(needAtomic[JsonReader] :: needAtomicOpt[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: HNil)
+    }.aa.queryResult
     //println(reader2.reader)
     //println(writer1.writer)
     //println(writer4.writer)
@@ -113,20 +116,22 @@ class ParTest extends FlatSpec
     val piles: List[FPileAbstract[Option]] = mainPile :: appendPile :: Nil
     val paths = piles.map(s => s.fShape.encodeColumn(s.pathPile)).flatten
 
-    val resultGen1 = FPile.transformOf { path =>
-      FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
-        .mapToOption(path) {
-          case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
-            val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
-            //println(property.proName + ":" + defaultValueOpt + "11111111")
-            new JsonWriterImpl {
-              override type DataType = writer.JsonType
-              override val key = property.proName
-              override val encoder = writer.writer
-              override val isReaderDefined = readerOpt.isDefined
-              override val data = defaultValueOpt.map(writer.convert)
-            }: JsonWriterImpl
-        }
+    val resultGen1 = FPile.transformOf {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+          .mapToOption {
+            case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
+              val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
+              //println(property.proName + ":" + defaultValueOpt + "11111111")
+              new JsonWriterImpl {
+                override type DataType = writer.JsonType
+                override val key = property.proName
+                override val encoder = writer.writer
+                override val isReaderDefined = readerOpt.isDefined
+                override val data = defaultValueOpt.map(writer.convert)
+              }: JsonWriterImpl
+          }
+      }.aa
     } { results =>
       results.map { s =>
         implicit val encoderForOpt = s.encoder
@@ -142,19 +147,21 @@ class ParTest extends FlatSpec
         result
     }
 
-    val resultGen2 = FPile.transformTree { path =>
-      FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
-        .mapToOption(path) {
-          case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
-            val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
-            new JsonWriterImpl {
-              override type DataType = writer.JsonType
-              override val key = property.proName
-              override val encoder = writer.writer
-              override val isReaderDefined = readerOpt.isDefined
-              override val data = defaultValueOpt.map(writer.convert)
-            }: JsonWriterImpl
-        }
+    val resultGen2 = FPile.transformTree {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+          .mapToOption {
+            case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
+              val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
+              new JsonWriterImpl {
+                override type DataType = writer.JsonType
+                override val key = property.proName
+                override val encoder = writer.writer
+                override val isReaderDefined = readerOpt.isDefined
+                override val data = defaultValueOpt.map(writer.convert)
+              }: JsonWriterImpl
+          }
+      }.aa
     } { results =>
       results.map { s =>
         implicit val encoderForOpt = s.encoder
@@ -187,19 +194,21 @@ class ParTest extends FlatSpec
         result
     }
 
-    val resultGen3 = FPile.transformTreeList { path =>
-      FAtomicQuery(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
-        .mapToOption(path) {
-          case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
-            val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
-            new JsonWriterImpl {
-              override type DataType = writer.JsonType
-              override val key = property.proName
-              override val encoder = writer.writer
-              override val isReaderDefined = readerOpt.isDefined
-              override val data = defaultValueOpt.map(writer.convert)
-            }: JsonWriterImpl
-        }
+    val resultGen3 = FPile.transformTreeList {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+          .mapToOption {
+            case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
+              val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
+              new JsonWriterImpl {
+                override type DataType = writer.JsonType
+                override val key = property.proName
+                override val encoder = writer.writer
+                override val isReaderDefined = readerOpt.isDefined
+                override val data = defaultValueOpt.map(writer.convert)
+              }: JsonWriterImpl
+          }
+      }.aa
     } { results =>
       results.map { s =>
         implicit val encoderForOpt = s.encoder
@@ -217,34 +226,38 @@ class ParTest extends FlatSpec
 
     //println("convertPile1:" + convertPile1)
 
-    val resultGen4 = FPile.transformTreeList { path =>
-      FAtomicQuery((needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: HNil) :: HNil)
-        .mapToOption(path) {
-          case ((defaultOpt :: property :: HNil) :: HNil, data) =>
-            val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
-            //println(defaultValueOpt)
-            //println(property.proName)
-            defaultValueOpt: Option[Any]
-        }
+    val resultGen4 = FPile.transformTreeList {
+      new FAtomicQuery(_) {
+        val aa = withRep((needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: HNil) :: HNil)
+          .mapToOption {
+            case ((defaultOpt :: property :: HNil) :: HNil, data) =>
+              val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
+              //println(defaultValueOpt)
+              //println(property.proName)
+              defaultValueOpt: Option[Any]
+          }
+      }.aa
     } { result =>
       //println(result)
       result
     }
 
-    val resultGen5 = FPile.transformTreeList { path =>
-      FAtomicQuery(needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
-        .mapToOption(path) {
-          case (writer :: (defaultOpt :: HNil) :: property :: HNil, data1) =>
-            //println(data1)
-            val defaultValueOpt = data1.fold(defaultOpt.map(_.value))(Option(_))
-            new JsonWriterImpl {
-              override type DataType = writer.JsonType
-              override val key = property.proName
-              override val encoder = writer.writer
-              override val isReaderDefined = defaultOpt.isDefined
-              override val data = defaultValueOpt.map(writer.convert)
-            }: JsonWriterImpl
-        }
+    val resultGen5 = FPile.transformTreeList {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+          .mapToOption {
+            case (writer :: (defaultOpt :: HNil) :: property :: HNil, data1) =>
+              //println(data1)
+              val defaultValueOpt = data1.fold(defaultOpt.map(_.value))(Option(_))
+              new JsonWriterImpl {
+                override type DataType = writer.JsonType
+                override val key = property.proName
+                override val encoder = writer.writer
+                override val isReaderDefined = defaultOpt.isDefined
+                override val data = defaultValueOpt.map(writer.convert)
+              }: JsonWriterImpl
+          }
+      }.aa
     } { results =>
       results.map { s =>
         implicit val encoderForOpt = s.encoder
