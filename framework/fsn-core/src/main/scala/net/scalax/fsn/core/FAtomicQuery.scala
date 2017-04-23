@@ -6,20 +6,35 @@ import shapeless.ops.hlist.IsHCons
 
 import scala.reflect.runtime.universe._
 
-trait FAtomicQuery {
+trait FAtomicQueryImpl {
+  self =>
 
   val path: FPath
 
-  def apply[U, T](rep: U)(implicit fAtomicGenShape: FAtomicGenShape[U, path.DataType, T]): Abc[U] = {
-    new Abc[U] {
-      override def mapTo[C[_], R](cv: (T, C[path.DataType]) => R): FQueryTranform[path.DataType, C, R] = {
+  def withRep[U, S, Y](rep: U)(implicit fAtomicGenShape: FAtomicGenShape[U, path.DataType, Y]): Abc[Y] = {
+    new Abc[Y] {
+      override def mapTo[C[_], R](cv: (Y, C[path.DataType]) => R): FQueryTranform[Y, R, C] = {
         val t = fAtomicGenShape.unwrap(rep).getBy(path.atomics)
-        new FQueryTranform[path.DataType, C, R] {
-          override def apply(data: C[path.DataType]): Either[FAtomicException, R] = {
-            t.right.map(s => cv(s, data))
+        new FQueryTranform[Y, R, C] {
+          override lazy val path: self.path.type = self.path
+          override val gen = t
+          override def apply(rep: Y, data: C[path.DataType]): R = {
+            //t.right.map(s => cv(s, data))
+            cv(rep, data)
           }
         }
       }
+
+      override def mapToWithoutData[C[_], R](cv: Y => R): FQueryTranformWithOutData[Y, R, C] = {
+        val t = fAtomicGenShape.unwrap(rep).getBy(path.atomics)
+        new FQueryTranformWithOutData[Y, R, C] {
+          override val gen = t
+          override def apply(rep: Y): R = {
+            cv(rep)
+          }
+        }
+      }
+
     }
   }
 
@@ -31,13 +46,13 @@ trait FAtomicQuery {
     }*/
 
   trait Abc[A] {
-    def mapTo[C[_], R](cv: (A, C[path.DataType]) => R): FQueryTranform[path.DataType, C, R]
+    def mapTo[C[_], R](cv: (A, C[path.DataType]) => R): FQueryTranform[A, R, C]
 
-    /*def mapToOption[R](cv: (T, Option[path.DataType]) => R): FQueryTranform[T, Option, R]
+    def mapToOption[R](cv: (A, Option[path.DataType]) => R): FQueryTranform[A, R, Option] = mapTo[Option, R](cv)
 
-    def mapToWithoutData[R](cv: T => R): FQueryTranformWithOutData[R]
+    def mapToWithoutData[C[_], R](cv: A => R): FQueryTranformWithOutData[A, R, C]
 
-    def mapToOptionWithoutData[R](cv: T => R): FQueryTranformWithOutData[R]*/
+    def mapToOptionWithoutData[R](cv: A => R): FQueryTranformWithOutData[A, R, Option] = mapToWithoutData[Option, R](cv)
   }
 
   def needAtomic[T[_]](implicit parGen: FAtomicPartialFunctionGen[T], typeTag: WeakTypeTag[T[_]]): FAtomicGen[path.DataType, T] = FAtomicGenHelper.needAtomic[path.DataType, T](parGen, typeTag)
@@ -46,12 +61,31 @@ trait FAtomicQuery {
 
 }
 
-trait FQueryTranform[T, C[_], U] {
-  def apply(data: C[T]): Either[FAtomicException, U]
+class FAtomicQuery(override val path: FPath) extends FAtomicQueryImpl
+
+/*object FAtomicQuery {
+  def apply(path: FPath): FAtomicQuery = {
+    new FAtomicQueryImpl(path)
+  }
+}*/
+
+trait FQueryTranform[S, U, C[_]] {
+  val path: FPath
+  val gen: Either[FAtomicException, S]
+  def apply(rep: S, data: C[path.DataType]): U
+
+  /*def withList[Y](columnGen: List[U] => Y): FPileSyntax.PileGen[C, Y] = {
+    FPile.transformTreeList(this)(columnGen)
+  }*/
 }
 
-trait FQueryTranformWithOutData[T] {
-  def apply: Either[FAtomicException, T]
+trait FQueryTranformWithOutData[S, U, C[_]] {
+  val gen: Either[FAtomicException, S]
+  def apply(rep: S): U
+
+  /*def withList[Y](columnGen: List[U] => Y): FPileSyntaxWithoutData.PileGen[C, Y] = {
+    FPile.transformTreeListWithoutData(this)(columnGen)
+  }*/
 }
 
 /*trait AbstractFAtomicQuery[F[_]] { self =>

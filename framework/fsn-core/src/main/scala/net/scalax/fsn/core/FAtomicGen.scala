@@ -4,8 +4,8 @@ import scala.reflect.runtime.universe._
 import scala.language.higherKinds
 import shapeless._
 
-trait AbstractFAtomicGen[U, T] {
-  def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, T]
+trait AbstractFAtomicGen[U, S] {
+  def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, S]
 }
 
 trait FAtomicGen[U, S[_]] extends AbstractFAtomicGen[U, S[U]] {
@@ -20,8 +20,8 @@ trait FAtomicGenList[U, S[_]] extends AbstractFAtomicGen[U, List[S[U]]] {
   override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, List[S[U]]]
 }
 
-trait FAtomicGenShape[Input, U, T] {
-  def unwrap(input: Input): AbstractFAtomicGen[U, T]
+trait FAtomicGenShape[-Input, U, S] {
+  def unwrap(input: Input): AbstractFAtomicGen[U, S]
 }
 
 object FAtomicGenShape extends FAtomicGenShapeImpl {
