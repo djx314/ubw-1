@@ -85,7 +85,7 @@ object FPile {
     apply(paths)
   }
 
-  def genTreeTailCall[S, U, C[_]](pathGen: FPath => FQueryTranform[S, U, C], oldPile: FPile[C], newPile: FPile[C]): Either[FAtomicException, (FPile[C], FPile[C], List[FPile[C]])] = {
+  def genTreeTailCall[U, C[_]](pathGen: FPath => FQueryTranform[U, C], oldPile: FPile[C], newPile: FPile[C]): Either[FAtomicException, (FPile[C], FPile[C], List[FPile[C]])] = {
     if (newPile.subs.isEmpty) {
       val transforms = newPile.paths.map(pathGen)
       if (transforms.forall(_.gen.isRight)) {
@@ -105,11 +105,11 @@ object FPile {
     }
   }
 
-  def genTree[S, U, C[_]](pathGen: FPath => FQueryTranform[S, U, C], pile: FPile[C]): Either[FAtomicException, (FPile[C], List[FPile[C]])] = {
+  def genTree[U, C[_]](pathGen: FPath => FQueryTranform[U, C], pile: FPile[C]): Either[FAtomicException, (FPile[C], List[FPile[C]])] = {
     genTreeTailCall(pathGen, pile, pile).right.map { case (oldPile, newPile, piles) => newPile -> piles }
   }
 
-  def transformTree[S, U, C[_], T](pathGen: FPath => FQueryTranform[S, U, C])(columnGen: List[U] => T): FPile[C] => Either[FAtomicException, (FPile[C], List[C[Any]] => T)] = {
+  def transformTree[U, C[_], T](pathGen: FPath => FQueryTranform[U, C])(columnGen: List[U] => T): FPile[C] => Either[FAtomicException, (FPile[C], List[C[Any]] => T)] = {
     (pile: FPile[C]) =>
       {
         genTree(pathGen, pile).right.map {
@@ -122,7 +122,7 @@ object FPile {
       }
   }
 
-  def transformTreeList[C[_], S, U, T](pathGen: FPath => FQueryTranform[S, U, C])(columnGen: List[U] => T): FPileSyntax.PileGen[C, T] = {
+  def transformTreeList[C[_], U, T](pathGen: FPath => FQueryTranform[U, C])(columnGen: List[U] => T): FPileSyntax.PileGen[C, T] = {
     (piles: List[FPile[C]]) =>
       {
         val calculatePiles = piles.map { s =>
@@ -161,7 +161,7 @@ object FPile {
       }
   }
 
-  def genTreeTailCallWithoutData[C[_], S, U](pathGen: FPath => FQueryTranformWithOutData[S, U, C], oldPile: FPile[C], newPile: FPile[C]): Either[FAtomicException, (FPile[C], FPile[C], List[FPile[C]])] = {
+  def genTreeTailCallWithoutData[C[_], U](pathGen: FPath => FQueryTranformWithOutData[U, C], oldPile: FPile[C], newPile: FPile[C]): Either[FAtomicException, (FPile[C], FPile[C], List[FPile[C]])] = {
     if (newPile.subs.isEmpty) {
       val transforms = newPile.paths.map(pathGen)
       if (transforms.forall(_.gen.isRight)) {
@@ -181,11 +181,11 @@ object FPile {
     }
   }
 
-  def genTreeWithoutData[C[_], S, U](pathGen: FPath => FQueryTranformWithOutData[S, U, C], pile: FPile[C]): Either[FAtomicException, (FPile[C], List[FPile[C]])] = {
+  def genTreeWithoutData[C[_], U](pathGen: FPath => FQueryTranformWithOutData[U, C], pile: FPile[C]): Either[FAtomicException, (FPile[C], List[FPile[C]])] = {
     genTreeTailCallWithoutData(pathGen, pile, pile).right.map { case (oldPile, newPile, piles) => newPile -> piles }
   }
 
-  def transformTreeListWithoutData[C[_], S, U, T](pathGen: FPath => FQueryTranformWithOutData[S, U, C])(columnGen: List[U] => T): FPileSyntaxWithoutData.PileGen[C, T] = {
+  def transformTreeListWithoutData[C[_], U, T](pathGen: FPath => FQueryTranformWithOutData[U, C])(columnGen: List[U] => T): FPileSyntaxWithoutData.PileGen[C, T] = {
     (piles: List[FPile[C]]) =>
       {
         val calculatePiles = piles.map { s =>
@@ -218,7 +218,7 @@ object FPile {
       }
   }
 
-  def transformOf[S, U, T, C[_]](pathGen: FPath => FQueryTranform[S, U, C])(columnGen: List[U] => T): List[FPath] => Either[FAtomicException, List[C[Any]] => T] = {
+  def transformOf[U, T, C[_]](pathGen: FPath => FQueryTranform[U, C])(columnGen: List[U] => T): List[FPath] => Either[FAtomicException, List[C[Any]] => T] = {
     (initPaths: List[FPath]) =>
       {
         initPaths.map(pathGen).zipWithIndex.foldLeft(Right { _: List[C[Any]] => Nil }: Either[FAtomicException, List[C[Any]] => List[U]]) {

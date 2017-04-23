@@ -45,33 +45,35 @@ case class StrSReader[S, T, D](
 
 case class StrReaderWithIndex(reader: StrSlickReader, index: Int)
 
-object StrOutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
+object StrOutSelectConvert {
 
   def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[Option, StrSlickQuery] = {
-    FPile.transformTreeList { path =>
-      FAtomicQuery(needAtomic[StrSlickSelect] :: needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: HNil)
-        .mapToOption(path) {
-          case (slickSelect :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil, data) => {
-            val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
-            val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
-            def slickReaderGen: StrSReader[slickSelect.SourceType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
-              StrSReader(
-                slickSelect.outCol,
-                slickSelect.shape,
-                slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
-                orderTargetName.map(s => property.proName -> s)
-              )
-            else
-              StrSReader(
-                slickSelect.outCol,
-                slickSelect.shape,
-                slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
-                orderTargetName.map(s => property.proName -> s)
-              )
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: HNil)
+          .mapToOption {
+            case (slickSelect :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil, data) => {
+              val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
+              val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
+              def slickReaderGen: StrSReader[slickSelect.SourceType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
+                StrSReader(
+                  slickSelect.outCol,
+                  slickSelect.shape,
+                  slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
+                  orderTargetName.map(s => property.proName -> s)
+                )
+              else
+                StrSReader(
+                  slickSelect.outCol,
+                  slickSelect.shape,
+                  slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
+                  orderTargetName.map(s => property.proName -> s)
+                )
 
-            slickReaderGen: StrSlickReader
+              slickReaderGen: StrSlickReader
+            }
           }
-        }
+      }.aa
     } { genList =>
       val gensWithIndex = genList.zipWithIndex.map { case (reader, index) => StrReaderWithIndex(reader, index) }
       val genSortMap: Map[String, Int] = {
@@ -135,16 +137,18 @@ object StrOutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
   }
 
   def ubwGenWithoutData /*(wQuery: SlickQueryBindImpl)*/ : FPileSyntaxWithoutData.PileGen[Option, List[String]] = {
-    FPile.transformTreeListWithoutData { path =>
-      FAtomicQuery(needAtomic[StrSlickSelect] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: HNil)
-        .mapToOptionWithoutData(path) {
-          case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
-            if (slickSelect.colToOrder.isDefined || orderTargetNameContent.isDefined) {
-              Option(property.proName)
-            } else {
-              None
-            }
-        }
+    FPile.transformTreeListWithoutData {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: HNil)
+          .mapToOptionWithoutData {
+            case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
+              if (slickSelect.colToOrder.isDefined || orderTargetNameContent.isDefined) {
+                Option(property.proName)
+              } else {
+                None
+              }
+          }
+      }.aa
     } { genList =>
       genList.flatten
     }

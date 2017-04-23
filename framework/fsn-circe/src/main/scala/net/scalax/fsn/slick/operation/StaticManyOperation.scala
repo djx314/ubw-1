@@ -5,7 +5,6 @@ import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.slick.atomic.{ OneToOneUpdate, SlickUpdate, StaticMany }
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import net.scalax.fsn.slick.model.{ QueryJsonInfo, StaticManyUbw, UpdateStaticManyInfo }
-import net.scalax.fsn.slick.operation.InUpdateConvert2.{ needAtomic, needAtomicOpt }
 import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent
 import slick.lifted.Query
@@ -13,22 +12,24 @@ import shapeless._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-object StaticManyOperation extends FAtomicGenHelper with FAtomicShapeHelper {
+object StaticManyOperation {
 
   //TODO change option selector to list selector
   def updateGen(implicit ec: ExecutionContext): FPileSyntax.PileGen[Option, Future[Map[String, QueryJsonInfo]]] = {
-    FPile.transformTreeList { path =>
-      FAtomicQuery(needAtomicOpt[StaticMany] :: HNil)
-        .mapToOption(path) {
-          case (staticMayOpt :: HNil, data) =>
-            Future.sequence(staticMayOpt.toList.map { eachStatic =>
-              eachStatic.staticMany.map {
-                _.map { eachMany =>
-                  eachMany.proName -> eachMany.gen(data.get)
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomicOpt[StaticMany] :: HNil)
+          .mapToOption {
+            case (staticMayOpt :: HNil, data) =>
+              Future.sequence(staticMayOpt.toList.map { eachStatic =>
+                eachStatic.staticMany.map {
+                  _.map { eachMany =>
+                    eachMany.proName -> eachMany.gen(data.get)
+                  }
                 }
-              }
-            }).map(_.flatten.toMap)
-        }
+              }).map(_.flatten.toMap)
+          }
+      }.aa
     } { staticManyList =>
       Future.sequence(staticManyList).map(_.foldLeft(Map.empty[String, QueryJsonInfo]) { (font, back) =>
         font ++ back
@@ -70,15 +71,17 @@ object StaticManyOperation extends FAtomicGenHelper with FAtomicShapeHelper {
 
   //TODO change option selector to list selector
   def ubwStaticManyGen(implicit ec: ExecutionContext): FPileSyntaxWithoutData.PileGen[Option, Future[List[StaticManyUbw]]] = {
-    FPile.transformTreeListWithoutData { path =>
-      FAtomicQuery(needAtomicOpt[StaticMany] :: needAtomic[FProperty] :: HNil)
-        .mapToOptionWithoutData(path) {
-          case (staticManyCol :: property :: HNil) =>
-            Future.sequence(
-              staticManyCol
-              .map(_.staticMany.map(s => s.map(t => StaticManyUbw(t.proName, property.proName, t.slaveryIdField, t.ubwGen)))).toList
-            ).map(_.flatten)
-        }
+    FPile.transformTreeListWithoutData {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomicOpt[StaticMany] :: needAtomic[FProperty] :: HNil)
+          .mapToOptionWithoutData {
+            case (staticManyCol :: property :: HNil) =>
+              Future.sequence(
+                staticManyCol
+                .map(_.staticMany.map(s => s.map(t => StaticManyUbw(t.proName, property.proName, t.slaveryIdField, t.ubwGen)))).toList
+              ).map(_.flatten)
+          }
+      }.aa
     } { staticManyList =>
       /*staticManyList.map(_.map(_.foldLeft(List.empty[StaticManyUbw]) { (font, back) =>
         font ++: back

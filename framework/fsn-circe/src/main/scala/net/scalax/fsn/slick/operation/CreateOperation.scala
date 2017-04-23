@@ -135,7 +135,7 @@ case class ISWriterWithData[A, B, C](
   override type PreValue = B
   override type PreTarget = C
 }*/
-object InCreateConvert2222 extends FAtomicGenHelper with FAtomicShapeHelper {
+object InCreateConvert2222 {
 
   def createGen(
     implicit
@@ -143,78 +143,80 @@ object InCreateConvert2222 extends FAtomicGenHelper with FAtomicShapeHelper {
     cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
     retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ): FPileSyntax.PileGen[Option, List[(Any, SlickQueryBindImpl)] => DBIO[ExecInfo3]] = {
-    FPile.transformTreeList { path =>
-      FAtomicQuery(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: HNil)
-        .mapToOption(path) {
-          case (slickCreate :: autoIncOpt :: oneToOneCreateOpt :: HNil, data) => {
-            //val slickWriter = FColumn.find(columns)({ case s: SlickUpdate[columns.DataType] => s })
-            //val oneToOneUpdateOpt = FColumn.findOpt(columns)({ case s: OneToOneUpdate[columns.DataType] => s })
-            val isAutoInc = autoIncOpt.map(_.isAutoInc).getOrElse(false)
-            val writer = if (isAutoInc) {
-              lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate =>
-                new InsertWrapTran2[slickCreate.SlickType] {
-                  override val table = oneToOneCreate.owner
-                  def convert(sourceData: slickCreate.SlickType, source: InsertDataQuery): InsertDataQuery = {
-                    new InsertDataQuery {
-                      override val bind = source.bind
-                      override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
-                      override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
-                      override val data = source.data ::: oneToOneCreate.convert(slickCreate.convert(sourceData)) :: Nil
-                      override val returningCols = source.returningCols
-                      override val returningShapes = source.returningShapes
-                      override def dataGen(returningData: List[Any]): List[DataWithIndex] = source.dataGen(returningData)
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: HNil)
+          .mapToOption {
+            case (slickCreate :: autoIncOpt :: oneToOneCreateOpt :: HNil, data) => {
+              //val slickWriter = FColumn.find(columns)({ case s: SlickUpdate[columns.DataType] => s })
+              //val oneToOneUpdateOpt = FColumn.findOpt(columns)({ case s: OneToOneUpdate[columns.DataType] => s })
+              val isAutoInc = autoIncOpt.map(_.isAutoInc).getOrElse(false)
+              val writer = if (isAutoInc) {
+                lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate =>
+                  new InsertWrapTran2[slickCreate.SlickType] {
+                    override val table = oneToOneCreate.owner
+                    def convert(sourceData: slickCreate.SlickType, source: InsertDataQuery): InsertDataQuery = {
+                      new InsertDataQuery {
+                        override val bind = source.bind
+                        override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
+                        override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
+                        override val data = source.data ::: oneToOneCreate.convert(slickCreate.convert(sourceData)) :: Nil
+                        override val returningCols = source.returningCols
+                        override val returningShapes = source.returningShapes
+                        override def dataGen(returningData: List[Any]): List[DataWithIndex] = source.dataGen(returningData)
+                      }
                     }
                   }
                 }
-              }
 
-              ISWriter2222(
-                preData = (),
-                table = slickCreate.owner,
-                preRep = (),
-                preShape = implicitly[Shape[FlatShapeLevel, Unit, Unit, Unit]],
-                autoIncRep = (slickCreate.mainCol: slickCreate.SourceType),
-                autoIncShape = slickCreate.mainShape,
-                subGen = oneToOneSubGen,
-                autalColumn = (s: slickCreate.SlickType) => {
-                slickCreate.convert(s)
-              }
-              )
-            } else {
-              lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate =>
-                new InsertWrapTran2[Unit] {
-                  override val table = oneToOneCreate.owner
-                  def convert(sourceData: Unit, source: InsertDataQuery): InsertDataQuery = {
-                    val commonData = data
-                    new InsertDataQuery {
-                      override val bind = source.bind
-                      override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
-                      override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
-                      override val data = source.data ::: oneToOneCreate.convert(commonData.get) :: Nil
-                      override val returningCols = source.returningCols
-                      override val returningShapes = source.returningShapes
-                      override def dataGen(returningData: List[Any]): List[DataWithIndex] = source.dataGen(returningData)
+                ISWriter2222(
+                  preData = (),
+                  table = slickCreate.owner,
+                  preRep = (),
+                  preShape = implicitly[Shape[FlatShapeLevel, Unit, Unit, Unit]],
+                  autoIncRep = (slickCreate.mainCol: slickCreate.SourceType),
+                  autoIncShape = slickCreate.mainShape,
+                  subGen = oneToOneSubGen,
+                  autalColumn = (s: slickCreate.SlickType) => {
+                  slickCreate.convert(s)
+                }
+                )
+              } else {
+                lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate =>
+                  new InsertWrapTran2[Unit] {
+                    override val table = oneToOneCreate.owner
+                    def convert(sourceData: Unit, source: InsertDataQuery): InsertDataQuery = {
+                      val commonData = data
+                      new InsertDataQuery {
+                        override val bind = source.bind
+                        override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
+                        override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
+                        override val data = source.data ::: oneToOneCreate.convert(commonData.get) :: Nil
+                        override val returningCols = source.returningCols
+                        override val returningShapes = source.returningShapes
+                        override def dataGen(returningData: List[Any]): List[DataWithIndex] = source.dataGen(returningData)
+                      }
                     }
                   }
                 }
-              }
 
-              ISWriter2222(
-                preData = {
-                slickCreate.reverseConvert(data.get)
-              },
-                table = slickCreate.owner,
-                preRep = slickCreate.mainCol,
-                preShape = slickCreate.mainShape,
-                autoIncRep = (),
-                autoIncShape = implicitly[Shape[FlatShapeLevel, Unit, Unit, Unit]],
-                subGen = oneToOneSubGen,
-                autalColumn = (s: Unit) => data.get
-              )
+                ISWriter2222(
+                  preData = {
+                  slickCreate.reverseConvert(data.get)
+                },
+                  table = slickCreate.owner,
+                  preRep = slickCreate.mainCol,
+                  preShape = slickCreate.mainShape,
+                  autoIncRep = (),
+                  autoIncShape = implicitly[Shape[FlatShapeLevel, Unit, Unit, Unit]],
+                  subGen = oneToOneSubGen,
+                  autalColumn = (s: Unit) => data.get
+                )
+              }
+              writer: ISlickWriter2222
             }
-            writer: ISlickWriter2222
           }
-        }
+      }.aa
     } { genList =>
       { binds: List[(Any, SlickQueryBindImpl)] =>
         val genListWithIndex = genList.zipWithIndex.map {

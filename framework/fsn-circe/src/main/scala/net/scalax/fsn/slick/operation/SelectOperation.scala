@@ -45,76 +45,37 @@ case class SReader[S, U, T, D](
 
 }
 
-object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
-
-  /*def convert(column: FColumn): SlickReader = {
-    val slickSelect = FColumn.find(column) { case s: SlickSelect[column.DataType] => s }
-    val isOrderNullsLast = FColumn.findOpt(column) { case s: OrderNullsLast[column.DataType] => s }.map(_.isOrderNullsLast).getOrElse(true)
-    val orderTargetName = FColumn.findOpt(column) { case s: OrderTargetName[column.DataType] => s }.map(_.orderTargetName)
-    val property = FColumn.find(column) { case s: FProperty[column.DataType] => s }
-
-    def slickReaderGen: SReader[slickSelect.SourceType, slickSelect.SlickType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
-      SReader(
-        slickSelect.outCol,
-        slickSelect.shape,
-        slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
-        orderTargetName.map(s => property.proName -> s),
-        slickSelect.outConvert
-      )
-    else
-      SReader(
-        slickSelect.outCol,
-        slickSelect.shape,
-        slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
-        orderTargetName.map(s => property.proName -> s),
-        slickSelect.outConvert
-      )
-
-    slickReaderGen
-  }*/
-
-  /*def extraSubCol(column: List[FColumn]): List[FColumn] = {
-    val extraColumns = column.map { s =>
-      val subCols = FColumn.findOpt(s) { case t: SubUbw[s.DataType] => t }
-      subCols match {
-        case Some(t) => t.subCols
-        case _ => List(s)
-      }
-    }.flatten
-    if (extraColumns.exists(s => FColumn.findOpt(s) { case t: SubUbw[s.DataType] => t }.isDefined)) {
-      extraSubCol(extraColumns)
-    } else {
-      extraColumns
-    }
-  }*/
+object OutSelectConvert {
 
   def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[Option, FSlickQuery] = {
-    FPile.transformTreeList { path =>
-      FAtomicQuery(needAtomic[SlickSelect] :: needAtomicOpt[OrderNullsLast] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: HNil)
-        .mapToOption(path) {
-          case (slickSelect :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil, data) => {
-            val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
-            val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
-            def slickReaderGen: SReader[slickSelect.SourceType, slickSelect.SlickType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
-              SReader(
-                slickSelect.outCol,
-                slickSelect.shape,
-                slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
-                orderTargetName.map(s => property.proName -> s),
-                slickSelect.outConvert
-              )
-            else
-              SReader(
-                slickSelect.outCol,
-                slickSelect.shape,
-                slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
-                orderTargetName.map(s => property.proName -> s),
-                slickSelect.outConvert
-              )
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[SlickSelect] :: needAtomicOpt[OrderNullsLast] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: HNil)
+          .mapToOption {
+            case (slickSelect :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil, data) => {
+              val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
+              val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
+              def slickReaderGen: SReader[slickSelect.SourceType, slickSelect.SlickType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
+                SReader(
+                  slickSelect.outCol,
+                  slickSelect.shape,
+                  slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
+                  orderTargetName.map(s => property.proName -> s),
+                  slickSelect.outConvert
+                )
+              else
+                SReader(
+                  slickSelect.outCol,
+                  slickSelect.shape,
+                  slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
+                  orderTargetName.map(s => property.proName -> s),
+                  slickSelect.outConvert
+                )
 
-            slickReaderGen: SlickReader
+              slickReaderGen: SlickReader
+            }
           }
-        }
+      }.aa
     } { genList =>
       val gensWithIndex = genList.zipWithIndex
       val genSortMap: Map[String, Seq[Any] => ColumnOrdered[_]] = {
@@ -155,36 +116,38 @@ object OutSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
   }
 
   def ubwGenWithoutData /*(wQuery: SlickQueryBindImpl)*/ : FPileSyntaxWithoutData.PileGen[Option, List[String]] = {
-    FPile.transformTreeListWithoutData { path =>
-      FAtomicQuery(needAtomic[SlickSelect] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: HNil)
-        .mapToOptionWithoutData(path) {
-          case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
-            if (slickSelect.colToOrder.isDefined || orderTargetNameContent.isDefined) {
-              Option(property.proName)
-            } else {
-              None
-            }
-          /*val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
-          val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
-          def slickReaderGen: SReader[slickSelect.SourceType, slickSelect.SlickType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
-            SReader(
-              slickSelect.outCol,
-              slickSelect.shape,
-              slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
-              orderTargetName.map(s => property.proName -> s),
-              slickSelect.outConvert
-            )
-          else
-            SReader(
-              slickSelect.outCol,
-              slickSelect.shape,
-              slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
-              orderTargetName.map(s => property.proName -> s),
-              slickSelect.outConvert
-            )
+    FPile.transformTreeListWithoutData {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[SlickSelect] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: HNil)
+          .mapToOptionWithoutData {
+            case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
+              if (slickSelect.colToOrder.isDefined || orderTargetNameContent.isDefined) {
+                Option(property.proName)
+              } else {
+                None
+              }
+            /*val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
+            val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
+            def slickReaderGen: SReader[slickSelect.SourceType, slickSelect.SlickType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
+              SReader(
+                slickSelect.outCol,
+                slickSelect.shape,
+                slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
+                orderTargetName.map(s => property.proName -> s),
+                slickSelect.outConvert
+              )
+            else
+              SReader(
+                slickSelect.outCol,
+                slickSelect.shape,
+                slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
+                orderTargetName.map(s => property.proName -> s),
+                slickSelect.outConvert
+              )
 
-          slickReaderGen: SlickReader*/
-        }
+            slickReaderGen: SlickReader*/
+          }
+      }.aa
     } { genList =>
       genList.flatten
       /*val gensWithIndex = genList.zipWithIndex

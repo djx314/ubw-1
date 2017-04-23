@@ -77,7 +77,7 @@ object ExcelOperation /*extends FAtomicGenHelper with FAtomicShapeHelper*/ {
   }*/
   val writeGen = FPile.transformTreeList {
     new FAtomicQuery(_) {
-      withRep(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
+      val aa = withRep(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
         .mapToOption {
           case (poiWriter :: transforms :: property :: defaultOpt :: HNil, data) => {
             val exportData = data.fold(defaultOpt.map(_.value))(Option(_))
@@ -85,8 +85,7 @@ object ExcelOperation /*extends FAtomicGenHelper with FAtomicShapeHelper*/ {
             property.proName -> CellData.gen(poiWriter.convert(eachColumnData))(poiWriter.writer).addTransform(transforms.toList.flatMap(_.transforms)): (String, CellData[_])
           }
         }
-    }
-
+    }.aa
   } { cellDataTupleList =>
     cellDataTupleList.toMap: Map[String, CellData[_]]
   }

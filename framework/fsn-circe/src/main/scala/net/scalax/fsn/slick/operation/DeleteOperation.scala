@@ -68,61 +68,63 @@ trait ISlickDeleteWithData {
   val data: DataWithIndex
 }
 
-object InDeleteConvert2222 extends FAtomicGenHelper with FAtomicShapeHelper {
+object InDeleteConvert2222 {
   def convert(
     implicit
     ec: ExecutionContext,
     deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
   ) = {
-    FPile.transformTreeList { path =>
-      FAtomicQuery(needAtomic[SlickDelete] :: needAtomicOpt[OneToOneRetrieve] :: HNil)
-        .mapToOption(path) {
-          case (slickDelete :: oneToDeleteOpt :: HNil, data) => {
-            val subGenOpt = oneToDeleteOpt.map { oneToOneDelete =>
-              new DeleteTran2 {
-                override val table = oneToOneDelete.owner
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[SlickDelete] :: needAtomicOpt[OneToOneRetrieve] :: HNil)
+          .mapToOption {
+            case (slickDelete :: oneToDeleteOpt :: HNil, data) => {
+              val subGenOpt = oneToDeleteOpt.map { oneToOneDelete =>
+                new DeleteTran2 {
+                  override val table = oneToOneDelete.owner
 
-                override def convert(source: DeleteQuery): DeleteQuery = {
-                  new DeleteQuery {
-                    override val bind = source.bind
-                    override val cols = source.cols ::: oneToOneDelete.mainCol :: Nil
-                    override val shapes = source.shapes ::: oneToOneDelete.mainShape :: Nil
-                    override val filters = source.filters ::: {
-                      val index = cols.indexOf(oneToOneDelete.mainCol)
-                      new FilterColumnGen[Seq[Any]] {
-                        override type BooleanTypeRep = oneToOneDelete.primaryGen.BooleanTypeRep
-                        override val dataToCondition = { cols: Seq[Any] =>
-                          val col = cols(index).asInstanceOf[oneToOneDelete.TargetType]
-                          val slickData = oneToOneDelete.filterConvert(data.get)
-                          oneToOneDelete.primaryGen.dataToCondition(col)(slickData)
+                  override def convert(source: DeleteQuery): DeleteQuery = {
+                    new DeleteQuery {
+                      override val bind = source.bind
+                      override val cols = source.cols ::: oneToOneDelete.mainCol :: Nil
+                      override val shapes = source.shapes ::: oneToOneDelete.mainShape :: Nil
+                      override val filters = source.filters ::: {
+                        val index = cols.indexOf(oneToOneDelete.mainCol)
+                        new FilterColumnGen[Seq[Any]] {
+                          override type BooleanTypeRep = oneToOneDelete.primaryGen.BooleanTypeRep
+                          override val dataToCondition = { cols: Seq[Any] =>
+                            val col = cols(index).asInstanceOf[oneToOneDelete.TargetType]
+                            val slickData = oneToOneDelete.filterConvert(data.get)
+                            oneToOneDelete.primaryGen.dataToCondition(col)(slickData)
+                          }
+                          override val wt = oneToOneDelete.primaryGen.wt
                         }
-                        override val wt = oneToOneDelete.primaryGen.wt
-                      }
-                    } :: Nil
+                      } :: Nil
+                    }
                   }
                 }
               }
+              DSWriter2(
+                mainCol = slickDelete.mainCol,
+                mainShape = slickDelete.mainShape,
+                table = slickDelete.owner,
+                primaryGen = slickDelete.primaryGen.map { eachPri =>
+                  (new FilterColumnGen[slickDelete.TargetType] {
+                    override type BooleanTypeRep = eachPri.BooleanTypeRep
+                    override val dataToCondition = { sourceCol: slickDelete.TargetType =>
+                      eachPri.dataToCondition(sourceCol)(
+                        slickDelete.filterConvert(data.get)
+                      )
+                    }
+                    override val wt = eachPri.wt
+                  })
+                },
+                data = data.get,
+                subGen = subGenOpt
+              ): DSlickWriter2
             }
-            DSWriter2(
-              mainCol = slickDelete.mainCol,
-              mainShape = slickDelete.mainShape,
-              table = slickDelete.owner,
-              primaryGen = slickDelete.primaryGen.map { eachPri =>
-                (new FilterColumnGen[slickDelete.TargetType] {
-                  override type BooleanTypeRep = eachPri.BooleanTypeRep
-                  override val dataToCondition = { sourceCol: slickDelete.TargetType =>
-                    eachPri.dataToCondition(sourceCol)(
-                      slickDelete.filterConvert(data.get)
-                    )
-                  }
-                  override val wt = eachPri.wt
-                })
-              },
-              data = data.get,
-              subGen = subGenOpt
-            ): DSlickWriter2
           }
-        }
+      }.aa
     } { genList =>
       { binds: List[(Any, SlickQueryBindImpl)] =>
         val genListWithData = genList.zipWithIndex.map {
