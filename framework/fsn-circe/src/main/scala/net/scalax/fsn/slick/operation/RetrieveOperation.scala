@@ -92,7 +92,7 @@ trait ISlickReaderWithData {
   val dataGen: reader.MainDColumn => DataWithIndex
 }
 
-object InRetrieveConvert2222 extends FAtomicGenHelper with FAtomicShapeHelper {
+object InRetrieveConvert2222 {
   def convert(
     implicit
     ec: ExecutionContext,
@@ -101,53 +101,55 @@ object InRetrieveConvert2222 extends FAtomicGenHelper with FAtomicShapeHelper {
     /*val slickReader = FColumn.find(columns)({ case s: SlickRetrieve[columns.DataType] => s })
     val oneToOneRetrieveOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })*/
 
-    FPile.transformTreeList { path =>
-      FAtomicQuery(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: HNil)
-        .mapToOption(path) {
-          case (slickReader :: oneToOneRetrieveOpt :: HNil, data) => {
-            val iSlickReader = ISReader2222(
-              mainCol = (slickReader.mainCol: slickReader.SourceType),
-              table = slickReader.owner,
-              mainShape = slickReader.mainShape,
-              autalColumn = { s: slickReader.SlickType => slickReader.convert(s) },
-              primaryGen = slickReader.primaryGen.map(eachPri => new FilterColumnGen[slickReader.TargetType] {
-                override type BooleanTypeRep = eachPri.BooleanTypeRep
-                override val dataToCondition = (sourceCol: slickReader.TargetType) => {
-                  eachPri.dataToCondition(sourceCol)(
-                    slickReader.filterConvert(data.get)
-                  )
-                }
-                override val wt = eachPri.wt
-              }),
-              subGen = oneToOneRetrieveOpt.map { oneToOneRetrieve =>
-                new IWrapTran2[slickReader.SlickType] {
-                  override val table = oneToOneRetrieve.owner
-                  override def convert(data: slickReader.SlickType, source: RetrieveQuery): RetrieveQuery = {
-                    new RetrieveQuery {
-                      override val bind = source.bind
-                      override val cols = source.cols ::: oneToOneRetrieve.mainCol :: Nil
-                      override val shapes = source.shapes ::: oneToOneRetrieve.mainShape :: Nil
-                      override lazy val filters = source.filters ::: {
-                        val index = cols.indexOf(oneToOneRetrieve.mainCol)
-                        new FilterColumnGen[Seq[Any]] {
-                          override type BooleanTypeRep = oneToOneRetrieve.primaryGen.BooleanTypeRep
-                          override val dataToCondition = { cols: Seq[Any] =>
-                            val col = cols(index).asInstanceOf[oneToOneRetrieve.TargetType]
-                            val slickData = oneToOneRetrieve.filterConvert(slickReader.convert(data))
-                            oneToOneRetrieve.primaryGen.dataToCondition(col)(slickData)
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: HNil)
+          .mapToOption {
+            case (slickReader :: oneToOneRetrieveOpt :: HNil, data) => {
+              val iSlickReader = ISReader2222(
+                mainCol = (slickReader.mainCol: slickReader.SourceType),
+                table = slickReader.owner,
+                mainShape = slickReader.mainShape,
+                autalColumn = { s: slickReader.SlickType => slickReader.convert(s) },
+                primaryGen = slickReader.primaryGen.map(eachPri => new FilterColumnGen[slickReader.TargetType] {
+                  override type BooleanTypeRep = eachPri.BooleanTypeRep
+                  override val dataToCondition = (sourceCol: slickReader.TargetType) => {
+                    eachPri.dataToCondition(sourceCol)(
+                      slickReader.filterConvert(data.get)
+                    )
+                  }
+                  override val wt = eachPri.wt
+                }),
+                subGen = oneToOneRetrieveOpt.map { oneToOneRetrieve =>
+                  new IWrapTran2[slickReader.SlickType] {
+                    override val table = oneToOneRetrieve.owner
+                    override def convert(data: slickReader.SlickType, source: RetrieveQuery): RetrieveQuery = {
+                      new RetrieveQuery {
+                        override val bind = source.bind
+                        override val cols = source.cols ::: oneToOneRetrieve.mainCol :: Nil
+                        override val shapes = source.shapes ::: oneToOneRetrieve.mainShape :: Nil
+                        override lazy val filters = source.filters ::: {
+                          val index = cols.indexOf(oneToOneRetrieve.mainCol)
+                          new FilterColumnGen[Seq[Any]] {
+                            override type BooleanTypeRep = oneToOneRetrieve.primaryGen.BooleanTypeRep
+                            override val dataToCondition = { cols: Seq[Any] =>
+                              val col = cols(index).asInstanceOf[oneToOneRetrieve.TargetType]
+                              val slickData = oneToOneRetrieve.filterConvert(slickReader.convert(data))
+                              oneToOneRetrieve.primaryGen.dataToCondition(col)(slickData)
+                            }
+                            override val wt = oneToOneRetrieve.primaryGen.wt
                           }
-                          override val wt = oneToOneRetrieve.primaryGen.wt
-                        }
-                      } :: Nil
+                        } :: Nil
+                      }
                     }
                   }
-                }
 
-              }
-            )
-            iSlickReader: ISlickReader2222
+                }
+              )
+              iSlickReader: ISlickReader2222
+            }
           }
-        }
+      }.aa
     } { genList =>
       { binds: List[(Any, SlickQueryBindImpl)] =>
         val readersWithData = genList.zipWithIndex.map {
@@ -164,54 +166,7 @@ object InRetrieveConvert2222 extends FAtomicGenHelper with FAtomicShapeHelper {
     }
   }
 }
-/*object InRetrieveConvert2 {
-  def convert(columns: FColumn)(implicit ec: ExecutionContext): ISlickReader2 = {
-    val slickReader = FColumn.find(columns)({ case s: SlickRetrieve[columns.DataType] => s })
-    val oneToOneRetrieveOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })
 
-    val iSlickReader = ISReader2(
-      mainCol = (slickReader.mainCol: slickReader.SourceType),
-      table = slickReader.owner,
-      mainShape = slickReader.mainShape,
-      autalColumn = { s: slickReader.SlickType => FsnColumn(columns.cols, Option(slickReader.convert(s))) },
-      primaryGen = slickReader.primaryGen.map(eachPri => new FilterColumnGen[slickReader.TargetType] {
-        override type BooleanTypeRep = eachPri.BooleanTypeRep
-        override val dataToCondition = (sourceCol: slickReader.TargetType) => {
-          eachPri.dataToCondition(sourceCol)(
-            slickReader.filterConvert(columns.data.get)
-          )
-        }
-        override val wt = eachPri.wt
-      }),
-      subGen = oneToOneRetrieveOpt.map { oneToOneRetrieve =>
-        new IWrapTran2[slickReader.SlickType] {
-          override val table = oneToOneRetrieve.owner
-          override def convert(data: slickReader.SlickType, source: RetrieveQuery): RetrieveQuery = {
-            new RetrieveQuery {
-              override val bind = source.bind
-              override val cols = source.cols ::: oneToOneRetrieve.mainCol :: Nil
-              override val shapes = source.shapes ::: oneToOneRetrieve.mainShape :: Nil
-              override lazy val filters = source.filters ::: {
-                val index = cols.indexOf(oneToOneRetrieve.mainCol)
-                new FilterColumnGen[Seq[Any]] {
-                  override type BooleanTypeRep = oneToOneRetrieve.primaryGen.BooleanTypeRep
-                  override val dataToCondition = { cols: Seq[Any] =>
-                    val col = cols(index).asInstanceOf[oneToOneRetrieve.TargetType]
-                    val slickData = oneToOneRetrieve.filterConvert(slickReader.convert(data))
-                    oneToOneRetrieve.primaryGen.dataToCondition(col)(slickData)
-                  }
-                  override val wt = oneToOneRetrieve.primaryGen.wt
-                }
-              } :: Nil
-            }
-          }
-        }
-
-      }
-    )
-    iSlickReader
-  }
-}*/
 trait RetrieveQuery {
 
   val bind: SlickQueryBindImpl

@@ -41,75 +41,77 @@ trait GroupSlickReader {
 
 }
 
-object GroupSelectConvert extends FAtomicGenHelper with FAtomicShapeHelper {
+object GroupSelectConvert {
 
   def ubwGen(wQuery1: SlickQueryBindImpl): FPileSyntax.PileGen[Option, FGroupQuery] = {
-    FPile.transformTreeList { path =>
-      FAtomicQuery(needAtomic[GroupSlickSelect] :: needAtomicOpt[GroupableColumnBase] :: needAtomicOpt[CountableGroupColumn] :: needAtomic[FProperty] :: HNil)
-        .mapToOption(path) {
-          case (select :: groupColOpt :: countOpt :: property :: HNil, data) => {
-            val aa = (groupColOpt, countOpt) match {
-              case (None, None) =>
-                new GroupSlickReader {
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[GroupSlickSelect] :: needAtomicOpt[GroupableColumnBase] :: needAtomicOpt[CountableGroupColumn] :: needAtomic[FProperty] :: HNil)
+          .mapToOption {
+            case (select :: groupColOpt :: countOpt :: property :: HNil, data) => {
+              val aa = (groupColOpt, countOpt) match {
+                case (None, None) =>
+                  new GroupSlickReader {
 
-                  override val propertyName = property.proName
-                  override val selectModel = select
+                    override val propertyName = property.proName
+                    override val selectModel = select
 
-                  override val groupModel = Option.empty[GroupWraperBase]
+                    override val groupModel = Option.empty[GroupWraperBase]
 
-                }
-              case (Some(t), None) =>
-                new GroupSlickReader {
-
-                  override val propertyName = property.proName
-                  override val selectModel = select
-                  slick.jdbc.MySQLProfile
-                  override val groupModel = Option {
-                    t match {
-                      case a: GroupableNoOptionColumn[path.DataType] =>
-                        new GroupWraperWithNonOption {
-                          override type RepDataType = path.DataType
-                          override val groupShape = {
-                            implicit val typedTypeImplicit = a.baseTypedType
-                            implicitly[Shape[FlatShapeLevel, Rep[Option[RepDataType]], Option[RepDataType], Rep[Option[RepDataType]]]]
-                          }
-                          override val colToOrder = (rep: Rep[Option[RepDataType]]) => ColumnOrdered[Option[RepDataType]](rep, Ordering())
-                          override val baseTypedType = a.baseTypedType
-                          override val typedType = a.baseTypedType.optionType
-                          override val targetColConvert = a.targetColConvert
-                        }
-                      case a: GroupableOptionColumn[path.DataType] =>
-                        new GroupWraperWithOption {
-                          override type RepDataType = path.DataType
-
-                          override val groupShape = {
-                            implicit val typedTypeImplicit = a.baseTypedType
-                            implicitly[Shape[FlatShapeLevel, Rep[Option[RepDataType]], Option[RepDataType], Rep[Option[RepDataType]]]]
-                          }
-                          override val colToOrder = (rep: Rep[Option[RepDataType]]) => ColumnOrdered[Option[RepDataType]](rep, Ordering())
-                          override val baseTypedType = a.baseTypedType
-                          override val typedType = a.baseTypedType.optionType
-                          override val targetColConvert = a.targetColConvert
-                        }
-                    }
                   }
+                case (Some(t), None) =>
+                  new GroupSlickReader {
 
-                }
-              case (None, Some(t)) =>
-                new GroupSlickReader {
+                    override val propertyName = property.proName
+                    override val selectModel = select
+                    slick.jdbc.MySQLProfile
+                    override val groupModel = Option {
+                      t match {
+                        case a: GroupableNoOptionColumn[path.DataType] =>
+                          new GroupWraperWithNonOption {
+                            override type RepDataType = path.DataType
+                            override val groupShape = {
+                              implicit val typedTypeImplicit = a.baseTypedType
+                              implicitly[Shape[FlatShapeLevel, Rep[Option[RepDataType]], Option[RepDataType], Rep[Option[RepDataType]]]]
+                            }
+                            override val colToOrder = (rep: Rep[Option[RepDataType]]) => ColumnOrdered[Option[RepDataType]](rep, Ordering())
+                            override val baseTypedType = a.baseTypedType
+                            override val typedType = a.baseTypedType.optionType
+                            override val targetColConvert = a.targetColConvert
+                          }
+                        case a: GroupableOptionColumn[path.DataType] =>
+                          new GroupWraperWithOption {
+                            override type RepDataType = path.DataType
 
-                  override val propertyName = property.proName
-                  override val selectModel = select
+                            override val groupShape = {
+                              implicit val typedTypeImplicit = a.baseTypedType
+                              implicitly[Shape[FlatShapeLevel, Rep[Option[RepDataType]], Option[RepDataType], Rep[Option[RepDataType]]]]
+                            }
+                            override val colToOrder = (rep: Rep[Option[RepDataType]]) => ColumnOrdered[Option[RepDataType]](rep, Ordering())
+                            override val baseTypedType = a.baseTypedType
+                            override val typedType = a.baseTypedType.optionType
+                            override val targetColConvert = a.targetColConvert
+                          }
+                      }
+                    }
 
-                  override val groupModel = Option.empty[GroupWraperBase]
+                  }
+                case (None, Some(t)) =>
+                  new GroupSlickReader {
 
-                }
-              case _ =>
-                throw new Exception("不可预测的原子集合")
+                    override val propertyName = property.proName
+                    override val selectModel = select
+
+                    override val groupModel = Option.empty[GroupWraperBase]
+
+                  }
+                case _ =>
+                  throw new Exception("不可预测的原子集合")
+              }
+              aa: GroupSlickReader
             }
-            aa: GroupSlickReader
           }
-        }
+      }.aa
     } { genList =>
       new FGroupQuery {
         override val wQuery = wQuery1

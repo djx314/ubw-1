@@ -22,21 +22,23 @@ import slick.relational.RelationalProfile
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 
-object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with FPilesGenHelper {
+object PropertiesOperation extends FPilesGenHelper {
 
   val RWPropertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[RWProperty]] = {
-    FPile.transformTreeListWithoutData { path =>
-      FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[InRetrieve] :: needAtomicOpt[AutoInc] :: needAtomic[SlickRetrieve] :: HNil)
-        .mapToOptionWithoutData(path) {
-          case (jsonWriter :: property :: inRetrieveOpt :: isAutoIncOpt :: slickRetrieve :: HNil) =>
-            RWProperty(
-              property = property.proName,
-              typeName = TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString,
-              inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true),
-              isAutoInc = isAutoIncOpt.map(_.isAutoInc).getOrElse(false),
-              isPrimaryKey = slickRetrieve.primaryGen.isDefined
-            )
-        }
+    FPile.transformTreeListWithoutData {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[InRetrieve] :: needAtomicOpt[AutoInc] :: needAtomic[SlickRetrieve] :: HNil)
+          .mapToOptionWithoutData {
+            case (jsonWriter :: property :: inRetrieveOpt :: isAutoIncOpt :: slickRetrieve :: HNil) =>
+              RWProperty(
+                property = property.proName,
+                typeName = TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString,
+                inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true),
+                isAutoInc = isAutoIncOpt.map(_.isAutoInc).getOrElse(false),
+                isPrimaryKey = slickRetrieve.primaryGen.isDefined
+              )
+          }
+      }.aa
     } { rwProperties =>
       rwProperties
     }
@@ -83,13 +85,15 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
   }*/
 
   val strJsonPropertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = StrOutSelectConvert.ubwGenWithoutData.flatMap {
-    FPile.transformTreeListWithoutData { path =>
-      FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[StrDefaultDesc] :: needAtomicOpt[StrNeededFetch] :: HNil)
-        .mapToOptionWithoutData(path) {
-          case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: neededFetchOpt :: HNil) =>
-            val inRetrieve = neededFetchOpt.map(_.isInRetrieve).getOrElse(true)
-            (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString, describeOpt.map(_.describe)))
-        }
+    FPile.transformTreeListWithoutData {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[StrDefaultDesc] :: needAtomicOpt[StrNeededFetch] :: HNil)
+          .mapToOptionWithoutData {
+            case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: neededFetchOpt :: HNil) =>
+              val inRetrieve = neededFetchOpt.map(_.isInRetrieve).getOrElse(true)
+              (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString, describeOpt.map(_.describe)))
+          }
+      }.aa
     } { jsonTupleList =>
       jsonTupleList
     }
@@ -139,13 +143,15 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
   }
 
   val jsonPropertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData.flatMap {
-    FPile.transformTreeListWithoutData { path =>
-      FAtomicQuery(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
-        .mapToOptionWithoutData(path) {
-          case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
-            val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
-            (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString, describeOpt.map(_.describe)))
-        }
+    FPile.transformTreeListWithoutData {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
+          .mapToOptionWithoutData {
+            case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
+              val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
+              (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString, describeOpt.map(_.describe)))
+          }
+      }.aa
     } { jsonTupleList =>
       jsonTupleList
     }
@@ -216,13 +222,15 @@ object PropertiesOperation extends FAtomicGenHelper with FAtomicShapeHelper with
   }
 
   val poiPropertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = OutSelectConvert.ubwGenWithoutData /*(wQuery)*/ .flatMap {
-    FPile.transformTreeListWithoutData { path =>
-      FAtomicQuery(needAtomic[PoiWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
-        .mapToOptionWithoutData(path) {
-          case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
-            val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
-            (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, jsonWriter.writer.typeTag.tpe.toString, describeOpt.map(_.describe)))
-        }
+    FPile.transformTreeListWithoutData {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[PoiWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: HNil)
+          .mapToOptionWithoutData {
+            case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
+              val inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true)
+              (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, jsonWriter.writer.typeTag.tpe.toString, describeOpt.map(_.describe)))
+          }
+      }.aa
     } { jsonTupleList =>
       jsonTupleList
     }

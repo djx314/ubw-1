@@ -2,28 +2,75 @@ package net.scalax.fsn.core
 
 import scala.reflect.runtime.universe._
 import scala.language.higherKinds
+import shapeless._
 
-trait AbstractFAtomicGen {
-  type T[_]
-  def getBy[U](atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]]
+trait AbstractFAtomicGen[U, S] {
+  def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, S]
 }
 
-trait FAtomicGen[S[_]] extends AbstractFAtomicGen {
-  override type T[K] = S[K]
+trait FAtomicGen[U, S[_]] extends AbstractFAtomicGen[U, S[U]] {
+  override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, S[U]]
 }
 
-trait FAtomicGenOpt[S[_]] extends AbstractFAtomicGen {
-  override type T[K] = Option[S[K]]
+trait FAtomicGenOpt[U, S[_]] extends AbstractFAtomicGen[U, Option[S[U]]] {
+  override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, Option[S[U]]]
 }
 
-trait FAtomicGenList[S[_]] extends AbstractFAtomicGen {
-  override type T[K] = List[S[K]]
+trait FAtomicGenList[U, S[_]] extends AbstractFAtomicGen[U, List[S[U]]] {
+  override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, List[S[U]]]
+}
+
+trait FAtomicGenShape[-Input, U, S] {
+  def unwrap(input: Input): AbstractFAtomicGen[U, S]
+}
+
+object FAtomicGenShape extends FAtomicGenShapeImpl {
+
+}
+
+trait FAtomicGenShapeImpl {
+  implicit def hnilShape[U]: FAtomicGenShape[HNil, U, HNil] = new FAtomicGenShape[HNil, U, HNil] {
+    override def unwrap(input: HNil): AbstractFAtomicGen[U, HNil] = new AbstractFAtomicGen[U, HNil] {
+      override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, HNil] = {
+        Right(HNil)
+      }
+    }
+  }
+
+  implicit def commonGenShape[U, T]: FAtomicGenShape[AbstractFAtomicGen[U, T], U, T] = new FAtomicGenShape[AbstractFAtomicGen[U, T], U, T] {
+    override def unwrap(input: AbstractFAtomicGen[U, T]): AbstractFAtomicGen[U, T] = input
+  }
+
+  implicit def hlistShape[U, Sub, Tail <: HList, SubRe, TailRe <: HList](
+    implicit
+    sub: FAtomicGenShape[Sub, U, SubRe],
+    tail: FAtomicGenShape[Tail, U, TailRe]
+  ): FAtomicGenShape[Sub :: Tail, U, SubRe :: TailRe] = new FAtomicGenShape[Sub :: Tail, U, SubRe :: TailRe] {
+    override def unwrap(input: Sub :: Tail): AbstractFAtomicGen[U, SubRe :: TailRe] = new AbstractFAtomicGen[U, SubRe :: TailRe] {
+      val subInput :: tailInput = input
+      override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, SubRe :: TailRe] = {
+        val subGen = sub.unwrap(subInput)
+        val tailGen = tail.unwrap(tailInput)
+        (subGen.getBy(atomics): Either[FAtomicException, SubRe]) -> (tailGen.getBy(atomics): Either[FAtomicException, TailRe]) match {
+          case (Left(s), Left(t)) =>
+            Left(FAtomicException(s.typeTags ::: t.typeTags))
+          case (Left(s), Right(_)) =>
+            Left(FAtomicException(s.typeTags))
+          case (Right(_), Left(s)) =>
+            Left(FAtomicException(s.typeTags))
+          case (Right(s), Right(t)) =>
+            Right(s :: t)
+        }
+      }
+    }
+  }
+
 }
 
 trait FAtomicGenHelper {
 
-  def needAtomic[T[_]](implicit parGen: FAtomicPartialFunctionGen[T], typeTag: WeakTypeTag[T[_]]): FAtomicGen[T] = new FAtomicGen[T] {
-    override def getBy[U](atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]] = {
+  def needAtomic[U, T[_]](implicit parGen: FAtomicPartialFunctionGen[T], typeTag: WeakTypeTag[T[_]]): FAtomicGen[U, T] = new FAtomicGen[U, T] {
+    override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]] = {
       atomics.find(parGen.par[U].isDefinedAt) match {
         case Some(s) =>
           Right(parGen.par[U](s))
@@ -33,14 +80,14 @@ trait FAtomicGenHelper {
     }
   }
 
-  def needAtomicOpt[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenOpt[T] = new FAtomicGenOpt[T] {
-    override def getBy[U](atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]] = {
+  def needAtomicOpt[U, T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenOpt[U, T] = new FAtomicGenOpt[U, T] {
+    override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, Option[T[U]]] = {
       Right(atomics.find(parGen.par[U].isDefinedAt).map(parGen.par[U].apply))
     }
   }
 
-  def needAtomicList[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenList[T] = new FAtomicGenList[T] {
-    override def getBy[U](atomics: List[FAtomic[U]]): Either[FAtomicException, T[U]] = {
+  def needAtomicList[U, T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenList[U, T] = new FAtomicGenList[U, T] {
+    override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, List[T[U]]] = {
       Right(atomics.filter(parGen.par[U].isDefinedAt).map(parGen.par[U].apply))
     }
   }
@@ -48,6 +95,10 @@ trait FAtomicGenHelper {
 }
 
 object FAtomicGenHelper extends FAtomicGenHelper
+
+/*trait FAtomicPartialFunctionGenBase[T[_]] {
+  def par[U]: PartialFunction[FAtomic[U], T[U]]
+}*/
 
 trait FAtomicPartialFunctionGen[T[_]] {
   def par[U]: PartialFunction[FAtomic[U], T[U]]

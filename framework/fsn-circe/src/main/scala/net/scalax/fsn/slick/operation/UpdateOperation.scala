@@ -72,68 +72,70 @@ trait ISlickUpdaterWithData {
   val data: DataWithIndex
 }
 
-object InUpdateConvert2 extends FAtomicGenHelper with FAtomicShapeHelper {
+object InUpdateConvert2 {
 
   def updateGen(
     implicit
     ec: ExecutionContext,
     updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
   ): FPileSyntax.PileGen[Option, List[(Any, SlickQueryBindImpl)] => DBIO[ExecInfo3]] = {
-    FPile.transformTreeList { path =>
-      FAtomicQuery(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: HNil)
-        .mapToOption(path) {
-          case (slickWriter :: oneToOneUpdateOpt :: HNil, data) => {
-            //val slickWriter = FColumn.find(columns)({ case s: SlickUpdate[columns.DataType] => s })
-            //val oneToOneUpdateOpt = FColumn.findOpt(columns)({ case s: OneToOneUpdate[columns.DataType] => s })
-            val uSlickSubGen = oneToOneUpdateOpt.map { oneToOneUpdate =>
-              new UUpdateTran2 {
-                override val table = oneToOneUpdate.owner
-                override def convert(source: UpdateQuery): UpdateQuery = {
-                  new UpdateQuery {
-                    override val bind = source.bind
-                    override val cols = source.cols ::: oneToOneUpdate.mainCol :: Nil
-                    override val shapes = source.shapes ::: oneToOneUpdate.mainShape :: Nil
-                    override val filters = source.filters ::: {
-                      val index = cols.indexOf(oneToOneUpdate.mainCol)
-                      new FilterColumnGen[Seq[Any]] {
-                        override type BooleanTypeRep = oneToOneUpdate.primaryGen.BooleanTypeRep
-                        override val dataToCondition = { cols: Seq[Any] =>
-                          val col = cols(index).asInstanceOf[oneToOneUpdate.TargetType]
-                          val slickData = oneToOneUpdate.filterConvert(data.get)
-                          oneToOneUpdate.primaryGen.dataToCondition(col)(slickData)
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
+        val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: HNil)
+          .mapToOption {
+            case (slickWriter :: oneToOneUpdateOpt :: HNil, data) => {
+              //val slickWriter = FColumn.find(columns)({ case s: SlickUpdate[columns.DataType] => s })
+              //val oneToOneUpdateOpt = FColumn.findOpt(columns)({ case s: OneToOneUpdate[columns.DataType] => s })
+              val uSlickSubGen = oneToOneUpdateOpt.map { oneToOneUpdate =>
+                new UUpdateTran2 {
+                  override val table = oneToOneUpdate.owner
+                  override def convert(source: UpdateQuery): UpdateQuery = {
+                    new UpdateQuery {
+                      override val bind = source.bind
+                      override val cols = source.cols ::: oneToOneUpdate.mainCol :: Nil
+                      override val shapes = source.shapes ::: oneToOneUpdate.mainShape :: Nil
+                      override val filters = source.filters ::: {
+                        val index = cols.indexOf(oneToOneUpdate.mainCol)
+                        new FilterColumnGen[Seq[Any]] {
+                          override type BooleanTypeRep = oneToOneUpdate.primaryGen.BooleanTypeRep
+                          override val dataToCondition = { cols: Seq[Any] =>
+                            val col = cols(index).asInstanceOf[oneToOneUpdate.TargetType]
+                            val slickData = oneToOneUpdate.filterConvert(data.get)
+                            oneToOneUpdate.primaryGen.dataToCondition(col)(slickData)
+                          }
+                          override val wt = oneToOneUpdate.primaryGen.wt
                         }
-                        override val wt = oneToOneUpdate.primaryGen.wt
-                      }
-                    } :: Nil
-                    override val updateIndices = source.updateIndices
-                    override val updateShapes = source.updateShapes
-                    override val updateData = source.updateData
+                      } :: Nil
+                      override val updateIndices = source.updateIndices
+                      override val updateShapes = source.updateShapes
+                      override val updateData = source.updateData
+                    }
                   }
                 }
               }
-            }
 
-            val uSlickWriter = USWriter2(
-              mainCol = slickWriter.mainCol,
-              mainShape = slickWriter.mainShape,
-              table = slickWriter.owner,
-              data = slickWriter.convert(data.get),
-              primaryGen = slickWriter.primaryGen.map { eachPri =>
-                (new FilterColumnGen[slickWriter.TargetType] {
-                  override type BooleanTypeRep = eachPri.BooleanTypeRep
-                  override val dataToCondition = { sourceCol: slickWriter.TargetType =>
-                    eachPri.dataToCondition(sourceCol)(
-                      slickWriter.filterConvert(data.get)
-                    )
-                  }
-                  override val wt = eachPri.wt
-                })
-              },
-              subGen = uSlickSubGen
-            )
-            uSlickWriter: USlickWriter2
+              val uSlickWriter = USWriter2(
+                mainCol = slickWriter.mainCol,
+                mainShape = slickWriter.mainShape,
+                table = slickWriter.owner,
+                data = slickWriter.convert(data.get),
+                primaryGen = slickWriter.primaryGen.map { eachPri =>
+                  (new FilterColumnGen[slickWriter.TargetType] {
+                    override type BooleanTypeRep = eachPri.BooleanTypeRep
+                    override val dataToCondition = { sourceCol: slickWriter.TargetType =>
+                      eachPri.dataToCondition(sourceCol)(
+                        slickWriter.filterConvert(data.get)
+                      )
+                    }
+                    override val wt = eachPri.wt
+                  })
+                },
+                subGen = uSlickSubGen
+              )
+              uSlickWriter: USlickWriter2
+            }
           }
-        }
+      }.aa
     } { genList =>
       { binds: List[(Any, SlickQueryBindImpl)] =>
         val genListWithData = genList.zipWithIndex.map {
