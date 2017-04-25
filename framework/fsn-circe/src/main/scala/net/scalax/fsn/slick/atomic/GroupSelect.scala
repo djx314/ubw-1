@@ -7,9 +7,13 @@ import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Ordered, Rep, Shape }
 import scala.language.existentials
 
 trait GroupSlickSelect[D] extends FAtomic[D] {
-  val shape: Shape[_ <: FlatShapeLevel, Any, Any, Any]
-  val outCol: Any
-  val colToOrder: Option[Any => Ordered]
+  type SourceType
+  type DataType
+  type TargetType
+
+  val shape: Shape[_ <: FlatShapeLevel, SourceType, DataType, TargetType]
+  val outCol: SourceType
+  val colToOrder: Option[TargetType => Ordered]
 }
 
 case class GroupSSelect[S, D, T](
@@ -24,9 +28,12 @@ case class GroupSSelect[S, D, T](
   def order(implicit orderCv: T => Ordered): GroupSSelect[S, D, T] = self.copy(colToOrder = Option(orderCv))
 
   private def selectWithType[E]: GroupSlickSelect[E] = new GroupSlickSelect[E] {
-    override val shape = self.shape.asInstanceOf[Shape[_ <: FlatShapeLevel, Any, Any, Any]]
+    override type SourceType = S
+    override type DataType = D
+    override type TargetType = T
+    override val shape = self.shape //.asInstanceOf[Shape[_ <: FlatShapeLevel, Any, Any, Any]]
     override val outCol = self.outCol
-    override val colToOrder = self.colToOrder.asInstanceOf[Option[Any => ColumnOrdered[_]]]
+    override val colToOrder = self.colToOrder //.asInstanceOf[Option[Any => ColumnOrdered[_]]]
   }
 
   /*def groupWithNonOpt[U](
