@@ -158,7 +158,7 @@ trait FGroupQuery {
             case ("count", reader) =>
               val eachValue = queries.map { values =>
                 values(reader._2)
-              }(reader._1.selectModel.shape.packedShape)
+              }(reader._1.selectModel.shape.packedShape.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]])
               eachValue.length
             case (method, reader) =>
               val helper = new ExtensionMethodConversions {}
@@ -218,7 +218,7 @@ trait FGroupQuery {
       case (keyIndex, repIndex) =>
         val (reader, _) = readers(keyIndex)
         reader.selectModel.colToOrder.map { colToOrder =>
-          (reader.propertyName, (repIndex, colToOrder))
+          (reader.propertyName, (repIndex, colToOrder.asInstanceOf[Any => Ordered]))
         }.toList
     }.flatten.toMap
 
