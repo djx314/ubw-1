@@ -28,7 +28,7 @@
 
 但为了类型安全和映射对象`slick`也做出了一些牺牲，下面通过一些简单的例子重点说明一下这些不和谐的地方，这跟`fsn` `slick`部分的模块的设计目标有很大的关系。
 
-&emsp;&emsp;首先我们建设一个模型：
+&emsp;&emsp;首先我们建立一个模型：
 
 ```scala
 import slick.jdbc.H2Profile.api._
