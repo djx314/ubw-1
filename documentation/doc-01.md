@@ -18,12 +18,32 @@
 
 &emsp;&emsp;`slick`满足了我认识他之前对数据库操作框架的诸多幻想：
 
-1. 类型安全，在不断迭代的`Query`运算中可以保持类型不丢失；
+1. 类型安全，在不断迭代的`Query`运算中可以保持类型信息不丢失；
 
 1. 框架本身几乎没有运行时消耗（尤其在对象关系映射方面）；
 
 1. 设计严密，几乎可以映射所有形式十分复杂的 sql 语句；
 
-1. `slick` 3.1.0 以后生成的 sql 语句几乎可以与手写的相媲美。
+1. `slick` 3.1.0 以后生成的 sql 语句的简洁程度几乎可以与手写的相媲美。
 
 但为了类型安全和映射对象`slick`也做出了一些牺牲，下面通过一些简单的例子重点说明一下这些不和谐的地方，这跟`fsn` `slick`部分的模块的设计目标有很大的关系。
+
+&emsp;&emsp;首先我们建立一个模型：
+
+```scala
+import slick.jdbc.H2Profile.api._
+
+case class Friend(
+  id: Option[Long],
+  name: String,
+  nick: String
+)
+
+class FriendTable(tag: Tag) extends Table[Friend](tag, "firend") {
+  def id = column[Long]("id", O.AutoInc)
+  def name = column[String]("name")
+  def nick = column[String]("nick")
+
+  def * = (id.?, name, nick).mapTo[Friend]
+}
+```
