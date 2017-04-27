@@ -1,9 +1,6 @@
 package net.scalax.fsn.database.test
 
 import slick.jdbc.H2Profile.api._
-/**
- * Created by djx314 on 15-6-22.
- */
 
 case class Friend(
   id: Option[Long],
