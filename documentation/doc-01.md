@@ -28,22 +28,6 @@
 
 但为了类型安全和映射对象`slick`也做出了一些牺牲，下面通过一些简单的例子重点说明一下这些不和谐的地方，这跟`fsn` `slick`部分的模块的设计目标有很大的关系。
 
-&emsp;&emsp;首先我们建立一个模型：
+1. 烦人的 sortBy
 
-```scala
-import slick.jdbc.H2Profile.api._
-
-case class Friend(
-  id: Option[Long],
-  name: String,
-  nick: String
-)
-
-class FriendTable(tag: Tag) extends Table[Friend](tag, "firend") {
-  def id = column[Long]("id", O.AutoInc)
-  def name = column[String]("name")
-  def nick = column[String]("nick")
-
-  def * = (id.?, name, nick).mapTo[Friend]
-}
-```
+slick 的 sortBy

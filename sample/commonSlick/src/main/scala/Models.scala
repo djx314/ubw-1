@@ -3,7 +3,7 @@ package net.scalax.fsn.database.test
 import slick.jdbc.H2Profile.api._
 
 case class Friend(
-  id: Option[Long],
+  id: Option[Long] = None,
   name: String,
   nick: String,
   age: Option[Int],
@@ -20,14 +20,4 @@ class FriendTable(tag: Tag) extends Table[Friend](tag, "firend") {
   def * = (id.?, name, nick, age, grade).mapTo[Friend]
 }
 
-object FriendTq extends TableQuery(cons => new FriendTable(cons))
-
-object Sample01 {
-
-  lazy val db = {
-    val datasource = new JdbcDataSource()
-    datasource.setUrl(s"jdbc:h2:mem:groupTest;DB_CLOSE_DELAY=-1")
-    Database.forDataSource(datasource, None)
-  }
-
-}
+object FriendTable extends TableQuery(cons => new FriendTable(cons))
