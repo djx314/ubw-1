@@ -13,4 +13,6 @@ scalaVersion := "2.12.2"
 
 scalacOptions ++= Seq("-feature", "-deprecation")
 
+libraryDependencies ++= Seq("com.h2database" % "h2" % "1.4.192")
+
 val commonSlick = (project in file(".")).dependsOn(fsnProject)
