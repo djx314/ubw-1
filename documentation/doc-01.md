@@ -30,12 +30,14 @@
 
 1. 烦人的 sortBy
 
-`slick` `Query` 的 `sortBy` 由于类型安全的原因，在需要动态 sortBy 的情况下代码略为臃肿。例如我在前端以列标识（string）和 isDesc 参数（boolean）为参数 parse 成 json 传到服务器要求查询时先对某一列进行排序
+`slick`中的`Query`在需要动态`sortBy`的情况下代码略为臃肿。例如我在前端以列标识（string）和 isDesc 参数（boolean）为参数以 json 格式传到服务器作为数据库排序条件时
+
 ```javascript
 { sortColumn: "name", isDesc: true }
 ```
 
 由于类型安全的限制，你只能编写以下代码：
+
 ```scala
 def sortByName(query: Query[FriendTable, FriendTable#TableElementType, Seq], colName: String, isDesc: Boolean): Query[FriendTable, FriendTable#TableElementType, Seq] = {
   import slick.lifted.{ Ordered => SlickOrdered }
@@ -59,6 +61,6 @@ def sortByName(query: Query[FriendTable, FriendTable#TableElementType, Seq], col
 }
 ```
 
-而且这种判断对于复杂列（例如列相加）的处理需要编写更多的 case 分支并且要自己定义命名规则与前端匹配，`Query`类型信息发生变化后需要重新编写匹配函数（`groupBy`操作）。有个朋友 @烟流 自己写了个 macro 放在 table 代码中，可以自动根据字符串匹配所有的列，但毕竟治标不治本，复杂列和复杂类型依然无法处理，而且部分不能排序的列又需要做特殊处理。
+而且这种判断如果遇到复杂列（如列与列相加）则需要更多的 case 分支，并且要自己定义命名规则与前端匹配，`Query`类型信息发生变化后需要重新编写匹配函数（`groupBy`操作）。有个朋友 @烟流 自己写了个 macro 放在 table 代码中，可以自动根据字符串匹配所有的列，但复杂列和复杂类型依然无法优雅处理，而且部分不能排序的列又需要做特殊处理。
 
-不仅`slick`对于`sortBy`的处理表现欠佳，其他 Java 的 ORM 框架（`hibernate`、`mybatis`等）对排序的官方支持也是一般，例如`hibernate`在多层对象嵌套的情况下已不能简单读取到列的信息用作自动匹配排序逻辑。
+不仅`slick`对于`sortBy`的默认处理表现欠佳，其他 Java 的 ORM 框架（`hibernate`、`mybatis`等）对排序的官方支持也是一般，例如`hibernate`在多层对象嵌套的情况下已不能简单读取到列的信息用作自动匹配排序逻辑。
