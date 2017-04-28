@@ -30,7 +30,7 @@
 
 1. 烦人的 sortBy
 
-`slick` `Query` 的 `sortBy` 由于需要类型安全的原因，在需要动态 sortBy 的情况下代码略为臃肿。例如我在前端以列标识（string）和 isDesc 参数（boolean）为参数 parse 成 json 传到服务器要求查询时先对某一列进行排序
+`slick` `Query` 的 `sortBy` 由于类型安全的原因，在需要动态 sortBy 的情况下代码略为臃肿。例如我在前端以列标识（string）和 isDesc 参数（boolean）为参数 parse 成 json 传到服务器要求查询时先对某一列进行排序
 ```javascript
 { sortColumn: "name", isDesc: true }
 ```
@@ -59,6 +59,6 @@ def sortByName(query: Query[FriendTable, FriendTable#TableElementType, Seq], col
 }
 ```
 
-而且这种处理对于复杂列（例如列相加）的处理需要编写更多的 case 分支并且要自己定义命名规则需要前端匹配，`Query`类型信息发生变化后需要重新编写匹配函数（`groupBy`）。有个朋友自己写了个 `macro`，放在 table 代码中可以自动根据字符串匹配所有的列，但毕竟治标不治本，复杂列和复杂类型依然无法处理，而且部分不能排序的列又需要做特殊处理。
+而且这种判断对于复杂列（例如列相加）的处理需要编写更多的 case 分支并且要自己定义命名规则与前端匹配，`Query`类型信息发生变化后需要重新编写匹配函数（`groupBy`操作）。有个朋友 @烟流 自己写了个 macro 放在 table 代码中，可以自动根据字符串匹配所有的列，但毕竟治标不治本，复杂列和复杂类型依然无法处理，而且部分不能排序的列又需要做特殊处理。
 
-不仅`slick`对于`sortBy`的处理表现欠佳，其他 java 的 orm 框架（`hibernate`、`mybatis`）对排序和分页的官方支持也是一般，例如`hibernate`在多层对象嵌套的情况下几乎不能简单（甚至通过反射）读取到列的信息用作自动匹配排序逻辑。
+不仅`slick`对于`sortBy`的处理表现欠佳，其他 Java 的 ORM 框架（`hibernate`、`mybatis`等）对排序的官方支持也是一般，例如`hibernate`在多层对象嵌套的情况下已不能简单读取到列的信息用作自动匹配排序逻辑。
