@@ -28,22 +28,37 @@
 
 但为了类型安全和映射对象`slick`也做出了一些牺牲，下面通过一些简单的例子重点说明一下这些不和谐的地方，这跟`fsn` `slick`部分的模块的设计目标有很大的关系。
 
-&emsp;&emsp;首先我们建立一个模型：
+1. 烦人的 sortBy
 
+`slick` `Query` 的 `sortBy` 由于需要类型安全的原因，在需要动态 sortBy 的情况下代码略为臃肿。例如我在前端以列标识（string）和 isDesc 参数（boolean）为参数 parse 成 json 传到服务器要求查询时先对某一列进行排序
+```javascript
+{ sortColumn: "name", isDesc: true }
+```
+
+由于类型安全的限制，你只能编写以下代码：
 ```scala
-import slick.jdbc.H2Profile.api._
+def sortByName(query: Query[FriendTable, FriendTable#TableElementType, Seq], colName: String, isDesc: Boolean): Query[FriendTable, FriendTable#TableElementType, Seq] = {
+  import slick.lifted.{ Ordered => SlickOrdered }
 
-case class Friend(
-  id: Option[Long],
-  name: String,
-  nick: String
-)
-
-class FriendTable(tag: Tag) extends Table[Friend](tag, "firend") {
-  def id = column[Long]("id", O.AutoInc)
-  def name = column[String]("name")
-  def nick = column[String]("nick")
-
-  def * = (id.?, name, nick).mapTo[Friend]
+  val repToOrder = { friend: FriendTable =>
+    val order = colName match {
+      case "id" => friend.id: SlickOrdered
+      case "name" => friend.name: SlickOrdered
+      case "nick" => friend.nick: SlickOrdered
+      case "age" => friend.age: SlickOrdered
+      case "grade" => friend.grade: SlickOrdered
+      case _ => throw new IllegalArgumentException("没有匹配的数据库列")
+    }
+    if (isDesc) {
+      new SlickOrdered(order.columns.map(s => s.copy(_2 = s._2.desc)))
+    } else {
+      new SlickOrdered(order.columns.map(s => s.copy(_2 = s._2.asc)))
+    }
+  }
+  query.sortBy(repToOrder)
 }
 ```
+
+而且这种处理对于复杂列（例如列相加）的处理需要编写更多的 case 分支并且要自己定义命名规则需要前端匹配，`Query`类型信息发生变化后需要重新编写匹配函数（`groupBy`）。有个朋友自己写了个 `macro`，放在 table 代码中可以自动根据字符串匹配所有的列，但毕竟治标不治本，复杂列和复杂类型依然无法处理，而且部分不能排序的列又需要做特殊处理。
+
+不仅`slick`对于`sortBy`的处理表现欠佳，其他 java 的 orm 框架（`hibernate`、`mybatis`）对排序和分页的官方支持也是一般，例如`hibernate`在多层对象嵌套的情况下几乎不能简单（甚至通过反射）读取到列的信息用作自动匹配排序逻辑。

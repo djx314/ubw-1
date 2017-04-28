@@ -6,7 +6,6 @@
 *.idea
 *.tmpBin
 /logs
-/bin/
 /sbt
 /sbt.bat
-bin
+sample/commonSlick/sbt
