@@ -7,7 +7,7 @@ lazy val logger = {
   LoggerFactory.getLogger("sbt init")
 }
 
-val slickVersion = "3.2.0-RC1"
+val slickVersion = "3.2.0"
 val circeVersion = "0.7.0"
 val poiVersion = "3.15"
 val scalazVersion = "7.3.0-M7"
