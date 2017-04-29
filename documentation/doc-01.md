@@ -1,4 +1,4 @@
-# 项目构想
+# 困境
 
 ## 总览
 
@@ -106,8 +106,59 @@ var layout = [[
 
 DTO 支持的需求类似第二点的动态列支持，但 DTO 还需要对模型的属性起一个别名，而且某些属性不可能顺利地只把值传过就完成任务。例如我需要把传入来的 username 分解成 firstName 和 lastName 再持久化进数据库，但是取出展示的时候又需要把两列合并成 username 输出，并且这一步需要对外屏蔽，不能在 js 端做。又或者传输字段的类型和属性不变，我需要把 js 端的 float 标准化成两位小数后再持久化进数据库。这些需求，目前而言是需要添加诸多代码，并且需要重复地建立类似的模型，有时候只有两三个字段不同，你就需要重新编写一个上 30 个字段的模型类。
 
-### 5. multiply view
+### 5. 多类视图
 
-数据库的查询结果
+数据库的查询结果一般是渲染成 Json 在网页展示。但如果我是需要输出到 Excel 的话事情就有点有趣了。`slick`的查询结果输出成 Json 只需要 asJson 即可。但要渲染成 Excel 的话条件限制就大了，Excel 的列宽，小数位数，formatter 等信息使得你几乎需要为每一个 model 量身定做一个导出方案。即使你使用注解和反射解决了这个问题，但万一碰到生成 Excel 某一列的小数位数需要网页传入参数决定这类问题，输出方案又要重构了。
 
-### 6. filter
+### 6. 多类输入
+
+同第 5 点，如果你提交的数据来源不仅是 json，而是 Excel，csv，甚至是其他数据库，你也需要分别为这些输入作出定制的逻辑。
+
+### 6. 动态 filter
+
+数据库的查询多带限制条件（`slick`的`filter`），但如果查询的条件是在运行时才决定的，你可能需要下面一段代码来掩盖`slick`的不足：
+
+```slick
+def queryFilter(query: Query[FriendTable, FriendTable#TableElementType, Seq], age: Option[Int], grade: Option[Int]): Query[FriendTable, FriendTable#TableElementType, Seq] = {
+  val query1 = age match {
+    case Some(s) => query.filter(_.age === s)
+    case _ => query
+  }
+  grade match {
+    case Some(s) => query1.filter(_.grade === s)
+    case _ => query1
+  }
+}
+```
+
+如果我有 10 个参数需要这样动态决定呢？
+
+### 7. 更动态的 sql 语句生成
+
+需求是：我只有一个通用 talbe
+
+```scala
+class SimpleTable(tag: Tag) extends Table[Unit](tag, "student") {
+  def * = ()
+}
+```
+
+我需要根据一段很复杂的包含数据库表信息的 Json 生成一个 sql 生成方案
+
+1. 可以根据输入的 json 过滤某些列的值
+
+1. 可以根据字段名决定某些列的排序规则
+
+1. 第 1 点和第 2 点的列都有限制，超出范围的过滤条件和排序条件自动忽略
+
+1. 表间关联和多维度统计等功能要齐全
+
+1. 甚至可以处理有多表关联关系的数据插入和更新
+
+这些功能你可以用市面上的开源框架做到么？
+
+## 希望之光
+
+&emsp;&emsp;上面的这几点不足，其实只是你不够了解`slick`，`slick`是 FRM 框架，对象映射只是他的一个附属功能，只不过因为其应用范围广，覆盖掉其他功能的光辉而已。我可以肯定地告诉你，在真正的`slick`面前，上面说的这些缺点其实不是缺点，只是`slick`的功能之一，`fsn`正是为了把这些功能挖掘出来的一个框架。但`fsn`不单单只是一个针对`slick`做扩展的框架，他是一个数据转换的抽象，可以在不同的数据源和数据目标间构建数据通道，实现数据在不同领域间的转换。
+
+&emsp;&emsp;好了，说了这么多废话，有兴趣的话进入第二章吧。
