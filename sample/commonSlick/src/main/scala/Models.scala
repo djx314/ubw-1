@@ -21,3 +21,7 @@ class FriendTable(tag: Tag) extends Table[Friend](tag, "firend") {
 }
 
 object FriendTable extends TableQuery(cons => new FriendTable(cons))
+
+class SimpleTable(tag: Tag) extends Table[Unit](tag, "student") {
+  def * = ()
+}

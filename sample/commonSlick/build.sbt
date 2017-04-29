@@ -13,6 +13,13 @@ scalaVersion := "2.12.2"
 
 scalacOptions ++= Seq("-feature", "-deprecation")
 
-libraryDependencies ++= Seq("com.h2database" % "h2" % "1.4.192")
+val circeVersion = "0.7.0"
+
+libraryDependencies ++= Seq(
+  "com.h2database" % "h2" % "1.4.192",
+  "io.circe" %% "circe-core" % circeVersion,
+  "io.circe" %% "circe-generic" % circeVersion,
+  "io.circe" %% "circe-parser" % circeVersion
+)
 
 val commonSlick = (project in file(".")).dependsOn(fsnProject)
