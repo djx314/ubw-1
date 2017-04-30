@@ -96,10 +96,6 @@ trait FAtomicGenHelper {
 
 object FAtomicGenHelper extends FAtomicGenHelper
 
-/*trait FAtomicPartialFunctionGenBase[T[_]] {
-  def par[U]: PartialFunction[FAtomic[U], T[U]]
-}*/
-
 trait FAtomicPartialFunctionGen[T[_]] {
   def par[U]: PartialFunction[FAtomic[U], T[U]]
 }
@@ -120,7 +116,7 @@ class FAtomicPartialFunctionGenImpl(val c: scala.reflect.macros.blackbox.Context
       q"""
         new _root_.net.scalax.fsn.core.FAtomicPartialFunctionGen[$typeSymbol] {
           override def par[U]: PartialFunction[_root_.net.scalax.fsn.core.FAtomic[U], $typeSymbol[U]] = {
-           case s: $typeSymbol[U] => s
+           case (s: $typeSymbol[U @_root_.scala.unchecked]) => s
           }
         }
      """

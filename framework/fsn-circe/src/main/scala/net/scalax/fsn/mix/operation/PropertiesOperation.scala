@@ -11,10 +11,8 @@ import net.scalax.fsn.json.operation.{ ExcelOperation, JsonOperation }
 import net.scalax.fsn.excel.atomic.PoiWriter
 import slick.jdbc.JdbcActionComponent
 import shapeless._
-import io.circe.syntax._
 import io.circe.Json
 import slick.ast.BaseTypedType
-import slick.basic.BasicProfile
 import slick.dbio._
 import slick.lifted.{ Query, Rep }
 import slick.relational.RelationalProfile

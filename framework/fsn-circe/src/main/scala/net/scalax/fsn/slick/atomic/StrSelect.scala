@@ -3,8 +3,6 @@ package net.scalax.fsn.slick.atomic
 import net.scalax.fsn.core.{ FAtomic, FPathImpl }
 import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Shape }
 
-import scala.language.existentials
-
 trait StrSlickSelect[D] extends FAtomic[D] {
   type SourceType
   type TargetType

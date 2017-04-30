@@ -2,12 +2,8 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.slick.atomic.{ OneToOneUpdate, SlickUpdate, StaticMany }
-import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
-import net.scalax.fsn.slick.model.{ QueryJsonInfo, StaticManyUbw, UpdateStaticManyInfo }
-import slick.dbio.DBIO
-import slick.jdbc.JdbcActionComponent
-import slick.lifted.Query
+import net.scalax.fsn.slick.atomic.StaticMany
+import net.scalax.fsn.slick.model.{ QueryJsonInfo, StaticManyUbw }
 import shapeless._
 
 import scala.concurrent.{ ExecutionContext, Future }

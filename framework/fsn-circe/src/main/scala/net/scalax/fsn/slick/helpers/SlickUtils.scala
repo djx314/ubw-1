@@ -2,7 +2,6 @@ package net.scalax.fsn.slick.helpers
 
 import slick.ast._
 import slick.lifted._
-import slick.relational.RelationalProfile
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag

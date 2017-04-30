@@ -5,8 +5,6 @@ import net.scalax.fsn.slick.helpers.FilterWrapper
 import net.scalax.fsn.slick.model.StaticManyGen
 import slick.lifted.{ FlatShapeLevel, Shape }
 
-import scala.language.existentials
-import scala.language.implicitConversions
 import scala.concurrent.Future
 /*trait SubUbw[E] extends FAtomic[E] {
   val subCols: List[FColumn]

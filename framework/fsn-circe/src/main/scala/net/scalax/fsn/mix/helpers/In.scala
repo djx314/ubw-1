@@ -8,9 +8,8 @@ import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
 import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.helpers.{ FilterWrapper, SlickUtils }
 import net.scalax.fsn.slick.model.StaticManyGen
-import org.xarcher.cpoi.{ ReadableCellOperationAbs, StyleTransform, WriteableCellContentOperationAbs, WriteableCellOperationAbs }
-import slick.lifted.{ FlatShapeLevel, Rep, Shape }
-import slick.relational.RelationalProfile
+import org.xarcher.cpoi.{ ReadableCellOperationAbs, StyleTransform, WriteableCellOperationAbs }
+import slick.lifted.{ FlatShapeLevel, Shape }
 
 import scala.concurrent.Future
 import scala.reflect.runtime.universe._

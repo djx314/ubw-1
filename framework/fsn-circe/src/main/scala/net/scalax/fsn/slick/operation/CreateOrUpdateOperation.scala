@@ -1,14 +1,6 @@
 package net.scalax.fsn.slick.operation
 
-import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
-import slick.relational.RelationalProfile
-
-import scala.language.existentials
-import scala.concurrent.ExecutionContext
-import scala.util.Success
-
 object CreateOrUpdateOperation {
-  import slick.jdbc.PostgresProfile.api._
   /*def parseInsert(
     insertQuerytWrap: List[(Any, SlickQueryBindImpl)],
     columns: List[FColumn]

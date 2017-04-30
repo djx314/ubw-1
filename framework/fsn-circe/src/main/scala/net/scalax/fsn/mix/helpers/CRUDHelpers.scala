@@ -4,12 +4,11 @@ import io.circe.{ Decoder, Encoder }
 import net.scalax.fsn.core.FAtomic
 import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.helpers.{ FRep, FilterWrapper, SlickUtils }
-import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Rep, Shape }
+import net.scalax.fsn.slick.helpers.{ FilterWrapper, SlickUtils }
+import slick.lifted.{ FlatShapeLevel, Shape }
 import slick.relational.RelationalProfile
 
 import scala.reflect.runtime.universe._
-import scala.language.existentials
 
 case class SCRUD[S, D, T, E](
     create: SCreate[S, D, T, E],

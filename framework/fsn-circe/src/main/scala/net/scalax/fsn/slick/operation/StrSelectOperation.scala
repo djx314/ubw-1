@@ -6,12 +6,10 @@ import net.scalax.fsn.slick.atomic.{ StrOrderNullsLast, StrOrderTargetName, StrS
 import net.scalax.fsn.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
 import net.scalax.fsn.slick.model._
 import shapeless._
-import slick.basic.BasicProfile
 import slick.dbio.{ DBIO, NoStream }
 import slick.jdbc.JdbcActionComponent
 import slick.lifted._
 
-import scala.language.existentials
 import scala.concurrent.ExecutionContext
 
 trait StrSlickReader {

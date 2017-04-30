@@ -1,5 +1,4 @@
 package net.scalax.fsn.slick.operation
-import net.scalax.fsn.slick.atomic.InRetrieve
 /*object InRetrieveOperation {
 
   def filterInRetrieve(columns: List[FColumn]): List[FColumn] = {

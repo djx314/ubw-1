@@ -6,7 +6,7 @@ import net.scalax.fsn.core._
 //import net.scalax.fsn.mix.helpers.{Select => SSelect}
 import net.scalax.fsn.mix.slickbase.{ CrudQueryExtensionMethods, PileListQueryExtensionMethods }
 import net.scalax.fsn.slick.helpers.{ FRep, SlickUtils }
-import slick.lifted.{ FlatShapeLevel, Query, Rep, Shape }
+import slick.lifted.{ FlatShapeLevel, Query, Shape }
 import slick.relational.RelationalProfile
 
 import scala.reflect.runtime.universe._

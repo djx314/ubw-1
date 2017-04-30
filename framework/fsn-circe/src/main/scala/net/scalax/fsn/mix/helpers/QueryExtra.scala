@@ -2,22 +2,18 @@ package net.scalax.fsn.mix.helpers
 
 import io.circe.Json
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{ ExcelOperation, JsonOperation }
 import net.scalax.fsn.mix.operation.PropertiesOperation
 import net.scalax.fsn.mix.slickbase.{ FQueryWrap, PileListQueryWrap }
-import net.scalax.fsn.slick.atomic.{ AutoInc, SlickRetrieve }
 import net.scalax.fsn.slick.model._
 import net.scalax.fsn.slick.operation._
 import slick.ast.BaseTypedType
 import slick.basic.BasicProfile
 import slick.dbio._
 import slick.jdbc.JdbcActionComponent
-import slick.lifted.{ FlatShapeLevel, Query, Rep, Shape }
+import slick.lifted.{ Query, Rep }
 import slick.relational.RelationalProfile
 
 import scala.concurrent.ExecutionContext
-import scala.reflect.runtime.universe._
-import scala.language.implicitConversions
 
 trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 

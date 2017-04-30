@@ -3,14 +3,12 @@ package net.scalax.fsn.slick.operation
 import net.scalax.fsn.core._
 import net.scalax.fsn.slick.atomic.{ AutoInc, OneToOneCrate, SlickCreate }
 import net.scalax.fsn.slick.helpers.{ ListAnyShape, SlickQueryBindImpl, SlickUtils }
-import slick.basic.BasicProfile
 import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent
 import slick.lifted.{ FlatShapeLevel, Query, Shape }
 import shapeless._
 
 import scala.concurrent.ExecutionContext
-import scala.language.existentials
 /*case class ExecInfo(effectRows: Int, columns: List[ColumnWithIndex]) {
 
   def fColumns = columns.map(_.column)
