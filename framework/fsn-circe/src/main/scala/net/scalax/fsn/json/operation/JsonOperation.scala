@@ -104,12 +104,12 @@ object JsonOperation {
             val exportData = data.fold(defaultOpt.map(_.value))(Option(_))
             //val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
             implicit val writerJ = jsonWriter.writer
-            property.proName -> exportData.map(s => jsonWriter.convert(s)).asJson
+            exportData.map(s => property.proName -> jsonWriter.convert(s).asJson)
           }
         }
     }.aa
   } { jsonTupleList =>
-    jsonTupleList.toMap: Map[String, Json]
+    jsonTupleList.collect { case Some(s) => s }.toMap: Map[String, Json]
   }
 
 }

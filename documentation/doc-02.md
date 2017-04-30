@@ -122,7 +122,6 @@ properties:
 
 ```scala
 val view2: DBIO[JsonView] = result1.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))))
-
 ```
 
 根据传入参数的不同，日志的 sql 语句发生了变化：
@@ -134,3 +133,39 @@ val view2: DBIO[JsonView] = result1.toView(SlickParam(orders = List(ColumnOrder(
 `id`字段根据根据传入参数进行了 asc 排序，`name`字段由于声明时做了`orderTarget`处理，排序逻辑自动跳转到`nick`字段并进行 desc 排序。`orderTarget`这个特性在前端处理一些排序逻辑的时候十分有用（例如有一个既有的 grid 组件，在展示年级成绩数据的时候，班级列有一个排序组件，现在需要当点击班级列使其降序排序的时候按各班级平均分降序排序）。而由于`ageOpt`列没有声明排序逻辑，所以自动忽略了此列的排序逻辑。
 
 至此，`fsn`在创作之初的需求[排序](doc-01.md#1-烦人的-sortby)和分页得以轻松解决，其中分页的实现较为复杂，有 drop、take、pageIndex、pageSize 四个属性其中三个可以为空，传入`SlickParam`后即可达到分页效果，不同的数据量和参数可以导致不同的 sql 查询策略，但分页是`slick`内置的功能，在此不做详述。
+
+只改变列声明，不改变传入的参数：
+
+```scala
+val fQuery = for {
+  friend <- FriendTable.out
+} yield {
+  List(
+    "id" ofPile friend.id.out.order.describe("自增主键").inView(false).writeJ,
+    "name" ofPile friend.name.out.orderTarget("nick").describe("昵称").writeJ,
+    "nick" ofPile friend.nick.out.order.describe("昵称").inView(false).writeJ,
+    "ageOpt" ofPile friend.age.out.writeJ
+  )
+}
+```
+
+可以看到生成的 sql 语句为：
+
+```sql
+select "name", "age" from "firend" order by "id" nulls last, "nick" desc nulls last
+```
+
+而输出的 Json 结果集为：
+
+```json
+[
+ { "name" : "魔理沙", "ageOpt" : 2333 },
+ { "name" : "jilen", "ageOpt" : 30 },
+ { "name" : "品神", "ageOpt" : 28 },
+ { "name" : "廖师虎", "ageOpt" : null }
+]
+```
+
+可以看到标记了需要隐藏的字段不单在 Json 中被隐藏，而是在数据库查询中就已经被删去了，而且不影响`nick`字段的排序（此效果得益于`slick` 3.1.0 以后的 sql 简化功能）。
+
+由于列的定义已经十分动态，只要稍作修改，便可根据传入的 List[String] 类型的参数在数据库查询级别过滤要展示的列了。[动态列支持欠佳](doc-01.md#2-动态列支持欠佳)的问题迎刃而解。至于能否实现`GraphQL`其中的按需传输数据就要看大家的想象力了。

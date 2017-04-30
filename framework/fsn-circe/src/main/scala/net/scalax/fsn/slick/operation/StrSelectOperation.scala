@@ -2,7 +2,7 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.slick.atomic.{ StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
+import net.scalax.fsn.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
 import net.scalax.fsn.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
 import net.scalax.fsn.slick.model._
 import shapeless._
@@ -22,12 +22,15 @@ trait StrSlickReader {
   val orderTargetGen: Option[(String, String)]
   val sourceCol: SourceColumn
 
+  val inView: Boolean
+
   val mainShape: Shape[_ <: FlatShapeLevel, SourceColumn, DataType, TargetColumn]
 
 }
 
 case class StrSReader[S, T, D](
     override val sourceCol: S,
+    override val inView: Boolean,
     override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
     override val orderGen: Option[(String, T => ColumnOrdered[_])],
     override val orderTargetGen: Option[(String, String)]
@@ -46,14 +49,16 @@ object StrOutSelectConvert {
   def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[Option, StrSlickQuery] = {
     FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrNeededFetch] :: needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: HNil)
           .mapToOption {
-            case (slickSelect :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil, data) => {
+            case (slickSelect :: neededFetchOpt :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil, data) => {
               val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
               val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
+              val isInView = neededFetchOpt.map(_.isInView).getOrElse(true)
               def slickReaderGen: StrSReader[slickSelect.SourceType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
                 StrSReader(
                   slickSelect.outCol,
+                  isInView,
                   slickSelect.shape,
                   slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
                   orderTargetName.map(s => property.proName -> s)
@@ -61,6 +66,7 @@ object StrOutSelectConvert {
               else
                 StrSReader(
                   slickSelect.outCol,
+                  isInView,
                   slickSelect.shape,
                   slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
                   orderTargetName.map(s => property.proName -> s)
@@ -152,14 +158,14 @@ trait StrSlickQuery {
     (slickParam: SlickParam) =>
       val cols: List[Any] = readers.map(_.reader.sourceCol)
       val shape: Shape[FlatShapeLevel, List[Any], List[Any], List[Any]] = new ListColumnShape[FlatShapeLevel](readers.map(_.reader.mainShape))
-      try {
+      /*try {
         ShapedValue(cols, shape).packedValue(shape.packedShape).toNode
         scala.collection.immutable.Vector
       } catch {
         case e: Exception =>
           e.printStackTrace
           throw e
-      }
+      }*/
       val selectQuery = wrapQuery.bind(Query(cols)(shape))
       val sortedQuery = (slickParam.orders ::: defaultOrders)
         .filter(s => sortMaps.keySet.contains(s.columnName))
@@ -175,9 +181,22 @@ trait StrSlickQuery {
         }
 
       val sortbyQuery2 = sortedQuery.to[List]
-      val rs = CommonResult1111.commonResult(selectQuery.to[List], sortbyQuery2).apply(slickParam)
+
+      val inViewReaders = readers.filter(_.reader.inView == true)
+      val inViewReadersWithIndex = inViewReaders.zipWithIndex
+      val mapQuery = sortbyQuery2.map(values => inViewReaders.map(s => values(s.index)))(new ListColumnShape[FlatShapeLevel](inViewReaders.map(_.reader.mainShape)))
+
+      val rs = CommonResult1111.commonResult(selectQuery.to[List], /*sortbyQuery2*/ mapQuery).apply(slickParam)
         .map { s =>
-          ListAnyCollection(s._1.map(t => t.map(u => Option(u))), Option(s._2))
+          val resultSet = s._1.map { eachRow =>
+            val resultArray = Array.fill[Option[Any]](readers.size)(None)
+            inViewReadersWithIndex.foreach {
+              case (reader, index) =>
+                resultArray(reader.index) = Option(eachRow(index))
+            }
+            resultArray.toList
+          }
+          ListAnyCollection(resultSet, Option(s._2))
         }
       ListAnyWrap(rs, sortbyQuery2.result.statements.toList)
   }

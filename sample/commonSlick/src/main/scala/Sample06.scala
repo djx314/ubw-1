@@ -7,7 +7,7 @@ import net.scalax.fsn.core.FPathImpl
 import net.scalax.fsn.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
 import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FSelectExtAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
-import net.scalax.fsn.slick.model.{ ColumnOrder, JsonOut, JsonView, SlickParam }
+import net.scalax.fsn.slick.model._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.implicitConversions
@@ -15,7 +15,7 @@ import slick.jdbc.H2Profile.api._
 
 import scala.concurrent._
 
-object Sample05 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit {
+object Sample06 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit with App {
 
   val printer = Printer(
     preserveOrder = true,
@@ -48,15 +48,16 @@ object Sample05 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
     friend <- FriendTable.out
   } yield {
     List(
-      "id" ofPile friend.id.out.order.describe("自增主键").writeJ,
+      "id" ofPile friend.id.out.order.describe("自增主键").inView(false).writeJ,
       "name" ofPile friend.name.out.orderTarget("nick").describe("昵称").writeJ,
-      "nick" ofPile friend.nick.out.order.describe("昵称").writeJ,
+      "nick" ofPile friend.nick.out.order.describe("昵称").inView(false).writeJ,
       "ageOpt" ofPile friend.age.out.writeJ
     )
   }
 
   val result1: JsonOut = fQuery.strResult
-  val view1: DBIO[JsonView] = result1.toView(SlickParam())
+
+  val view1: DBIO[JsonView] = result1.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))))
 
   Await.result(Sample01.db.run {
     Sample01.initData
@@ -65,14 +66,6 @@ object Sample05 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
           prettyPrint(s)
         }
       }
-  }, duration.Duration.Inf)
-
-  val view2: DBIO[JsonView] = result1.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))))
-
-  Await.result(Sample01.db.run {
-    view2.map { s =>
-      prettyPrint(s)
-    }
   }, duration.Duration.Inf)
 
 }
