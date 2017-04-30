@@ -6,8 +6,8 @@ import io.circe.generic.auto._
 import net.scalax.fsn.core.FPathImpl
 import net.scalax.fsn.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
-import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FSelectExtAtomicHelper, StrFSSelectAtomicHelper }
-import net.scalax.fsn.slick.model.{ JsonOut, JsonView, SlickParam }
+import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FSelectExtAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
+import net.scalax.fsn.slick.model.{ ColumnOrder, JsonOut, JsonView, SlickParam }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.implicitConversions
@@ -37,9 +37,9 @@ object Sample05 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
     println("properties:\n" + view.properties.asJson.pretty(printer) + "\n")
   }
 
-  implicit def fPilesOptionImplicit[D](path: FPathImpl[D]): FJsonAtomicHelper[D] with FSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
+  implicit def fPilesOptionImplicit[D](path: FPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
     val path1 = path
-    new FJsonAtomicHelper[D] with FSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
+    new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
       override val path = path1
     }
   }
@@ -65,6 +65,14 @@ object Sample05 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
           prettyPrint(s)
         }
       }
+  }, duration.Duration.Inf)
+
+  val view2: DBIO[JsonView] = result1.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false))))
+
+  Await.result(Sample01.db.run {
+    view2.map { s =>
+      prettyPrint(s)
+    }
   }, duration.Duration.Inf)
 
 }

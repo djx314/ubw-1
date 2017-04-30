@@ -29,9 +29,9 @@
 2. 引入所需模块的扩展方法，这里需要 4 个模块
 
 ```scala
-implicit def fPilesOptionImplicit[D](path: FPathImpl[D]): FJsonAtomicHelper[D] with FSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
+implicit def fPilesOptionImplicit[D](path: FPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
   val path1 = path
-  new FJsonAtomicHelper[D] with FSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
+  new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
     override val path = path1
   }
 }
@@ -89,8 +89,9 @@ Await.result(Sample01.db.run {
 }, duration.Duration.Inf)
 ```
 
-让我们看一下这个简单查询的输出：
+## 效果
 
+让我们看一下这个简单查询的输出：
 
 json data:
 
@@ -114,3 +115,19 @@ properties:
 ```
 
 `JsonView`有 2 个字段，`properties`和`data`，properties 包含了`fQuery`声明的所有列的详细信息，包括 Json 键、类型名称、是否展示，能否排序、详细描述等。这些信息可以直接响应给前端，前端可以根据这些信息作出对应列的数据和操作的逻辑处理。只要稍加判断，即可轻松弥补[无法传递列信息](doc-01.md#3-无法传递列信息)的缺陷。
+
+大家还留意到`ageOpt`这个属性么，它在数据库的字段名是`age`，但由于声明的时候做了映射，所以输出的 Json 中已经转化成`ageOpt`这个属性了，这个特性部分弥补了[DTO支持欠佳](doc-01.md#4-dto-支持欠佳)这个缺陷，至于`DTO`中数据值的转换再稍后会进行进一步说明。
+
+现在我们稍微改动一下传入的参数（第 3 步），
+
+```scala
+val view2: DBIO[JsonView] = result1.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false))))
+```
+
+根据传入参数的不同，日志的 sql 语句发生了变化：
+
+```sql
+ select "id", "name", "nick", "age" from "firend" order by "id" nulls last, "nick" desc nulls last
+```
+
+`id`字段根据根据传入参数进行了 asc 排序，`name`字段由于声明时做了`orderTarget`处理，排序逻辑自动跳转到`nick`字段并进行 desc 排序。`orderTarget`这个特性在前端处理一些排序逻辑的时候十分有用（例如有一个既有的 grid 组件，在展示年级成绩数据的时候，班级列有一个排序组件，现在需要当点击班级列使其降序排序的时候按各班级平均分降序排序）。至此，`fsn`在创作之初的需求[排序](doc-01.md#1-烦人的-sortby)和分页得以轻松解决，其中分页的实现较为复杂，有 drop、take、pageIndex、pageSize 四个属性其中三个可以为空，传入`SlickParam`后即可达到分页效果，不同的数据量和参数可以导致不同的 sql 查询策略，但分页是`slick`内置的功能，在此不做详述。
