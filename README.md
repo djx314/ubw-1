@@ -1,5 +1,7 @@
 # fsn
 
+[![Build Status](https://travis-ci.org/scalax/fsn.svg?branch=master)](https://travis-ci.org/scalax/fsn)
+
 一个数据转换的抽象。
 
 # 一些初期资料
