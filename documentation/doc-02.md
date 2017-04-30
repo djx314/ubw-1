@@ -4,9 +4,9 @@
 
 有了第一章的了解，现在可以初步介绍`fsn`的 API 了。
 
-目前`fsn`分三层代码，底层代码、中层代码、表层代码。
+目前`fsn`的 API 分三层，分别是：底层代码、中层代码、表层代码。
 
-`fsn`暂时不对这三层代码作支持，只提供数据转换的抽象和一些已经基本完善的样例代码，大家可以根据自己的业务逻辑编写属于自己的`fsn`。
+`fsn`暂不对这三层代码作支持，只提供数据转换的抽象和一些已经基本完善的样例代码，大家可以根据自己的业务逻辑编写属于自己的`fsn`。
 
 1. 底层代码需要由对涉及到的框架十分熟悉的程序员编写。实现对某一领域的数据读入和输出。
 
@@ -63,3 +63,50 @@ val fQuery = for {
   )
 }
 ```
+
+2. 选择渲染方式
+
+```scala
+val result1: JsonOut = fQuery.strResult
+```
+
+3. 传入 Json 友好的参数并获取结果
+
+```scala
+val view1: DBIO[JsonView] = result1.toView(SlickParam())
+```
+
+4. 打印结果
+
+```scala
+Await.result(Sample01.db.run {
+  Sample01.initData
+    .flatMap { _ =>
+      view1.map { s =>
+        prettyPrint(s)
+      }
+    }
+}, duration.Duration.Inf)
+```
+
+让我们看一下这个简单查询的输出：
+
+```json
+json data:
+[
+ { "id" : 1, "name" : "魔理沙", "nick" : "小莎莎", "ageOpt" : 2333 },
+ { "id" : 2, "name" : "jilen", "nick" : "jilen 酱", "ageOpt" : 30 },
+ { "id" : 3, "name" : "品神", "nick" : "kerr", "ageOpt" : 28 },
+ { "id" : 4, "name" : "廖师虎", "nick" : "shihu", "ageOpt" : null }
+]
+
+properties:
+[
+ { "property" : "id", "typeName" : "Long", "inRetrieve" : true, "canOrder" : true, "isDefaultDesc" : true, "describe" : "自增主键" },
+ { "property" : "name", "typeName" : "java.lang.String", "inRetrieve" : true, "canOrder" : false, "isDefaultDesc" : true, "describe" : "昵称" },
+ { "property" : "nick", "typeName" : "java.lang.String", "inRetrieve" : true, "canOrder" : true, "isDefaultDesc" : true, "describe" : "昵称" },
+ { "property" : "ageOpt", "typeName" : "Int", "inRetrieve" : true, "canOrder" : true, "isDefaultDesc" : true, "describe" : null }
+]
+```
+
+`JsonView`有 2 个字段，`properties`和`data`，properties 包含了`fQuery`声明的所有列的详细信息，包括 Json 键、类型名称、是否展示，能否排序、详细描述等。这些信息可以直接响应给前端，前端可以根据这些信息作出对应列的数据和操作的逻辑处理。只要稍加判断，即可轻松弥补[无法传递列信息](../doc-01.md#3-无法传递列信息)的缺陷。
