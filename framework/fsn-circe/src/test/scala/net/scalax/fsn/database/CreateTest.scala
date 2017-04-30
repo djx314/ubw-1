@@ -2,8 +2,8 @@ package net.scalax.fsn.database.test
 
 import net.scalax.fsn.core.{ FPathImpl, PilesPolyHelper }
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
-import net.scalax.fsn.slick.helpers.{ FRep, FilterRepImplicitHelper }
-import net.scalax.fsn.slick.model.{ ColumnOrder, RWProperty, SlickParam }
+import net.scalax.fsn.slick.helpers.{ FilterRepImplicitHelper }
+import net.scalax.fsn.slick.model.{ ColumnOrder, SlickParam }
 import org.h2.jdbcx.JdbcDataSource
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.language.implicitConversions
 
 class CreateTest extends FlatSpec
     with Matchers
@@ -25,7 +26,6 @@ class CreateTest extends FlatSpec
 
   object SlickCRUDImplicits extends SlickCRUDImplicits with FilterRepImplicitHelper
 
-  import io.circe.generic.auto._, io.circe.syntax._, io.circe.parser._, io.circe._
   import slick.jdbc.H2Profile.api._
 
   val friendTq = TableQuery[FriendTable]
@@ -54,10 +54,9 @@ class CreateTest extends FlatSpec
       with net.scalax.fsn.slick.helpers.StrFSSelectAtomicHelper
       with SlickCRUDImplicits {
 
-    import net.scalax.fsn.core.{ FAtomic }
     import net.scalax.fsn.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
     import net.scalax.fsn.slick.helpers.FStrSelectExtAtomicHelper
-    import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper }
+    import net.scalax.fsn.slick.helpers.FJsonAtomicHelper
 
     implicit def fPilesOptionImplicit[D](path: FPathImpl[D]) = {
       val path1 = path
@@ -86,7 +85,7 @@ class CreateTest extends FlatSpec
 
   "model" should "insert with json data" in {
     val plan11 = for {
-      friend <- friendTq.out2222
+      friend <- friendTq.out
     } yield {
       List(
         "abc" ofPile friend.id.out.order.writeJ.describe("喵喵"),

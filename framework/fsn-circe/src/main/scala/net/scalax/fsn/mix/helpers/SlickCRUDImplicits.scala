@@ -124,7 +124,7 @@ trait SlickCRUDImplicits {
   implicit class queryToUQueryExtendsionMethodGen[E, U](query: Query[E, U, Seq]) {
 
     //def out = new ListQueryExtensionMethods[E, U](query)
-    def out2222 = new PileListQueryExtensionMethods[E, U](query)
+    def out = new PileListQueryExtensionMethods[E, U](query)
 
   }
 

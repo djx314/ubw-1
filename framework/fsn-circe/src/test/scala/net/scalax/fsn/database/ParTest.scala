@@ -4,12 +4,9 @@ import net.scalax.fsn.core._
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
-import net.scalax.fsn.slick.atomic.SlickCreate
-import net.scalax.fsn.mix.helpers.{ In, SlickCRUDImplicits }
+import net.scalax.fsn.mix.helpers.In
 import shapeless._
 import io.circe._
-import io.circe.generic.auto._
-import io.circe.parser._
 import io.circe.syntax._
 import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
 import scala.language.implicitConversions
@@ -28,10 +25,6 @@ class ParTest extends FlatSpec
     val path = FPathImpl(In.jRead[Long] ::: In.jWrite[Long])
     //val bb: FAtomicGen[JsonReader] = needAtomic[JsonReader]
     //val jsonReaderGen: AbstractFAtomicGen = needAtomic[JsonReader]
-
-    //println(bb.gen(path.atomics).reader)
-    //println(FAtomicQuery(HNil).gen(path.atomics))
-    //println(FAtomicQuery(needAtomic[JsonReader]).gen(path.atomics).right.get.reader)
 
     new FAtomicQuery(path) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil)

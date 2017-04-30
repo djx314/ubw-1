@@ -20,4 +20,10 @@ object Sample05 {
     }
   }
 
+  val fQuery = for {
+
+  } yield {
+
+  }
+
 }
