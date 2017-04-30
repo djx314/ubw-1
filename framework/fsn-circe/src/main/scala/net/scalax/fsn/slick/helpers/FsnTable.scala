@@ -1,6 +1,5 @@
 package net.scalax.fsn.slick.helpers
 
-import scala.language.implicitConversions
 import slick.relational.RelationalProfile
 
 trait FRep[C] {

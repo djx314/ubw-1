@@ -6,7 +6,7 @@ import net.scalax.fsn.core._
 //import net.scalax.fsn.mix.helpers.{Select => SSelect}
 import net.scalax.fsn.mix.slickbase.{ CrudQueryExtensionMethods, PileListQueryExtensionMethods }
 import net.scalax.fsn.slick.helpers.{ FRep, SlickUtils }
-import slick.lifted.{ FlatShapeLevel, Query, Rep, Shape }
+import slick.lifted.{ FlatShapeLevel, Query, Shape }
 import slick.relational.RelationalProfile
 
 import scala.reflect.runtime.universe._
@@ -124,7 +124,7 @@ trait SlickCRUDImplicits {
   implicit class queryToUQueryExtendsionMethodGen[E, U](query: Query[E, U, Seq]) {
 
     //def out = new ListQueryExtensionMethods[E, U](query)
-    def out2222 = new PileListQueryExtensionMethods[E, U](query)
+    def out = new PileListQueryExtensionMethods[E, U](query)
 
   }
 

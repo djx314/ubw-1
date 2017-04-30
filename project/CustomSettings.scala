@@ -16,7 +16,7 @@ object CustomSettings {
   def scalaSettings =
     Seq(
       scalaVersion := "2.12.2",
-      scalacOptions ++= Seq("-feature", "-deprecation")
+      scalacOptions ++= Seq("-feature", "-deprecation", "-Ywarn-unused-import")
     )
   
   def resolversSettings =

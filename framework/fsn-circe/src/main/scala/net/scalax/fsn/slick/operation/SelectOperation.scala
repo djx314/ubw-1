@@ -6,12 +6,10 @@ import net.scalax.fsn.slick.atomic.{ OrderNullsLast, OrderTargetName, SlickSelec
 import net.scalax.fsn.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
 import net.scalax.fsn.slick.model.{ ColumnOrder, SlickPage, SlickParam, SlickRange }
 import shapeless._
-import slick.basic.BasicProfile
 import slick.dbio.{ DBIO, NoStream }
 import slick.jdbc.JdbcActionComponent
 import slick.lifted._
 
-import scala.language.existentials
 import scala.concurrent.ExecutionContext
 
 trait SlickReader {
@@ -115,7 +113,7 @@ object OutSelectConvert {
     }
   }
 
-  def ubwGenWithoutData /*(wQuery: SlickQueryBindImpl)*/ : FPileSyntaxWithoutData.PileGen[Option, List[String]] = {
+  def ubwGenWithoutData: FPileSyntaxWithoutData.PileGen[Option, List[String]] = {
     FPile.transformTreeListWithoutData {
       new FAtomicQuery(_) {
         val aa = withRep(needAtomic[SlickSelect] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: HNil)
@@ -126,107 +124,15 @@ object OutSelectConvert {
               } else {
                 None
               }
-            /*val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
-            val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
-            def slickReaderGen: SReader[slickSelect.SourceType, slickSelect.SlickType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
-              SReader(
-                slickSelect.outCol,
-                slickSelect.shape,
-                slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
-                orderTargetName.map(s => property.proName -> s),
-                slickSelect.outConvert
-              )
-            else
-              SReader(
-                slickSelect.outCol,
-                slickSelect.shape,
-                slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
-                orderTargetName.map(s => property.proName -> s),
-                slickSelect.outConvert
-              )
-
-            slickReaderGen: SlickReader*/
           }
       }.aa
     } { genList =>
       genList.flatten
-      /*val gensWithIndex = genList.zipWithIndex
-      val genSortMap: Map[String, Seq[Any] => ColumnOrdered[_]] = {
-        gensWithIndex
-          .toStream
-          .map { case (gen, index) =>
-            gen.orderGen.map { order =>
-              order._1 -> { cols: Seq[Any] =>
-                order._2(cols(index).asInstanceOf[gen.TargetColumn])
-              }
-            }
-          }
-          .collect { case Some(s) => s }
-          .toMap
-      }
-      val baseOrderTarget = genList.toStream.filter(_.orderTargetGen.isDefined).map(_.orderTargetGen.get).toMap
-      val finalOrderGen: Map[String, Seq[Any] => ColumnOrdered[_]] = baseOrderTarget.map { case (key, value) =>
-        key -> genSortMap.get(value).getOrElse(throw new Exception(s"$key 需要映射 $value 的排序方案，但找不到 $value 对应的列的排序"))
-      } ++ genSortMap
-
-      val cols: Seq[Any] = genList.map(_.sourceCol)
-      val shape = new ListAnyShape[FlatShapeLevel](genList.map(_.mainShape))
-      val selectQuery = wQuery.bind(Query(cols)(shape))
-
-      new FSlickQuery {
-        override val uQuery = selectQuery
-        override val sortMap = finalOrderGen
-        override val lineConvert = { list: Seq[Any] =>
-          list.toStream.zip(genList).map { case (eachData, reader) =>
-            Option(reader.convert(eachData.asInstanceOf[reader.SlickType]))
-          }.toList
-        }
-      }*/
     }
   }
 
 }
-/*object SelectOperation {
 
-  def encode(columns: List[FColumn], wQuery: SlickQueryBindImpl): JsonQuery = {
-    val genList = columns.map(OutSelectConvert.convert)
-    val gensWithIndex = genList.zipWithIndex
-    val genSortMap: Map[String, Seq[Any] => ColumnOrdered[_]] = {
-      gensWithIndex
-        .toStream
-        .map { case (gen, index) =>
-          gen.orderGen.map { order =>
-            order._1 -> { cols: Seq[Any] =>
-              order._2(cols(index).asInstanceOf[gen.TargetColumn])
-            }
-          }
-        }
-        .collect { case Some(s) => s }
-        .toMap
-    }
-    val baseOrderTarget = genList.toStream.filter(_.orderTargetGen.isDefined).map(_.orderTargetGen.get).toMap
-    val finalOrderGen: Map[String, Seq[Any] => ColumnOrdered[_]] = baseOrderTarget.map { case (key, value) =>
-      key -> genSortMap.get(value).getOrElse(throw new Exception(s"$key 需要映射 $value 的排序方案，但找不到 $value 对应的列的排序"))
-    } ++ genSortMap
-
-    val cols: Seq[Any] = genList.map(_.sourceCol)
-    val shape = new ListAnyShape[FlatShapeLevel](genList.map(_.mainShape))
-    val selectQuery = wQuery.bind(Query(cols)(shape))
-
-    val resultGen: Seq[Any] => List[FColumn] = { s =>
-      s.zip(columns).zip(genList).map { case ((result, column), gen) =>
-        FsnColumn(column.cols, Option(gen.convert(result.asInstanceOf[gen.SlickType]).asInstanceOf[column.DataType]))
-      }.toList
-    }
-
-    new JsonQuery {
-      override val uQuery = selectQuery
-      override val render = resultGen
-      override val sortMap = finalOrderGen
-    }
-  }
-
-}*/
 trait FSlickQuery {
 
   val uQuery: Query[List[Any], List[Any], List]
@@ -261,40 +167,7 @@ trait FSlickQuery {
   }
 
 }
-/*trait JsonQuery {
 
-  val uQuery: Query[Seq[Any], Seq[Any], Seq]
-  val render: Seq[Any] => List[FColumn]
-  val sortMap: Map[String, Seq[Any] => ColumnOrdered[_]]
-
-  def jsonResult(
-                  implicit
-                  jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-                  repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
-                  ec: ExecutionContext
-                ): SlickParam => DBIO[(List[List[FColumn]], Int)] = {
-    jsonResult(Nil)
-  }
-
-  def jsonResult(orderColumn: String, isDesc: Boolean = true)(
-    implicit
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
-    ec: ExecutionContext
-  ): SlickParam => DBIO[(List[List[FColumn]], Int)] = {
-    jsonResult(List(ColumnOrder(orderColumn, isDesc)))
-  }
-
-  def jsonResult(defaultOrders: List[ColumnOrder])(
-    implicit
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-    repToDBIO: Rep[Int] => BasicProfile#QueryActionExtensionMethods[Int, NoStream],
-    ec: ExecutionContext
-  ): SlickParam => DBIO[(List[List[FColumn]], Int)] = {
-    (slickParam: SlickParam) => CommonResult.commonResult(defaultOrders, uQuery, render, sortMap).apply(slickParam)
-  }
-
-}*/
 object CommonResult {
 
   type CommonRType[T] = (List[T], Int)

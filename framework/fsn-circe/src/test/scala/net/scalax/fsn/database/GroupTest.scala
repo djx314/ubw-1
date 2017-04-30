@@ -86,7 +86,7 @@ class GroupTest extends FlatSpec
 
   "model" should "insert with json data" in {
     val plan11 = for {
-      friend <- friendTq.out2222
+      friend <- friendTq.out
     } yield {
       List(
         "abc" ofPile friend.id.groupOutput.groupValue.writeJ.describe("喵喵"),

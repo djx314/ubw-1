@@ -7,12 +7,10 @@ import net.scalax.fsn.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
 import net.scalax.fsn.slick.model._
 import shapeless._
 import slick.ast.{ BaseTypedType, Ordering, TypedType }
-import slick.basic.BasicProfile
-import slick.dbio.{ DBIO, NoStream }
+import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent
 import slick.lifted._
 
-import scala.language.existentials
 import scala.concurrent.ExecutionContext
 
 sealed abstract trait GroupWraperBase {
@@ -52,12 +50,9 @@ object GroupSelectConvert {
               val aa = (groupColOpt, countOpt) match {
                 case (None, None) =>
                   new GroupSlickReader {
-
                     override val propertyName = property.proName
                     override val selectModel = select
-
                     override val groupModel = Option.empty[GroupWraperBase]
-
                   }
                 case (Some(t), None) =>
                   new GroupSlickReader {
@@ -195,6 +190,8 @@ trait FGroupQuery {
                     case "sum" =>
                       helper.singleColumnQueryExtensionMethods(eachValue)(a.baseTypedType).sum(a.typedType)
                   }
+                case _ =>
+                  throw new IllegalArgumentException("You need to provide groupModel when use groupValue")
               }
           }
     } {

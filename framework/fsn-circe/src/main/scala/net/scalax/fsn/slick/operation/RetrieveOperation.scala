@@ -3,14 +3,12 @@ package net.scalax.fsn.slick.operation
 import net.scalax.fsn.core._
 import net.scalax.fsn.slick.atomic.{ OneToOneRetrieve, SlickRetrieve }
 import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
-import slick.basic.BasicProfile
 import slick.dbio.DBIO
 import slick.lifted._
 import shapeless._
 import slick.jdbc.JdbcActionComponent
 
 import scala.concurrent.ExecutionContext
-import scala.language.existentials
 
 trait IWrapTran2[U] {
 

@@ -9,7 +9,6 @@ import slick.lifted._
 import slick.relational.RelationalProfile
 import shapeless._
 
-import scala.language.existentials
 import scala.concurrent.ExecutionContext
 
 trait DeleteTran2 {

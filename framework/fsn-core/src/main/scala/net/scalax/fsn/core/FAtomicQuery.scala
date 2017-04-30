@@ -1,8 +1,6 @@
 package net.scalax.fsn.core
 
 import scala.language.higherKinds
-import shapeless._
-import shapeless.ops.hlist.IsHCons
 
 import scala.reflect.runtime.universe._
 

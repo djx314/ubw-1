@@ -2,9 +2,7 @@ package net.scalax.fsn.slick.atomic
 
 import net.scalax.fsn.core.{ FAtomic, FPathImpl }
 import slick.ast.BaseTypedType
-import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Ordered, Rep, Shape }
-
-import scala.language.existentials
+import slick.lifted.{ FlatShapeLevel, Ordered, Rep, Shape }
 
 trait GroupSlickSelect[D] extends FAtomic[D] {
   type SourceType

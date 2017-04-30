@@ -3,13 +3,10 @@ package net.scalax.fsn.slick.operation
 import net.scalax.fsn.core._
 import net.scalax.fsn.slick.atomic.{ OneToOneUpdate, SlickUpdate }
 import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
-import net.scalax.fsn.slick.model.UpdateStaticManyInfo
 import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent
 import slick.lifted.{ FlatShapeLevel, Query, Shape }
-import slick.relational.RelationalProfile
 
-import scala.language.existentials
 import scala.concurrent.ExecutionContext
 
 import shapeless._
