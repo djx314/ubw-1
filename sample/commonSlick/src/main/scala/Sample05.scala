@@ -51,7 +51,7 @@ object Sample05 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
       "id" ofPile friend.id.out.order.describe("自增主键").writeJ,
       "name" ofPile friend.name.out.orderTarget("nick").describe("昵称").writeJ,
       "nick" ofPile friend.nick.out.order.describe("昵称").writeJ,
-      "ageOpt" ofPile friend.age.out.order.writeJ
+      "ageOpt" ofPile friend.age.out.writeJ
     )
   }
 
@@ -67,7 +67,7 @@ object Sample05 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
       }
   }, duration.Duration.Inf)
 
-  val view2: DBIO[JsonView] = result1.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false))))
+  val view2: DBIO[JsonView] = result1.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))))
 
   Await.result(Sample01.db.run {
     view2.map { s =>
