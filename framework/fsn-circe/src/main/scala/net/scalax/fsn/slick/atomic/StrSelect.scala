@@ -38,7 +38,7 @@ trait StrDefaultDesc[E] extends FAtomic[E] {
 }
 
 trait StrNeededFetch[E] extends FAtomic[E] {
-  val isInRetrieve: Boolean
+  val isInView: Boolean
 }
 
 trait StrOrderTargetName[E] extends FAtomic[E] {

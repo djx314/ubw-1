@@ -61,7 +61,11 @@ trait FSelectExtAtomicHelper[E] extends FAtomicHelper[E] {
 trait FStrSelectExtAtomicHelper[E] extends FAtomicHelper[E] {
 
   def hidden = path.appendAtomic(new StrNeededFetch[E] {
-    override val isInRetrieve = false
+    override val isInView = false
+  })
+
+  def inView(inView: Boolean) = path.appendAtomic(new StrNeededFetch[E] {
+    override val isInView = inView
   })
 
   def orderTarget(name: String) = path.appendAtomic(new StrOrderTargetName[E] {
