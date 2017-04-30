@@ -2,8 +2,7 @@ package net.scalax.fsn.database.test
 
 import net.scalax.fsn.core.{ FPathImpl, PilesPolyHelper }
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
-import net.scalax.fsn.slick.atomic.GroupColImplicit
-import net.scalax.fsn.slick.helpers.{ FRep, FilterRepImplicitHelper }
+import net.scalax.fsn.slick.helpers.FilterRepImplicitHelper
 import net.scalax.fsn.slick.model._
 import org.h2.jdbcx.JdbcDataSource
 import org.scalatest._
@@ -12,6 +11,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.language.implicitConversions
 
 class GroupTest extends FlatSpec
     with Matchers
@@ -26,7 +26,6 @@ class GroupTest extends FlatSpec
 
   object SlickCRUDImplicits extends SlickCRUDImplicits with FilterRepImplicitHelper
 
-  import io.circe.generic.auto._, io.circe.syntax._, io.circe.parser._, io.circe._
   import slick.jdbc.H2Profile.api._
 
   val friendTq = TableQuery[FriendTable]
@@ -69,7 +68,6 @@ class GroupTest extends FlatSpec
       with net.scalax.fsn.slick.helpers.GroupFSSelectAtomicHelper
       with SlickCRUDImplicits {
 
-    import net.scalax.fsn.core.{ FAtomic }
     import net.scalax.fsn.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
     import net.scalax.fsn.slick.helpers.FStrSelectExtAtomicHelper
     import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper }

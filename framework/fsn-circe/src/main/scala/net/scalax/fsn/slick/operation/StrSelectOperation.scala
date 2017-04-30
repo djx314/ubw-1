@@ -15,14 +15,12 @@ import scala.concurrent.ExecutionContext
 trait StrSlickReader {
 
   type SourceColumn
-  //type SlickType
   type TargetColumn
   type DataType
 
   val orderGen: Option[(String, TargetColumn => ColumnOrdered[_])]
   val orderTargetGen: Option[(String, String)]
   val sourceCol: SourceColumn
-  //val convert: SlickType => DataType
 
   val mainShape: Shape[_ <: FlatShapeLevel, SourceColumn, DataType, TargetColumn]
 
@@ -99,42 +97,10 @@ object StrOutSelectConvert {
         override val sortMaps = finalOrderGen
         override val wrapQuery = wQuery
       }
-
-      /*val genSortMap: Map[String, Seq[Any] => ColumnOrdered[_]] = {
-        gensWithIndex
-          .toStream
-          .map {
-            case (gen, index) =>
-              gen.orderGen.map { order =>
-                order._1 -> { cols: Seq[Any] =>
-                  order._2(cols(index).asInstanceOf[gen.TargetColumn])
-                }
-              }
-          }
-          .collect { case Some(s) => s }
-          .toMap
-      }
-      val baseOrderTarget = genList.toStream.filter(_.orderTargetGen.isDefined).map(_.orderTargetGen.get).toMap
-      val finalOrderGen: Map[String, Seq[Any] => ColumnOrdered[_]] = baseOrderTarget.map {
-        case (key, value) =>
-          key -> genSortMap.get(value).getOrElse(throw new Exception(s"$key 需要映射 $value 的排序方案，但找不到 $value 对应的列的排序"))
-      } ++ genSortMap
-
-      val cols: Seq[Any] = genList.map(_.sourceCol)
-      val shape = new ListAnyShape[FlatShapeLevel](genList.map(_.mainShape))
-      val selectQuery = wQuery.bind(Query(cols)(shape))
-
-      new StrFSlickQuery {
-        override val uQuery = selectQuery
-        override val sortMap = finalOrderGen
-        override val lineConvert = { list: Seq[Any] =>
-          list.map(Option(_)).toList
-        }
-      }*/
     }
   }
 
-  def ubwGenWithoutData /*(wQuery: SlickQueryBindImpl)*/ : FPileSyntaxWithoutData.PileGen[Option, List[String]] = {
+  def ubwGenWithoutData: FPileSyntaxWithoutData.PileGen[Option, List[String]] = {
     FPile.transformTreeListWithoutData {
       new FAtomicQuery(_) {
         val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: HNil)
@@ -216,42 +182,7 @@ trait StrSlickQuery {
       ListAnyWrap(rs, sortbyQuery2.result.statements.toList)
   }
 }
-/*trait StrFSlickQuery {
 
-  val uQuery: Query[Seq[Any], Seq[Any], Seq]
-  val sortMap: Map[String, Seq[Any] => ColumnOrdered[_]]
-  val lineConvert: Seq[Any] => List[Option[Any]]
-
-  def slickResult(
-    implicit
-    jsonEv: Query[_, Seq[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[Seq[Any]], Seq[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-    ec: ExecutionContext
-  ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
-    slickResult(Nil)
-  }
-
-  def slickResult(orderColumn: String, isDesc: Boolean = true)(
-    implicit
-    jsonEv: Query[_, Seq[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[Seq[Any]], Seq[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-    ec: ExecutionContext
-  ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
-    slickResult(List(ColumnOrder(orderColumn, isDesc)))
-  }
-
-  def slickResult(defaultOrders: List[ColumnOrder])(
-    implicit
-    jsonEv: Query[_, Seq[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[Seq[Any]], Seq[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-    ec: ExecutionContext
-  ): SlickParam => DBIO[(List[List[Option[Any]]], Int)] = {
-    (slickParam: SlickParam) =>
-      CommonResult1111.commonResult(uQuery.to[List], uQuery.to[List]).apply(slickParam)
-        .map(s => s.copy(_1 = s._1.map(t => t.toList.map(u => Option(u)))))
-  }
-
-}*/
 object CommonResult1111 {
 
   type CommonRType[T] = (List[T], Int)
@@ -265,7 +196,6 @@ object CommonResult1111 {
     val mappedQuery = commonQuery
 
     val result: SlickParam => DBIO[CommonRType[U]] = slickParam => {
-      //val autualOrders = defaultOrders ::: slickParam.orders
       val baseQuery = sortedQuery
       /*{
         autualOrders.foldLeft(mappedQuery) {
