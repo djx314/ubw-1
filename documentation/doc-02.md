@@ -91,16 +91,20 @@ Await.result(Sample01.db.run {
 
 让我们看一下这个简单查询的输出：
 
-```json
+
 json data:
+
+```json
 [
  { "id" : 1, "name" : "魔理沙", "nick" : "小莎莎", "ageOpt" : 2333 },
  { "id" : 2, "name" : "jilen", "nick" : "jilen 酱", "ageOpt" : 30 },
  { "id" : 3, "name" : "品神", "nick" : "kerr", "ageOpt" : 28 },
  { "id" : 4, "name" : "廖师虎", "nick" : "shihu", "ageOpt" : null }
 ]
+```
 
 properties:
+```json
 [
  { "property" : "id", "typeName" : "Long", "inRetrieve" : true, "canOrder" : true, "isDefaultDesc" : true, "describe" : "自增主键" },
  { "property" : "name", "typeName" : "java.lang.String", "inRetrieve" : true, "canOrder" : false, "isDefaultDesc" : true, "describe" : "昵称" },
