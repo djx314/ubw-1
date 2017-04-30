@@ -20,8 +20,8 @@ object Sample01 {
   val friend3 = Friend(name = "品神", nick = "kerr", age = Option(28), grade = 5)
   val friend4 = Friend(name = "廖师虎", nick = "shihu", age = None, grade = 6)
 
-  def initData: Future[Unit] = {
-    db.run(FriendTable ++= List(friend1, friend2, friend3, friend4)).map(_ => ())
+  def initData: DBIO[Unit] = {
+    FriendTable.schema.create >> (FriendTable ++= List(friend1, friend2, friend3, friend4)) >> DBIO.successful(())
   }
 
 }

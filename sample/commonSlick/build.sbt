@@ -19,7 +19,8 @@ libraryDependencies ++= Seq(
   "com.h2database" % "h2" % "1.4.192",
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
-  "io.circe" %% "circe-parser" % circeVersion
+  "io.circe" %% "circe-parser" % circeVersion,
+  "org.slf4j" % "slf4j-simple" % "1.7.25"
 )
 
 val commonSlick = (project in file(".")).dependsOn(fsnProject)
