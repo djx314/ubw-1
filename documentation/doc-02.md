@@ -1,4 +1,4 @@
-# 初探
+# 初探（一）
 
 ## 概况
 
@@ -89,7 +89,7 @@ Await.result(Sample01.db.run {
 }, duration.Duration.Inf)
 ```
 
-## 效果
+## 效果（一）
 
 让我们看一下这个简单查询的输出：
 

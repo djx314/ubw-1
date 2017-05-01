@@ -44,4 +44,10 @@ object FPathImpl {
     }
   }
 
+  def empty[D]: FPathImpl[D] = {
+    new FPathImpl[D] {
+      override val atomics = Nil
+    }
+  }
+
 }
