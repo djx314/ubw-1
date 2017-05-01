@@ -1,13 +1,13 @@
 package net.scalax.fsn.core
 
-trait FZeroPile[T] {
+import scala.language.higherKinds
 
-  def zero: T
-
+trait FZeroPile[T[_]] {
+  def zero[S]: T[S]
 }
 
 object FZeroPile {
-  implicit def optionPileZero[T]: FZeroPile[Option[T]] = new FZeroPile[Option[T]] {
-    override def zero = None
+  implicit def optionPileZero[T]: FZeroPile[Option] = new FZeroPile[Option] {
+    override def zero[S] = None
   }
 }

@@ -11,7 +11,7 @@ lazy val fsnProject = RootProject(file("../../../fsn"))
 
 scalaVersion := "2.12.2"
 
-scalacOptions ++= Seq("-feature", "-deprecation")
+scalacOptions ++= Seq("-feature", "-deprecation", "-Ywarn-unused-import")
 
 val circeVersion = "0.7.0"
 

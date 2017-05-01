@@ -39,13 +39,12 @@ trait SlickCRUDImplicits {
       }
       FPile.applyOpt(FPathImpl(proName :: path.atomics))(implicitly[FsnShape[FPathImpl[D], Option[D], Option]])
     }
-
-    def ofPath[D](path: FPathImpl[D]): FPathImpl[D] = {
+    /*def ofPath[D](path: FPathImpl[D]): FPathImpl[D] = {
       val proName = new FProperty[D] {
         override val proName = proName1
       }
       FPathImpl(proName :: path.atomics)
-    }
+    }*/
   }
 
   implicit def fColumnStringExtesionMethods(proName: String): FColumnStringImplicits = new FColumnStringImplicits(proName)

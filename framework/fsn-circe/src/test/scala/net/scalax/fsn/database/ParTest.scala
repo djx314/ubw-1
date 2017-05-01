@@ -4,11 +4,12 @@ import net.scalax.fsn.core._
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
-import net.scalax.fsn.mix.helpers.In
+import net.scalax.fsn.mix.helpers.{ In, SlickCRUDImplicits }
 import shapeless._
 import io.circe._
 import io.circe.syntax._
 import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
+
 import scala.language.implicitConversions
 import scala.language.existentials
 
@@ -19,7 +20,8 @@ class ParTest extends FlatSpec
     with BeforeAndAfterAll
     with BeforeAndAfter
     with PilesPolyHelper
-    with FPilesGenHelper {
+    with FPilesGenHelper
+    with SlickCRUDImplicits {
 
   "shapes" should "find readers in Atomic in FPath" in {
     val path = FPathImpl(In.jRead[Long] ::: In.jWrite[Long])
@@ -72,7 +74,7 @@ class ParTest extends FlatSpec
     }
   }
 
-  implicit def fColumnStringExtesionMethods(proName: String): FColumnStringImplicits = new FColumnStringImplicits(proName)
+  implicit def fColumnStringExtesionMethods1111(proName: String): FColumnStringImplicits = new FColumnStringImplicits(proName)
 
   "FPile" should "work fine" in {
 
@@ -270,19 +272,19 @@ class ParTest extends FlatSpec
     )
 
     val convertPile1 = (mainPile1 :: appendPile1 :: HNil).poly(
-      ("小萌师父" columns (In.default("喵") ::: In.jRead[String])) ::
-        ("徒弟弟" columns (In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+      ("小萌师父" ofPile FPathImpl(In.default("喵") ::: In.jRead[String])) ::
+        ("徒弟弟" ofPile FPathImpl(In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
         HNil
-    ).apply {
+    ).transform {
         case (longData :: stringData :: HNil) :: (stringData2 :: stringData3 :: HNil) :: HNil =>
           None :: None :: HNil
       }
 
     val convertPile2 = (convertPile1 :: mainPile1 :: HNil).poly(
-      ("喵喵喵" columns (In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
-        ("汪汪汪" columns (In.default(5678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+      ("喵喵喵" ofPile FPathImpl(In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+        ("汪汪汪" ofPile FPathImpl(In.default(5678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
         HNil
-    ).apply {
+    ).transform {
         case (stringData :: longData1 :: HNil) :: (longData2 :: stringData3 :: HNil) :: HNil =>
           None :: longData2 :: HNil
       }
