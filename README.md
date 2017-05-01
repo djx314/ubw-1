@@ -11,3 +11,5 @@
 [初探（一）](documentation/doc-02.md "初探（一）")
 
 [初探（二）](documentation/doc-03.md "初探（二）")
+
+[初探（三）](documentation/doc-04.md "初探（二）")
