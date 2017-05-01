@@ -16,7 +16,7 @@ import shapeless._
 
 import scala.concurrent._
 
-object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit with PilesPolyHelper {
+object Sample08 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit with PilesPolyHelper with App {
 
   val printer = Printer(
     preserveOrder = true,
@@ -45,29 +45,16 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
     }
   }
 
-  val fQuery = for {
-    friend <- FriendTable.out
-  } yield {
-    List(
-      "id" ofPile friend.id.out.order.describe("自增主键").writeJ,
-      (
-        ("name" ofPile friend.name.out.orderTarget("nick").describe("昵称")) ::
-        ("nick" ofPile friend.nick.out.order.describe("昵称")) ::
-        ("age" ofPile friend.age.out) ::
-        HNil
-      ).poly(
-          "name" ofPath FPathImpl.empty[String].writeJ
-        ).apply {
-            case Some(name) :: Some(nick) :: Some(Some(age)) :: HNil if age < 200 =>
-              Option(s"$name-$nick")
-            case Some(name) :: _ :: _ :: HNil =>
-              Option(name)
-            case _ =>
-              None
-          },
-      "ageOpt" ofPile friend.age.out.writeJ
-    )
-  }
+val fQuery = for {
+  friend <- SimpleTable.tq("friend").out
+} yield {
+  List(
+    "id" ofPile friend.column[Long]("id").out.order.describe("自增主键").writeJ,
+    "name" ofPile friend.column[String]("name").out.orderTarget("nick").describe("昵称").writeJ,
+    "nick" ofPile friend.column[String]("nick").out.order.describe("昵称").writeJ,
+    "ageOpt" ofPile friend.column[Option[Int]]("age").out.writeJ
+  )
+}
 
   val result1: JsonOut = fQuery.strResult
 
