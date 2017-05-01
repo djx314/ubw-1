@@ -6,4 +6,8 @@
 
 # 一些初期资料
 
-&emsp;&emsp;[项目构想](documentation/doc-01.md "项目构想")
+[困境](documentation/doc-01.md "困境")
+
+[初探（一）](documentation/doc-02.md "初探（一）")
+
+[初探（二）](documentation/doc-03.md "初探（二）")

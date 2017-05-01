@@ -1,6 +1,7 @@
 package net.scalax.fsn.database.test
 
 import slick.jdbc.H2Profile.api._
+import slick.lifted.Tag
 
 case class Friend(
   id: Option[Long] = None,
@@ -10,7 +11,7 @@ case class Friend(
   grade: Int
 )
 
-class FriendTable(tag: Tag) extends Table[Friend](tag, "firend") {
+class FriendTable(tag: Tag) extends Table[Friend](tag, "friend") {
   def id = column[Long]("id", O.AutoInc)
   def name = column[String]("name")
   def nick = column[String]("nick")
@@ -22,6 +23,14 @@ class FriendTable(tag: Tag) extends Table[Friend](tag, "firend") {
 
 object FriendTable extends TableQuery(cons => new FriendTable(cons))
 
-class SimpleTable(tag: Tag) extends Table[Unit](tag, "student") {
+class SimpleTable(tag: Tag, tbName: String) extends Table[Unit](tag, tbName) {
   def * = ()
+}
+
+object SimpleTable {
+
+  def tq(tbName: String): TableQuery[SimpleTable] = {
+    TableQuery(cons => new SimpleTable(cons, tbName))
+  }
+
 }
