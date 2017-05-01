@@ -11,7 +11,7 @@ trait FPileAbstract[C[_]] {
 
   val pathPile: PathType
 
-  val fShape: FsnShape[PathType, DataType, WrapType]
+  val fShape: FsnShape[PathType, DataType, PathType, WrapType]
 
   val dataFromSub: List[Any] => DataType
   val subs: List[FPileAbstract[WrapType]]
@@ -67,7 +67,7 @@ trait FPile[C[_]] extends FPileAbstract[C] {
 
 case class FPileImpl[E, U, C[_]](
     override val pathPile: E,
-    override val fShape: FsnShape[E, U, C],
+    override val fShape: FsnShape[E, U, E, C],
     override val dataFromSub: List[Any] => U,
     override val subs: List[FPile[C]]
 ) extends FPile[C] {
@@ -77,11 +77,11 @@ case class FPileImpl[E, U, C[_]](
 
 object FPile {
 
-  def apply[E, U, C[_]](paths: E)(implicit shape: FsnShape[E, U, C]): FPileImpl[E, U, C] = {
-    FPileImpl(paths, shape, { _: List[Any] => shape.zero }, List.empty[FPile[C]])
+  def apply[E, U, T, C[_]](paths: E)(implicit shape: FsnShape[E, U, T, C]): FPileImpl[T, U, C] = {
+    FPileImpl(shape.toTarget(paths), shape.packageShape, { _: List[Any] => shape.zero }, List.empty[FPile[C]])
   }
 
-  def applyOpt[E, U](paths: E)(implicit shape: FsnShape[E, U, Option]): FPileImpl[E, U, Option] = {
+  def applyOpt[E, U, T](paths: E)(implicit shape: FsnShape[E, U, T, Option]): FPileImpl[T, U, Option] = {
     apply(paths)
   }
 
