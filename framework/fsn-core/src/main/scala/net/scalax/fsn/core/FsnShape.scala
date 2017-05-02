@@ -49,7 +49,8 @@ object FsnShape {
       override def encodeColumn(pile: FPathImpl[T]): List[FPath] = pile :: Nil
       //override def decodeColumn(columns: List[FPath]): FPathImpl[T] = columns.head.asInstanceOf[FPathImpl[T]]
       override def genPiles(pile: FPathImpl[T]): List[FPile[U]] = {
-        FPile[FPathImpl[T], U[T], FPathImpl[T], U](pile)(self) :: Nil
+        //FPile[FPathImpl[T], U[T], FPathImpl[T], U](pile)(self) :: Nil
+        Nil
       }
       override def toTarget(path: FPathImpl[T]): FPathImpl[T] = path
       override def encodeData(pileData: U[T]): List[U[Any]] = pileData.asInstanceOf[U[Any]] :: Nil

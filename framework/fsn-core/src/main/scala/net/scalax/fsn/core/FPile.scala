@@ -77,11 +77,12 @@ case class FPileImpl[E, U, C[_]](
 
 object FPile {
 
-  def apply[E, U, T, C[_]](paths: E)(implicit shape: FsnShape[E, U, T, C]): FPileImpl[T, U, C] = {
+  def apply[D, C[_]](paths: FPathImpl[D])(implicit zeroPile: FZeroPile[C[D]]): FPileImpl[FPathImpl[D], C[D], C] = {
+    val shape = implicitly[FsnShape[FPathImpl[D], C[D], FPathImpl[D], C]]
     FPileImpl(shape.toTarget(paths), shape.packageShape, { _: List[Any] => shape.zero }, List.empty[FPile[C]])
   }
 
-  def applyOpt[E, U, T](paths: E)(implicit shape: FsnShape[E, U, T, Option]): FPileImpl[T, U, Option] = {
+  def applyOpt[D](paths: FPathImpl[D]): FPileImpl[FPathImpl[D], Option[D], Option] = {
     apply(paths)
   }
 

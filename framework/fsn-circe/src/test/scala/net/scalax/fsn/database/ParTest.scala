@@ -10,7 +10,6 @@ import io.circe._
 import io.circe.syntax._
 import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
 
-import scala.language.implicitConversions
 import scala.language.existentials
 
 class ParTest extends FlatSpec
@@ -25,15 +24,11 @@ class ParTest extends FlatSpec
 
   "shapes" should "find readers in Atomic in FPath" in {
     val path = FPathImpl(In.jRead[Long] ::: In.jWrite[Long])
-    //val bb: FAtomicGen[JsonReader] = needAtomic[JsonReader]
-    //val jsonReaderGen: AbstractFAtomicGen = needAtomic[JsonReader]
 
     new FAtomicQuery(path) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil)
     }
-    //println(FAtomicQuery(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: HNil).gen(path.atomics))
 
-    //val items: List[FAtomic[Long]] = path.atomics
     val Right(reader1 :: reader3 :: reader2 :: writer1 :: writer2 :: writer3 :: writer4 :: HNil) = new FAtomicQuery(path) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomicOpt[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: HNil)
     }.aa.queryResult
@@ -53,29 +48,6 @@ class ParTest extends FlatSpec
     //println(isReaderDefined(path1))
   }
 
-  class FColumnStringImplicits(proName1: String) {
-    def column[D](converts: List[FAtomic[D]]): FPathImpl[D] = {
-      val proName = new FProperty[D] {
-        override val proName = proName1
-      }
-      FPathImpl(proName :: converts)
-    }
-    def column[D](converts: FAtomic[D]*): FPathImpl[D] = {
-      val proName = new FProperty[D] {
-        override val proName = proName1
-      }
-      FPathImpl(proName :: converts.toList)
-    }
-    def columns[D](converts: List[FAtomic[D]]*): FPathImpl[D] = {
-      val proName = new FProperty[D] {
-        override val proName = proName1
-      }
-      FPathImpl(proName :: converts.toList.flatten)
-    }
-  }
-
-  implicit def fColumnStringExtesionMethods1111(proName: String): FColumnStringImplicits = new FColumnStringImplicits(proName)
-
   "FPile" should "work fine" in {
 
     trait JsonWriterImpl {
@@ -86,30 +58,30 @@ class ParTest extends FlatSpec
       val data: Option[DataType]
     }
 
-    val mainPile = FPile.applyOpt(
-      ("我是" columns (In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
-        ("小莎莎" columns (In.default("1234") ::: In.jWrite[String])) ::
-        (("千反田" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) :: HNil) ::
+    val mainPile = (
+      ("我是" ofPile FPathImpl(In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+      ("小莎莎" ofPile FPathImpl(In.default("1234") ::: In.jWrite[String])) ::
+      (("千反田" ofPile FPathImpl(In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) :: HNil) ::
+      (
+        ("的枕头" ofPile FPathImpl(In.jRead[Int] ::: In.jWrite[Int])) ::
+        ("喵喵喵" ofPile FPathImpl(In.jRead[Long] ::: In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
         (
-          ("的枕头" columns (In.jRead[Int] ::: In.jWrite[Int])) ::
-          ("喵喵喵" columns (In.jRead[Long] ::: In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
-          (
-            ("哈哈哈哈哈" columns (In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) ::
-            ("汪汪汪" columns (In.jRead[Long] ::: In.jWrite[Long])) ::
-            HNil
-          ) ::
-            HNil
+          ("哈哈哈哈哈" ofPile FPathImpl(In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) ::
+          ("汪汪汪" ofPile FPathImpl(In.jRead[Long] ::: In.jWrite[Long])) ::
+          HNil
         ) ::
-            HNil
+          HNil
+      ) ::
+          HNil
     )
-    val appendPile = FPile.applyOpt(
-      ("jilen" columns (In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
-        ("kerr" columns (In.default("汪") ::: In.jRead[String] ::: In.jWrite[String])) ::
-        HNil
+    val appendPile = (
+      ("jilen" ofPile FPathImpl(In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      ("kerr" ofPile FPathImpl(In.default("汪") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      HNil
     )
 
-    val piles: List[FPileAbstract[Option]] = mainPile :: appendPile :: Nil
-    val paths = piles.map(s => s.fShape.encodeColumn(s.pathPile)).flatten
+    //val piles: List[FPileAbstract[Option]] = mainPile :: appendPile :: Nil
+    //val paths = piles.map(s => s.fShape.encodeColumn(s.pathPile)).flatten
 
     val resultGen1 = FPile.transformOf {
       new FAtomicQuery(_) {
@@ -134,13 +106,13 @@ class ParTest extends FlatSpec
       }.toMap.asJson
     }
 
-    resultGen1(paths) match {
+    /*resultGen1(paths) match {
       case Left(e) => throw e
       case Right(s) =>
         val result = s(piles.map(s => s.fShape.encodeData(s.fShape.zero)).flatten)
         //println(result)
         result
-    }
+    }*/
 
     val resultGen2 = FPile.transformTree {
       new FAtomicQuery(_) {
@@ -164,30 +136,29 @@ class ParTest extends FlatSpec
       }.toMap.asJson
     }
 
-    val jx3Pile = FPile.applyOpt(
-      ("小萌师父的徒弟个数" columns (In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
-        ("徒弟的名字" columns (In.default("水山清风") ::: In.jWrite[String])) ::
-        (("茶馆任务要做多少遍才有奖品" columns (In.default(10) ::: In.jWrite[Int])) :: HNil) ::
+    val jx3Pile = (
+      ("小萌师父的徒弟个数" ofPile FPathImpl(In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+      ("徒弟的名字" ofPile FPathImpl(In.default("水山清风") ::: In.jWrite[String])) ::
+      (("茶馆任务要做多少遍才有奖品" ofPile FPathImpl(In.default(10) ::: In.jWrite[Int])) :: HNil) ::
+      (
+        ("狭义值" ofPile FPathImpl(In.jRead[Int] ::: In.jWrite[Int])) ::
+        ("江湖贡献值" ofPile FPathImpl(In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
         (
-          ("狭义值" columns (In.jRead[Int] ::: In.jWrite[Int])) ::
-          ("江湖贡献值" columns (In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
-          (
-            ("大侠之路" columns (In.jRead[String] ::: In.default("跳出五行天地外") ::: In.jWrite[String])) ::
-            ("电信" columns (In.default(5L) ::: In.jWrite[Long])) ::
-            HNil
-          ) ::
-            HNil
+          ("大侠之路" ofPile FPathImpl(In.jRead[String] ::: In.default("跳出五行天地外") ::: In.jWrite[String])) ::
+          ("电信" ofPile FPathImpl(In.default(5L) ::: In.jWrite[Long])) ::
+          HNil
         ) ::
-            HNil
+          HNil
+      ) ::
+          HNil
     )
 
-    resultGen2(jx3Pile) match {
+    /*resultGen2(jx3Pile) match {
       case Left(e) => throw e
       case Right((outPile, s)) =>
         val result = s(jx3Pile.fShape.encodeData(jx3Pile.fShape.zero))
-        //println(result)
         result
-    }
+    }*/
 
     val resultGen3 = FPile.transformTreeList {
       new FAtomicQuery(_) {
@@ -211,13 +182,13 @@ class ParTest extends FlatSpec
       }.toMap.asJson
     }
 
-    resultGen3(jx3Pile :: appendPile :: Nil) match {
+    /*resultGen3(jx3Pile :: appendPile :: Nil) match {
       case Left(e) => throw e
       case Right((outPile, s)) =>
         val result = s(jx3Pile.fShape.encodeData(jx3Pile.fShape.zero) ::: appendPile.fShape.encodeData(appendPile.fShape.zero))
         //println(result)
         result
-    }
+    }*/
 
     //println("convertPile1:" + convertPile1)
 
