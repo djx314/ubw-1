@@ -69,5 +69,3 @@ lazy val framework = (project in file("./framework"))
   .settings(CustomSettings.customSettings: _*)
   .settings(name := "framework")
 
-useJGit
-

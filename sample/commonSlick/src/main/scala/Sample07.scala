@@ -1,13 +1,14 @@
 package net.scalax.fsn.database.test
 
-import io.circe.{ Json, Printer }
-import io.circe.syntax._
-import io.circe.generic.auto._
 import net.scalax.fsn.core.{ FPathImpl, PilesPolyHelper }
 import net.scalax.fsn.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
-import net.scalax.fsn.mix.helpers.{ In, Slick2JsonFsnImplicit, SlickCRUDImplicits }
-import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FSelectExtAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
+import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
+import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
 import net.scalax.fsn.slick.model._
+
+import io.circe.Json
+import io.circe.generic.auto._
+import io.circe.syntax._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.implicitConversions
@@ -16,27 +17,7 @@ import shapeless._
 
 import scala.concurrent._
 
-object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit with PilesPolyHelper {
-
-  val printer = Printer(
-    preserveOrder = true,
-    dropNullKeys = false,
-    indent = " ",
-    lbraceRight = " ",
-    rbraceLeft = " ",
-    lbracketRight = "\n",
-    rbracketLeft = "\n",
-    lrbracketsEmpty = "\n",
-    arrayCommaRight = "\n",
-    objectCommaRight = " ",
-    colonLeft = " ",
-    colonRight = " "
-  )
-
-  def prettyPrint(view: JsonView): Unit = {
-    println("json data:\n" + view.data.asJson.pretty(printer) + "\n")
-    println("properties:\n" + view.properties.asJson.pretty(printer) + "\n")
-  }
+object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit with PilesPolyHelper with App {
 
   implicit def fPilesOptionImplicit[D](path: FPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
     val path1 = path
@@ -56,8 +37,8 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
         ("age" ofPile friend.age.out) ::
         HNil
       ).poly(
-          "name" ofPath FPathImpl.empty[String].writeJ
-        ).apply {
+          "name" ofPile FPathImpl.empty[String].writeJ
+        ).transform {
             case Some(name) :: Some(nick) :: Some(Some(age)) :: HNil if age < 200 =>
               Option(s"$name-$nick")
             case Some(name) :: _ :: _ :: HNil =>
@@ -73,13 +54,68 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
 
   val view1: DBIO[JsonView] = result1.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))))
 
-  Await.result(Sample01.db.run {
-    Sample01.initData
+  Await.result(Helper.db.run {
+    Helper.initData
       .flatMap { _ =>
         view1.map { s =>
-          prettyPrint(s)
+          Helper.prettyPrint(s)
         }
       }
+  }, duration.Duration.Inf)
+
+  case class Aa(name: String, age: Int)
+
+  val moreComplexQuery = for {
+    friend <- FriendTable.out
+  } yield {
+    List(
+      "id" ofPile friend.id.out.order.describe("自增主键").writeJ,
+      ((((
+        ("name" ofPile friend.name.out.orderTarget("nick").describe("昵称")) ::
+        ("nick" ofPile friend.nick.out.order.describe("昵称")) ::
+        ("age" ofPile friend.age.out) ::
+        HNil
+      ).poly(
+          "name" ofPile FPathImpl.empty[String]
+        ).transform {
+            case Some(name) :: Some(nick) :: Some(Some(age)) :: HNil if age < 200 =>
+              Option(s"$name-$nick")
+            case Some(name) :: _ :: _ :: HNil =>
+              Option(name)
+            case _ =>
+              None
+          }) :: ("ageOpt" ofPile friend.age.out) :: HNil).poly("account" ofPile FPathImpl.empty[Aa]).transform {
+            case Some(name) :: Some(Some(age)) :: HNil =>
+              Option(Aa(name, age))
+            case _ =>
+              None
+          } :: ("id" ofPile friend.id.out.order.describe("自增主键")) :: HNil).poly("info" ofPile FPathImpl.empty[Map[String, Json]].writeJ).transform {
+            case Some(aa) :: Some(id) :: HNil =>
+              Option(Map("id" -> id.asJson, "accountInfo" -> aa.asJson))
+            case _ =>
+              None
+          },
+      "ageOpt" ofPile friend.age.out.writeJ
+    )
+  }
+
+  val result2: JsonOut = moreComplexQuery.strResult
+
+  val view2: DBIO[JsonView] = result2.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))))
+
+  Await.result(Helper.db.run {
+    view2.map { s =>
+      Helper.prettyPrint(s)
+      /*
+      json data:
+      [
+       { "id" : 1, "info" : { "id" : 1, "accountInfo" : { "name" : "魔理沙", "age" : 2333 } }, "ageOpt" : 2333 },
+       { "id" : 2, "info" : { "id" : 2, "accountInfo" : { "name" : "jilen-jilen 酱", "age" : 30 } }, "ageOpt" : 30 },
+       { "id" : 3, "info" : { "id" : 3, "accountInfo" : { "name" : "品神-kerr", "age" : 28 } }, "ageOpt" : 28 },
+       { "id" : 4, "ageOpt" : null }
+      ]
+       */
+    }
   }, duration.Duration.Inf)
 
 }

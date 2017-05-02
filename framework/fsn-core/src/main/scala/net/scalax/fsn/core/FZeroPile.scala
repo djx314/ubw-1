@@ -1,9 +1,7 @@
 package net.scalax.fsn.core
 
 trait FZeroPile[T] {
-
   def zero: T
-
 }
 
 object FZeroPile {
