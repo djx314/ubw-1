@@ -260,16 +260,15 @@ class ParTest extends FlatSpec
       }.toMap.asJson
     }
 
-    val mainPile1 = FPile.applyOpt(
-      ("我是" columns (In.default(12345678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
-        ("小莎莎" columns (In.default("1234") ::: In.jWrite[String])) ::
+    val mainPile1 =
+      ("我是" ofPile FPathImpl(In.default(12345678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+        ("小莎莎" ofPile FPathImpl(In.default("1234") ::: In.jWrite[String])) ::
         HNil
-    )
-    val appendPile1 = FPile.applyOpt(
-      ("jilen" columns (In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
-        ("kerr" columns (In.default("汪") ::: In.jRead[String])) ::
+
+    val appendPile1 =
+      ("jilen" ofPile FPathImpl(In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+        ("kerr" ofPile FPathImpl(In.default("汪") ::: In.jRead[String])) ::
         HNil
-    )
 
     val convertPile1 = (mainPile1 :: appendPile1 :: HNil).poly(
       ("小萌师父" ofPile FPathImpl(In.default("喵") ::: In.jRead[String])) ::
@@ -280,7 +279,7 @@ class ParTest extends FlatSpec
           None :: None :: HNil
       }
 
-    val convertPile2 = (convertPile1 :: mainPile1 :: HNil).poly(
+    /*val convertPile2 = (convertPile1 :: mainPile1 :: HNil).poly(
       ("喵喵喵" ofPile FPathImpl(In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
         ("汪汪汪" ofPile FPathImpl(In.default(5678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
         HNil
@@ -295,7 +294,7 @@ class ParTest extends FlatSpec
     println(resultGen4.flatMap(resultGen5) {
       case (result, gen) =>
         gen(result)
-    }.result(pileList))
+    }.result(pileList))*/
 
     /*try {
       resultGen4(pileList) match {

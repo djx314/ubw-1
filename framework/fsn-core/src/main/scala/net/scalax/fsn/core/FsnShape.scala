@@ -78,7 +78,7 @@ object FsnShape {
       override def decodeData(data: List[U[Any]]): U[T] = fsnShape.decodeData(data)
 
       override def zero = fsnShape.zero
-      override def packageShape = new FsnShape[FPathImpl[T], U[T], FPathImpl[T], U] {
+      override def packageShape = implicitly[FsnShape[FPathImpl[T], U[T], FPathImpl[T], U]] /*new FsnShape[FPathImpl[T], U[T], FPathImpl[T], U] {
         subSelf =>
         override def encodeColumn(pile: FPathImpl[T]): List[FPath] = pile :: Nil
         //思路错误，FPathImpl[T]还有 subs 字段需要特殊处理
@@ -96,11 +96,61 @@ object FsnShape {
         override def packageShape = subSelf
 
         override val dataLength = fsnShape.dataLength
-      }
+      }*/
 
       override val dataLength = fsnShape.dataLength
     }
   }
+
+  /*implicit def fpileFsnShape[U,T <: HList, W, V <: HList, C, D <: HList, A[_]]
+  (
+    implicit
+    subShape: FsnShape[U, W, C, A],
+    tailShape: FsnShape[T, V, D, A]
+  )
+  : FsnShape[FPileImpl[U :: T, W :: V , U], W :: V, FPathImpl[U :: T], U] = {
+    //val fsnShape = implicitly[FsnShape[FPathImpl[U :: T], W :: V, FPathImpl[U :: T], U]]
+
+    new FsnShape[FPileImpl[U :: T, W :: V , U], W :: V, FPathImpl[U :: T], U] {
+      self =>
+
+      override def encodeColumn(pile: FPileImpl[U :: T, W :: V , U]): List[FPath] = {
+        val headPile :: tailPile = pile.pathPile
+        subShape.encodeColumn(headPile) ::: tailShape.encodeColumn(tailPile)
+      }
+      //思路错误，FPathImpl[T]还有 subs 字段需要特殊处理
+      /*override def decodeColumn(columns: List[FPath]): FPileImpl[FPathImpl[T], U[T], U] = {
+        FPile(fsnShape.decodeColumn(columns))(fsnShape)
+      }*/
+      override def genPiles(pile: FPileImpl[U :: T, W :: V , U]): List[FPile[U]] = pile :: Nil
+      override def toTarget(pile: FPileImpl[U :: T, W :: V , U]): FPathImpl[U :: T] = pile.pathPile
+      override def encodeData(pileData: U[T]): List[U[Any]] = fsnShape.encodeData(pileData)
+      override def decodeData(data: List[U[Any]]): U[T] = fsnShape.decodeData(data)
+
+      override def zero = subShape.zero :: tailShape.zero
+      override def packageShape = new FsnShape[FPathImpl[T], U[T], FPathImpl[T], U] {
+        subSelf =>
+        override def encodeColumn(pile: FPathImpl[T]): List[FPath] = pile :: Nil
+        //思路错误，FPathImpl[T]还有 subs 字段需要特殊处理
+        /*override def decodeColumn(columns: List[FPath]): FPileImpl[FPathImpl[T], U[T], U] = {
+          FPile(fsnShape.decodeColumn(columns))(fsnShape)
+        }*/
+        override def genPiles(pile: FPathImpl[T]): List[FPile[U]] = {
+          FPile[FPathImpl[T], U[T], FPathImpl[T], U](pile)(subSelf) :: Nil
+        }
+        override def toTarget(pile: FPathImpl[T]): FPathImpl[T] = pile
+        override def encodeData(pileData: U[T]): List[U[Any]] = fsnShape.encodeData(pileData)
+        override def decodeData(data: List[U[Any]]): U[T] = fsnShape.decodeData(data)
+
+        override def zero = subShape.packageShape.zero :: tailShape.packageShape.zero
+        override def packageShape = subSelf
+
+        override val dataLength = subShape.packageShape.dataLength + tailShape.packageShape.dataLength
+      }
+
+      override val dataLength = subShape.dataLength + tailShape.dataLength
+    }
+  }*/
 
   implicit def hlistFsnShape[T <: HList, U, W, V <: HList, C, D <: HList, A[_]](
     implicit

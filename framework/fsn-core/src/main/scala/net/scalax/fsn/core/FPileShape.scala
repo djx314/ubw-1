@@ -96,9 +96,13 @@ trait PilesPolyHelper {
       }
   }*/
 
-  implicit class pilesPolyFuction[E, U, T, C[_]](piles: E)(implicit subShape: FsnShape[E, U, T, C]) {
+  implicit class pilesPolyFuction[E](piles: E) {
 
-    def poly[X, Y, Z](parentPile: X)(implicit parentShape: FsnShape[X, Y, Z, C]): PilesTransform[U, Y, Z, Y, C] =
+    def poly[X, Y, Z, U, T, C[_]](parentPile: X)(
+      implicit
+      subShape: FsnShape[E, U, T, C],
+      parentShape: FsnShape[X, Y, Z, C]
+    ): PilesTransform[U, Y, Z, Y, C] =
       new PilesTransform[U, Y, Z, Y, C] {
         override def transform(cv: (U => Y)): FPileImpl[Z, Y, C] = {
           FPileImpl(
@@ -115,6 +119,53 @@ trait PilesPolyHelper {
           )
         }
       }
+    /*def polyOpt[X, Y, Z, U, T](parentPile: X)(
+      implicit
+      subShape: FsnShape[E, U, T, Option],
+      parentShape: FsnShape[X, Y, Z, Option]
+    ): PilesTransform[U, Y, Z, Y, Option] =
+      new PilesTransform[U, Y, Z, Y, Option] {
+        override def transform(cv: (U => Y)): FPileImpl[Z, Y, Option] = {
+          FPileImpl(
+            parentShape.toTarget(parentPile),
+            parentShape.packageShape,
+            { list: List[Any] =>
+              cv(subShape.decodeData(subShape.genPiles(piles).zip(list).flatMap {
+                case (pile, pileData) =>
+                  pile.fShape.encodeData(pileData.asInstanceOf[pile.DataType])
+              }))
+              //cv(fPileShape.decodeData(list))
+            },
+            subShape.genPiles(piles)
+          )
+        }
+      }*/
   }
+
+  /*implicit class pilesPolyFuction[E, U, T, C[_]](piles: E)(
+      implicit
+      subShape: FsnShape[E, U, T, C]
+  ) {
+
+    def poly[X, Y, Z](parentPile: X)(
+      implicit
+      parentShape: FsnShape[X, Y, Z, C]
+    ): PilesTransform[U, Y, Z, Y, C] =
+      new PilesTransform[U, Y, Z, Y, C] {
+        override def transform(cv: (U => Y)): FPileImpl[Z, Y, C] = {
+          FPileImpl(
+            parentShape.toTarget(parentPile),
+            parentShape.packageShape, { list: List[Any] =>
+              cv(subShape.decodeData(subShape.genPiles(piles).zip(list).flatMap {
+                case (pile, pileData) =>
+                  pile.fShape.encodeData(pileData.asInstanceOf[pile.DataType])
+              }))
+              //cv(fPileShape.decodeData(list))
+            },
+            subShape.genPiles(piles)
+          )
+        }
+      }
+  }*/
 
 }
