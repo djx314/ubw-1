@@ -11,17 +11,11 @@ trait FAtomicQueryImpl {
 
   val path: FPath
 
-  trait FAtomicGenPoly extends Poly1 {
-    implicit def intCase[S]: Case.Aux[AbstractFAtomicGen[path.DataType, S], S] = {
-      at(s => s.getBy(path.atomics).right.get)
-    }
-  }
-
-  object fAtomicGenPolyImpl extends FAtomicGenPoly
+  object fAtomicGenPolyImpl extends FAtomicGenPolyImpl[path.type](path)
 
   val everyFAtomicGenPoly = everywhere(fAtomicGenPolyImpl)
 
-  def withRep[E, T, U, S, Y, V, X](rep: E)(
+  def withRep[E, V](rep: E)(
     implicit
     case1: poly.Case1.Aux[everyFAtomicGenPoly.type, E, V]
   ): WithRep[V] = {
@@ -65,6 +59,17 @@ trait FAtomicQueryImpl {
   def needAtomicList[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): AbstractFAtomicGen[path.DataType, List[T[path.DataType]]] = FAtomicGenHelper.needAtomicList[path.DataType, T](parGen)
 
 }
+
+trait FAtomicGenPoly extends Poly1 {
+
+  val path: FPath
+
+  implicit def intCase[S]: Case.Aux[AbstractFAtomicGen[path.DataType, S], S] = {
+    at(s => s.getBy(path.atomics).right.get)
+  }
+}
+
+class FAtomicGenPolyImpl[T <: FPath](override val path: T) extends FAtomicGenPoly
 
 class FAtomicQuery(override val path: FPath) extends FAtomicQueryImpl
 
