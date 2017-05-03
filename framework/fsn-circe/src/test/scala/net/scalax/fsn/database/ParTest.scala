@@ -10,8 +10,6 @@ import io.circe._
 import io.circe.syntax._
 import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
 
-import scala.language.existentials
-
 class ParTest extends FlatSpec
     with Matchers
     with EitherValues
