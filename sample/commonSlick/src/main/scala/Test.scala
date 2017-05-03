@@ -1,6 +1,6 @@
 package net.scalax.fsn.database.test
 
-object Test extends App {
+object Test {
 
   import shapeless._
   object sizeOf extends Poly1 {

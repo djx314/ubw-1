@@ -4,23 +4,65 @@ import scala.language.higherKinds
 
 import scala.reflect.runtime.universe._
 
+import shapeless._
+
 trait FAtomicQueryImpl {
   self =>
 
   val path: FPath
 
-  def withRep[U, S, Y](rep: U)(implicit fAtomicGenShape: FAtomicGenShape[U, path.DataType, Y]): Abc[Y] = {
+  /*def withRep[U, S, Y](rep: U)(implicit fAtomicGenShape: FAtomicGenShape[U, path.DataType, Y]): Abc[Y] = {
     new Abc[Y] {
       override val queryResult = fAtomicGenShape.unwrap(rep).getBy(path.atomics)
     }
+  }*/
+
+  /*object EverywhereAux {
+    implicit def default[E, F <: Poly, T, U, V]
+    (implicit
+     unpack: Unpack1[E, EverywhereAux, F],
+     data: Lazy[DataT.Aux[E, T, U]],
+     f: Case1.Aux[F, U, V] = Case1[F, U, U](identity)
+    ): Case1.Aux[E, T, V] = Case1[E, T, V](t => f(data.value.gmapT(t)))
+  }*/
+
+  val bbbb = everywhere(ddeeff)
+
+  def withRep[E, T, U, S, Y, V, X](rep: E)(
+    implicit
+    //unpack: Unpack1[EverywhereAux[ddeeff.type] {}, EverywhereAux, ddeeff.type],
+    //data: Lazy[DataT.Aux[EverywhereAux[ddeeff.type] {}, E, U]],
+    //unpack: Unpack1[bbbb.type, EverywhereAux, ddeeff.type],
+    //data: Lazy[DataT.Aux[bbbb.type, E, U]],
+    //f: poly.Case1.Aux[ddeeff.type, U, V] = poly.Case1[ddeeff.type, U, U](identity) //,
+    aabbcc: poly.Case1.Aux[bbbb.type, E, V] //,
+  //fAtomicGenShape: FAtomicGenShape[E, path.DataType, Y] //PolyDefns.Case1[ddeeff.type , U, V](identity)
+  ): Abc[V] = {
+    /*new Abc[Y] {
+      override val queryResult = Right(everywhere(ddeeff)(rep)) //fAtomicGenShape.unwrap(rep).getBy(path.atomics)
+    }*/
+    //val bb = implicitly[poly.Case[bbbb.type, shapeless.::[E, shapeless.HNil]] { type Result = V }]
+    //println(bbbb.apply(rep)(bb))
+    new Abc[V] {
+      override val queryResult = Right(bbbb.apply(rep)(aabbcc)) //fAtomicGenShape.unwrap(rep).getBy(path.atomics)
+    }
   }
 
-  /*override def mapToOption[R](cv: (T, Option[path.DataType]) => R): FQueryTranform[T, Option, R]
+  object ddeeff extends Poly1 {
+    implicit def intCase[S]: Case.Aux[AbstractFAtomicGen[path.DataType, S], S] = {
+      at(s => s.getBy(path.atomics).right.get)
+    }
+    /*implicit def intCase1[S[_]]: Case.Aux[FAtomicGen[path.DataType, S], S[path.DataType]] = {
+      at(s => s.getBy(path.atomics).right.get)
+    }
+    implicit def intCase2[S[_]]: Case.Aux[FAtomicGenOpt[path.DataType, S], Option[S[path.DataType]]] = {
+      at(s => s.getBy(path.atomics).right.get)
+    }
 
-    override def mapToWithoutData[R](cv: T => R): FQueryTranformWithOutData[R]
-
-    override def mapToOptionWithoutData[R](cv: T => R): FQueryTranformWithOutData[R]
+    implicit def intCas3e[S[_]]: Case.Aux[FAtomicGenList[path.DataType, S], List[S[path.DataType]]] = {
+      at(s => s.getBy(path.atomics).right.get)
     }*/
+  }
 
   trait Abc[A] {
     val queryResult: Either[FAtomicException, A]
@@ -52,9 +94,9 @@ trait FAtomicQueryImpl {
     def mapToOptionWithoutData[R](cv: A => R): FQueryTranformWithOutData[R, Option] = mapToWithoutData[Option, R](cv)
   }
 
-  def needAtomic[T[_]](implicit parGen: FAtomicPartialFunctionGen[T], typeTag: WeakTypeTag[T[_]]): FAtomicGen[path.DataType, T] = FAtomicGenHelper.needAtomic[path.DataType, T](parGen, typeTag)
-  def needAtomicOpt[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenOpt[path.DataType, T] = FAtomicGenHelper.needAtomicOpt[path.DataType, T](parGen)
-  def needAtomicList[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): FAtomicGenList[path.DataType, T] = FAtomicGenHelper.needAtomicList[path.DataType, T](parGen)
+  def needAtomic[T[_]](implicit parGen: FAtomicPartialFunctionGen[T], typeTag: WeakTypeTag[T[_]]): AbstractFAtomicGen[path.DataType, T[path.DataType]] = FAtomicGenHelper.needAtomic[path.DataType, T](parGen, typeTag)
+  def needAtomicOpt[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): AbstractFAtomicGen[path.DataType, Option[T[path.DataType]]] = FAtomicGenHelper.needAtomicOpt[path.DataType, T](parGen)
+  def needAtomicList[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): AbstractFAtomicGen[path.DataType, List[T[path.DataType]]] = FAtomicGenHelper.needAtomicList[path.DataType, T](parGen)
 
 }
 
