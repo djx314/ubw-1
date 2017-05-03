@@ -49,9 +49,9 @@ object StrOutSelectConvert {
   def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[Option, StrSlickQuery] = {
     FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrNeededFetch] :: needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomic[StrSlickSelect] :: (needAtomicOpt[StrNeededFetch] :: (needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: HNil) :: HNil) :: needAtomic[FProperty] :: HNil)
           .mapToOption {
-            case (slickSelect :: neededFetchOpt :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil, data) => {
+            case (slickSelect :: (neededFetchOpt :: (isOrderNullsLastContent :: orderTargetNameContent :: HNil) :: HNil) :: property :: HNil, data) => {
               val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
               val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
               val isInView = neededFetchOpt.map(_.isInView).getOrElse(true)

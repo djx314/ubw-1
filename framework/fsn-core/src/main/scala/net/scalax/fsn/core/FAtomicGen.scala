@@ -2,7 +2,6 @@ package net.scalax.fsn.core
 
 import scala.reflect.runtime.universe._
 import scala.language.higherKinds
-import shapeless._
 
 trait AbstractFAtomicGen[U, S] {
   def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, S]
@@ -19,8 +18,7 @@ trait FAtomicGenOpt[U, S[_]] extends AbstractFAtomicGen[U, Option[S[U]]] {
 trait FAtomicGenList[U, S[_]] extends AbstractFAtomicGen[U, List[S[U]]] {
   override def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, List[S[U]]]
 }
-
-trait FAtomicGenShape[-Input, U, S] {
+/*trait FAtomicGenShape[-Input, U, S] {
   def unwrap(input: Input): AbstractFAtomicGen[U, S]
 }
 
@@ -65,8 +63,7 @@ trait FAtomicGenShapeImpl {
     }
   }
 
-}
-
+}*/
 trait FAtomicGenHelper {
 
   def needAtomic[U, T[_]](implicit parGen: FAtomicPartialFunctionGen[T], typeTag: WeakTypeTag[T[_]]): FAtomicGen[U, T] = new FAtomicGen[U, T] {
