@@ -80,7 +80,7 @@ val fQuery = for {
 
 输出的结果与第一个例子一样。可以发现，这个`fQuery`所需要的信息并不是`slick`中的`table`，而是字段名称，一些描述性信息和字段类型，如果把类型用 case 等方式处理，你会发现，所有的信息都是 Json 友好的 String，Boolean 等类型。完全可以根据 Json 或者 XML 等易用于模块间交互数据描述方式生成一个 fQuery。[更动态的 sql 语句生成](doc-01.md#7-更动态的-sql-语句生成)这个问题似乎也不难解决，但实际上要花费的功夫会比想象中大。不过比起人工拼接 sql，处理数据库间方言的差异，以及渲染视图中各种类型不安全的代码来说，基于`slick`的解决方案实现起来明显要轻松得多。
 
-另外我在底层样例代码中实现了一个可以使用`slick`的`groupBy`功能的`fQuery`，可以根据不同的参数动态进行多维度统计，再配合`slick`自身的数据库信息检索接口（可以参照`codegen`的示例代码）辅助生成上述例子所需要的字段信息（column name, nullable, scala type 等），用[slick-migration-api](https://github.com/nafg/slick-migration-api "slick-migration-api")修改数据库表结构。而传往前端的数据中，已经自带字段信息，只要加上部分样式信息，则可在 Excel，Echarts，Grid 等多种终端展示。并可轻易加上各类参数以过滤数据和排序，也可从多个数据源中获取数据以持久化。说了这么多，是不是有一种可以单枪匹马做出一个`BI`的错觉？
+另外我在底层样例代码中实现了一个包含`slick` `groupBy`功能的`fQuery`，可以根据不同的参数动态进行多维度统计，再配合`slick`自身的数据库信息检索接口（参照`codegen`的示例代码）辅助生成上述例子所需要的字段信息（column name, nullable, scala type 等），用[slick-migration-api](https://github.com/nafg/slick-migration-api "slick-migration-api")修改数据库表结构。而传往前端的数据中，已经自带字段信息，只要加上部分样式信息，则可在 Excel，Echarts，Grid 等多种终端展示，并可轻易加上各类参数以过滤数据和排序，也可从多个数据源中获取数据以持久化。说了这么多，是不是有一种可以单枪匹马做出一个`BI`的错觉？
 
 可以感觉到`slick`的魅力和威力所在了么？
 
