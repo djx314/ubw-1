@@ -20,7 +20,15 @@ trait FAtomicQueryImpl {
     case1: poly.Case1.Aux[everyFAtomicGenPoly.type, E, V]
   ): WithRep[V] = {
     new WithRep[V] {
-      override val queryResult = Right(everyFAtomicGenPoly.apply(rep)(case1)) //fAtomicGenShape.unwrap(rep).getBy(path.atomics)
+      override val queryResult = {
+        try {
+          Right(everyFAtomicGenPoly.apply(rep)(case1))
+        } catch {
+          case e: FAtomicException =>
+            //TODO 这里还没有完成，要判断是缺少的所有 FAtomic
+            Left(e)
+        }
+      } //Right(everyFAtomicGenPoly.apply(rep)(case1)) //fAtomicGenShape.unwrap(rep).getBy(path.atomics)
     }
   }
 
