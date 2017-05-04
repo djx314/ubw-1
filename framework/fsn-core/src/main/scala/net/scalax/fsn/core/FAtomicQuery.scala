@@ -15,12 +15,18 @@ trait FAtomicQueryImpl {
 
   val everyFAtomicGenPoly = everywhere(fAtomicGenPolyImpl)
 
-  def withRep[E, V](rep: E)(
+  object aaaa extends FAtomicListPolyImpl[path.type](path)
+  object bbbb extends FAtomicAppendImpl[path.type](path)
+  val cccc = everything(aaaa).apply(bbbb)
+
+  def withRep[E, V, X](rep: E)(
     implicit
-    case1: poly.Case1.Aux[everyFAtomicGenPoly.type, E, V]
+    case1: Lazy[poly.Case1.Aux[everyFAtomicGenPoly.type, E, V]],
+    listCase: Lazy[poly.Case1.Aux[cccc.type, E, X]],
+    cv: Lazy[X <:< List[AbstractFAtomicGen[path.DataType, Any]]]
   ): WithRep[V] = {
     new WithRep[V] {
-      override val queryResult = Right(everyFAtomicGenPoly.apply(rep)(case1)) //fAtomicGenShape.unwrap(rep).getBy(path.atomics)
+      override val queryResult = Right(everyFAtomicGenPoly.apply(rep)(case1.value)) //fAtomicGenShape.unwrap(rep).getBy(path.atomics)
     }
   }
 
@@ -67,9 +73,32 @@ trait FAtomicGenPoly extends Poly1 {
   implicit def intCase[S]: Case.Aux[AbstractFAtomicGen[path.DataType, S], S] = {
     at(s => s.getBy(path.atomics).right.get)
   }
+
 }
 
 class FAtomicGenPolyImpl[T <: FPath](override val path: T) extends FAtomicGenPoly
+
+trait FAtomicListPoly extends Poly1 {
+
+  val path: FPath
+
+  implicit def default[T] = at[T](_ => List.empty[AbstractFAtomicGen[path.DataType, Any]])
+
+  implicit def intCase[S]: Case.Aux[AbstractFAtomicGen[path.DataType, S], List[AbstractFAtomicGen[path.DataType, Any]]] = {
+    at(s => s.asInstanceOf[AbstractFAtomicGen[path.DataType, Any]] :: Nil)
+  }
+
+}
+
+class FAtomicListPolyImpl[T <: FPath](override val path: T) extends FAtomicListPoly
+
+trait FAtomicAppend extends Poly2 {
+  val path: FPath
+
+  implicit def caseString = at[List[AbstractFAtomicGen[path.DataType, Any]], List[AbstractFAtomicGen[path.DataType, Any]]](_ ++ _)
+}
+
+class FAtomicAppendImpl[T <: FPath](override val path: T) extends FAtomicAppend
 
 class FAtomicQuery(override val path: FPath) extends FAtomicQueryImpl
 
