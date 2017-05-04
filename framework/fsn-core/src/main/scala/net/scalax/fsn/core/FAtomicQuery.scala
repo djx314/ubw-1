@@ -26,7 +26,15 @@ trait FAtomicQueryImpl {
     cv: Lazy[X <:< List[AbstractFAtomicGen[path.DataType, Any]]]
   ): WithRep[V] = {
     new WithRep[V] {
-      override val queryResult = Right(everyFAtomicGenPoly.apply(rep)(case1.value)) //fAtomicGenShape.unwrap(rep).getBy(path.atomics)
+      override val queryResult = {
+        try {
+          Right(everyFAtomicGenPoly.apply(rep)(case1.value))
+        } catch {
+          case e: FAtomicException =>
+            //TODO 这里还没有完成，要判断是缺少的所有 FAtomic
+            Left(e)
+        }
+      } //Right(everyFAtomicGenPoly.apply(rep)(case1)) //fAtomicGenShape.unwrap(rep).getBy(path.atomics)
     }
   }
 
