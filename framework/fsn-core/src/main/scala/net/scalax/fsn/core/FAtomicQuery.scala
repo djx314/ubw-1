@@ -6,33 +6,28 @@ import scala.reflect.runtime.universe._
 
 import shapeless._
 
-trait FAtomicQueryImpl {
+trait FAtomicQueryBase {
   self =>
 
   val path: FPath
 
-  object fAtomicGenPolyImpl extends FAtomicGenPolyImpl[path.type](path)
-
-  val everywhereFAtomicGenPoly = everywhere(fAtomicGenPolyImpl)
-
-  object everythingFatomicListPoly extends FAtomicListPolyImpl[path.type](path)
-  object everythingFAtomicAppend extends FAtomicAppendImpl[path.type](path)
-  val everythingImpl = everything(everythingFatomicListPoly).apply(everythingFAtomicAppend)
-
-  def withRep[E, V, X](rep: E)(
+  def commonWithRep[E, V, X, F, K](rep: E)(everywherePoly: Poly, everythingPoly: EverythingAux[F, K])(
     implicit
-    case1: Lazy[poly.Case1.Aux[everywhereFAtomicGenPoly.type, E, V]],
-    listCase: Lazy[poly.Case1.Aux[everythingImpl.type, E, X]],
+    case1: Lazy[poly.Case1.Aux[everywherePoly.type, E, V]],
+    listCase: Lazy[poly.Case1.Aux[everythingPoly.type, E, X]],
     cv: Lazy[X <:< List[AbstractFAtomicGen[path.DataType, Any]]]
   ): WithRep[V] = {
     new WithRep[V] {
       override val queryResult = {
         try {
-          Right(everywhereFAtomicGenPoly.apply(rep)(case1.value))
+          Right(everywherePoly.apply(rep)(case1.value))
         } catch {
           case e: FAtomicException =>
             //过滤出全部 FAtomic 中没有的 Reader 的 TypeTag
-            val atomicGenList = cv.value(everythingImpl.apply(rep)(listCase.value))
+            val atomicGenList = cv.value(
+              everythingPoly
+                .apply(rep)(listCase.value)
+            )
             val missTypeTags = atomicGenList.map { gen =>
               gen.getBy(path.atomics) match {
                 case Left(e) => Option(e)
@@ -54,7 +49,6 @@ trait FAtomicQueryImpl {
         override lazy val path: self.path.type = self.path
         override val gen = queryResult
         override def apply(rep: A, data: C[path.DataType]): R = {
-          //t.right.map(s => cv(s, data))
           cv(rep, data)
         }
       }
@@ -73,6 +67,27 @@ trait FAtomicQueryImpl {
     }
 
     def mapToOptionWithoutData[R](cv: A => R): FQueryTranformWithOutData[R, Option] = mapToWithoutData[Option, R](cv)
+  }
+
+}
+
+trait FAtomicQueryImpl extends FAtomicQueryBase {
+  self =>
+
+  object fAtomicGenPolyImpl extends FAtomicGenPolyImpl[path.type](path)
+  val everywhereFAtomicGenPoly = everywhere(fAtomicGenPolyImpl)
+
+  object everythingFatomicListPoly extends FAtomicListPolyImpl[path.type](path)
+  object everythingFAtomicAppend extends FAtomicAppendImpl[path.type](path)
+  val everythingImpl = everything(everythingFatomicListPoly).apply(everythingFAtomicAppend)
+
+  def withRep[E, V, X](rep: E)(
+    implicit
+    case1: Lazy[poly.Case1.Aux[everywhereFAtomicGenPoly.type, E, V]],
+    listCase: Lazy[poly.Case1.Aux[everythingImpl.type, E, X]],
+    cv: Lazy[X <:< List[AbstractFAtomicGen[path.DataType, Any]]]
+  ): WithRep[V] = {
+    commonWithRep(rep)(everywhereFAtomicGenPoly, everythingImpl)(case1, listCase, cv)
   }
 
   def needAtomic[T[_]](implicit parGen: FAtomicPartialFunctionGen[T], typeTag: WeakTypeTag[T[_]]): AbstractFAtomicGen[path.DataType, T[path.DataType]] = FAtomicGenHelper.needAtomic[path.DataType, T](parGen, typeTag)
