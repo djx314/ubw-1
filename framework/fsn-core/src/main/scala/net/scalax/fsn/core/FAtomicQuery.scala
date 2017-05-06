@@ -9,7 +9,7 @@ import shapeless._
 trait FAtomicQueryBase {
   self =>
 
-  val path: FPath
+  val path: FAtomicPath
 
   def commonWithRep[E, V, X, F, K](rep: E)(everywherePoly: Poly, everythingPoly: EverythingAux[F, K])(
     implicit
@@ -98,7 +98,7 @@ trait FAtomicQueryImpl extends FAtomicQueryBase {
 
 trait FAtomicGenPoly extends Poly1 {
 
-  val path: FPath
+  val path: FAtomicPath
 
   implicit def intCase[S]: Case.Aux[AbstractFAtomicGen[path.DataType, S], S] = {
     at { s =>
@@ -111,11 +111,11 @@ trait FAtomicGenPoly extends Poly1 {
 
 }
 
-class FAtomicGenPolyImpl[T <: FPath](override val path: T) extends FAtomicGenPoly
+class FAtomicGenPolyImpl[T <: FAtomicPath](override val path: T) extends FAtomicGenPoly
 
 trait FAtomicListPoly extends Poly1 {
 
-  val path: FPath
+  val path: FAtomicPath
 
   implicit def default[T] = at[T](_ => List.empty[AbstractFAtomicGen[path.DataType, Any]])
 
@@ -125,21 +125,21 @@ trait FAtomicListPoly extends Poly1 {
 
 }
 
-class FAtomicListPolyImpl[T <: FPath](override val path: T) extends FAtomicListPoly
+class FAtomicListPolyImpl[T <: FAtomicPath](override val path: T) extends FAtomicListPoly
 
 trait FAtomicAppend extends Poly2 {
-  val path: FPath
+  val path: FAtomicPath
 
   implicit def caseString = at[List[AbstractFAtomicGen[path.DataType, Any]], List[AbstractFAtomicGen[path.DataType, Any]]](_ ++ _)
 }
 
-class FAtomicAppendImpl[T <: FPath](override val path: T) extends FAtomicAppend
+class FAtomicAppendImpl[T <: FAtomicPath](override val path: T) extends FAtomicAppend
 
-class FAtomicQuery(override val path: FPath) extends FAtomicQueryImpl
+class FAtomicQuery(override val path: FAtomicPath) extends FAtomicQueryImpl
 
 trait FQueryTranform[U, C[_]] {
   type QueryType
-  val path: FPath
+  val path: FAtomicPath
   val gen: Either[FAtomicException, QueryType]
   def apply(rep: QueryType, data: C[path.DataType]): U
 }

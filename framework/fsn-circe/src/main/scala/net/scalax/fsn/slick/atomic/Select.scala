@@ -1,6 +1,6 @@
 package net.scalax.fsn.slick.atomic
 
-import net.scalax.fsn.core.{ FAtomic, FPathImpl }
+import net.scalax.fsn.core.{ FAtomic, FAtomicPathImpl }
 import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Shape }
 
 trait SlickSelect[E] extends FAtomic[E] {
@@ -20,7 +20,7 @@ case class SSelect[S, D, T, E](
     override val outConvert: D => E,
     override val outCol: S,
     override val colToOrder: Option[T => ColumnOrdered[_]]
-) extends SlickSelect[E] with FPathImpl[E] {
+) extends SlickSelect[E] with FAtomicPathImpl[E] {
   override type SourceType = S
   override type SlickType = D
   override type TargetType = T

@@ -1,6 +1,6 @@
 package net.scalax.fsn.database.test
 
-import net.scalax.fsn.core.{ FPathImpl, PilesPolyHelper }
+import net.scalax.fsn.core.{ FAtomicPathImpl, PilesPolyHelper }
 import net.scalax.fsn.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
 import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
@@ -19,7 +19,7 @@ import scala.concurrent._
 
 object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit with PilesPolyHelper {
 
-  implicit def fPilesOptionImplicit[D](path: FPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
+  implicit def fPilesOptionImplicit[D](path: FAtomicPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
     val path1 = path
     new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
       override val path = path1
@@ -37,7 +37,7 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
         ("age" ofPile friend.age.out) ::
         HNil
       ).poly(
-          "name" ofPile FPathImpl.empty[String].writeJ
+          "name" ofPile FAtomicPathImpl.empty[String].writeJ
         ).transform {
             case Some(name) :: Some(nick) :: Some(Some(age)) :: HNil if age < 200 =>
               Option(s"$name-$nick")
@@ -76,7 +76,7 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
         ("age" ofPile friend.age.out) ::
         HNil
       ).poly(
-          "name" ofPile FPathImpl.empty[String]
+          "name" ofPile FAtomicPathImpl.empty[String]
         ).transform {
             case Some(name) :: Some(nick) :: Some(Some(age)) :: HNil if age < 200 =>
               Option(s"$name-$nick")
@@ -84,12 +84,12 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
               Option(name)
             case _ =>
               None
-          }) :: ("ageOpt" ofPile friend.age.out) :: HNil).poly("account" ofPile FPathImpl.empty[Aa]).transform {
+          }) :: ("ageOpt" ofPile friend.age.out) :: HNil).poly("account" ofPile FAtomicPathImpl.empty[Aa]).transform {
             case Some(name) :: Some(Some(age)) :: HNil =>
               Option(Aa(name, age))
             case _ =>
               None
-          } :: ("id" ofPile friend.id.out.order.describe("自增主键")) :: HNil).poly("info" ofPile FPathImpl.empty[Map[String, Json]].writeJ).transform {
+          } :: ("id" ofPile friend.id.out.order.describe("自增主键")) :: HNil).poly("info" ofPile FAtomicPathImpl.empty[Map[String, Json]].writeJ).transform {
             case Some(aa) :: Some(id) :: HNil =>
               Option(Map("id" -> id.asJson, "accountInfo" -> aa.asJson))
             case _ =>

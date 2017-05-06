@@ -1,7 +1,7 @@
 package net.scalax.fsn.mix.helpers
 
 import io.circe.{ Decoder, Encoder }
-import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.core.{ FAtomic, FAtomicPathImpl }
 import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
 import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.helpers.{ FilterWrapper, SlickUtils }
@@ -18,7 +18,7 @@ case class SCRUD[S, D, T, E](
     jRead: JsonReader[E],
     jWrite: JsonWriter[E],
     isAutoInc: Boolean
-) { self =>
+) extends FAtomicPathImpl[E] { self =>
   def primary(implicit priFilter: FilterWrapper[T, D]): SCRUD[S, D, T, E] = {
     this.copy(
       retrieve = retrieve.copy(primaryGen = Option(priFilter)),
@@ -26,8 +26,6 @@ case class SCRUD[S, D, T, E](
       delete = delete.copy(primaryGen = Option(priFilter))
     )
   }
-
-  List
 
   def autoInc: SCRUD[S, D, T, E] = {
     this.copy(isAutoInc = true)
@@ -46,6 +44,9 @@ case class SCRUD[S, D, T, E](
       }
     )
   }
+
+  override type DataType = E
+  override val atomics = result
 }
 
 object SCRUD {

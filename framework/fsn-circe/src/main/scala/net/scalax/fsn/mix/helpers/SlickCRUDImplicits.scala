@@ -33,17 +33,17 @@ trait SlickCRUDImplicits {
       }
       FsnColumn(proName :: converts.toList.flatten)
     }*/
-    def ofPile[D](path: FPathImpl[D]): FPileImpl[FPathImpl[D], Option[D], Option] = {
+    def ofPile[D](path: FAtomicPathImpl[D]): FPileImpl[FAtomicPathImpl[D], Option[D], Option] = {
       val proName = new FProperty[D] {
         override val proName = proName1
       }
-      FPile.applyOpt(FPathImpl(proName :: path.atomics)) /*(implicitly[FsnShape[FPathImpl[D], Option[D], FPathImpl[D], Option]])*/
+      FPile.applyOpt(FAtomicPathImpl(proName :: path.atomics)) /*(implicitly[FsnShape[FAtomicPathImpl[D], Option[D], FAtomicPathImpl[D], Option]])*/
     }
-    /*def ofPath[D](path: FPathImpl[D]): FPathImpl[D] = {
+    /*def ofPath[D](path: FAtomicPathImpl[D]): FAtomicPathImpl[D] = {
       val proName = new FProperty[D] {
         override val proName = proName1
       }
-      FPathImpl(proName :: path.atomics)
+      FAtomicPathImpl(proName :: path.atomics)
     }*/
   }
 
