@@ -1,9 +1,7 @@
 package net.scalax.fsn.core
 
 import scala.language.higherKinds
-
 import scala.reflect.runtime.universe._
-
 import shapeless._
 
 trait FAtomicQueryBase {

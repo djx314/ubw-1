@@ -75,6 +75,7 @@ object ExcelOperation /*extends FAtomicGenHelper with FAtomicShapeHelper*/ {
       write(eachColumn)
     }.toMap
   }*/
+
   val writeGen = FPile.transformTreeList {
     new FAtomicQuery(_) {
       val aa = withRep(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
