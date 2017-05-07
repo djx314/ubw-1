@@ -74,7 +74,7 @@ object InDeleteConvert2222 {
   ) = {
     FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomic[SlickDelete] :: needAtomicOpt[OneToOneRetrieve] :: HNil)
+        val aa = withRep(needAtomic[SlickDelete] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
           .mapToOption {
             case (slickDelete :: oneToDeleteOpt :: HNil, data) =>
               val subGenOpt = oneToDeleteOpt.map { oneToOneDelete =>

@@ -48,7 +48,7 @@ object OutSelectConvert {
   def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[Option, FSlickQuery] = {
     FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomic[SlickSelect] :: needAtomicOpt[OrderNullsLast] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomic[SlickSelect] :: needAtomicOpt[OrderNullsLast] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: FANil)
           .mapToOption {
             case (slickSelect :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil, data) => {
               val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
@@ -116,7 +116,7 @@ object OutSelectConvert {
   def ubwGenWithoutData: FPileSyntaxWithoutData.PileGen[Option, List[String]] = {
     FPile.transformTreeListWithoutData {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomic[SlickSelect] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomic[SlickSelect] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: FANil)
           .mapToOptionWithoutData {
             case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
               if (slickSelect.colToOrder.isDefined || orderTargetNameContent.isDefined) {

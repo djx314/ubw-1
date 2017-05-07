@@ -78,7 +78,7 @@ object ExcelOperation /*extends FAtomicGenHelper with FAtomicShapeHelper*/ {
 
   val writeGen = FPile.transformTreeList {
     new FAtomicQuery(_) {
-      val aa = withRep(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
+      val aa = withRep(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapToOption {
           case (poiWriter :: transforms :: property :: defaultOpt :: HNil, data) => {
             val exportData = data.fold(defaultOpt.map(_.value))(Option(_))

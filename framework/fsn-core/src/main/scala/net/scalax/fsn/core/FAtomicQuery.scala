@@ -3,8 +3,7 @@ package net.scalax.fsn.core
 import scala.language.higherKinds
 import scala.reflect.runtime.universe._
 import shapeless._
-
-trait FAtomicQueryBase {
+/*trait FAtomicQueryBase {
   self =>
 
   val path: FAtomicPath
@@ -133,8 +132,7 @@ trait FAtomicAppend extends Poly2 {
 
 class FAtomicAppendImpl[T <: FAtomicPath](override val path: T) extends FAtomicAppend
 
-class FAtomicQuery(override val path: FAtomicPath) extends FAtomicQueryImpl
-
+class FAtomicQuery(override val path: FAtomicPath) extends FAtomicQueryImpl*/
 trait FQueryTranform[U, C[_]] {
   type QueryType
   val path: FAtomicPath
@@ -147,3 +145,55 @@ trait FQueryTranformWithOutData[U, C[_]] {
   val gen: Either[FAtomicException, QueryType]
   def apply(rep: QueryType): U
 }
+
+trait FAtomicQueryImpl {
+  self =>
+
+  val path: FAtomicPath
+
+  val FANil: AbstractFAtomicGen[path.DataType, HNil] = AbstractFAtomicGen.empty
+
+  def withRep[F](rep: AbstractFAtomicGen[path.DataType, F]): WithRep[F] = {
+    new WithRep[F] {
+      override val queryResult: Either[FAtomicException, F] = {
+        rep.getBy(path.atomics)
+      }
+    }
+  }
+
+  trait WithRep[A] {
+    val queryResult: Either[FAtomicException, A]
+
+    def mapTo[C[_], R](cv: (A, C[path.DataType]) => R): FQueryTranform[R, C] = {
+      new FQueryTranform[R, C] {
+        override type QueryType = A
+        override lazy val path: self.path.type = self.path
+        override val gen = queryResult
+        override def apply(rep: A, data: C[path.DataType]): R = {
+          cv(rep, data)
+        }
+      }
+    }
+
+    def mapToOption[R](cv: (A, Option[path.DataType]) => R): FQueryTranform[R, Option] = mapTo[Option, R](cv)
+
+    def mapToWithoutData[C[_], R](cv: A => R): FQueryTranformWithOutData[R, C] = {
+      new FQueryTranformWithOutData[R, C] {
+        override type QueryType = A
+        override val gen = queryResult
+        override def apply(rep: A): R = {
+          cv(rep)
+        }
+      }
+    }
+
+    def mapToOptionWithoutData[R](cv: A => R): FQueryTranformWithOutData[R, Option] = mapToWithoutData[Option, R](cv)
+  }
+
+  def needAtomic[T[_]](implicit parGen: FAtomicPartialFunctionGen[T], typeTag: WeakTypeTag[T[_]]): AbstractFAtomicGen[path.DataType, T[path.DataType]] = FAtomicGenHelper.needAtomic[path.DataType, T](parGen, typeTag)
+  def needAtomicOpt[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): AbstractFAtomicGen[path.DataType, Option[T[path.DataType]]] = FAtomicGenHelper.needAtomicOpt[path.DataType, T](parGen)
+  def needAtomicList[T[_]](implicit parGen: FAtomicPartialFunctionGen[T]): AbstractFAtomicGen[path.DataType, List[T[path.DataType]]] = FAtomicGenHelper.needAtomicList[path.DataType, T](parGen)
+
+}
+
+class FAtomicQuery(override val path: FAtomicPath) extends FAtomicQueryImpl

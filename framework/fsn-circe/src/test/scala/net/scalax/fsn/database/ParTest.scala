@@ -9,7 +9,6 @@ import shapeless._
 import io.circe._
 import io.circe.syntax._
 import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
-import shapeless.ops.hlist.IsHCons
 
 class ParTest extends FlatSpec
     with Matchers
@@ -25,11 +24,11 @@ class ParTest extends FlatSpec
     val path = FAtomicPathImpl(In.jRead[Long] ::: In.jWrite[Long])
 
     new FAtomicQuery(path) {
-      val aa = withRep(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil)
+      val aa = withRep(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: FANil)
     }
 
     val Right(reader1 :: reader3 :: reader2 :: writer1 :: writer2 :: writer3 :: writer4 :: HNil) = new FAtomicQuery(path) {
-      val aa = withRep(needAtomic[JsonReader] :: needAtomicOpt[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: HNil)
+      val aa = withRep(needAtomic[JsonReader] :: needAtomicOpt[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: FANil)
     }.aa.queryResult
     //println(reader2.reader)
     //println(writer1.writer)
@@ -84,7 +83,7 @@ class ParTest extends FlatSpec
 
     val resultGen1 = FPile.transformOf {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapToOption {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
               val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
@@ -115,7 +114,7 @@ class ParTest extends FlatSpec
 
     val resultGen2 = FPile.transformTree {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapToOption {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
               val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
@@ -161,7 +160,7 @@ class ParTest extends FlatSpec
 
     val resultGen3 = FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapToOption {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
               val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
@@ -193,7 +192,7 @@ class ParTest extends FlatSpec
 
     val resultGen4 = FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep((needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: HNil) :: HNil)
+        val aa = withRep((needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: FANil) :: FANil)
           .mapToOption {
             case ((defaultOpt :: property :: HNil) :: HNil, data) =>
               val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
@@ -209,7 +208,7 @@ class ParTest extends FlatSpec
 
     val resultGen5 = FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapToOption {
             case (writer :: (defaultOpt :: HNil) :: property :: HNil, data1) =>
               //println(data1)

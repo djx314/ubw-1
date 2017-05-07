@@ -6,12 +6,11 @@ import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
 import shapeless._
-
 object JsonOperation {
 
   val readGen = FPile.transformTreeList {
     new FAtomicQuery(_) {
-      val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
+      val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapToOption {
           case (jsonReader :: property :: defaultOpt :: HNil, data) =>
             val tran: Map[String, Json] => Option[path.DataType] = { sourceData: Map[String, Json] =>
@@ -47,7 +46,7 @@ object JsonOperation {
 
   val unfullReadGen = FPile.transformTreeList {
     new FAtomicQuery(_) {
-      val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
+      val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapToOption {
           case (jsonReader :: property :: defaultOpt :: HNil, data) =>
             val tran: Map[String, Json] => Option[path.DataType] = { sourceData: Map[String, Json] =>
@@ -83,7 +82,7 @@ object JsonOperation {
 
   def writeGen = FPile.transformTreeList {
     new FAtomicQuery(_) {
-      val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
+      val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapToOption {
           case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
             val exportData = data.fold(defaultOpt.map(_.value))(Option(_))
@@ -98,7 +97,7 @@ object JsonOperation {
 
   def unSafewriteGen = FPile.transformTreeList {
     new FAtomicQuery(_) {
-      val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: HNil)
+      val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapToOption {
           case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
             val exportData = data.fold(defaultOpt.map(_.value))(Option(_))
