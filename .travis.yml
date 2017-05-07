@@ -1,8 +1,10 @@
-sudo: true
 language: scala
+sudo: required
+dist: trusty
 
 scala:
-  - 2.12.2
+  - 2.10.6
+  - 2.11.11
 
 jdk:
   - oraclejdk8
@@ -10,5 +12,6 @@ jdk:
 script:
   - sbt ++$TRAVIS_SCALA_VERSION allClean coverage allTest
   - sbt ++$TRAVIS_SCALA_VERSION allReport
+
 
 after_success: bash <(curl -s https://codecov.io/bash)

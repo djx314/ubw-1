@@ -14,7 +14,7 @@ object StaticManyOperation {
   def updateGen(implicit ec: ExecutionContext): FPileSyntax.PileGen[Option, Future[Map[String, QueryJsonInfo]]] = {
     FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomicOpt[StaticMany] :: HNil)
+        val aa = withRep(needAtomicOpt[StaticMany] :: FANil)
           .mapToOption {
             case (staticMayOpt :: HNil, data) =>
               Future.sequence(staticMayOpt.toList.map { eachStatic =>
@@ -69,7 +69,7 @@ object StaticManyOperation {
   def ubwStaticManyGen(implicit ec: ExecutionContext): FPileSyntaxWithoutData.PileGen[Option, Future[List[StaticManyUbw]]] = {
     FPile.transformTreeListWithoutData {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomicOpt[StaticMany] :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomicOpt[StaticMany] :: needAtomic[FProperty] :: FANil)
           .mapToOptionWithoutData {
             case (staticManyCol :: property :: HNil) =>
               Future.sequence(

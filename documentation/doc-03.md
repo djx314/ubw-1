@@ -20,7 +20,7 @@ val fQuery = for {
       ("age" ofPile friend.age.out) ::
       HNil
     ).poly(
-        "name" ofPile FPathImpl.empty[String].writeJ
+        "name" ofPile FAtomicPathImpl.empty[String].writeJ
       ).transform {
           case Some(name) :: Some(nick) :: Some(Some(age)) :: HNil if age < 200 =>
             Option(s"$name-$nick")

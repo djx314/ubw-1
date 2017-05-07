@@ -101,7 +101,7 @@ object InRetrieveConvert2222 {
 
     FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: HNil)
+        val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
           .mapToOption {
             case (slickReader :: oneToOneRetrieveOpt :: HNil, data) => {
               val iSlickReader = ISReader2222(

@@ -21,14 +21,14 @@ class ParTest extends FlatSpec
     with SlickCRUDImplicits {
 
   "shapes" should "find readers in Atomic in FPath" in {
-    val path = FPathImpl(In.jRead[Long] ::: In.jWrite[Long])
+    val path = FAtomicPathImpl(In.jRead[Long] ::: In.jWrite[Long])
 
     new FAtomicQuery(path) {
-      val aa = withRep(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: HNil)
+      val aa = withRep(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: FANil)
     }
 
     val Right(reader1 :: reader3 :: reader2 :: writer1 :: writer2 :: writer3 :: writer4 :: HNil) = new FAtomicQuery(path) {
-      val aa = withRep(needAtomic[JsonReader] :: needAtomicOpt[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: HNil)
+      val aa = withRep(needAtomic[JsonReader] :: needAtomicOpt[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: FANil)
     }.aa.queryResult
     //println(reader2.reader)
     //println(writer1.writer)
@@ -42,7 +42,7 @@ class ParTest extends FlatSpec
       }
     }*/
 
-    val path1 = FPathImpl(In.jWrite[Long])
+    val path1 = FAtomicPathImpl(In.jWrite[Long])
     //println(isReaderDefined(path1))
   }
 
@@ -57,15 +57,15 @@ class ParTest extends FlatSpec
     }
 
     val mainPile = (
-      ("我是" ofPile FPathImpl(In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
-      ("小莎莎" ofPile FPathImpl(In.default("1234") ::: In.jWrite[String])) ::
-      (("千反田" ofPile FPathImpl(In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) :: HNil) ::
+      ("我是" ofPile FAtomicPathImpl(In.default(12L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+      ("小莎莎" ofPile FAtomicPathImpl(In.default("1234") ::: In.jWrite[String])) ::
+      (("千反田" ofPile FAtomicPathImpl(In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) :: HNil) ::
       (
-        ("的枕头" ofPile FPathImpl(In.jRead[Int] ::: In.jWrite[Int])) ::
-        ("喵喵喵" ofPile FPathImpl(In.jRead[Long] ::: In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
+        ("的枕头" ofPile FAtomicPathImpl(In.jRead[Int] ::: In.jWrite[Int])) ::
+        ("喵喵喵" ofPile FAtomicPathImpl(In.jRead[Long] ::: In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
         (
-          ("哈哈哈哈哈" ofPile FPathImpl(In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) ::
-          ("汪汪汪" ofPile FPathImpl(In.jRead[Long] ::: In.jWrite[Long])) ::
+          ("哈哈哈哈哈" ofPile FAtomicPathImpl(In.jRead[Int] ::: In.default(579) ::: In.jWrite[Int])) ::
+          ("汪汪汪" ofPile FAtomicPathImpl(In.jRead[Long] ::: In.jWrite[Long])) ::
           HNil
         ) ::
           HNil
@@ -73,8 +73,8 @@ class ParTest extends FlatSpec
           HNil
     )
     val appendPile = (
-      ("jilen" ofPile FPathImpl(In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
-      ("kerr" ofPile FPathImpl(In.default("汪") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      ("jilen" ofPile FAtomicPathImpl(In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+      ("kerr" ofPile FAtomicPathImpl(In.default("汪") ::: In.jRead[String] ::: In.jWrite[String])) ::
       HNil
     )
 
@@ -83,7 +83,7 @@ class ParTest extends FlatSpec
 
     val resultGen1 = FPile.transformOf {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapToOption {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
               val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
@@ -114,7 +114,7 @@ class ParTest extends FlatSpec
 
     val resultGen2 = FPile.transformTree {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapToOption {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
               val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
@@ -135,15 +135,15 @@ class ParTest extends FlatSpec
     }
 
     val jx3Pile = (
-      ("小萌师父的徒弟个数" ofPile FPathImpl(In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
-      ("徒弟的名字" ofPile FPathImpl(In.default("水山清风") ::: In.jWrite[String])) ::
-      (("茶馆任务要做多少遍才有奖品" ofPile FPathImpl(In.default(10) ::: In.jWrite[Int])) :: HNil) ::
+      ("小萌师父的徒弟个数" ofPile FAtomicPathImpl(In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+      ("徒弟的名字" ofPile FAtomicPathImpl(In.default("水山清风") ::: In.jWrite[String])) ::
+      (("茶馆任务要做多少遍才有奖品" ofPile FAtomicPathImpl(In.default(10) ::: In.jWrite[Int])) :: HNil) ::
       (
-        ("狭义值" ofPile FPathImpl(In.jRead[Int] ::: In.jWrite[Int])) ::
-        ("江湖贡献值" ofPile FPathImpl(In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
+        ("狭义值" ofPile FAtomicPathImpl(In.jRead[Int] ::: In.jWrite[Int])) ::
+        ("江湖贡献值" ofPile FAtomicPathImpl(In.default(4564654624463455345L) ::: In.jWrite[Long])) ::
         (
-          ("大侠之路" ofPile FPathImpl(In.jRead[String] ::: In.default("跳出五行天地外") ::: In.jWrite[String])) ::
-          ("电信" ofPile FPathImpl(In.default(5L) ::: In.jWrite[Long])) ::
+          ("大侠之路" ofPile FAtomicPathImpl(In.jRead[String] ::: In.default("跳出五行天地外") ::: In.jWrite[String])) ::
+          ("电信" ofPile FAtomicPathImpl(In.default(5L) ::: In.jWrite[Long])) ::
           HNil
         ) ::
           HNil
@@ -160,7 +160,7 @@ class ParTest extends FlatSpec
 
     val resultGen3 = FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapToOption {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
               val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
@@ -192,7 +192,7 @@ class ParTest extends FlatSpec
 
     val resultGen4 = FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep((needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: HNil) :: HNil)
+        val aa = withRep((needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: FANil) :: FANil)
           .mapToOption {
             case ((defaultOpt :: property :: HNil) :: HNil, data) =>
               val defaultValueOpt = data.fold(defaultOpt.map(_.value))(Option(_))
@@ -208,7 +208,7 @@ class ParTest extends FlatSpec
 
     val resultGen5 = FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: HNil) :: needAtomic[FProperty] :: HNil)
+        val aa = withRep(needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapToOption {
             case (writer :: (defaultOpt :: HNil) :: property :: HNil, data1) =>
               //println(data1)
@@ -230,34 +230,34 @@ class ParTest extends FlatSpec
     }
 
     val mainPile1 =
-      ("我是" ofPile FPathImpl(In.default(12345678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
-        ("小莎莎" ofPile FPathImpl(In.default("1234") ::: In.jWrite[String])) ::
+      ("我是" ofPile FAtomicPathImpl(In.default(12345678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+        ("小莎莎" ofPile FAtomicPathImpl(In.default("1234") ::: In.jWrite[String])) ::
         HNil
 
     val appendPile1 =
-      ("jilen" ofPile FPathImpl(In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
-        ("kerr" ofPile FPathImpl(In.default("汪") ::: In.jRead[String])) ::
+      ("jilen" ofPile FAtomicPathImpl(In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+        ("kerr" ofPile FAtomicPathImpl(In.default("汪") ::: In.jRead[String])) ::
         HNil
 
-    val convertPile1 = (mainPile1 :: appendPile1 :: HNil).poly(
-      ("小萌师父" ofPile FPathImpl(In.default("喵") ::: In.jRead[String])) ::
-        ("徒弟弟" ofPile FPathImpl(In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+    /*val convertPile1 = (mainPile1 :: appendPile1 :: HNil).poly(
+      ("小萌师父" ofPile FAtomicPathImpl(In.default("喵") ::: In.jRead[String])) ::
+        ("徒弟弟" ofPile FAtomicPathImpl(In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
         HNil
     ).transform {
         case (longData :: stringData :: HNil) :: (stringData2 :: stringData3 :: HNil) :: HNil =>
           None :: None :: HNil
       }
 
-    /*val convertPile2 = (convertPile1 :: mainPile1 :: HNil).poly(
-      ("喵喵喵" ofPile FPathImpl(In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
-        ("汪汪汪" ofPile FPathImpl(In.default(5678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
+    val convertPile2 = (convertPile1 :: mainPile1 :: HNil).poly(
+      ("喵喵喵" ofPile FAtomicPathImpl(In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
+        ("汪汪汪" ofPile FAtomicPathImpl(In.default(5678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
         HNil
-    ).transform {
+    )(FsnShape.hlistFsnShape111111111111111111111111(FsnShape.fpileFsnShape444444444444444444, FsnShape.hlistFsnShape111111111111111111111111(FsnShape.hlistFsnShape111111111111111111111111(FsnShape.fpileFsnShape444444444444444444, FsnShape.hlistFsnShape111111111111111111111111(FsnShape.fpileFsnShape444444444444444444, FsnShape.hnilFsnShape22222222222222222)), FsnShape.hnilFsnShape22222222222222222)), FsnShape.hlistFsnShape111111111111111111111111).transform {
         case (stringData :: longData1 :: HNil) :: (longData2 :: stringData3 :: HNil) :: HNil =>
           None :: longData2 :: HNil
-      }
+      }*/
 
-    val pileList = convertPile2 :: mainPile1 :: Nil
+    /*val pileList = convertPile2 :: mainPile1 :: Nil
     println(convertPile1.toString)
 
     println(resultGen4.flatMap(resultGen5) {

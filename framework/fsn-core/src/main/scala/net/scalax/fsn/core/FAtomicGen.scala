@@ -1,10 +1,40 @@
 package net.scalax.fsn.core
 
-import scala.reflect.runtime.universe._
+import shapeless.{ ::, HList, HNil }
+
 import scala.language.higherKinds
+import scala.language.implicitConversions
+import scala.reflect.runtime.universe._
 
 trait AbstractFAtomicGen[U, S] {
   def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, S]
+}
+
+object AbstractFAtomicGen {
+  def empty[U]: AbstractFAtomicGen[U, HNil] = new AbstractFAtomicGen[U, HNil] {
+    def getBy(atomics: List[FAtomic[U]]): Either[FAtomicException, HNil] = Right(HNil)
+  }
+
+  class bbbb[T, F <: HList](bb: AbstractFAtomicGen[T, F]) {
+    def ::[G](cc: AbstractFAtomicGen[T, G]): AbstractFAtomicGen[T, G :: F] = {
+      new AbstractFAtomicGen[T, G :: F] {
+        override def getBy(atomics: List[FAtomic[T]]): Either[FAtomicException, G :: F] = {
+          (cc.getBy(atomics), bb.getBy(atomics)) match {
+            case (Left(e1), Left(e2)) =>
+              Left(FAtomicException(e1.typeTags ::: e2.typeTags))
+            case (Left(e1), Right(_)) =>
+              Left(FAtomicException(e1.typeTags))
+            case (Right(_), Left(e2)) =>
+              Left(FAtomicException(e2.typeTags))
+            case (Right(out1), Right(out2)) =>
+              Right(out1 :: out2)
+          }
+        }
+      }
+    }
+  }
+
+  implicit def convert[T, F <: HList](bb: AbstractFAtomicGen[T, F]): bbbb[T, F] = new bbbb(bb)
 }
 
 trait FAtomicGen[U, S[_]] extends AbstractFAtomicGen[U, S[U]] {

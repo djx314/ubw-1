@@ -112,7 +112,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
         PoiOut(withExtraCols.map(PropertiesOperation.convertProperty), poiGen)*/
 
       //==========================================================================================
-      //val newPiles = withExtraCols.map(col => FPile.applyOpt(FPathImpl(col.cols)))
+      //val newPiles = withExtraCols.map(col => FPile.applyOpt(FAtomicPathImpl(col.cols)))
       lazy val outJsonGen = PropertiesOperation.slick2jsonOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
 
       lazy val outPoiGen = PropertiesOperation.slick2PoiOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
@@ -168,7 +168,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
         /*val jsonData = JsonOperation.readWithFilter(columns) { eachColumn =>
             FColumn.findOpt(eachColumn) { case s: SlickRetrieve[eachColumn.DataType] => s }.map(_.primaryGen.isDefined).getOrElse(false)
           } (v)
-          val staticManyFuture = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)*/
+          val staticManyFuture = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FAtomicPathImpl(s.cols)))).apply(v)*/
         val retrieveDBIO = PropertiesOperation.json2SlickRetrieveOperation(crudQueryWrap.binds).apply(columns).apply(v)
 
         for {
@@ -184,7 +184,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
         /*val jsonData = JsonOperation.readWithFilter(columns){ eachColumn =>
             ! FColumn.findOpt(eachColumn) { case s: AutoInc[eachColumn.DataType] => s }.map(_.isAutoInc).getOrElse(false)
           }(v)*/
-        //val staticManyFuture = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+        //val staticManyFuture = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FAtomicPathImpl(s.cols)))).apply(v)
         val createInfoDBIO = PropertiesOperation.json2SlickCreateOperation(crudQueryWrap.binds).apply(columns).apply(v)
 
         for {
@@ -214,7 +214,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
         /*val primaryColumns = columns.filter { col => FColumn.findOpt(col) { case retrieve: SlickRetrieve[col.DataType] => retrieve }.map(_.primaryGen.isDefined).getOrElse(false) }
           val jsonData = JsonOperation.readJ(primaryColumns)(v)
           //val staticMany = StaticManyOperation.convertList2Query(jsonData)
-          val staticManyFuture = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FPathImpl(s.cols)))).apply(v)
+          val staticManyFuture = PropertiesOperation.staticManyOperation.apply(columns.map(s => FPile.applyOpt(FAtomicPathImpl(s.cols)))).apply(v)
           for {
             updateInfo <- DeleteOperation.parseInsert(crudQueryWrap.binds, jsonData)
             staticM <- DBIO.from(staticManyFuture)

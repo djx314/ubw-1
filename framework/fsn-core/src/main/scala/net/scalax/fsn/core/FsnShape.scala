@@ -12,7 +12,7 @@ trait FsnShape[Packed_, DataType_, TargetType_, UnPacked_[_]] {
   type DataType = DataType_
   type TargetType = TargetType_
 
-  def encodeColumn(pile: Packed_): List[FPath]
+  def encodeColumn(pile: Packed_): List[FAtomicPath]
   //def decodeColumn(columns: List[FPath]): Packed_
   def genPiles(pile: Packed_): List[FPile[UnPacked_]]
   def toTarget(pile: Packed_): TargetType_
@@ -32,7 +32,7 @@ object FsnShape {
 
   implicit def hnilFsnShape[T[_]]: FsnShape[HNil, HNil, HNil, T] = new FsnShape[HNil, HNil, HNil, T] {
     self =>
-    override def encodeColumn(pile: HNil): List[FPath] = Nil
+    override def encodeColumn(pile: HNil): List[FAtomicPath] = Nil
     //override def decodeColumn(columns: List[FPath]): HNil = HNil
     override def genPiles(pile: HNil): List[FPile[T]] = Nil
     override def encodeData(pileData: HNil): List[T[Any]] = Nil
@@ -43,16 +43,16 @@ object FsnShape {
     override val dataLength = 0
   }
 
-  implicit def fpathFsnShape[T, U[_]](implicit zeroPile: FZeroPile[U[T]]): FsnShape[FPathImpl[T], U[T], FPathImpl[T], U] =
-    new FsnShape[FPathImpl[T], U[T], FPathImpl[T], U] {
+  implicit def fpathFsnShape[T, U[_]](implicit zeroPile: FZeroPile[U[T]]): FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U] =
+    new FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U] {
       self =>
-      override def encodeColumn(pile: FPathImpl[T]): List[FPath] = pile :: Nil
-      //override def decodeColumn(columns: List[FPath]): FPathImpl[T] = columns.head.asInstanceOf[FPathImpl[T]]
-      override def genPiles(pile: FPathImpl[T]): List[FPile[U]] = {
-        //FPile[FPathImpl[T], U[T], FPathImpl[T], U](pile)(self) :: Nil
+      override def encodeColumn(pile: FAtomicPathImpl[T]): List[FAtomicPath] = pile :: Nil
+      //override def decodeColumn(columns: List[FPath]): FAtomicPathImpl[T] = columns.head.asInstanceOf[FAtomicPathImpl[T]]
+      override def genPiles(pile: FAtomicPathImpl[T]): List[FPile[U]] = {
+        //FPile[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U](pile)(self) :: Nil
         Nil
       }
-      override def toTarget(path: FPathImpl[T]): FPathImpl[T] = path
+      override def toTarget(path: FAtomicPathImpl[T]): FAtomicPathImpl[T] = path
       override def encodeData(pileData: U[T]): List[U[Any]] = pileData.asInstanceOf[U[Any]] :: Nil
       override def decodeData(data: List[U[Any]]): U[T] = data.head.asInstanceOf[U[T]]
 
@@ -62,34 +62,34 @@ object FsnShape {
       override val dataLength = 1
     }
 
-  implicit def fpileFsnShape[T, U[_]](implicit zeroPile: FZeroPile[U[T]]) /*(implicit fsnShape: FsnShape[FPathImpl[T], U[T], FPathImpl[T], U])*/ : FsnShape[FPileImpl[FPathImpl[T], U[T], U], U[T], FPathImpl[T], U] = {
-    val fsnShape = implicitly[FsnShape[FPathImpl[T], U[T], FPathImpl[T], U]]
+  implicit def fpileFsnShape[T, U[_]](implicit zeroPile: FZeroPile[U[T]]) /*(implicit fsnShape: FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U])*/ : FsnShape[FPileImpl[FAtomicPathImpl[T], U[T], U], U[T], FAtomicPathImpl[T], U] = {
+    val fsnShape = implicitly[FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U]]
 
-    new FsnShape[FPileImpl[FPathImpl[T], U[T], U], U[T], FPathImpl[T], U] {
+    new FsnShape[FPileImpl[FAtomicPathImpl[T], U[T], U], U[T], FAtomicPathImpl[T], U] {
       self =>
 
-      override def encodeColumn(pile: FPileImpl[FPathImpl[T], U[T], U]): List[FPath] = pile.pathPile :: Nil
-      //思路错误，FPathImpl[T]还有 subs 字段需要特殊处理
-      /*override def decodeColumn(columns: List[FPath]): FPileImpl[FPathImpl[T], U[T], U] = {
+      override def encodeColumn(pile: FPileImpl[FAtomicPathImpl[T], U[T], U]): List[FAtomicPath] = pile.pathPile :: Nil
+      //思路错误，FAtomicPathImpl[T]还有 subs 字段需要特殊处理
+      /*override def decodeColumn(columns: List[FPath]): FPileImpl[FAtomicPathImpl[T], U[T], U] = {
         FPile(fsnShape.decodeColumn(columns))(fsnShape)
       }*/
-      override def genPiles(pile: FPileImpl[FPathImpl[T], U[T], U]): List[FPile[U]] = pile :: Nil
-      override def toTarget(pile: FPileImpl[FPathImpl[T], U[T], U]): FPathImpl[T] = pile.pathPile
+      override def genPiles(pile: FPileImpl[FAtomicPathImpl[T], U[T], U]): List[FPile[U]] = pile :: Nil
+      override def toTarget(pile: FPileImpl[FAtomicPathImpl[T], U[T], U]): FAtomicPathImpl[T] = pile.pathPile
       override def encodeData(pileData: U[T]): List[U[Any]] = fsnShape.encodeData(pileData)
       override def decodeData(data: List[U[Any]]): U[T] = fsnShape.decodeData(data)
 
       override def zero = fsnShape.zero
-      override def packageShape = implicitly[FsnShape[FPathImpl[T], U[T], FPathImpl[T], U]] /*new FsnShape[FPathImpl[T], U[T], FPathImpl[T], U] {
+      override def packageShape = implicitly[FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U]] /*new FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U] {
         subSelf =>
-        override def encodeColumn(pile: FPathImpl[T]): List[FPath] = pile :: Nil
-        //思路错误，FPathImpl[T]还有 subs 字段需要特殊处理
-        /*override def decodeColumn(columns: List[FPath]): FPileImpl[FPathImpl[T], U[T], U] = {
+        override def encodeColumn(pile: FAtomicPathImpl[T]): List[FPath] = pile :: Nil
+        //思路错误，FAtomicPathImpl[T]还有 subs 字段需要特殊处理
+        /*override def decodeColumn(columns: List[FPath]): FPileImpl[FAtomicPathImpl[T], U[T], U] = {
           FPile(fsnShape.decodeColumn(columns))(fsnShape)
         }*/
-        override def genPiles(pile: FPathImpl[T]): List[FPile[U]] = {
-          FPile[FPathImpl[T], U[T], FPathImpl[T], U](pile)(subSelf) :: Nil
+        override def genPiles(pile: FAtomicPathImpl[T]): List[FPile[U]] = {
+          FPile[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U](pile)(subSelf) :: Nil
         }
-        override def toTarget(pile: FPathImpl[T]): FPathImpl[T] = pile
+        override def toTarget(pile: FAtomicPathImpl[T]): FAtomicPathImpl[T] = pile
         override def encodeData(pileData: U[T]): List[U[Any]] = fsnShape.encodeData(pileData)
         override def decodeData(data: List[U[Any]]): U[T] = fsnShape.decodeData(data)
 
@@ -109,37 +109,37 @@ object FsnShape {
     subShape: FsnShape[U, W, C, A],
     tailShape: FsnShape[T, V, D, A]
   )
-  : FsnShape[FPileImpl[U :: T, W :: V , U], W :: V, FPathImpl[U :: T], U] = {
-    //val fsnShape = implicitly[FsnShape[FPathImpl[U :: T], W :: V, FPathImpl[U :: T], U]]
+  : FsnShape[FPileImpl[U :: T, W :: V , U], W :: V, FAtomicPathImpl[U :: T], U] = {
+    //val fsnShape = implicitly[FsnShape[FAtomicPathImpl[U :: T], W :: V, FAtomicPathImpl[U :: T], U]]
 
-    new FsnShape[FPileImpl[U :: T, W :: V , U], W :: V, FPathImpl[U :: T], U] {
+    new FsnShape[FPileImpl[U :: T, W :: V , U], W :: V, FAtomicPathImpl[U :: T], U] {
       self =>
 
       override def encodeColumn(pile: FPileImpl[U :: T, W :: V , U]): List[FPath] = {
         val headPile :: tailPile = pile.pathPile
         subShape.encodeColumn(headPile) ::: tailShape.encodeColumn(tailPile)
       }
-      //思路错误，FPathImpl[T]还有 subs 字段需要特殊处理
-      /*override def decodeColumn(columns: List[FPath]): FPileImpl[FPathImpl[T], U[T], U] = {
+      //思路错误，FAtomicPathImpl[T]还有 subs 字段需要特殊处理
+      /*override def decodeColumn(columns: List[FPath]): FPileImpl[FAtomicPathImpl[T], U[T], U] = {
         FPile(fsnShape.decodeColumn(columns))(fsnShape)
       }*/
       override def genPiles(pile: FPileImpl[U :: T, W :: V , U]): List[FPile[U]] = pile :: Nil
-      override def toTarget(pile: FPileImpl[U :: T, W :: V , U]): FPathImpl[U :: T] = pile.pathPile
+      override def toTarget(pile: FPileImpl[U :: T, W :: V , U]): FAtomicPathImpl[U :: T] = pile.pathPile
       override def encodeData(pileData: U[T]): List[U[Any]] = fsnShape.encodeData(pileData)
       override def decodeData(data: List[U[Any]]): U[T] = fsnShape.decodeData(data)
 
       override def zero = subShape.zero :: tailShape.zero
-      override def packageShape = new FsnShape[FPathImpl[T], U[T], FPathImpl[T], U] {
+      override def packageShape = new FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U] {
         subSelf =>
-        override def encodeColumn(pile: FPathImpl[T]): List[FPath] = pile :: Nil
-        //思路错误，FPathImpl[T]还有 subs 字段需要特殊处理
-        /*override def decodeColumn(columns: List[FPath]): FPileImpl[FPathImpl[T], U[T], U] = {
+        override def encodeColumn(pile: FAtomicPathImpl[T]): List[FPath] = pile :: Nil
+        //思路错误，FAtomicPathImpl[T]还有 subs 字段需要特殊处理
+        /*override def decodeColumn(columns: List[FPath]): FPileImpl[FAtomicPathImpl[T], U[T], U] = {
           FPile(fsnShape.decodeColumn(columns))(fsnShape)
         }*/
-        override def genPiles(pile: FPathImpl[T]): List[FPile[U]] = {
-          FPile[FPathImpl[T], U[T], FPathImpl[T], U](pile)(subSelf) :: Nil
+        override def genPiles(pile: FAtomicPathImpl[T]): List[FPile[U]] = {
+          FPile[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U](pile)(subSelf) :: Nil
         }
-        override def toTarget(pile: FPathImpl[T]): FPathImpl[T] = pile
+        override def toTarget(pile: FAtomicPathImpl[T]): FAtomicPathImpl[T] = pile
         override def encodeData(pileData: U[T]): List[U[Any]] = fsnShape.encodeData(pileData)
         override def decodeData(data: List[U[Any]]): U[T] = fsnShape.decodeData(data)
 
@@ -160,7 +160,7 @@ object FsnShape {
   ): FsnShape[U :: T, W :: V, C :: D, A] = new FsnShape[U :: T, W :: V, C :: D, A] {
     self =>
 
-    override def encodeColumn(pile: U :: T): List[FPath] = {
+    override def encodeColumn(pile: U :: T): List[FAtomicPath] = {
       val headPile :: tailPile = pile
       subShape.encodeColumn(headPile) ::: tailShape.encodeColumn(tailPile)
     }
@@ -186,7 +186,7 @@ object FsnShape {
     override def packageShape = new FsnShape[C :: D, W :: V, C :: D, A] {
       subSelf =>
 
-      override def encodeColumn(pile: C :: D): List[FPath] = {
+      override def encodeColumn(pile: C :: D): List[FAtomicPath] = {
         val headPile :: tailPile = pile
         subShape.packageShape.encodeColumn(headPile) ::: tailShape.packageShape.encodeColumn(tailPile)
       }

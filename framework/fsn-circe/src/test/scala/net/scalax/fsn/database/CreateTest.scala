@@ -1,6 +1,6 @@
 package net.scalax.fsn.database.test
 
-import net.scalax.fsn.core.{ FPathImpl, PilesPolyHelper }
+import net.scalax.fsn.core.{ FAtomicPathImpl, PilesPolyHelper }
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
 import net.scalax.fsn.slick.helpers.{ FilterRepImplicitHelper }
 import net.scalax.fsn.slick.model.{ ColumnOrder, SlickParam }
@@ -58,7 +58,7 @@ class CreateTest extends FlatSpec
     import net.scalax.fsn.slick.helpers.FStrSelectExtAtomicHelper
     import net.scalax.fsn.slick.helpers.FJsonAtomicHelper
 
-    implicit def fPilesOptionImplicit[D](path: FPathImpl[D]) = {
+    implicit def fPilesOptionImplicit[D](path: FAtomicPathImpl[D]) = {
       val path1 = path
       new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
         override val path = path1

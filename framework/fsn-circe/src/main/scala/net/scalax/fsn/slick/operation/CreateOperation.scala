@@ -82,7 +82,7 @@ object InCreateConvert2222 {
   ): FPileSyntax.PileGen[Option, List[(Any, SlickQueryBindImpl)] => DBIO[ExecInfo3]] = {
     FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: HNil)
+        val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: FANil)
           .mapToOption {
             case (slickCreate :: autoIncOpt :: oneToOneCreateOpt :: HNil, data) => {
               //val slickWriter = FColumn.find(columns)({ case s: SlickUpdate[columns.DataType] => s })

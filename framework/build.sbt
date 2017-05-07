@@ -57,6 +57,7 @@ lazy val `fsn-core` = (project in file("./fsn-core"))
   .settings(
     libraryDependencies ++= Seq(
       "com.chuusai" %% "shapeless" % "2.3.2",
+      "org.typelevel" %% "cats" % "0.9.0",
       scalaOrganization.value % "scala-reflect" % scalaVersion.value
     )
   )
