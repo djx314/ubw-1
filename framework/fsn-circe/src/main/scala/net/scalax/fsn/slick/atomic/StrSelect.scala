@@ -27,6 +27,8 @@ case class StrSSelect[S, D, T](
   def order(implicit cv: T => ColumnOrdered[_]): StrSSelect[S, D, T] = {
     this.copy(colToOrder = Option(cv))
   }
+
+  override def toString = s"StrSelect(canOrder=${colToOrder.isDefined})"
 }
 
 trait StrOrderNullsLast[E] extends FAtomic[E] {
