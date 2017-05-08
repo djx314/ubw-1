@@ -86,7 +86,10 @@ case class FPileImpl[E, U, C[_]](
   def poly[A, B](other: FPileImpl[A, B, C]): Abc[U, A, B] = {
     new Abc[U, A, B] {
       def transform(cv: U => B): FPileImpl[A, B, C] = {
-        FPileImpl(other.pathPile, other.fShape, { list: List[Any] => cv(self.dataFromSub(list)) }, self.subs)
+        FPileImpl(other.pathPile, other.fShape, { list: List[Any] =>
+          println(list)
+          cv(list.head.asInstanceOf[U] /*self.dataFromSub(list)*/ )
+        }, self :: Nil)
       }
     }
   }

@@ -17,7 +17,7 @@ import shapeless._
 
 import scala.concurrent._
 
-object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit with PilesPolyHelper {
+object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit with PilesPolyHelper with App {
 
   implicit def fPilesOptionImplicit[D](path: FAtomicPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
     val path1 = path
@@ -35,7 +35,7 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
         ("name" ofPile friend.name.out.orderTarget("nick").describe("昵称")) ::
         ("nick" ofPile friend.nick.out.order.describe("昵称")) ::
         ("age" ofPile friend.age.out) ::
-        HNil
+        FPNil
       ).poly(
           "name" ofPile FAtomicPathImpl.empty[String].writeJ
         ).transform {
@@ -74,7 +74,7 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
         ("name" ofPile friend.name.out.orderTarget("nick").describe("昵称")) ::
         ("nick" ofPile friend.nick.out.order.describe("昵称")) ::
         ("age" ofPile friend.age.out) ::
-        HNil
+        FPNil
       ).poly(
           "name" ofPile FAtomicPathImpl.empty[String]
         ).transform {
@@ -84,12 +84,12 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
               Option(name)
             case _ =>
               None
-          }) :: ("ageOpt" ofPile friend.age.out) :: HNil).poly("account" ofPile FAtomicPathImpl.empty[Aa]).transform {
+          }) :: ("ageOpt" ofPile friend.age.out) :: FPNil).poly("account" ofPile FAtomicPathImpl.empty[Aa]).transform {
             case Some(name) :: Some(Some(age)) :: HNil =>
               Option(Aa(name, age))
             case _ =>
               None
-          } :: ("id" ofPile friend.id.out.order.describe("自增主键")) :: HNil).poly("info" ofPile FAtomicPathImpl.empty[Map[String, Json]].writeJ).transform {
+          } :: ("id" ofPile friend.id.out.order.describe("自增主键")) :: FPNil).poly("info" ofPile FAtomicPathImpl.empty[Map[String, Json]].writeJ).transform {
             case Some(aa) :: Some(id) :: HNil =>
               Option(Map("id" -> id.asJson, "accountInfo" -> aa.asJson))
             case _ =>
