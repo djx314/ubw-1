@@ -184,7 +184,7 @@ object FPile {
 
   def empty[C[_]]: FPileImpl[HNil, HNil, C] = {
     val shape = FsnShape.hnilFsnShape[C]
-    new FPileImpl(HNil, shape, { _: List[Any] => HNil }, List.empty[FPile[C]])({ cusType =>
+    new FPileImpl(HNil, shape, { _: List[Any] => ??? /*HNil*/ }, List.empty[FPile[C]])({ cusType =>
       cusType :: Nil
     }) /*{ self =>
       override def genPiles(cusType: FPileImpl[HNil, HNil, C]): List[FPile[C]] = cusType :: Nil
@@ -196,7 +196,8 @@ object FPile {
     new FPileImpl(paths, shape, { s: List[Any] =>
       //println(s)
       //zeroPile.zero
-      s.head.asInstanceOf[C[D]]
+      //s.head.asInstanceOf[C[D]]
+      ???
     }, List.empty[FPile[C]])({ cusType =>
       cusType :: Nil
     }) /*{ self =>
