@@ -98,6 +98,7 @@ case class FPileImpl[E, U, C[_]](
           //cv(self.dataFromSub(list))
           //println(list)
           //cv(self.dataFromSub(list.head :: Nil))
+          println("1111" + list)
           cv(list.head.asInstanceOf[U])
         }, self :: Nil)
       }
@@ -114,6 +115,7 @@ object FPile {
       val shape: FsnShape[A :: E, B :: U, C] = new FsnShape[A :: E, B :: U, C] {
         def encodeColumn(pile: A :: E): List[FAtomicPath] = {
           val sub :: tail = pile
+          println(cc.fShape.encodeColumn(sub).size.toString + "aaaa" + bb.fShape.encodeColumn(tail).size.toString)
           cc.fShape.encodeColumn(sub) ::: bb.fShape.encodeColumn(tail)
         }
         def encodeData(pileData: B :: U): List[C[Any]] = {
@@ -123,6 +125,7 @@ object FPile {
         def decodeData(data: List[C[Any]]): B :: U = {
           //println(data)
           cc.fShape.decodeData(data.take(cc.fShape.dataLength)) :: bb.fShape.decodeData(data.drop(cc.fShape.dataLength))
+          //cc.fShape.decodeData(data.take(cc.dataLengthSum)) :: bb.fShape.decodeData(data.drop(cc.dataLengthSum))
         }
 
         def zero = cc.fShape.zero :: bb.fShape.zero

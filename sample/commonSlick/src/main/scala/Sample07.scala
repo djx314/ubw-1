@@ -80,8 +80,8 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
           "name" ofPile FAtomicPathImpl.empty[String]
         ).transform {
             a =>
-              //println(a)
-              a match {
+              println(a)
+              val bb = a match {
                 case Some(name) :: Some(nick) :: Some(Some(age)) :: HNil if age < 200 =>
                   Option(s"$name-$nick")
                 case Some(name) :: _ :: _ :: HNil =>
@@ -89,9 +89,11 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
                 case _ =>
                   None
               }
+              println(bb)
+              bb
           }) :: ("ageOpt" ofPile friend.age.out) :: FPNil).poly("account" ofPile FAtomicPathImpl.empty[Aa]).transform {
             a =>
-              println(a)
+              //println(a)
               a match {
                 case Some(name) :: Some(Some(age)) :: HNil =>
                   Option(Aa(name, age))
