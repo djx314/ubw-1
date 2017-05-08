@@ -1,6 +1,9 @@
 package net.scalax.fsn.core
 
+import shapeless._
+
 import scala.language.higherKinds
+import scala.language.implicitConversions
 
 trait FPileAbstract[C[_]] {
   self =>
@@ -11,7 +14,7 @@ trait FPileAbstract[C[_]] {
 
   val pathPile: PathType
 
-  val fShape: FsnShape[PathType, DataType, PathType, WrapType]
+  val fShape: FsnShape[PathType, DataType /*, PathType*/ , WrapType]
 
   val dataFromSub: List[Any] => DataType
   val subs: List[FPileAbstract[WrapType]]
@@ -67,19 +70,69 @@ trait FPile[C[_]] extends FPileAbstract[C] {
 
 case class FPileImpl[E, U, C[_]](
     override val pathPile: E,
-    override val fShape: FsnShape[E, U, E, C],
+    override val fShape: FsnShape[E, U /*, E*/ , C],
     override val dataFromSub: List[Any] => U,
     override val subs: List[FPile[C]]
 ) extends FPile[C] {
+  self =>
+
   override type PathType = E
   override type DataType = U
+
+  trait Abc[G, H, I] {
+    def transform(cv: G => I): FPileImpl[H, I, C]
+  }
+
+  def poly[A, B](other: FPileImpl[A, B, C]): Abc[U, A, B] = {
+    new Abc[U, A, B] {
+      def transform(cv: U => B): FPileImpl[A, B, C] = {
+        FPileImpl(other.pathPile, other.fShape, { list: List[Any] => cv(self.dataFromSub(list)) }, self.subs)
+      }
+    }
+  }
+
 }
 
 object FPile {
 
+  class bbbb[E <: HList, U <: HList, C[_]](bb: FPileImpl[E, U, C]) {
+    def ::[A, B](cc: FPileImpl[A, B, C]): FPileImpl[A :: E, B :: U, C] = {
+      val pathPile = cc.pathPile :: bb.pathPile
+      val shape: FsnShape[A :: E, B :: U, C] = new FsnShape[A :: E, B :: U, C] {
+        def encodeColumn(pile: A :: E): List[FAtomicPath] = {
+          val sub :: tail = pile
+          cc.fShape.encodeColumn(sub) ::: bb.fShape.encodeColumn(tail)
+        }
+        def encodeData(pileData: B :: U): List[C[Any]] = {
+          val sub :: tail = pileData
+          cc.fShape.encodeData(sub) ::: bb.fShape.encodeData(tail)
+        }
+        def decodeData(data: List[C[Any]]): B :: U = {
+          cc.fShape.decodeData(data.take(cc.fShape.dataLength)) :: bb.fShape.decodeData(data.take(bb.fShape.dataLength))
+        }
+
+        def zero = cc.fShape.zero :: bb.fShape.zero
+
+        val dataLength = cc.fShape.dataLength + bb.fShape.dataLength
+      }
+      val dataFromSub: List[Any] => (B :: U) = { list =>
+        cc.dataFromSub(list.take(cc.subs.size)) :: bb.dataFromSub(list.take(bb.subs.size))
+      }
+
+      FPileImpl(cc.pathPile :: bb.pathPile, shape, dataFromSub, cc.subs ::: bb.subs)
+    }
+  }
+
+  implicit def convert[E <: HList, U <: HList, C[_]](bb: FPileImpl[E, U, C]): bbbb[E, U, C] = new bbbb(bb)
+
+  def empty[C[_]] /*(implicit zeroPile: FZeroPile[C[HNil]])*/ : FPileImpl[HNil, HNil, C] = {
+    val shape = FsnShape.hnilFsnShape[C]
+    FPileImpl(HNil, shape, { _: List[Any] => HNil }, List.empty[FPile[C]])
+  }
+
   def apply[D, C[_]](paths: FAtomicPathImpl[D])(implicit zeroPile: FZeroPile[C[D]]): FPileImpl[FAtomicPathImpl[D], C[D], C] = {
-    val shape = implicitly[FsnShape[FAtomicPathImpl[D], C[D], FAtomicPathImpl[D], C]]
-    FPileImpl(shape.toTarget(paths), shape.packageShape, { _: List[Any] => shape.zero }, List.empty[FPile[C]])
+    val shape = FsnShape.fpathFsnShape[D, C] //implicitly[FsnShape[FAtomicPathImpl[D], C[D] /*, FAtomicPathImpl[D]*/ , C]]
+    FPileImpl(paths, shape, { _: List[Any] => shape.zero }, List.empty[FPile[C]])
   }
 
   def applyOpt[D](paths: FAtomicPathImpl[D]): FPileImpl[FAtomicPathImpl[D], Option[D], Option] = {

@@ -2,20 +2,19 @@ package net.scalax.fsn.core
 
 import scala.language.higherKinds
 import shapeless._
-import scala.language.existentials
 
-trait FsnShape[Packed_, DataType_, TargetType_, UnPacked_[_]] {
+trait FsnShape[Packed_, DataType_ /*, TargetType_*/ , UnPacked_[_]] {
   self =>
 
   type Packed = Packed_
   type UnPacked[T] = UnPacked_[T]
   type DataType = DataType_
-  type TargetType = TargetType_
+  //type TargetType = TargetType_
 
   def encodeColumn(pile: Packed_): List[FAtomicPath]
   //def decodeColumn(columns: List[FPath]): Packed_
-  def genPiles(pile: Packed_): List[FPile[UnPacked_]]
-  def toTarget(pile: Packed_): TargetType_
+  //def genPiles(pile: Packed_): List[FPile[UnPacked_]]
+  //def toTarget(pile: Packed_): TargetType_
 
   def encodeData(pileData: DataType_): List[UnPacked_[Any]]
   def decodeData(data: List[UnPacked_[Any]]): DataType_
@@ -24,48 +23,48 @@ trait FsnShape[Packed_, DataType_, TargetType_, UnPacked_[_]] {
 
   val dataLength: Int
 
-  def packageShape: FsnShape[TargetType_, DataType_, TargetType_, UnPacked_]
+  //def packageShape: FsnShape[TargetType_, DataType_, TargetType_, UnPacked_]
 
 }
 
 object FsnShape {
 
-  implicit def hnilFsnShape[T[_]]: FsnShape[HNil, HNil, HNil, T] = new FsnShape[HNil, HNil, HNil, T] {
+  def hnilFsnShape[T[_]]: FsnShape[HNil, HNil /*, HNil*/ , T] = new FsnShape[HNil, HNil /*, HNil*/ , T] {
     self =>
     override def encodeColumn(pile: HNil): List[FAtomicPath] = Nil
     //override def decodeColumn(columns: List[FPath]): HNil = HNil
-    override def genPiles(pile: HNil): List[FPile[T]] = Nil
+    //override def genPiles(pile: HNil): List[FPile[T]] = Nil
     override def encodeData(pileData: HNil): List[T[Any]] = Nil
     override def decodeData(data: List[T[Any]]): HNil = HNil
-    override def toTarget(pile: HNil): HNil = HNil
+    //override def toTarget(pile: HNil): HNil = HNil
     override def zero = HNil
-    override def packageShape = self
+    //override def packageShape = self
     override val dataLength = 0
   }
 
-  implicit def fpathFsnShape[T, U[_]](implicit zeroPile: FZeroPile[U[T]]): FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U] =
-    new FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U] {
+  def fpathFsnShape[T, U[_]](implicit zeroPile: FZeroPile[U[T]]): FsnShape[FAtomicPathImpl[T], U[T] /*, FAtomicPathImpl[T]*/ , U] =
+    new FsnShape[FAtomicPathImpl[T], U[T] /*, FAtomicPathImpl[T]*/ , U] {
       self =>
       override def encodeColumn(pile: FAtomicPathImpl[T]): List[FAtomicPath] = pile :: Nil
       //override def decodeColumn(columns: List[FPath]): FAtomicPathImpl[T] = columns.head.asInstanceOf[FAtomicPathImpl[T]]
-      override def genPiles(pile: FAtomicPathImpl[T]): List[FPile[U]] = {
-        //FPile[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U](pile)(self) :: Nil
+      /*override def genPiles(pile: FAtomicPathImpl[T]): List[FPile[U]] = {
+        FPile[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U](pile)(self) :: Nil
         Nil
-      }
-      override def toTarget(path: FAtomicPathImpl[T]): FAtomicPathImpl[T] = path
+      }*/
+      //override def toTarget(path: FAtomicPathImpl[T]): FAtomicPathImpl[T] = path
       override def encodeData(pileData: U[T]): List[U[Any]] = pileData.asInstanceOf[U[Any]] :: Nil
       override def decodeData(data: List[U[Any]]): U[T] = data.head.asInstanceOf[U[T]]
 
       override def zero = zeroPile.zero
-      override def packageShape = self
+      //override def packageShape = self
 
       override val dataLength = 1
     }
 
-  implicit def fpileFsnShape[T, U[_]](implicit zeroPile: FZeroPile[U[T]]) /*(implicit fsnShape: FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U])*/ : FsnShape[FPileImpl[FAtomicPathImpl[T], U[T], U], U[T], FAtomicPathImpl[T], U] = {
-    val fsnShape = implicitly[FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U]]
+  /*implicit def fpileFsnShape[T, U[_]](implicit zeroPile: FZeroPile[U[T]]) /*(implicit fsnShape: FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U])*/ : FsnShape[FPileImpl[FAtomicPathImpl[T], U[T], U], U[T] /*, FAtomicPathImpl[T]*/ , U] = {
+    val fsnShape = implicitly[FsnShape[FAtomicPathImpl[T], U[T] /*, FAtomicPathImpl[T]*/ , U]]
 
-    new FsnShape[FPileImpl[FAtomicPathImpl[T], U[T], U], U[T], FAtomicPathImpl[T], U] {
+    new FsnShape[FPileImpl[FAtomicPathImpl[T], U[T], U], U[T] /*, FAtomicPathImpl[T]*/ , U] {
       self =>
 
       override def encodeColumn(pile: FPileImpl[FAtomicPathImpl[T], U[T], U]): List[FAtomicPath] = pile.pathPile :: Nil
@@ -73,13 +72,14 @@ object FsnShape {
       /*override def decodeColumn(columns: List[FPath]): FPileImpl[FAtomicPathImpl[T], U[T], U] = {
         FPile(fsnShape.decodeColumn(columns))(fsnShape)
       }*/
-      override def genPiles(pile: FPileImpl[FAtomicPathImpl[T], U[T], U]): List[FPile[U]] = pile :: Nil
-      override def toTarget(pile: FPileImpl[FAtomicPathImpl[T], U[T], U]): FAtomicPathImpl[T] = pile.pathPile
+      //override def genPiles(pile: FPileImpl[FAtomicPathImpl[T], U[T], U]): List[FPile[U]] = pile :: Nil
+      //override def toTarget(pile: FPileImpl[FAtomicPathImpl[T], U[T], U]): FAtomicPathImpl[T] = pile.pathPile
       override def encodeData(pileData: U[T]): List[U[Any]] = fsnShape.encodeData(pileData)
       override def decodeData(data: List[U[Any]]): U[T] = fsnShape.decodeData(data)
 
       override def zero = fsnShape.zero
-      override def packageShape = implicitly[FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U]] /*new FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U] {
+      //override def packageShape = implicitly[FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U]]
+      /*new FsnShape[FAtomicPathImpl[T], U[T], FAtomicPathImpl[T], U] {
         subSelf =>
         override def encodeColumn(pile: FAtomicPathImpl[T]): List[FPath] = pile :: Nil
         //思路错误，FAtomicPathImpl[T]还有 subs 字段需要特殊处理
@@ -101,7 +101,7 @@ object FsnShape {
 
       override val dataLength = fsnShape.dataLength
     }
-  }
+  }*/
 
   /*implicit def fpileFsnShape[U,T <: HList, W, V <: HList, C, D <: HList, A[_]]
   (
@@ -153,7 +153,7 @@ object FsnShape {
     }
   }*/
 
-  implicit def hlistFsnShape[T <: HList, U, W, V <: HList, C, D <: HList, A[_]](
+  /*implicit def hlistFsnShape[T <: HList, U, W, V <: HList, C, D <: HList, A[_]](
     implicit
     subShape: FsnShape[U, W, C, A],
     tailShape: FsnShape[T, V, D, A]
@@ -218,6 +218,6 @@ object FsnShape {
     override def zero = subShape.zero :: tailShape.zero
 
     override val dataLength = subShape.dataLength + tailShape.dataLength
-  }
+  }*/
 
 }

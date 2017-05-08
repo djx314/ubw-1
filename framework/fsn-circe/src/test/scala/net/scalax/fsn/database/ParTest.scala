@@ -232,30 +232,30 @@ class ParTest extends FlatSpec
     val mainPile1 =
       ("我是" ofPile FAtomicPathImpl(In.default(12345678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
         ("小莎莎" ofPile FAtomicPathImpl(In.default("1234") ::: In.jWrite[String])) ::
-        HNil
+        FPNil
 
     val appendPile1 =
       ("jilen" ofPile FAtomicPathImpl(In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
         ("kerr" ofPile FAtomicPathImpl(In.default("汪") ::: In.jRead[String])) ::
-        HNil
+        FPNil
 
-    /*val convertPile1 = (mainPile1 :: appendPile1 :: HNil).poly(
+    val convertPile1 = (mainPile1 :: appendPile1 :: FPNil).poly(
       ("小萌师父" ofPile FAtomicPathImpl(In.default("喵") ::: In.jRead[String])) ::
         ("徒弟弟" ofPile FAtomicPathImpl(In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
-        HNil
+        FPNil
     ).transform {
         case (longData :: stringData :: HNil) :: (stringData2 :: stringData3 :: HNil) :: HNil =>
           None :: None :: HNil
       }
 
-    val convertPile2 = (convertPile1 :: mainPile1 :: HNil).poly(
+    val convertPile2 = (convertPile1 :: mainPile1 :: FPNil).poly(
       ("喵喵喵" ofPile FAtomicPathImpl(In.default("喵") ::: In.jRead[String] ::: In.jWrite[String])) ::
         ("汪汪汪" ofPile FAtomicPathImpl(In.default(5678L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::
-        HNil
-    )(FsnShape.hlistFsnShape111111111111111111111111(FsnShape.fpileFsnShape444444444444444444, FsnShape.hlistFsnShape111111111111111111111111(FsnShape.hlistFsnShape111111111111111111111111(FsnShape.fpileFsnShape444444444444444444, FsnShape.hlistFsnShape111111111111111111111111(FsnShape.fpileFsnShape444444444444444444, FsnShape.hnilFsnShape22222222222222222)), FsnShape.hnilFsnShape22222222222222222)), FsnShape.hlistFsnShape111111111111111111111111).transform {
+        FPNil
+    ).transform {
         case (stringData :: longData1 :: HNil) :: (longData2 :: stringData3 :: HNil) :: HNil =>
           None :: longData2 :: HNil
-      }*/
+      }
 
     /*val pileList = convertPile2 :: mainPile1 :: Nil
     println(convertPile1.toString)

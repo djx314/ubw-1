@@ -1,6 +1,5 @@
 package net.scalax.fsn.core
 
-import scala.language.higherKinds
 /*import shapeless._
 
 trait FPileShape[E, U, C[_]] {
@@ -71,13 +70,15 @@ object FPileShape {
 
 }*/
 
-trait PilesTransform[A, B, C, D, E[_]] {
+/*trait PilesTransform[A, B, C, D, E[_]] {
 
   def transform(tran: A => B): FPileImpl[C, D, E]
 
-}
+}*/
 
 trait PilesPolyHelper {
+
+  val FPNil = FPile.empty[Option]
 
   /*implicit class pilesPolyFuction[E, U, C[_]](piles: E)(implicit fPileShape: FPileShape[E, U, C]) {
 
@@ -96,9 +97,9 @@ trait PilesPolyHelper {
       }
   }*/
 
-  implicit class pilesPolyFuction[E](piles: E) {
+  //implicit class pilesPolyFuction[E](piles: E) {
 
-    def poly[X, Y, Z, U, T, C[_]](parentPile: X)(
+  /*def poly[X, Y, Z, U, T, C[_]](parentPile: X)(
       implicit
       subShape: FsnShape[E, U, T, C],
       parentShape: FsnShape[X, Y, Z, C]
@@ -118,8 +119,9 @@ trait PilesPolyHelper {
             subShape.genPiles(piles)
           )
         }
-      }
-    /*def polyOpt[X, Y, Z, U, T](parentPile: X)(
+      }*/
+
+  /*def polyOpt[X, Y, Z, U, T](parentPile: X)(
       implicit
       subShape: FsnShape[E, U, T, Option],
       parentShape: FsnShape[X, Y, Z, Option]
@@ -140,7 +142,7 @@ trait PilesPolyHelper {
           )
         }
       }*/
-  }
+  //}
 
   /*implicit class pilesPolyFuction[E, U, T, C[_]](piles: E)(
       implicit
