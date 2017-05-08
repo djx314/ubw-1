@@ -64,21 +64,6 @@ class CreateTest extends FlatSpec
         override val path = path1
       }
     }
-    /*implicit def fPilesOptionImplicit[D](columns: List[FAtomic[D]]) = {
-      new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
-        override val atomics = columns
-      }
-    }
-
-    implicit def atomicExtensionMethod2[D](atomic: FAtomic[D]) = {
-      new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
-        override val atomics = atomic :: Nil
-      }
-    }
-
-    implicit def atomicExtensionMethod3[D](atomic: FAtomic[D]): List[FAtomic[D]] = {
-      atomic :: Nil
-    }*/
   }
 
   import helper._
