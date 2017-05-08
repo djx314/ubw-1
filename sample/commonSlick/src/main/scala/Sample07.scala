@@ -33,19 +33,20 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
       "id" ofPile friend.id.out.order.describe("自增主键").writeJ,
       (
         ("name" ofPile friend.name.out.orderTarget("nick").describe("昵称")) ::
-        ("nick" ofPile friend.nick.out.order.describe("昵称")) ::
-        ("age" ofPile friend.age.out) ::
-        FPNil
+        (("nick" ofPile friend.nick.out.order.describe("昵称")) ::
+          ("age" ofPile friend.age.out) :: FPNil) ::
+          FPNil
       ).poly(
-          "name" ofPile FAtomicPathImpl.empty[String].writeJ
-        ).transform {
-            case Some(name) :: Some(nick) :: Some(Some(age)) :: HNil if age < 200 =>
-              Option(s"$name-$nick")
-            case Some(name) :: _ :: _ :: HNil =>
-              Option(name)
-            case _ =>
-              None
-          },
+            "name" ofPile FAtomicPathImpl.empty[String].writeJ
+          ).transform {
+              case Some(name) :: (Some(nick) :: Some(Some(age)) :: HNil) :: HNil if age < 200 =>
+                Option(s"$name-$nick")
+              case Some(name) :: (_ :: _ :: HNil) :: HNil =>
+                Option(name)
+              case s =>
+                //println(s)
+                None
+            },
       "ageOpt" ofPile friend.age.out.writeJ
     )
   }
@@ -78,17 +79,25 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
       ).poly(
           "name" ofPile FAtomicPathImpl.empty[String]
         ).transform {
-            case Some(name) :: Some(nick) :: Some(Some(age)) :: HNil if age < 200 =>
-              Option(s"$name-$nick")
-            case Some(name) :: _ :: _ :: HNil =>
-              Option(name)
-            case _ =>
-              None
+            a =>
+              //println(a)
+              a match {
+                case Some(name) :: Some(nick) :: Some(Some(age)) :: HNil if age < 200 =>
+                  Option(s"$name-$nick")
+                case Some(name) :: _ :: _ :: HNil =>
+                  Option(name)
+                case _ =>
+                  None
+              }
           }) :: ("ageOpt" ofPile friend.age.out) :: FPNil).poly("account" ofPile FAtomicPathImpl.empty[Aa]).transform {
-            case Some(name) :: Some(Some(age)) :: HNil =>
-              Option(Aa(name, age))
-            case _ =>
-              None
+            a =>
+              println(a)
+              a match {
+                case Some(name) :: Some(Some(age)) :: HNil =>
+                  Option(Aa(name, age))
+                case _ =>
+                  None
+              }
           } :: ("id" ofPile friend.id.out.order.describe("自增主键")) :: FPNil).poly("info" ofPile FAtomicPathImpl.empty[Map[String, Json]].writeJ).transform {
             case Some(aa) :: Some(id) :: HNil =>
               Option(Map("id" -> id.asJson, "accountInfo" -> aa.asJson))

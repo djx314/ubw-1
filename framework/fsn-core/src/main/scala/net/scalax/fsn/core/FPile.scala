@@ -87,8 +87,18 @@ case class FPileImpl[E, U, C[_]](
     new Abc[U, A, B] {
       def transform(cv: U => B): FPileImpl[A, B, C] = {
         FPileImpl(other.pathPile, other.fShape, { list: List[Any] =>
-          println(list)
-          cv(list.head.asInstanceOf[U] /*self.dataFromSub(list)*/ )
+          //println("-1-2-3-4")
+          //println(list)
+          //println("1234")
+          //println(self.dataFromSub(list))
+          //cv(list.head.asInstanceOf[U] /*self.dataFromSub(list)*/ )
+          //println("5678")
+          //println(cv(self.dataFromSub(list)))
+          //println(self.dataFromSub(list.head :: Nil))
+          //cv(self.dataFromSub(list))
+          //println(list)
+          //cv(self.dataFromSub(list.head :: Nil))
+          cv(list.head.asInstanceOf[U])
         }, self :: Nil)
       }
     }
@@ -111,7 +121,8 @@ object FPile {
           cc.fShape.encodeData(sub) ::: bb.fShape.encodeData(tail)
         }
         def decodeData(data: List[C[Any]]): B :: U = {
-          cc.fShape.decodeData(data.take(cc.fShape.dataLength)) :: bb.fShape.decodeData(data.take(bb.fShape.dataLength))
+          //println(data)
+          cc.fShape.decodeData(data.take(cc.fShape.dataLength)) :: bb.fShape.decodeData(data.drop(cc.fShape.dataLength))
         }
 
         def zero = cc.fShape.zero :: bb.fShape.zero
@@ -119,10 +130,14 @@ object FPile {
         val dataLength = cc.fShape.dataLength + bb.fShape.dataLength
       }
       val dataFromSub: List[Any] => (B :: U) = { list =>
-        cc.dataFromSub(list.take(cc.subs.size)) :: bb.dataFromSub(list.take(bb.subs.size))
+        //cc.dataFromSub(list.take(cc.subs.size)) :: bb.dataFromSub(list.take(bb.subs.size))
+        //println(list)
+        //println(cc.subs.size.toString + "喵喵喵" + bb.subs.size.toString)
+        //println(cc.dataLengthSum.toString + "汪汪汪" + bb.dataLengthSum.toString)
+        cc.dataFromSub(list.take(cc.subs.size)) :: bb.dataFromSub(list.drop(cc.subs.size))
       }
 
-      FPileImpl(cc.pathPile :: bb.pathPile, shape, dataFromSub, cc.subs ::: bb.subs)
+      FPileImpl(pathPile, shape, dataFromSub, cc.subs ::: bb.subs)
     }
   }
 
