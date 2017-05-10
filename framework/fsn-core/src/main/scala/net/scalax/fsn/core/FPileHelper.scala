@@ -33,6 +33,7 @@ trait FPileSyntax[C[_], T] {
 object FPileSyntax {
 
   type PileGen[C[_], T] = List[FPile[C]] => Either[FAtomicException, (List[FPile[C]], List[C[Any]] => T)]
+  type PileGen1111[C[_], T] = List[FPile1111[C]] => Either[FAtomicException, (List[FPile1111[C]], List[C[Any]] => T)]
 
   def apply[C[_], T](piles: FPileSyntax.PileGen[C, T]): FPileSyntax[C, T] = {
     new FPileSyntax[C, T] {
@@ -72,6 +73,7 @@ trait FPileSyntaxWithoutData[C[_], T] {
 object FPileSyntaxWithoutData {
 
   type PileGen[C[_], T] = List[FPile[C]] => Either[FAtomicException, (List[FPile[C]], T)]
+  type PileGen1111[C[_], T] = List[FPile1111[C]] => Either[FAtomicException, (List[FPile1111[C]], T)]
 
   def apply[C[_], T](piles: FPileSyntax.PileGen[C, T]): FPileSyntax[C, T] = {
     new FPileSyntax[C, T] {
