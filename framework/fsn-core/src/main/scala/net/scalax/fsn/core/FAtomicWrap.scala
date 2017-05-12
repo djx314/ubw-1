@@ -1,6 +1,5 @@
 package net.scalax.fsn.core
-
-trait FAtomicWrap {
+/*trait FAtomicWrap {
   type DataType
   val atomics: List[FAtomic[DataType]]
 
@@ -8,4 +7,4 @@ trait FAtomicWrap {
     s"""|paths:
         |${atomics.map(s => "  " + s.toString).mkString("\n")}""".stripMargin
   }
-}
+}*/ 
