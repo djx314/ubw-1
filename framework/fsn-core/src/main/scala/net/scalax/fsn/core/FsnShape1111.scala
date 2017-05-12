@@ -37,9 +37,7 @@ object FsnShape1111 {
       override def encodeData(pileData: FAtomicValueImpl[T]): List[FAtomicValue] = pileData :: Nil
       override def decodeData(data: List[FAtomicValue]): FAtomicValueImpl[T] = data.head.asInstanceOf[FAtomicValueImpl[T]]
 
-      override def zero = new FAtomicValueImpl[T] {
-        override val atomics = Nil
-      }
+      override def zero = FAtomicValueImpl.empty
 
       override val dataLength = 1
     }
