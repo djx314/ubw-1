@@ -1,8 +1,9 @@
 package net.scalax.fsn.core
 
-trait FAtomicPath {
-  type DataType
-  val atomics: List[FAtomic[DataType]]
+trait FAtomicPath extends FAtomicWrap {
+  override type DataType
+  override type CollType[T] = List[T]
+  override val atomics: List[FAtomic[DataType]]
 
   override def toString: String = {
     s"""|paths:

@@ -2,21 +2,22 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
+import net.scalax.fsn.json.operation.FAtomicValueHelper
 import net.scalax.fsn.slick.atomic.StaticMany
 import net.scalax.fsn.slick.model.{ QueryJsonInfo, StaticManyUbw }
 import shapeless._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-object StaticManyOperation {
+object StaticManyOperation extends FAtomicValueHelper {
 
   //TODO change option selector to list selector
-  def updateGen(implicit ec: ExecutionContext): FPileSyntax.PileGen[Option, Future[Map[String, QueryJsonInfo]]] = {
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
-        val aa = withRep(needAtomicOpt[StaticMany] :: FANil)
-          .mapToOption {
-            case (staticMayOpt :: HNil, data) =>
+  def updateGen(implicit ec: ExecutionContext): FPileSyntax1111.PileGen[Future[Map[String, QueryJsonInfo]]] = {
+    FPile1111.transformTreeList {
+      new FAtomicQuery1111(_) {
+        val aa = withRep(needAtomicOpt[StaticMany])
+          .mapTo {
+            case (staticMayOpt, data) =>
               Future.sequence(staticMayOpt.toList.map { eachStatic =>
                 eachStatic.staticMany.map {
                   _.map { eachMany =>
@@ -66,11 +67,11 @@ object StaticManyOperation {
   }*/
 
   //TODO change option selector to list selector
-  def ubwStaticManyGen(implicit ec: ExecutionContext): FPileSyntaxWithoutData.PileGen[Option, Future[List[StaticManyUbw]]] = {
-    FPile.transformTreeListWithoutData {
-      new FAtomicQuery(_) {
+  def ubwStaticManyGen(implicit ec: ExecutionContext): FPileSyntaxWithoutData1111.PileGen[Future[List[StaticManyUbw]]] = {
+    FPile1111.transformTreeListWithoutData {
+      new FAtomicQuery1111(_) {
         val aa = withRep(needAtomicOpt[StaticMany] :: needAtomic[FProperty] :: FANil)
-          .mapToOptionWithoutData {
+          .mapToWithoutData {
             case (staticManyCol :: property :: HNil) =>
               Future.sequence(
                 staticManyCol

@@ -3,7 +3,7 @@ package net.scalax.fsn.core
 import scala.language.higherKinds
 import scala.language.implicitConversions
 
-trait FPileSyntax[C[_], T] {
+/*trait FPileSyntax[C[_], T] {
 
   val pilesGen: FPileSyntax.PileGen[C, T]
 
@@ -28,7 +28,7 @@ trait FPileSyntax[C[_], T] {
     }
   }
 
-}
+}*/
 
 trait FPileSyntax1111[T] {
 
@@ -69,7 +69,7 @@ object FPileSyntax1111 {
 
 }
 
-object FPileSyntax {
+/*object FPileSyntax {
 
   type PileGen[C[_], T] = List[FPile[C]] => Either[FAtomicException, (List[FPile[C]], List[C[Any]] => T)]
 
@@ -79,7 +79,7 @@ object FPileSyntax {
     }
   }
 
-}
+}*/
 
 trait FPileSyntaxWithoutData1111[T] {
 
@@ -120,7 +120,7 @@ object FPileSyntaxWithoutData1111 {
 
 }
 
-trait FPileSyntaxWithoutData[C[_], T] {
+/*trait FPileSyntaxWithoutData[C[_], T] {
 
   val pilesGen: FPileSyntaxWithoutData.PileGen[C, T]
 
@@ -157,11 +157,11 @@ object FPileSyntaxWithoutData {
     }
   }
 
-}
+}*/
 
 trait FPilesGenHelper {
 
-  implicit def pileExtensionMethods[C[_], T](pilesGenList: FPileSyntax.PileGen[C, T]): FPileSyntax[C, T] = {
+  /*implicit def pileExtensionMethods[C[_], T](pilesGenList: FPileSyntax.PileGen[C, T]): FPileSyntax[C, T] = {
     new FPileSyntax[C, T] {
       override val pilesGen = pilesGenList
     }
@@ -171,7 +171,7 @@ trait FPilesGenHelper {
     new FPileSyntaxWithoutData[C, T] {
       override val pilesGen = pilesGenList
     }
-  }
+  }*/
 
   implicit def pileExtensionMethods1111[T](pilesGenList: FPileSyntax1111.PileGen[T]): FPileSyntax1111[T] = {
     new FPileSyntax1111[T] {

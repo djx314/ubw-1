@@ -8,7 +8,7 @@ trait FAtomicValueHelper {
   trait AtomicValueWrap[D] {
     val fAtomicValue: FAtomicValueImpl[D]
 
-    def opt: Option[D] = fAtomicValue.atomic.flatMap { s =>
+    def opt: Option[D] = fAtomicValue.atomics.flatMap { s =>
       s match {
         case valueWrap: FValue[D] => Option(valueWrap.value)
         case _ => None
@@ -26,7 +26,7 @@ trait FAtomicValueHelper {
 
   def set[D](value: D): FAtomicValueImpl[D] = new FAtomicValueImpl[D] {
     val value1 = value
-    override val atomic = Option {
+    override val atomics = Option {
       new FValue[D] {
         override val value = value1
       }

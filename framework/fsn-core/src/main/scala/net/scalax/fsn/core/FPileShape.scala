@@ -78,7 +78,7 @@ object FPileShape {
 
 trait PilesPolyHelper {
 
-  val FPNil = FPile.empty[Option]
+  //val FPNil = FPile.empty[Option]
 
   /*implicit class pilesPolyFuction[E, U, C[_]](piles: E)(implicit fPileShape: FPileShape[E, U, C]) {
 

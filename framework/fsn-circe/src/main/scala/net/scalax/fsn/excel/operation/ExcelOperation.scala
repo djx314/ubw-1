@@ -6,7 +6,7 @@ import net.scalax.fsn.excel.atomic.{ PoiStyleTransform, PoiWriter }
 import org.xarcher.cpoi.CellData
 import shapeless._
 
-object ExcelOperation /*extends FAtomicGenHelper with FAtomicShapeHelper*/ {
+object ExcelOperation extends FAtomicValueHelper /*extends FAtomicGenHelper with FAtomicShapeHelper*/ {
 
   /*def read(eachColumn: FColumn): Map[String, Json] => FColumn = { data: Map[String, Json] =>
     val jsonReader = FColumn.find(eachColumn)({ case s: JsonReader[eachColumn.DataType] => s })
@@ -76,12 +76,27 @@ object ExcelOperation /*extends FAtomicGenHelper with FAtomicShapeHelper*/ {
     }.toMap
   }*/
 
-  val writeGen = FPile.transformTreeList {
+  /*val writeGen = FPile.transformTreeList {
     new FAtomicQuery(_) {
       val aa = withRep(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapToOption {
           case (poiWriter :: transforms :: property :: defaultOpt :: HNil, data) => {
             val exportData = data.fold(defaultOpt.map(_.value))(Option(_))
+            val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
+            property.proName -> CellData.gen(poiWriter.convert(eachColumnData))(poiWriter.writer).addTransform(transforms.toList.flatMap(_.transforms)): (String, CellData[_])
+          }
+        }
+    }.aa
+  } { cellDataTupleList =>
+    cellDataTupleList.toMap: Map[String, CellData[_]]
+  }*/
+
+  val writeGen1111 = FPile1111.transformTreeList {
+    new FAtomicQuery1111(_) {
+      val aa = withRep(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
+        .mapTo {
+          case (poiWriter :: transforms :: property :: defaultOpt :: HNil, data) => {
+            val exportData = data.opt.fold(defaultOpt.map(_.value))(Option(_))
             val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
             property.proName -> CellData.gen(poiWriter.convert(eachColumnData))(poiWriter.writer).addTransform(transforms.toList.flatMap(_.transforms)): (String, CellData[_])
           }
