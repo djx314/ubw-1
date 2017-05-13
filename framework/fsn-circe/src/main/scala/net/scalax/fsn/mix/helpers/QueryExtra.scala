@@ -3,7 +3,7 @@ package net.scalax.fsn.mix.helpers
 import io.circe.Json
 import net.scalax.fsn.core._
 import net.scalax.fsn.mix.operation.PropertiesOperation
-import net.scalax.fsn.mix.slickbase.{ FQueryWrap, PileListQueryWrap1111 }
+import net.scalax.fsn.mix.slickbase.{ FQueryWrap, PileListQueryWrap }
 import net.scalax.fsn.slick.model._
 import net.scalax.fsn.slick.operation._
 import slick.basic.BasicProfile
@@ -16,7 +16,7 @@ import scala.concurrent.ExecutionContext
 
 trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
-  implicit class slick2jsonExtraClass1111(listQueryWrap: PileListQueryWrap1111) {
+  implicit class slick2jsonExtraClass1111(listQueryWrap: PileListQueryWrap) {
 
     /*def groupResult(defaultOrders: GroupParam)(
       implicit

@@ -22,9 +22,9 @@ import scala.concurrent.ExecutionContext
 
 object PropertiesOperation extends FPilesGenHelper {
 
-  val RWPropertiesGen: FPileSyntaxWithoutData1111.PileGen[List[RWProperty]] = {
-    FPile1111.transformTreeListWithoutData {
-      new FAtomicQuery1111(_) {
+  val RWPropertiesGen: FPileSyntaxWithoutData.PileGen[List[RWProperty]] = {
+    FPile.transformTreeListWithoutData {
+      new FAtomicQuery(_) {
         val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[InRetrieve] :: needAtomicOpt[AutoInc] :: needAtomic[SlickRetrieve] :: FANil)
           .mapToWithoutData {
             case (jsonWriter :: property :: inRetrieveOpt :: isAutoIncOpt :: slickRetrieve :: HNil) =>
@@ -42,9 +42,9 @@ object PropertiesOperation extends FPilesGenHelper {
     }
   }
 
-  val strJsonPropertiesGen: FPileSyntaxWithoutData1111.PileGen[List[SelectProperty]] = StrOutSelectConvert1111.ubwGenWithoutData.flatMap {
-    FPile1111.transformTreeListWithoutData {
-      new FAtomicQuery1111(_) {
+  val strJsonPropertiesGen: FPileSyntaxWithoutData.PileGen[List[SelectProperty]] = StrOutSelectConvert.ubwGenWithoutData.flatMap {
+    FPile.transformTreeListWithoutData {
+      new FAtomicQuery(_) {
         val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[StrDefaultDesc] :: needAtomicOpt[StrNeededFetch] :: FANil)
           .mapToWithoutData {
             case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: neededFetchOpt :: HNil) =>
@@ -77,10 +77,10 @@ object PropertiesOperation extends FPilesGenHelper {
     jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
-  ): List[FPile1111] => JsonOut = { optPiles: List[FPile1111] =>
+  ): List[FPile] => JsonOut = { optPiles: List[FPile] =>
 
     //val jsonGen: FPileSyntax.PileGen[Option, SlickParam => ResultWrap] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.writeGen) { (slickQuery, jsonGen) =>
-    val jsonGen: FPileSyntax1111.PileGen[SlickParam => ResultWrap] = StrOutSelectConvert1111.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen1111) { (slickQuery, jsonGen) =>
+    val jsonGen: FPileSyntax.PileGen[SlickParam => ResultWrap] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen1111) { (slickQuery, jsonGen) =>
       { slickParam: SlickParam =>
         val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
         val result = slickQuery.slickResult.apply(addedParam)
@@ -162,9 +162,9 @@ object PropertiesOperation extends FPilesGenHelper {
     intTyped: BaseTypedType[Int],
     //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
-  ): List[FPile1111] => GroupParam => ResultWrap = { optPiles: List[FPile1111] =>
+  ): List[FPile] => GroupParam => ResultWrap = { optPiles: List[FPile] =>
 
-    val jsonGen: FPileSyntax1111.PileGen[GroupParam => ResultWrap] = GroupSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen1111) { (slickQuery, jsonGen) =>
+    val jsonGen: FPileSyntax.PileGen[GroupParam => ResultWrap] = GroupSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen1111) { (slickQuery, jsonGen) =>
       { slickParam: GroupParam =>
         val result = slickQuery.result(slickParam)
         ResultWrap(result.action.map {
@@ -180,9 +180,9 @@ object PropertiesOperation extends FPilesGenHelper {
     }
   }
 
-  val poiPropertiesGen: FPileSyntaxWithoutData1111.PileGen[List[SelectProperty]] = StrOutSelectConvert1111.ubwGenWithoutData /*(wQuery)*/ .flatMap {
-    FPile1111.transformTreeListWithoutData {
-      new FAtomicQuery1111(_) {
+  val poiPropertiesGen: FPileSyntaxWithoutData.PileGen[List[SelectProperty]] = StrOutSelectConvert.ubwGenWithoutData /*(wQuery)*/ .flatMap {
+    FPile.transformTreeListWithoutData {
+      new FAtomicQuery(_) {
         val aa = withRep(needAtomic[PoiWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: FANil)
           .mapToWithoutData {
             case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: inRetrieveOpt :: HNil) =>
@@ -215,9 +215,9 @@ object PropertiesOperation extends FPilesGenHelper {
     jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
-  ): List[FPile1111] => PoiOut = { optPiles: List[FPile1111] =>
+  ): List[FPile] => PoiOut = { optPiles: List[FPile] =>
 
-    val poiGen /*: FPileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]]*/ = StrOutSelectConvert1111.ubwGen(wQuery).flatMap(ExcelOperation.writeGen1111) { (slickQuery, poiGen) =>
+    val poiGen /*: FPileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]]*/ = StrOutSelectConvert.ubwGen(wQuery).flatMap(ExcelOperation.writeGen1111) { (slickQuery, poiGen) =>
       { slickParam: SlickParam =>
         slickQuery.slickResult.apply(slickParam).resultAction.map {
           case ListAnyCollection1111(dataList, sum) =>
@@ -240,10 +240,10 @@ object PropertiesOperation extends FPilesGenHelper {
     implicit
     ec: ExecutionContext,
     updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-  ): List[FPile1111] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
-    { optPiles: List[FPile1111] =>
+  ): List[FPile] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
+    { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
-        JsonOperation.readGen1111.flatMap(InUpdateConvert21111.updateGen) { (jsonReader, slickWriterGen) =>
+        JsonOperation.readGen1111.flatMap(InUpdateConvert.updateGen) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
           execInfoDBIO.apply(binds).flatMap { execInfo =>
@@ -260,10 +260,10 @@ object PropertiesOperation extends FPilesGenHelper {
     ec: ExecutionContext,
     deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
     retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): List[FPile1111] => Map[String, Json] => DBIO[Int] =
-    { optPiles: List[FPile1111] =>
+  ): List[FPile] => Map[String, Json] => DBIO[Int] =
+    { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
-        JsonOperation.unfullReadGen1111.flatMap(InRetrieveConvert1111.convert) { (jsonReader, slickWriterGen) =>
+        JsonOperation.unfullReadGen1111.flatMap(InRetrieveConvert.convert) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
           execInfoDBIO.apply(binds).flatMap { execInfo =>
@@ -274,7 +274,7 @@ object PropertiesOperation extends FPilesGenHelper {
               (s, data)
             }
           }
-        }.flatMap(InDeleteConvert1111.convert) {
+        }.flatMap(InDeleteConvert.convert) {
           case (dataList, slickWriterGen) =>
             dataList.flatMap {
               case (execInfo, data) =>
@@ -289,10 +289,10 @@ object PropertiesOperation extends FPilesGenHelper {
     ec: ExecutionContext,
     cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
     retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): List[FPile1111] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
-    { optPiles: List[FPile1111] =>
+  ): List[FPile] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
+    { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
-        JsonOperation.unfullReadGen1111.flatMap(InCreateConvert1111.createGen) { (jsonReader, slickWriterGen) =>
+        JsonOperation.unfullReadGen1111.flatMap(InCreateConvert.createGen) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
           execInfoDBIO.apply(binds).flatMap { execInfo =>
@@ -308,10 +308,10 @@ object PropertiesOperation extends FPilesGenHelper {
     implicit
     ec: ExecutionContext,
     retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): List[FPile1111] => Map[String, Json] => DBIO[(Map[String, QueryJsonInfo], Map[String, Json])] =
-    { optPiles: List[FPile1111] =>
+  ): List[FPile] => Map[String, Json] => DBIO[(Map[String, QueryJsonInfo], Map[String, Json])] =
+    { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
-        JsonOperation.unfullReadGen1111.flatMap(InRetrieveConvert1111.convert) { (jsonReader, slickWriterGen) =>
+        JsonOperation.unfullReadGen1111.flatMap(InRetrieveConvert.convert) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
           execInfoDBIO.apply(binds).flatMap { execInfo =>
@@ -332,8 +332,8 @@ object PropertiesOperation extends FPilesGenHelper {
   def staticManyOperation(
     implicit
     ec: ExecutionContext
-  ): List[FPile1111] => Map[String, Json] => Future[Map[String, QueryJsonInfo]] =
-    { optPiles: List[FPile1111] =>
+  ): List[FPile] => Map[String, Json] => Future[Map[String, QueryJsonInfo]] =
+    { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
         JsonOperation.readGen1111.flatMap(StaticManyOperation.updateGen) { (jsonReader, staticMayGen) =>
           staticMayGen(jsonReader.apply(data))

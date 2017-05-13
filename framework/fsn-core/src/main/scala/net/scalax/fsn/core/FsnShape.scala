@@ -2,7 +2,7 @@ package net.scalax.fsn.core
 
 import shapeless._
 
-trait FsnShape1111[Packed_, DataType_] {
+trait FsnShape[Packed_, DataType_] {
   self =>
 
   type Packed = Packed_
@@ -19,9 +19,9 @@ trait FsnShape1111[Packed_, DataType_] {
 
 }
 
-object FsnShape1111 {
+object FsnShape {
 
-  def hnilFsnShape1111: FsnShape1111[HNil, HNil] = new FsnShape1111[HNil, HNil] {
+  def hnilFsnShape: FsnShape[HNil, HNil] = new FsnShape[HNil, HNil] {
     self =>
     override def encodeColumn(pile: HNil): List[FAtomicPath] = Nil
     override def encodeData(pileData: HNil): List[FAtomicValue] = Nil
@@ -30,8 +30,8 @@ object FsnShape1111 {
     override val dataLength = 0
   }
 
-  def fpathFsnShape1111[T]: FsnShape1111[FAtomicPathImpl[T], FAtomicValueImpl[T]] =
-    new FsnShape1111[FAtomicPathImpl[T], FAtomicValueImpl[T]] {
+  def fpathFsnShape[T]: FsnShape[FAtomicPathImpl[T], FAtomicValueImpl[T]] =
+    new FsnShape[FAtomicPathImpl[T], FAtomicValueImpl[T]] {
       self =>
       override def encodeColumn(pile: FAtomicPathImpl[T]): List[FAtomicPath] = pile :: Nil
       override def encodeData(pileData: FAtomicValueImpl[T]): List[FAtomicValue] = pileData :: Nil

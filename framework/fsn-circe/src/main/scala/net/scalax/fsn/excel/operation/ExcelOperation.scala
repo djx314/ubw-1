@@ -91,8 +91,8 @@ object ExcelOperation extends FAtomicValueHelper /*extends FAtomicGenHelper with
     cellDataTupleList.toMap: Map[String, CellData[_]]
   }*/
 
-  val writeGen1111 = FPile1111.transformTreeList {
-    new FAtomicQuery1111(_) {
+  val writeGen1111 = FPile.transformTreeList {
+    new FAtomicQuery(_) {
       val aa = withRep(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (poiWriter :: transforms :: property :: defaultOpt :: HNil, data) => {

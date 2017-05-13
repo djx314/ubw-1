@@ -178,7 +178,7 @@ trait StrSlickQuery {
       val inViewReadersWithIndex = inViewReaders.zipWithIndex
       val mapQuery = sortbyQuery2.map(values => inViewReaders.map(s => values(s.index)))(new ListColumnShape[FlatShapeLevel](inViewReaders.map(_.reader.mainShape)))
 
-      val rs = CommonResult1111.commonResult(selectQuery.to[List], /*sortbyQuery2*/ mapQuery).apply(slickParam)
+      val rs = CommonResult.commonResult(selectQuery.to[List], /*sortbyQuery2*/ mapQuery).apply(slickParam)
         .map { s =>
           val resultSet = s._1.map { eachRow =>
             val resultArray = Array.fill[Option[Any]](readers.size)(None)

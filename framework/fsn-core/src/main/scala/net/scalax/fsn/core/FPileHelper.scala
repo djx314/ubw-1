@@ -30,12 +30,12 @@ import scala.language.implicitConversions
 
 }*/
 
-trait FPileSyntax1111[T] {
+trait FPileSyntax[T] {
 
-  val pilesGen: FPileSyntax1111.PileGen[T]
+  val pilesGen: FPileSyntax.PileGen[T]
 
-  def flatMap[S, U](mapPiles: FPileSyntax1111.PileGen[S])(cv: (T, List[FAtomicValue] => S) => U): FPileSyntax1111.PileGen[U] = {
-    (piles: List[FPile1111]) =>
+  def flatMap[S, U](mapPiles: FPileSyntax.PileGen[S])(cv: (T, List[FAtomicValue] => S) => U): FPileSyntax.PileGen[U] = {
+    (piles: List[FPile]) =>
       {
         pilesGen(piles).right.flatMap {
           case (newPiles, gen) =>
@@ -49,7 +49,7 @@ trait FPileSyntax1111[T] {
       }
   }
 
-  def result(piles: List[FPile1111]): Either[FAtomicException, T] = {
+  def result(piles: List[FPile]): Either[FAtomicException, T] = {
     pilesGen(piles).right.map { s =>
       s._2.apply(piles.flatMap(_.deepZero))
     }
@@ -57,12 +57,12 @@ trait FPileSyntax1111[T] {
 
 }
 
-object FPileSyntax1111 {
+object FPileSyntax {
 
-  type PileGen[T] = List[FPile1111] => Either[FAtomicException, (List[FPile1111], List[FAtomicValue] => T)]
+  type PileGen[T] = List[FPile] => Either[FAtomicException, (List[FPile], List[FAtomicValue] => T)]
 
-  def apply1111[T](piles: FPileSyntax1111.PileGen[T]): FPileSyntax1111[T] = {
-    new FPileSyntax1111[T] {
+  def apply1111[T](piles: FPileSyntax.PileGen[T]): FPileSyntax[T] = {
+    new FPileSyntax[T] {
       override val pilesGen = piles
     }
   }
@@ -81,12 +81,12 @@ object FPileSyntax1111 {
 
 }*/
 
-trait FPileSyntaxWithoutData1111[T] {
+trait FPileSyntaxWithoutData[T] {
 
-  val pilesGen: FPileSyntaxWithoutData1111.PileGen[T]
+  val pilesGen: FPileSyntaxWithoutData.PileGen[T]
 
-  def flatMap[S, U](mapPiles: FPileSyntaxWithoutData1111.PileGen[S])(cv: (T, S) => U): FPileSyntaxWithoutData1111.PileGen[U] = {
-    (piles: List[FPile1111]) =>
+  def flatMap[S, U](mapPiles: FPileSyntaxWithoutData.PileGen[S])(cv: (T, S) => U): FPileSyntaxWithoutData.PileGen[U] = {
+    (piles: List[FPile]) =>
       {
         pilesGen(piles).right.flatMap {
           case (newPiles, gen) =>
@@ -100,7 +100,7 @@ trait FPileSyntaxWithoutData1111[T] {
       }
   }
 
-  def result(piles: List[FPile1111]): Either[FAtomicException, T] = {
+  def result(piles: List[FPile]): Either[FAtomicException, T] = {
     pilesGen(piles).right.map { s =>
       s._2
     }
@@ -108,12 +108,12 @@ trait FPileSyntaxWithoutData1111[T] {
 
 }
 
-object FPileSyntaxWithoutData1111 {
+object FPileSyntaxWithoutData {
 
-  type PileGen[T] = List[FPile1111] => Either[FAtomicException, (List[FPile1111], T)]
+  type PileGen[T] = List[FPile] => Either[FAtomicException, (List[FPile], T)]
 
-  def apply[C[_], T](piles: FPileSyntax1111.PileGen[T]): FPileSyntax1111[T] = {
-    new FPileSyntax1111[T] {
+  def apply[C[_], T](piles: FPileSyntax.PileGen[T]): FPileSyntax[T] = {
+    new FPileSyntax[T] {
       override val pilesGen = piles
     }
   }
@@ -173,14 +173,14 @@ trait FPilesGenHelper {
     }
   }*/
 
-  implicit def pileExtensionMethods1111[T](pilesGenList: FPileSyntax1111.PileGen[T]): FPileSyntax1111[T] = {
-    new FPileSyntax1111[T] {
+  implicit def pileExtensionMethods[T](pilesGenList: FPileSyntax.PileGen[T]): FPileSyntax[T] = {
+    new FPileSyntax[T] {
       override val pilesGen = pilesGenList
     }
   }
 
-  implicit def pileWithoutDataExtensionMethods1111[T](pilesGenList: FPileSyntaxWithoutData1111.PileGen[T]): FPileSyntaxWithoutData1111[T] = {
-    new FPileSyntaxWithoutData1111[T] {
+  implicit def pileWithoutDataExtensionMethods[T](pilesGenList: FPileSyntaxWithoutData.PileGen[T]): FPileSyntaxWithoutData[T] = {
+    new FPileSyntaxWithoutData[T] {
       override val pilesGen = pilesGenList
     }
   }

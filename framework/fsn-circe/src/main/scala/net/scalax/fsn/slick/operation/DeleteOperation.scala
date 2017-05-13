@@ -62,19 +62,19 @@ case class DSWriter2[MS, MD, MT, D](
 
 }
 
-trait ISlickDeleteWithData1111 {
+trait ISlickDeleteWithData {
   val writer: DSlickWriter2
-  val data: DataWithIndex1111
+  val data: DataWithIndex
 }
 
-object InDeleteConvert1111 extends FAtomicValueHelper {
+object InDeleteConvert extends FAtomicValueHelper {
   def convert(
     implicit
     ec: ExecutionContext,
     deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
   ) = {
-    FPile1111.transformTreeList {
-      new FAtomicQuery1111(_) {
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
         val aa = withRep(needAtomic[SlickDelete] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
           .mapTo {
             case (slickDelete :: oneToDeleteOpt :: HNil, data) =>
@@ -127,28 +127,28 @@ object InDeleteConvert1111 extends FAtomicValueHelper {
       { binds: List[(Any, SlickQueryBindImpl)] =>
         val genListWithData = genList.zipWithIndex.map {
           case (gen, index) =>
-            new ISlickDeleteWithData1111 {
+            new ISlickDeleteWithData {
               override val writer = gen
-              override val data = DataWithIndex1111(set(writer.data), index)
+              override val data = DataWithIndex(set(writer.data), index)
             }
         }
-        DeleteOperation1111.parseInsert(binds, genListWithData)
+        DeleteOperation.parseInsert(binds, genListWithData)
       }
     }
   }
 }
 
-object DeleteOperation1111 {
+object DeleteOperation {
 
   def parseInsertGen(
     binds: List[(Any, SlickQueryBindImpl)],
-    updateList: List[ISlickDeleteWithData1111],
+    updateList: List[ISlickDeleteWithData],
     converts: List[DeleteTran2]
   )(
     implicit
     ec: ExecutionContext,
     deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
-  ): DBIO[ExecInfo31111] = {
+  ): DBIO[ExecInfo3] = {
     val wrapList = updateList
 
     val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => converts.exists(t => key == t.table) }
@@ -187,27 +187,27 @@ object DeleteOperation1111 {
           subs = eachWrap.map(_.writer.subGen.toList).flatten
           subResult <- parseInsertGen(binds, updateList, subs)
         } yield {
-          ExecInfo31111(effectRows + subResult.effectRows, data ::: subResult.columns)
+          ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
         }
     }
-    results.foldLeft(DBIO.successful(ExecInfo31111(0, Nil)): DBIO[ExecInfo31111]) { (s, t) =>
+    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
       (for {
         s1 <- s
         t1 <- t
       } yield {
-        ExecInfo31111(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
       })
     }
   }
 
   def parseInsert(
     binds: List[(Any, SlickQueryBindImpl)],
-    updateList: List[ISlickDeleteWithData1111]
+    updateList: List[ISlickDeleteWithData]
   )(
     implicit
     ec: ExecutionContext,
     deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
-  ): DBIO[ExecInfo31111] = {
+  ): DBIO[ExecInfo3] = {
     val wrapList = updateList
 
     val subGensTables = wrapList.flatMap { t => t.writer.subGen.toList.map(_.table) }
@@ -245,15 +245,15 @@ object DeleteOperation1111 {
           subs = eachWrap.map(_.writer.subGen.toList).flatten
           subResult <- parseInsertGen(binds, updateList, subs)
         } yield {
-          ExecInfo31111(effectRows + subResult.effectRows, data ::: subResult.columns)
+          ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
         }
     }
-    results.foldLeft(DBIO.successful(ExecInfo31111(0, Nil)): DBIO[ExecInfo31111]) { (s, t) =>
+    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
       (for {
         s1 <- s
         t1 <- t
       } yield {
-        ExecInfo31111(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
       })
     }
   }

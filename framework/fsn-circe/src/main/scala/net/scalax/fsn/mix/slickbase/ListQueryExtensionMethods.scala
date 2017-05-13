@@ -1,6 +1,6 @@
 package net.scalax.fsn.mix.slickbase
 
-import net.scalax.fsn.core.FPile1111
+import net.scalax.fsn.core.FPile
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import slick.ast.{ AnonSymbol, Ref }
 import slick.lifted._
@@ -57,7 +57,7 @@ import scala.concurrent.ExecutionContext
 }*/
 class PileListQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
 
-  def flatMap[A, B](f: E => PileListQueryWrap1111): PileListQueryWrap1111 = {
+  def flatMap[A, B](f: E => PileListQueryWrap): PileListQueryWrap = {
     val generator = new AnonSymbol
     val aliased = queryToExt.shaped.encodeRef(Ref(generator)).value
     val fv = f(aliased)
@@ -67,10 +67,10 @@ class PileListQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
         new WrappingQuery[E, U, Seq](new slick.ast.Bind(generator, queryToExt.toNode, newQuery.toNode), newQuery.shaped)
       }
     }
-    PileListQueryWrap1111(fv.columns, slickJsonQuery)(fv.ec)
+    PileListQueryWrap(fv.columns, slickJsonQuery)(fv.ec)
   }
 
-  def map(ev: E => List[FPile1111])(implicit ec: ExecutionContext): PileListQueryWrap1111 = {
+  def map(ev: E => List[FPile])(implicit ec: ExecutionContext): PileListQueryWrap = {
     val generator = new AnonSymbol
     val aliased = queryToExt.shaped.encodeRef(Ref(generator)).value
     val columns = ev(aliased)
@@ -79,7 +79,7 @@ class PileListQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
         new WrappingQuery[E, U, Seq](new slick.ast.Bind(generator, queryToExt.toNode, query.toNode), query.shaped)
       }
     }
-    PileListQueryWrap1111(columns, slickJsonQuery)
+    PileListQueryWrap(columns, slickJsonQuery)
   }
 
   def filter[T <: Rep[_]: CanBeQueryCondition](f: E => T): PileListQueryExtensionMethods[E, U] = {

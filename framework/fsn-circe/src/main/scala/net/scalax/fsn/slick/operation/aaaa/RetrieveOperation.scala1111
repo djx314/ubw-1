@@ -17,7 +17,7 @@ trait IWrapTran2[U] {
 
 }
 
-trait ISlickReader2222 {
+trait ISlickReader {
 
   type MainSColumn
   type MainDColumn
@@ -37,14 +37,14 @@ trait ISlickReader2222 {
 
 }
 
-case class ISReader2222[S, D, T](
+case class ISReader[S, D, T](
     override val mainCol: S,
     override val table: Any,
     override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
     override val autalColumn: D => Any,
     override val primaryGen: Option[FilterColumnGen[T]],
     override val subGen: Option[IWrapTran2[D]]
-) extends ISlickReader2222 {
+) extends ISlickReader {
 
   type MainSColumn = S
   type MainDColumn = D
@@ -53,7 +53,7 @@ case class ISReader2222[S, D, T](
 }
 
 trait ISlickReaderWithData {
-  val reader: ISlickReader2222
+  val reader: ISlickReader
   val dataGen: reader.MainDColumn => DataWithIndex
 }
 
@@ -71,7 +71,7 @@ object InRetrieveConvert2222 {
         val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
           .mapToOption {
             case (slickReader :: oneToOneRetrieveOpt :: HNil, data) => {
-              val iSlickReader = ISReader2222(
+              val iSlickReader = ISReader(
                 mainCol = (slickReader.mainCol: slickReader.SourceType),
                 table = slickReader.owner,
                 mainShape = slickReader.mainShape,
@@ -111,7 +111,7 @@ object InRetrieveConvert2222 {
 
                 }
               )
-              iSlickReader: ISlickReader2222
+              iSlickReader: ISlickReader
             }
           }
       }.aa
