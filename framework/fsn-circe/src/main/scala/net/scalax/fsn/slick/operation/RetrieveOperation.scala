@@ -1,5 +1,6 @@
 package net.scalax.fsn.slick.operation
 
+import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.FAtomicValueHelper
 import net.scalax.fsn.slick.atomic.{ OneToOneRetrieve, SlickRetrieve }
