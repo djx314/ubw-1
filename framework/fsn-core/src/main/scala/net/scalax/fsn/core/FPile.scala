@@ -22,6 +22,8 @@ trait FPileAbstract {
 trait FPile extends FPileAbstract {
   self =>
 
+  val genPiles: FPile => List[FPile]
+
   val dataListFromSubList: List[FAtomicValue] => List[FAtomicValue] = { list =>
     if (subs.isEmpty) {
       list
@@ -71,7 +73,7 @@ class FPileImpl[E, U](
     override val fShape: FsnShape[E, U],
     override val dataFromSub: List[Any] => U,
     override val subs: List[FPile]
-)(val genPiles: FPileImpl[E, U] => List[FPile] = { s: FPileImpl[E, U] => List(s) }) extends FPile {
+)(override val genPiles: FPile => List[FPile] = { s: FPile => List(s) }) extends FPile {
   self =>
 
   override type PathType = E
@@ -133,7 +135,7 @@ object FPile {
 
   implicit def convert[E <: HList, U <: HList](bb: FPileImpl[E, U]): bbbb[E, U] = new bbbb(bb)
 
-  def empty: FPileImpl[HNil, HNil] = {
+  val empty: FPileImpl[HNil, HNil] = {
     val shape = FsnShape.hnilFsnShape
     new FPileImpl(HNil, shape, { _: List[Any] => ??? }, List.empty[FPile])({ cusType =>
       cusType :: Nil
@@ -142,7 +144,7 @@ object FPile {
 
   def apply[D](paths: FAtomicPathImpl[D]): FPileImpl[FAtomicPathImpl[D], FAtomicValueImpl[D]] = {
     val shape = FsnShape.fpathFsnShape[D]
-    new FPileImpl(paths, shape, { s: List[Any] =>
+    new FPileImpl(paths, shape, { _: List[Any] =>
       ???
     }, List.empty[FPile])({ cusType =>
       cusType :: Nil
@@ -165,7 +167,7 @@ object FPile {
       val newSubs = oldPile.subs.zip(newPile.subs).map { case (eachOldPile, eachNewPile) => genTreeTailCall(pathGen, eachOldPile, eachNewPile) }
       if (newSubs.forall(_.isRight)) {
         val (_, newSubTree, successNodes) = newSubs.map(_.right.get).unzip3
-        val newNode = new FPileImpl(newPile.pathPile, newPile.fShape, newPile.dataFromSub, newSubTree)(s => ???)
+        val newNode = new FPileImpl(newPile.pathPile, newPile.fShape, newPile.dataFromSub, newSubTree)()
         Right(oldPile, newNode, successNodes.flatten)
       } else {
         genTreeTailCall(pathGen, oldPile, new FPileImpl(newPile.pathPile, newPile.fShape, (_: List[Any]) => newPile.fShape.zero, Nil)(s => ???))
@@ -191,42 +193,42 @@ object FPile {
   }
 
   def transformTreeList[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): FPileSyntax.PileGen[T] = {
-    (piles: List[FPile]) =>
-      {
-        val calculatePiles = piles.map { s =>
-          genTree(pathGen, s)
-        }.foldLeft(Right(Nil): Either[FAtomicException, List[(FPile, List[FPile])]]) {
-          (append, eitherResult) =>
-            (append -> eitherResult) match {
-              case (Left(s), Left(t)) =>
-                Left(FAtomicException(s.typeTags ::: t.typeTags))
-              case (Left(s), Right(_)) =>
-                Left(FAtomicException(s.typeTags))
-              case (Right(_), Left(s)) =>
-                Left(FAtomicException(s.typeTags))
-              case (Right(s), Right(t)) =>
-                Right(t :: s)
-            }
-        }.right.map(_.reverse)
-        calculatePiles.right.map { pileList =>
-          val (newPile, summaryPiles) = pileList.unzip
-          newPile -> { anyList: List[FAtomicValue] =>
-            columnGen(ListUtils.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*)
-              .zip(summaryPiles)
-              .map {
-                case (subList, subPiles) =>
-                  ListUtils.splitList(subList, subPiles.map(_.dataLengthSum): _*).zip(subPiles).map {
-                    case (eachList, eachPiles) =>
-                      eachPiles.paths.map(s => pathGen(s)).zip(eachPiles.dataListFromSubList(eachList)).map {
-                        case (tranform, data) =>
-                          tranform.apply(tranform.gen.right.get, data.asInstanceOf[FAtomicValueImpl[tranform.path.DataType]])
-                      }
-                  }
-              }.flatten.flatten)
+    prePiles: List[FPile] =>
+      //防止定义 FPile 时最后一步使用了混合后不能识别最后一层 path
+      val piles = prePiles.flatMap(eachPile => eachPile.genPiles(eachPile))
+      val calculatePiles = piles.map { s =>
+        genTree(pathGen, s)
+      }.foldLeft(Right(Nil): Either[FAtomicException, List[(FPile, List[FPile])]]) {
+        (append, eitherResult) =>
+          (append -> eitherResult) match {
+            case (Left(s), Left(t)) =>
+              Left(FAtomicException(s.typeTags ::: t.typeTags))
+            case (Left(s), Right(_)) =>
+              Left(FAtomicException(s.typeTags))
+            case (Right(_), Left(s)) =>
+              Left(FAtomicException(s.typeTags))
+            case (Right(s), Right(t)) =>
+              Right(t :: s)
           }
+      }.right.map(_.reverse)
+      calculatePiles.right.map { pileList =>
+        val (newPile, summaryPiles) = pileList.unzip
+        newPile -> { anyList: List[FAtomicValue] =>
+          columnGen(ListUtils.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*)
+            .zip(summaryPiles)
+            .map {
+              case (subList, subPiles) =>
+                ListUtils.splitList(subList, subPiles.map(_.dataLengthSum): _*).zip(subPiles).map {
+                  case (eachList, eachPiles) =>
+                    eachPiles.paths.map(s => pathGen(s)).zip(eachPiles.dataListFromSubList(eachList)).map {
+                      case (tranform, data) =>
+                        tranform.apply(tranform.gen.right.get, data.asInstanceOf[FAtomicValueImpl[tranform.path.DataType]])
+                    }
+                }
+            }.flatten.flatten)
         }
-
       }
+
   }
 
   def genTreeTailCallWithoutData[U](pathGen: FAtomicPath => FQueryTranformWithOutData[U], oldPile: FPile, newPile: FPile): Either[FAtomicException, (FPile, FPile, List[FPile])] = {
@@ -241,7 +243,7 @@ object FPile {
       val newSubs = oldPile.subs.zip(newPile.subs).map { case (eachOldPile, eachNewPile) => genTreeTailCallWithoutData(pathGen, eachOldPile, eachNewPile) }
       if (newSubs.forall(_.isRight)) {
         val (_, newSubTree, successNodes) = newSubs.map(_.right.get).unzip3
-        val newNode = new FPileImpl(newPile.pathPile, newPile.fShape, newPile.dataFromSub, newSubTree)(s => ???)
+        val newNode = new FPileImpl(newPile.pathPile, newPile.fShape, newPile.dataFromSub, newSubTree)()
         Right(oldPile, newNode, successNodes.flatten)
       } else {
         genTreeTailCallWithoutData(pathGen, oldPile, new FPileImpl(newPile.pathPile, newPile.fShape, (_: List[Any]) => newPile.fShape.zero, Nil)(s => ???))
@@ -254,34 +256,34 @@ object FPile {
   }
 
   def transformTreeListWithoutData[U, T](pathGen: FAtomicPath => FQueryTranformWithOutData[U])(columnGen: List[U] => T): FPileSyntaxWithoutData.PileGen[T] = {
-    (piles: List[FPile]) =>
-      {
-        val calculatePiles = piles.map { s =>
-          genTreeWithoutData(pathGen, s)
-        }.foldLeft(Right(Nil): Either[FAtomicException, List[(FPile, List[FPile])]]) {
-          (append, eitherResult) =>
-            (append -> eitherResult) match {
-              case (Left(s), Left(t)) =>
-                Left(FAtomicException(s.typeTags ::: t.typeTags))
-              case (Left(s), Right(_)) =>
-                Left(FAtomicException(s.typeTags))
-              case (Right(_), Left(s)) =>
-                Left(FAtomicException(s.typeTags))
-              case (Right(s), Right(t)) =>
-                Right(t :: s)
-            }
-        }.right.map(_.reverse)
-        calculatePiles.right.map { pileList =>
-          val (newPile, summaryPiles) = pileList.unzip
-          newPile -> {
-            columnGen(summaryPiles.map { subPiles =>
-              subPiles.map { eachPiles =>
-                eachPiles.paths.map(s => pathGen(s)).map { tranform =>
-                  tranform.apply(tranform.gen.right.get)
-                }
-              }
-            }.flatten.flatten)
+    prePiles: List[FPile] =>
+      //防止定义 FPile 时最后一步使用了混合后不能识别最后一层 path
+      val piles = prePiles.flatMap(eachPile => eachPile.genPiles(eachPile))
+      val calculatePiles = piles.map { s =>
+        genTreeWithoutData(pathGen, s)
+      }.foldLeft(Right(Nil): Either[FAtomicException, List[(FPile, List[FPile])]]) {
+        (append, eitherResult) =>
+          (append -> eitherResult) match {
+            case (Left(s), Left(t)) =>
+              Left(FAtomicException(s.typeTags ::: t.typeTags))
+            case (Left(s), Right(_)) =>
+              Left(FAtomicException(s.typeTags))
+            case (Right(_), Left(s)) =>
+              Left(FAtomicException(s.typeTags))
+            case (Right(s), Right(t)) =>
+              Right(t :: s)
           }
+      }.right.map(_.reverse)
+      calculatePiles.right.map { pileList =>
+        val (newPile, summaryPiles) = pileList.unzip
+        newPile -> {
+          columnGen(summaryPiles.map { subPiles =>
+            subPiles.map { eachPiles =>
+              eachPiles.paths.map(s => pathGen(s)).map { tranform =>
+                tranform.apply(tranform.gen.right.get)
+              }
+            }
+          }.flatten.flatten)
         }
       }
   }

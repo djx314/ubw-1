@@ -1,11 +1,10 @@
 package net.scalax.fsn.database.test
 
 import net.scalax.fsn.core.{ FAtomicPathImpl, PilesPolyHelper }
-import net.scalax.fsn.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
+import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper }
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
 import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
 import net.scalax.fsn.slick.model._
-
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -17,7 +16,12 @@ import shapeless._
 
 import scala.concurrent._
 
-object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit with PilesPolyHelper with App {
+object Sample07 extends SlickCRUDImplicits
+    with StrFSSelectAtomicHelper
+    with Slick2JsonFsnImplicit
+    with PilesPolyHelper
+    with FAtomicValueHelper
+    with App {
 
   implicit def fPilesOptionImplicit[D](path: FAtomicPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
     val path1 = path
@@ -39,13 +43,13 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
       ).poly(
             "name" ofPile FAtomicPathImpl.empty[String].writeJ
           ).transform {
-              case Some(name) :: (Some(nick) :: Some(Some(age)) :: HNil) :: HNil if age < 200 =>
-                Option(s"$name-$nick")
-              case Some(name) :: (_ :: _ :: HNil) :: HNil =>
-                Option(name)
+              case name :: (nick :: age :: HNil) :: HNil if (name.isDefined && nick.isDefined && age.opt.flatten.isDefined) && (age.opt.flatten.get < 200) =>
+                set(s"${name.get}-${nick.get}")
+              case name :: (_ :: _ :: HNil) :: HNil if name.isDefined =>
+                set(name.get)
               case s =>
                 //println(s)
-                None
+                emptyValue[String]
             },
       "ageOpt" ofPile friend.age.out.writeJ
     )
@@ -79,32 +83,22 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
       ).poly(
           "name" ofPile FAtomicPathImpl.empty[String]
         ).transform {
-            /*a =>
-                println(a)
-                val bb = a match {*/
-            case Some(name) :: Some(nick) :: Some(Some(age)) :: HNil if age < 200 =>
-              Option(s"$name-$nick")
-            case Some(name) :: _ :: _ :: HNil =>
-              Option(name)
+            case name :: nick :: age :: HNil if (name.isDefined && nick.isDefined && age.opt.flatten.isDefined) && age.opt.flatten.get < 200 =>
+              set(s"${name.get}-${nick.get}")
+            case name :: _ :: _ :: HNil if name.isDefined =>
+              set(name.get)
             case _ =>
-              None
-            /*}
-                bb*/
+              emptyValue[String]
           }) :: ("ageOpt" ofPile friend.age.out) :: FPNil).poly("account" ofPile FAtomicPathImpl.empty[Aa]).transform {
-            /*a =>
-                println(a)
-                a match {*/
-            case Some(name) :: Some(Some(age)) :: HNil =>
-              //println(Aa(name, age))
-              Option(Aa(name, age))
+            case name :: age :: HNil if name.isDefined && age.opt.flatten.isDefined =>
+              set(Aa(name.get, age.opt.flatten.get))
             case _ =>
-              None
-            //}
+              emptyValue[Aa]
           } :: ("id" ofPile friend.id.out.order.describe("自增主键")) :: ("id" ofPile friend.age.out.order.describe("年龄")) :: FPNil).poly("info" ofPile FAtomicPathImpl.empty[Map[String, Json]].writeJ).transform {
-            case Some(aa) :: Some(id) :: Some(ageOpt) :: HNil =>
-              Option(Map("id" -> id.asJson, "accountInfo" -> aa.asJson, "ageOpt" -> ageOpt.asJson))
-            case _ :: Some(id) :: _ :: HNil =>
-              Option(Map("message" -> s"id为${id}的不知名人事".asJson))
+            case aa :: id :: ageOpt :: HNil if aa.isDefined && id.isDefined && ageOpt.isDefined =>
+              set(Map("id" -> id.get.asJson, "accountInfo" -> aa.get.asJson, "ageOpt" -> ageOpt.get.asJson))
+            case _ :: id :: _ :: HNil if id.isDefined =>
+              set(Map("message" -> s"id为${id.get}的不知名人事".asJson))
           },
       "ageOpt" ofPile friend.age.out.writeJ
     )
@@ -119,12 +113,13 @@ object Sample07 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
       Helper.prettyPrint(s)
       /*
       json data:
-      [
-       { "id" : 1, "info" : { "id" : 1, "accountInfo" : { "name" : "魔理沙", "age" : 2333 } }, "ageOpt" : 2333 },
-       { "id" : 2, "info" : { "id" : 2, "accountInfo" : { "name" : "jilen-jilen 酱", "age" : 30 } }, "ageOpt" : 30 },
-       { "id" : 3, "info" : { "id" : 3, "accountInfo" : { "name" : "品神-kerr", "age" : 28 } }, "ageOpt" : 28 },
-       { "id" : 4, "ageOpt" : null }
-      ]
+        [
+         { "id" : 3, "info" : { "id" : 3, "accountInfo" : { "name" : "品神-kerr", "age" : 28 }, "ageOpt" : 28 }, "ageOpt" : 28 },
+         { "id" : 2, "info" : { "id" : 2, "accountInfo" : { "name" : "jilen-jilen 酱", "age" : 30 }, "ageOpt" : 30 }, "ageOpt" : 30 },
+         { "id" : 1, "info" : { "id" : 1, "accountInfo" : { "name" : "魔理沙", "age" : 2333 }, "ageOpt" : 2333 }, "ageOpt" : 2333 },
+         { "id" : 4, "info" : { "message" : "id为4的不知名人事" }, "ageOpt" : null }
+        ]
+
        */
     }
   }, duration.Duration.Inf)

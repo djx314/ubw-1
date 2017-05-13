@@ -1,7 +1,9 @@
 package net.scalax.fsn.json.operation
 
-import net.scalax.fsn.common.atomic.{ DefaultValue, FDescribe, FProperty, FValue }
-import net.scalax.fsn.core.{ FAtomicPathImpl, FAtomicValueImpl }
+import net.scalax.fsn.common.atomic.{ DefaultValue, FValue }
+import net.scalax.fsn.core.FAtomicValueImpl
+
+import scala.language.implicitConversions
 
 trait FAtomicValueHelper {
 
@@ -15,6 +17,11 @@ trait FAtomicValueHelper {
       }
     }
 
+    def isDefined: Boolean = fAtomicValue.atomics match {
+      case Some(valueWrap: FValue[D]) => true
+      case _ => false
+    }
+
     def get: D = opt.get
   }
 
@@ -22,6 +29,10 @@ trait FAtomicValueHelper {
     new AtomicValueWrap[D] {
       override val fAtomicValue = atomicValue
     }
+  }
+
+  def emptyValue[D]: FAtomicValueImpl[D] = new FAtomicValueImpl[D] {
+    override val atomics = None
   }
 
   def set[D](value: D): FAtomicValueImpl[D] = new FAtomicValueImpl[D] {
@@ -32,6 +43,20 @@ trait FAtomicValueHelper {
       }
     }
   }
+
+  def setOpt[D](valueOpt: Option[D]): FAtomicValueImpl[D] =
+    valueOpt match {
+      case Some(s) =>
+        new FAtomicValueImpl[D] {
+          override val atomics = Option {
+            new FValue[D] {
+              override val value = s
+            }
+          }
+        }
+      case _ =>
+        emptyValue[D]
+    }
 
   def mergeDefault[D](default: Option[DefaultValue[D]], atomicValue: FAtomicValueImpl[D]): Option[D] = {
     val defaultOpt = default.map(_.value)
