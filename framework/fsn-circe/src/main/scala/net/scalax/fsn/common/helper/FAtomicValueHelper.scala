@@ -8,6 +8,7 @@ import scala.language.implicitConversions
 trait FAtomicValueHelper {
 
   trait AtomicValueWrap[D] {
+    atomicSelf =>
     val fAtomicValue: FAtomicValueImpl[D]
 
     def opt: Option[D] = fAtomicValue.atomics.flatMap { s =>
@@ -20,6 +21,14 @@ trait FAtomicValueHelper {
     def isDefined: Boolean = fAtomicValue.atomics match {
       case Some(valueWrap: FValue[D]) => true
       case _ => false
+    }
+
+    def map[T](s: D => T): FAtomicValueImpl[T] = {
+      setOpt(atomicSelf.opt.map(s))
+    }
+
+    def flatMap[T](s: D => FAtomicValueImpl[T]): FAtomicValueImpl[T] = {
+      setOpt(atomicSelf.opt.flatMap(t => s(t).opt))
     }
 
     def get: D = opt.get
