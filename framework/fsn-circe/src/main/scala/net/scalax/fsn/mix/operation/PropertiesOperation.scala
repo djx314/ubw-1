@@ -42,11 +42,11 @@ object PropertiesOperation extends FPilesGenHelper {
     }
   }
 
-  val strJsonPropertiesGen: FPileSyntaxWithoutData.PileGen[Option, List[SelectProperty]] = StrOutSelectConvert.ubwGenWithoutData.flatMap {
-    FPile.transformTreeListWithoutData {
-      new FAtomicQuery(_) {
+  val strJsonPropertiesGen: FPileSyntaxWithoutData1111.PileGen[List[SelectProperty]] = StrOutSelectConvert1111.ubwGenWithoutData.flatMap {
+    FPile1111.transformTreeListWithoutData {
+      new FAtomicQuery1111(_) {
         val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[StrDefaultDesc] :: needAtomicOpt[StrNeededFetch] :: FANil)
-          .mapToOptionWithoutData {
+          .mapToWithoutData {
             case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: neededFetchOpt :: HNil) =>
               val inRetrieve = neededFetchOpt.map(_.isInView).getOrElse(true)
               (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString, describeOpt.map(_.describe)))
@@ -77,15 +77,15 @@ object PropertiesOperation extends FPilesGenHelper {
     jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
-  ): List[FPile[Option]] => JsonOut = { optPiles: List[FPile[Option]] =>
+  ): List[FPile1111] => JsonOut = { optPiles: List[FPile1111] =>
 
     //val jsonGen: FPileSyntax.PileGen[Option, SlickParam => ResultWrap] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.writeGen) { (slickQuery, jsonGen) =>
-    val jsonGen: FPileSyntax.PileGen[Option, SlickParam => ResultWrap] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen) { (slickQuery, jsonGen) =>
+    val jsonGen: FPileSyntax1111.PileGen[SlickParam => ResultWrap] = StrOutSelectConvert1111.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen1111) { (slickQuery, jsonGen) =>
       { slickParam: SlickParam =>
         val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
         val result = slickQuery.slickResult.apply(addedParam)
         val collection = result.resultAction.map {
-          case ListAnyCollection(dataList, sum) =>
+          case ListAnyCollection1111(dataList, sum) =>
             ResultCollection(dataList.map(s => jsonGen(s)), sum)
         }
         ResultWrap(collection, result.statements)

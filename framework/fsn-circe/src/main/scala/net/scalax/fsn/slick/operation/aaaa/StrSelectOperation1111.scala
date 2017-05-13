@@ -2,6 +2,7 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
+import net.scalax.fsn.json.operation.FAtomicValueHelper
 import net.scalax.fsn.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
 import net.scalax.fsn.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
 import net.scalax.fsn.slick.model._
@@ -12,7 +13,7 @@ import slick.lifted._
 
 import scala.concurrent.ExecutionContext
 
-/*trait StrSlickReader {
+trait StrSlickReader {
 
   type SourceColumn
   type TargetColumn
@@ -42,15 +43,15 @@ case class StrSReader[S, T, D](
 
 }
 
-case class StrReaderWithIndex(reader: StrSlickReader, index: Int)*/
+case class StrReaderWithIndex(reader: StrSlickReader, index: Int)
 
-/*object StrOutSelectConvert {
+object StrOutSelectConvert1111 {
 
-  def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[Option, StrSlickQuery] = {
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
+  def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax1111.PileGen[StrSlickQuery1111] = {
+    FPile1111.transformTreeList {
+      new FAtomicQuery1111(_) {
         val aa = withRep(needAtomic[StrSlickSelect] :: (needAtomicOpt[StrNeededFetch] :: (needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: FANil) :: FANil) :: needAtomic[FProperty] :: FANil)
-          .mapToOption {
+          .mapTo {
             case (slickSelect :: (neededFetchOpt :: (isOrderNullsLastContent :: orderTargetNameContent :: HNil) :: HNil) :: property :: HNil, data) => {
               val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
               val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
@@ -98,7 +99,7 @@ case class StrReaderWithIndex(reader: StrSlickReader, index: Int)*/
           key -> genSortMap.get(value).getOrElse(throw new Exception(s"$key 需要映射 $value 的排序方案，但找不到 $value 对应的列的排序"))
       } ++ genSortMap
 
-      new StrSlickQuery {
+      new StrSlickQuery1111 {
         override val readers = gensWithIndex
         override val sortMaps = finalOrderGen
         override val wrapQuery = wQuery
@@ -106,11 +107,11 @@ case class StrReaderWithIndex(reader: StrSlickReader, index: Int)*/
     }
   }
 
-  def ubwGenWithoutData: FPileSyntaxWithoutData.PileGen[Option, List[String]] = {
-    FPile.transformTreeListWithoutData {
-      new FAtomicQuery(_) {
+  def ubwGenWithoutData: FPileSyntaxWithoutData1111.PileGen[List[String]] = {
+    FPile1111.transformTreeListWithoutData {
+      new FAtomicQuery1111(_) {
         val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: FANil)
-          .mapToOptionWithoutData {
+          .mapToWithoutData {
             case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
               if (slickSelect.colToOrder.isDefined || orderTargetNameContent.isDefined) {
                 Option(property.proName)
@@ -126,7 +127,7 @@ case class StrReaderWithIndex(reader: StrSlickReader, index: Int)*/
 
 }
 
-trait StrSlickQuery {
+trait StrSlickQuery1111 extends FAtomicValueHelper {
   val readers: List[StrReaderWithIndex]
   val sortMaps: Map[String, Int]
   val wrapQuery: SlickQueryBindImpl
@@ -136,7 +137,7 @@ trait StrSlickQuery {
     jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
-  ): SlickParam => ListAnyWrap = {
+  ): SlickParam => ListAnyWrap1111 = {
     slickResult(Nil)
   }
 
@@ -145,7 +146,7 @@ trait StrSlickQuery {
     jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
-  ): SlickParam => ListAnyWrap = {
+  ): SlickParam => ListAnyWrap1111 = {
     slickResult(List(ColumnOrder(orderColumn, isDesc)))
   }
 
@@ -154,10 +155,18 @@ trait StrSlickQuery {
     jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
-  ): SlickParam => ListAnyWrap = {
+  ): SlickParam => ListAnyWrap1111 = {
     (slickParam: SlickParam) =>
       val cols: List[Any] = readers.map(_.reader.sourceCol)
       val shape: Shape[FlatShapeLevel, List[Any], List[Any], List[Any]] = new ListColumnShape[FlatShapeLevel](readers.map(_.reader.mainShape))
+      /*try {
+        ShapedValue(cols, shape).packedValue(shape.packedShape).toNode
+        scala.collection.immutable.Vector
+      } catch {
+        case e: Exception =>
+          e.printStackTrace
+          throw e
+      }*/
       val selectQuery = wrapQuery.bind(Query(cols)(shape))
       val sortedQuery = (slickParam.orders ::: defaultOrders)
         .filter(s => sortMaps.keySet.contains(s.columnName))
@@ -181,19 +190,20 @@ trait StrSlickQuery {
       val rs = CommonResult1111.commonResult(selectQuery.to[List], /*sortbyQuery2*/ mapQuery).apply(slickParam)
         .map { s =>
           val resultSet = s._1.map { eachRow =>
-            val resultArray = Array.fill[Option[Any]](readers.size)(None)
+            val resultArray = Array.fill[FAtomicValue](readers.size)(FAtomicValueImpl.empty)
             inViewReadersWithIndex.foreach {
               case (reader, index) =>
-                resultArray(reader.index) = Option(eachRow(index))
+                resultArray(reader.index) = set(eachRow(index).asInstanceOf[reader.reader.DataType])
             }
             resultArray.toList
           }
-          ListAnyCollection(resultSet, Option(s._2))
+          ListAnyCollection1111(resultSet, Option(s._2))
         }
-      ListAnyWrap(rs, sortbyQuery2.result.statements.toList)
+      ListAnyWrap1111(rs, sortbyQuery2.result.statements.toList)
   }
-}*/
+}
 
+/*
 object CommonResult1111 {
 
   type CommonRType[T] = (List[T], Int)
@@ -208,6 +218,24 @@ object CommonResult1111 {
 
     val result: SlickParam => DBIO[CommonRType[U]] = slickParam => {
       val baseQuery = sortedQuery
+      /*{
+        autualOrders.foldLeft(mappedQuery) {
+          case (eachQuery, ColumnOrder(eachOrderName, eachIsDesc)) =>
+            sortMap.get(eachOrderName) match {
+              case Some(convert) =>
+                eachQuery.sortBy { s =>
+                  val colOrder = convert(s)
+
+                  if (eachIsDesc)
+                    colOrder.desc
+                  else
+                    colOrder.asc
+                }
+              case _ =>
+                eachQuery
+            }
+        }
+      }*/
 
       slickParam match {
         case SlickParam(_, Some(SlickRange(drop1, Some(take1))), Some(SlickPage(pageIndex1, pageSize1))) =>
@@ -230,6 +258,10 @@ object CommonResult1111 {
             val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(autalLimit)
 
             limitQuery.result.map(s => {
+              /*val dataGen = s.toList.map(t => {
+                modelConvert(t)
+              })
+              (dataGen, endCount - startCount)*/
               (s, endCount - startCount)
             })
           })
@@ -239,6 +271,10 @@ object CommonResult1111 {
           val dropQuery = mappedQuery.drop(drop)
 
           baseQuery.drop(drop).take(take - drop).result.map(s => {
+            /*val dataGen = s.toList.map(t => {
+              modelConvert(t)
+            })
+            (dataGen, s.size)*/
             (s, s.size)
           })
 
@@ -256,6 +292,10 @@ object CommonResult1111 {
             val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(pageSize)
 
             limitQuery.result.map(s => {
+              /*val dataGen = s.toList.map(t => {
+                modelConvert(t)
+              })
+              (dataGen, sum)*/
               (s, sum)
             })
           })
@@ -263,6 +303,10 @@ object CommonResult1111 {
 
         case SlickParam(_, Some(SlickRange(drop, None)), None) =>
           baseQuery.drop(drop).result.map(s => {
+            /*val dataGen = s.toList.map(t => {
+              modelConvert(t)
+            })
+            (dataGen, s.size)*/
             (s, s.size)
           })
 
@@ -274,10 +318,18 @@ object CommonResult1111 {
             sum <- mappedQuery.size.result
             s <- takeQuery.result
           } yield {
+            /*val dataGen = s.toList.map(t => {
+              modelConvert(t)
+            })
+            (dataGen, sum)*/
             (s, sum)
           }
         case _ =>
           baseQuery.result.map(s => {
+            /*val dataGen = s.toList.map(t => {
+              modelConvert(t)
+            })
+            (dataGen, s.size)*/
             (s, s.size)
           })
       }
@@ -287,4 +339,4 @@ object CommonResult1111 {
 
   }
 
-}
+}*/ 
