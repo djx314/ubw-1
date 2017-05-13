@@ -17,11 +17,11 @@ trait SlickCRUDImplicits {
   trait FColumnStringImplicits {
     val proName1: String
 
-    def ofPile[D](path: FAtomicPathImpl[D]): FPileImpl1111[FAtomicPathImpl[D], FAtomicValueImpl[D]] = {
+    def ofPile[D](path: FAtomicPathImpl[D]): FPileImpl[FAtomicPathImpl[D], FAtomicValueImpl[D]] = {
       val proName = new FProperty[D] {
         override val proName = proName1
       }
-      FPile1111.apply(FAtomicPathImpl(proName :: path.atomics))
+      FPile.apply(FAtomicPathImpl(proName :: path.atomics))
     }
   }
 

@@ -45,8 +45,8 @@ object JsonOperation extends FAtomicValueHelper {
     }
   }*/
 
-  val readGen1111 = FPile1111.transformTreeList {
-    new FAtomicQuery1111(_) {
+  val readGen1111 = FPile.transformTreeList {
+    new FAtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (jsonReader :: property :: defaultOpt :: HNil, data) =>
@@ -111,8 +111,8 @@ object JsonOperation extends FAtomicValueHelper {
     }
   }*/
 
-  val unfullReadGen1111 = FPile1111.transformTreeList {
-    new FAtomicQuery1111(_) {
+  val unfullReadGen1111 = FPile.transformTreeList {
+    new FAtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (jsonReader :: property :: defaultOpt :: HNil, data) =>
@@ -159,8 +159,8 @@ object JsonOperation extends FAtomicValueHelper {
     jsonTupleList.toMap: Map[String, Json]
   }*/
 
-  def writeGen1111 = FPile1111.transformTreeList {
-    new FAtomicQuery1111(_) {
+  def writeGen1111 = FPile.transformTreeList {
+    new FAtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
@@ -190,8 +190,8 @@ object JsonOperation extends FAtomicValueHelper {
     jsonTupleList.collect { case Some(s) => s }.toMap: Map[String, Json]
   }*/
 
-  def unSafewriteGen1111 = FPile1111.transformTreeList {
-    new FAtomicQuery1111(_) {
+  def unSafewriteGen1111 = FPile.transformTreeList {
+    new FAtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (jsonWriter :: property :: defaultOpt :: HNil, data) => {

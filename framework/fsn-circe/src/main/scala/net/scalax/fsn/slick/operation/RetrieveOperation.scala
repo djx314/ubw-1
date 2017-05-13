@@ -27,7 +27,7 @@ trait RetrieveQuery {
 
 }
 
-trait ISlickReader2222 {
+trait ISlickReader {
 
   type MainSColumn
   type MainDColumn
@@ -47,14 +47,14 @@ trait ISlickReader2222 {
 
 }
 
-case class ISReader2222[S, D, T](
+case class ISReader[S, D, T](
     override val mainCol: S,
     override val table: Any,
     override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
     override val autalColumn: D => Any,
     override val primaryGen: Option[FilterColumnGen[T]],
     override val subGen: Option[IWrapTran2[D]]
-) extends ISlickReader2222 {
+) extends ISlickReader {
 
   type MainSColumn = S
   type MainDColumn = D
@@ -62,12 +62,12 @@ case class ISReader2222[S, D, T](
 
 }
 
-trait ISlickReaderWithData1111 {
-  val reader: ISlickReader2222
-  val dataGen: reader.MainDColumn => DataWithIndex1111
+trait ISlickReaderWithData {
+  val reader: ISlickReader
+  val dataGen: reader.MainDColumn => DataWithIndex
 }
 
-object InRetrieveConvert1111 extends FAtomicValueHelper {
+object InRetrieveConvert extends FAtomicValueHelper {
   def convert(
     implicit
     ec: ExecutionContext,
@@ -76,12 +76,12 @@ object InRetrieveConvert1111 extends FAtomicValueHelper {
     /*val slickReader = FColumn.find(columns)({ case s: SlickRetrieve[columns.DataType] => s })
     val oneToOneRetrieveOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })*/
 
-    FPile1111.transformTreeList {
-      new FAtomicQuery1111(_) {
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
         val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
           .mapTo {
             case (slickReader :: oneToOneRetrieveOpt :: HNil, data) => {
-              val iSlickReader = ISReader2222(
+              val iSlickReader = ISReader(
                 mainCol = (slickReader.mainCol: slickReader.SourceType),
                 table = slickReader.owner,
                 mainShape = slickReader.mainShape,
@@ -121,7 +121,7 @@ object InRetrieveConvert1111 extends FAtomicValueHelper {
 
                 }
               )
-              iSlickReader: ISlickReader2222
+              iSlickReader: ISlickReader
             }
           }
       }.aa
@@ -129,14 +129,14 @@ object InRetrieveConvert1111 extends FAtomicValueHelper {
       { binds: List[(Any, SlickQueryBindImpl)] =>
         val readersWithData = genList.zipWithIndex.map {
           case (reader1, index) =>
-            new ISlickReaderWithData1111 {
+            new ISlickReaderWithData {
               override val reader: reader1.type = reader1
               override val dataGen = { mainData: reader1.MainDColumn =>
-                DataWithIndex1111(set(reader1.autalColumn(mainData)), index)
+                DataWithIndex(set(reader1.autalColumn(mainData)), index)
               }
             }
         }
-        RetrieveOperation1111.parseInsertWithIndex(binds, readersWithData)
+        RetrieveOperation.parseInsertWithIndex(binds, readersWithData)
       }
     }
   }
@@ -151,7 +151,7 @@ object InRetrieveConvert1111 extends FAtomicValueHelper {
 
 }*/
 
-object RetrieveOperation1111 {
+object RetrieveOperation {
 
   trait WrapTran2 {
     val table: Any
@@ -160,13 +160,13 @@ object RetrieveOperation1111 {
 
   def parseInsertGen(
     binds: List[(Any, SlickQueryBindImpl)],
-    retrieveList: List[ISlickReaderWithData1111],
+    retrieveList: List[ISlickReaderWithData],
     converts: List[WrapTran2]
   )(
     implicit
     ec: ExecutionContext,
     jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): DBIO[ExecInfo31111] = try {
+  ): DBIO[ExecInfo3] = try {
     val wrapList = retrieveList //.map(InRetrieveConvert2.convert)
 
     val currents = wrapList.groupBy(_.reader.table).filter { case (key, s) => converts.exists(t => key == t.table) }
@@ -215,17 +215,17 @@ object RetrieveOperation1111 {
           }.unzip
           subResult <- parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
         } yield {
-          ExecInfo31111(subResult.effectRows + 1, subResult.columns ::: fillCols)
+          ExecInfo3(subResult.effectRows + 1, subResult.columns ::: fillCols)
         }
 
     }
 
-    results.foldLeft(DBIO.successful(ExecInfo31111(0, Nil)): DBIO[ExecInfo31111]) { (s, t) =>
+    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
       (for {
         s1 <- s
         t1 <- t
       } yield {
-        ExecInfo31111(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
       })
     }
   } catch {
@@ -235,12 +235,12 @@ object RetrieveOperation1111 {
 
   def parseInsertWithIndex(
     binds: List[(Any, SlickQueryBindImpl)],
-    retrieveList: List[ISlickReaderWithData1111]
+    retrieveList: List[ISlickReaderWithData]
   )(
     implicit
     ec: ExecutionContext,
     jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): DBIO[ExecInfo31111] = try {
+  ): DBIO[ExecInfo3] = try {
     val wrapList = retrieveList //.map(InRetrieveConvert2.convert)
 
     val subGensTables = wrapList.flatMap { t => t.reader.subGen.toList.map(_.table) }
@@ -288,17 +288,17 @@ object RetrieveOperation1111 {
           }.unzip
           subResult <- parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
         } yield {
-          ExecInfo31111(subResult.effectRows + 1, subResult.columns ::: fillCols) //UpdateStaticManyInfo(subResult.effectRows + 1, subResult.many ++ Map())
+          ExecInfo3(subResult.effectRows + 1, subResult.columns ::: fillCols) //UpdateStaticManyInfo(subResult.effectRows + 1, subResult.many ++ Map())
         }
 
     }
 
-    results.foldLeft(DBIO.successful(ExecInfo31111(0, Nil)): DBIO[ExecInfo31111]) { (s, t) =>
+    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
       (for {
         s1 <- s
         t1 <- t
       } yield {
-        ExecInfo31111(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
       })
     }
   } catch {
@@ -312,7 +312,7 @@ object RetrieveOperation1111 {
                    implicit
                    ec: ExecutionContext,
                    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-                 ): DBIO[ExecInfo31111] = {
+                 ): DBIO[ExecInfo3] = {
     parseInsertWithIndex(binds, retrieveList)
   }*/
 }

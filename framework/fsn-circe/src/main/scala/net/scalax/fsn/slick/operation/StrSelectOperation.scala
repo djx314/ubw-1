@@ -45,11 +45,11 @@ case class StrSReader[S, T, D](
 
 case class StrReaderWithIndex(reader: StrSlickReader, index: Int)
 
-object StrOutSelectConvert1111 {
+object StrOutSelectConvert {
 
-  def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax1111.PileGen[StrSlickQuery1111] = {
-    FPile1111.transformTreeList {
-      new FAtomicQuery1111(_) {
+  def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[StrSlickQuery] = {
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
         val aa = withRep(needAtomic[StrSlickSelect] :: (needAtomicOpt[StrNeededFetch] :: (needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: FANil) :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (slickSelect :: (neededFetchOpt :: (isOrderNullsLastContent :: orderTargetNameContent :: HNil) :: HNil) :: property :: HNil, data) => {
@@ -99,7 +99,7 @@ object StrOutSelectConvert1111 {
           key -> genSortMap.get(value).getOrElse(throw new Exception(s"$key 需要映射 $value 的排序方案，但找不到 $value 对应的列的排序"))
       } ++ genSortMap
 
-      new StrSlickQuery1111 {
+      new StrSlickQuery {
         override val readers = gensWithIndex
         override val sortMaps = finalOrderGen
         override val wrapQuery = wQuery
@@ -107,9 +107,9 @@ object StrOutSelectConvert1111 {
     }
   }
 
-  def ubwGenWithoutData: FPileSyntaxWithoutData1111.PileGen[List[String]] = {
-    FPile1111.transformTreeListWithoutData {
-      new FAtomicQuery1111(_) {
+  def ubwGenWithoutData: FPileSyntaxWithoutData.PileGen[List[String]] = {
+    FPile.transformTreeListWithoutData {
+      new FAtomicQuery(_) {
         val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: FANil)
           .mapToWithoutData {
             case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
@@ -127,7 +127,7 @@ object StrOutSelectConvert1111 {
 
 }
 
-trait StrSlickQuery1111 extends FAtomicValueHelper {
+trait StrSlickQuery extends FAtomicValueHelper {
   val readers: List[StrReaderWithIndex]
   val sortMaps: Map[String, Int]
   val wrapQuery: SlickQueryBindImpl
@@ -187,7 +187,7 @@ trait StrSlickQuery1111 extends FAtomicValueHelper {
       val inViewReadersWithIndex = inViewReaders.zipWithIndex
       val mapQuery = sortbyQuery2.map(values => inViewReaders.map(s => values(s.index)))(new ListColumnShape[FlatShapeLevel](inViewReaders.map(_.reader.mainShape)))
 
-      val rs = CommonResult1111.commonResult(selectQuery.to[List], /*sortbyQuery2*/ mapQuery).apply(slickParam)
+      val rs = CommonResult.commonResult(selectQuery.to[List], /*sortbyQuery2*/ mapQuery).apply(slickParam)
         .map { s =>
           val resultSet = s._1.map { eachRow =>
             val resultArray = Array.fill[FAtomicValue](readers.size)(FAtomicValueImpl.empty)
@@ -203,7 +203,7 @@ trait StrSlickQuery1111 extends FAtomicValueHelper {
   }
 }
 
-object CommonResult1111 {
+object CommonResult {
 
   type CommonRType[T] = (List[T], Int)
 

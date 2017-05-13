@@ -42,9 +42,9 @@ trait GroupSlickReader {
 
 object GroupSelectConvert {
 
-  def ubwGen(wQuery1: SlickQueryBindImpl): FPileSyntax1111.PileGen[FGroupQuery] = {
-    FPile1111.transformTreeList {
-      new FAtomicQuery1111(_) {
+  def ubwGen(wQuery1: SlickQueryBindImpl): FPileSyntax.PileGen[FGroupQuery] = {
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
         val aa = withRep(needAtomic[GroupSlickSelect] :: needAtomicOpt[GroupableColumnBase] :: needAtomicOpt[CountableGroupColumn] :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (select :: groupColOpt :: countOpt :: property :: HNil, data) => {

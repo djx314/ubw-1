@@ -12,9 +12,9 @@ import scala.concurrent.{ ExecutionContext, Future }
 object StaticManyOperation extends FAtomicValueHelper {
 
   //TODO change option selector to list selector
-  def updateGen(implicit ec: ExecutionContext): FPileSyntax1111.PileGen[Future[Map[String, QueryJsonInfo]]] = {
-    FPile1111.transformTreeList {
-      new FAtomicQuery1111(_) {
+  def updateGen(implicit ec: ExecutionContext): FPileSyntax.PileGen[Future[Map[String, QueryJsonInfo]]] = {
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
         val aa = withRep(needAtomicOpt[StaticMany])
           .mapTo {
             case (staticMayOpt, data) =>
@@ -67,9 +67,9 @@ object StaticManyOperation extends FAtomicValueHelper {
   }*/
 
   //TODO change option selector to list selector
-  def ubwStaticManyGen(implicit ec: ExecutionContext): FPileSyntaxWithoutData1111.PileGen[Future[List[StaticManyUbw]]] = {
-    FPile1111.transformTreeListWithoutData {
-      new FAtomicQuery1111(_) {
+  def ubwStaticManyGen(implicit ec: ExecutionContext): FPileSyntaxWithoutData.PileGen[Future[List[StaticManyUbw]]] = {
+    FPile.transformTreeListWithoutData {
+      new FAtomicQuery(_) {
         val aa = withRep(needAtomicOpt[StaticMany] :: needAtomic[FProperty] :: FANil)
           .mapToWithoutData {
             case (staticManyCol :: property :: HNil) =>

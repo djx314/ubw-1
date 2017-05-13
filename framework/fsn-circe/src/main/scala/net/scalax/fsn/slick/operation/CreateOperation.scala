@@ -11,12 +11,12 @@ import shapeless._
 
 import scala.concurrent.ExecutionContext
 
-trait ISlickWriterWithData1111 {
-  val writer: ISlickWriter1111
-  val dataGen: writer.IncValue => DataWithIndex1111
+trait ISlickWriterWithData {
+  val writer: ISlickWriter
+  val dataGen: writer.IncValue => DataWithIndex
 }
 
-trait InsertDataQuery1111 {
+trait InsertDataQuery {
 
   val bind: SlickQueryBindImpl
   val cols: List[Any]
@@ -25,16 +25,16 @@ trait InsertDataQuery1111 {
   val returningCols: List[Any]
   val returningShapes: List[Shape[_ <: FlatShapeLevel, _, _, _]]
 
-  def dataGen(returningData: List[Any]): List[DataWithIndex1111]
+  def dataGen(returningData: List[Any]): List[DataWithIndex]
 
 }
 
-trait InsertWrapTran21111[I] {
+trait InsertWrapTran[I] {
   val table: Any
-  def convert(inc: I, source: InsertDataQuery1111): InsertDataQuery1111
+  def convert(inc: I, source: InsertDataQuery): InsertDataQuery
 }
 
-trait ISlickWriter1111 {
+trait ISlickWriter {
   type PreRep
   type PreValue
   type PreTarget
@@ -48,20 +48,20 @@ trait ISlickWriter1111 {
   val preShape: Shape[_ <: FlatShapeLevel, PreRep, PreValue, PreTarget]
   val autoIncRep: IncRep
   val autoIncShape: Shape[_ <: FlatShapeLevel, IncRep, IncValue, IncTarget]
-  val subGen: Option[InsertWrapTran21111[IncValue]]
+  val subGen: Option[InsertWrapTran[IncValue]]
   val autalColumn: IncValue => Any
 }
 
-case class ISWriter1111[A, B, C, D, E, F](
+case class ISWriter[A, B, C, D, E, F](
     override val preData: B,
     override val table: Any,
     override val preRep: A,
     override val preShape: Shape[_ <: FlatShapeLevel, A, B, C],
     override val autoIncRep: D,
     override val autoIncShape: Shape[_ <: FlatShapeLevel, D, E, F],
-    override val subGen: Option[InsertWrapTran21111[E]],
+    override val subGen: Option[InsertWrapTran[E]],
     override val autalColumn: E => Any
-) extends ISlickWriter1111 {
+) extends ISlickWriter {
   override type PreRep = A
   override type PreValue = B
   override type PreTarget = C
@@ -70,16 +70,16 @@ case class ISWriter1111[A, B, C, D, E, F](
   override type IncTarget = F
 }
 
-object InCreateConvert1111 extends FAtomicValueHelper {
+object InCreateConvert extends FAtomicValueHelper {
 
   def createGen(
     implicit
     ec: ExecutionContext,
     cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
     retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): FPileSyntax1111.PileGen[List[(Any, SlickQueryBindImpl)] => DBIO[ExecInfo31111]] = {
-    FPile1111.transformTreeList {
-      new FAtomicQuery1111(_) {
+  ): FPileSyntax.PileGen[List[(Any, SlickQueryBindImpl)] => DBIO[ExecInfo3]] = {
+    FPile.transformTreeList {
+      new FAtomicQuery(_) {
         val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: FANil)
           .mapTo {
             case (slickCreate :: autoIncOpt :: oneToOneCreateOpt :: HNil, data) => {
@@ -88,23 +88,23 @@ object InCreateConvert1111 extends FAtomicValueHelper {
               val isAutoInc = autoIncOpt.map(_.isAutoInc).getOrElse(false)
               val writer = if (isAutoInc) {
                 lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate =>
-                  new InsertWrapTran21111[slickCreate.SlickType] {
+                  new InsertWrapTran[slickCreate.SlickType] {
                     override val table = oneToOneCreate.owner
-                    def convert(sourceData: slickCreate.SlickType, source: InsertDataQuery1111): InsertDataQuery1111 = {
-                      new InsertDataQuery1111 {
+                    def convert(sourceData: slickCreate.SlickType, source: InsertDataQuery): InsertDataQuery = {
+                      new InsertDataQuery {
                         override val bind = source.bind
                         override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
                         override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
                         override val data = source.data ::: oneToOneCreate.convert(slickCreate.convert(sourceData)) :: Nil
                         override val returningCols = source.returningCols
                         override val returningShapes = source.returningShapes
-                        override def dataGen(returningData: List[Any]): List[DataWithIndex1111] = source.dataGen(returningData)
+                        override def dataGen(returningData: List[Any]): List[DataWithIndex] = source.dataGen(returningData)
                       }
                     }
                   }
                 }
 
-                ISWriter1111(
+                ISWriter(
                   preData = (),
                   table = slickCreate.owner,
                   preRep = (),
@@ -118,24 +118,24 @@ object InCreateConvert1111 extends FAtomicValueHelper {
                 )
               } else {
                 lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate =>
-                  new InsertWrapTran21111[Unit] {
+                  new InsertWrapTran[Unit] {
                     override val table = oneToOneCreate.owner
-                    def convert(sourceData: Unit, source: InsertDataQuery1111): InsertDataQuery1111 = {
+                    def convert(sourceData: Unit, source: InsertDataQuery): InsertDataQuery = {
                       val commonData = data
-                      new InsertDataQuery1111 {
+                      new InsertDataQuery {
                         override val bind = source.bind
                         override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
                         override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
                         override val data = source.data ::: oneToOneCreate.convert(commonData.get) :: Nil
                         override val returningCols = source.returningCols
                         override val returningShapes = source.returningShapes
-                        override def dataGen(returningData: List[Any]): List[DataWithIndex1111] = source.dataGen(returningData)
+                        override def dataGen(returningData: List[Any]): List[DataWithIndex] = source.dataGen(returningData)
                       }
                     }
                   }
                 }
 
-                ISWriter1111(
+                ISWriter(
                   preData = {
                   slickCreate.reverseConvert(data.get)
                 },
@@ -148,7 +148,7 @@ object InCreateConvert1111 extends FAtomicValueHelper {
                   autalColumn = (s: Unit) => data.get
                 )
               }
-              writer: ISlickWriter1111
+              writer: ISlickWriter
             }
           }
       }.aa
@@ -156,30 +156,30 @@ object InCreateConvert1111 extends FAtomicValueHelper {
       { binds: List[(Any, SlickQueryBindImpl)] =>
         val genListWithIndex = genList.zipWithIndex.map {
           case (gen, index) =>
-            new ISlickWriterWithData1111 {
+            new ISlickWriterWithData {
               override val writer = gen
               override val dataGen = { s: writer.IncValue =>
-                DataWithIndex1111(set(writer.autalColumn(s)), index)
+                DataWithIndex(set(writer.autalColumn(s)), index)
               }
             }
         }
-        CreateOperation1111.parseInsert(binds, genListWithIndex)
+        CreateOperation.parseInsert(binds, genListWithIndex)
       }
     }
   }
 
 }
 
-object CreateOperation1111 {
+object CreateOperation {
 
   trait InsWrapTran2 {
     val table: Any
-    def convert(source: InsertDataQuery1111): InsertDataQuery1111
+    def convert(source: InsertDataQuery): InsertDataQuery
   }
 
   def parseInsertGen(
     binds: List[(Any, SlickQueryBindImpl)],
-    insertList: List[ISlickWriterWithData1111],
+    insertList: List[ISlickWriterWithData],
     //autoIncCols: List[ISlickWriterWithData],
     converts: List[InsWrapTran2]
   )(
@@ -187,20 +187,20 @@ object CreateOperation1111 {
     ec: ExecutionContext,
     cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
     retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): DBIO[ExecInfo31111] = try {
+  ): DBIO[ExecInfo3] = try {
     val wrapList = insertList
 
     val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => converts.exists(t => key == t.table) }
     val results = currents.map {
       case (table, eachWrap) =>
-        val initCreateQuery: InsertDataQuery1111 = new InsertDataQuery1111 {
+        val initCreateQuery: InsertDataQuery = new InsertDataQuery {
           override val bind = binds.find(_._1 == table).get._2
           override val cols = eachWrap.map(_.writer.preRep)
           override val shapes = eachWrap.map(_.writer.preShape)
           override val data = eachWrap.map(_.writer.preData)
           override val returningCols = eachWrap.map(_.writer.autoIncRep)
           override val returningShapes = eachWrap.map(_.writer.autoIncShape)
-          override def dataGen(returningData: List[Any]): List[DataWithIndex1111] = eachWrap.zip(returningData).map {
+          override def dataGen(returningData: List[Any]): List[DataWithIndex] = eachWrap.zip(returningData).map {
             case (wrap, data) =>
               wrap.dataGen(data.asInstanceOf[wrap.writer.IncValue])
           }
@@ -227,7 +227,7 @@ object CreateOperation1111 {
               val subGens = wrap.writer.subGen.map { gen =>
                 new InsWrapTran2 {
                   override val table = gen.table
-                  override def convert(source: InsertDataQuery1111): InsertDataQuery1111 = {
+                  override def convert(source: InsertDataQuery): InsertDataQuery = {
                     gen.convert(wrapSlickData, source)
                   }
                 }
@@ -236,17 +236,17 @@ object CreateOperation1111 {
           }
           subResult <- parseInsertGen(binds, insertList, fillSubGens.flatten)
         } yield {
-          ExecInfo31111(subResult.effectRows + 1, convertRetrieveQuery.dataGen(incData.toList) ::: subResult.columns)
+          ExecInfo3(subResult.effectRows + 1, convertRetrieveQuery.dataGen(incData.toList) ::: subResult.columns)
         }
 
     }
 
-    results.foldLeft(DBIO.successful(ExecInfo31111(0, Nil)): DBIO[ExecInfo31111]) { (s, t) =>
+    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
       (for {
         s1 <- s
         t1 <- t
       } yield {
-        ExecInfo31111(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
       })
     }
   } catch {
@@ -256,27 +256,27 @@ object CreateOperation1111 {
 
   def parseInsert(
     binds: List[(Any, SlickQueryBindImpl)],
-    insertList: List[ISlickWriterWithData1111]
+    insertList: List[ISlickWriterWithData]
   )(
     implicit
     ec: ExecutionContext,
     cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
     retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): DBIO[ExecInfo31111] = try {
+  ): DBIO[ExecInfo3] = try {
     val wrapList = insertList //.map(InCreateConvert2.convert)
 
     val subGensTables = wrapList.flatMap { t => t.writer.subGen.toList.map(_.table) }
     val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => subGensTables.forall(t => key != t) }
     val results = currents.map {
       case (table, eachWrap) =>
-        val initCreateQuery: InsertDataQuery1111 = new InsertDataQuery1111 {
+        val initCreateQuery: InsertDataQuery = new InsertDataQuery {
           override val bind = binds.find(_._1 == table).get._2
           override val cols = eachWrap.map(_.writer.preRep)
           override val shapes = eachWrap.map(_.writer.preShape)
           override val data = eachWrap.map(_.writer.preData)
           override val returningCols = eachWrap.map(_.writer.autoIncRep)
           override val returningShapes = eachWrap.map(_.writer.autoIncShape)
-          override def dataGen(returningData: List[Any]): List[DataWithIndex1111] = eachWrap.zip(returningData).map {
+          override def dataGen(returningData: List[Any]): List[DataWithIndex] = eachWrap.zip(returningData).map {
             case (wrap, data) =>
               wrap.dataGen(data.asInstanceOf[wrap.writer.IncValue])
           }
@@ -301,7 +301,7 @@ object CreateOperation1111 {
               val subGens = wrap.writer.subGen.map { gen =>
                 new InsWrapTran2 {
                   override val table = gen.table
-                  override def convert(source: InsertDataQuery1111): InsertDataQuery1111 = {
+                  override def convert(source: InsertDataQuery): InsertDataQuery = {
                     gen.convert(wrapSlickData, source)
                   }
                 }
@@ -310,17 +310,17 @@ object CreateOperation1111 {
           }
           subResult <- parseInsertGen(binds, insertList, fillSubGens.flatten)
         } yield {
-          ExecInfo31111(subResult.effectRows + 1, convertRetrieveQuery.dataGen(incData.toList) ::: subResult.columns)
+          ExecInfo3(subResult.effectRows + 1, convertRetrieveQuery.dataGen(incData.toList) ::: subResult.columns)
         }
 
     }
 
-    results.foldLeft(DBIO.successful(ExecInfo31111(0, Nil)): DBIO[ExecInfo31111]) { (s, t) =>
+    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
       (for {
         s1 <- s
         t1 <- t
       } yield {
-        ExecInfo31111(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
       })
     }
   } catch {
