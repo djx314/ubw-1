@@ -1,6 +1,6 @@
 package net.scalax.fsn.mix.slickbase
 
-import net.scalax.fsn.core.FPile
+import net.scalax.fsn.core.FPile1111
 import net.scalax.fsn.slick.helpers.{ SlickQueryBindImpl, SlickUtils }
 import slick.ast.{ AnonSymbol, Ref }
 import slick.lifted._
@@ -24,7 +24,7 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
     FQueryWrap(deleteWrap, fv.columns)
   }
 
-  def map[A, B](f: E => List[FPile[Option]]): FQueryWrap = {
+  def map[A, B](f: E => List[FPile1111]): FQueryWrap = {
     val generator = new AnonSymbol
     val aliased = queryToExt.shaped.encodeRef(Ref(generator)).value
     val fv = f(aliased)

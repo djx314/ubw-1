@@ -57,14 +57,15 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
       strResult(Nil)
     }
 
-    /*def result(defaultOrders: List[ColumnOrder])(
+    def result(defaultOrders: List[ColumnOrder])(
       implicit
       jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
       repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): JsonOut = {
-      lazy val outJsonGen = PropertiesOperation.slick2jsonOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
-      outJsonGen
+      /*lazy val outJsonGen = PropertiesOperation.slick2jsonOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
+      outJsonGen*/
+      strResult(defaultOrders)
     }
 
     def result(orderColumn: String, isDesc: Boolean = true)(
@@ -112,7 +113,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
       //==========================================================================================
       //val newPiles = withExtraCols.map(col => FPile.applyOpt(FAtomicPathImpl(col.cols)))
-      lazy val outJsonGen = PropertiesOperation.slick2jsonOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
+      lazy val outJsonGen = PropertiesOperation.strSlick2jsonOperation(listQueryWrap.listQueryBind, defaultOrders).apply(listQueryWrap.columns)
 
       lazy val outPoiGen = PropertiesOperation.slick2PoiOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
 
@@ -135,7 +136,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
       ec: ExecutionContext
     ): (() => JsonOut, () => PoiOut) = {
       jpResult(Nil)
-    }*/
+    }
 
   }
 

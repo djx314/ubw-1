@@ -1,6 +1,6 @@
 package net.scalax.fsn.mix.slickbase
 
-import net.scalax.fsn.core.{ FPile, FPile1111 }
+import net.scalax.fsn.core.FPile1111
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 
 import scala.concurrent.ExecutionContext
@@ -17,5 +17,5 @@ case class PileListQueryWrap1111(
 
 case class FQueryWrap(
   binds: List[(Any, SlickQueryBindImpl)],
-  columns: List[FPile[Option]]
+  columns: List[FPile1111]
 )

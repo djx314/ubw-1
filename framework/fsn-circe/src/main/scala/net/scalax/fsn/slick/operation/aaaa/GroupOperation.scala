@@ -2,6 +2,7 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
+import net.scalax.fsn.json.operation.FAtomicValueHelper
 import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
 import net.scalax.fsn.slick.model._
@@ -41,11 +42,11 @@ trait GroupSlickReader {
 
 object GroupSelectConvert {
 
-  def ubwGen(wQuery1: SlickQueryBindImpl): FPileSyntax.PileGen[Option, FGroupQuery] = {
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
+  def ubwGen(wQuery1: SlickQueryBindImpl): FPileSyntax1111.PileGen[FGroupQuery] = {
+    FPile1111.transformTreeList {
+      new FAtomicQuery1111(_) {
         val aa = withRep(needAtomic[GroupSlickSelect] :: needAtomicOpt[GroupableColumnBase] :: needAtomicOpt[CountableGroupColumn] :: needAtomic[FProperty] :: FANil)
-          .mapToOption {
+          .mapTo {
             case (select :: groupColOpt :: countOpt :: property :: HNil, data) => {
               val aa = (groupColOpt, countOpt) match {
                 case (None, None) =>
@@ -117,9 +118,9 @@ object GroupSelectConvert {
 
 }
 
-case class GroupResult(action: DBIO[List[List[Option[Any]]]], statements: List[String])
+case class GroupResult(action: DBIO[List[List[FAtomicValue]]], statements: List[String])
 
-trait FGroupQuery {
+trait FGroupQuery extends FAtomicValueHelper {
   val wQuery: SlickQueryBindImpl
   val readers: List[(GroupSlickReader, Int)]
 
@@ -236,14 +237,14 @@ trait FGroupQuery {
 
     val action = jsonEv(orderedQuery.to[List]).result.map { s =>
       val result = s.map { t =>
-        val initArray = Array.fill[Option[Any]](readers.size)(Option.empty[Any])
+        val initArray = Array.fill[FAtomicValue](readers.size)(FAtomicValueImpl.empty)
         keyIndexs.zipWithIndex.map {
           case (keyIndexs, resultIndex) =>
-            initArray(keyIndexs) = Option(t(resultIndex))
+            initArray(keyIndexs) = set(t(resultIndex))
         }
         aggregateIndexsAndMethods.zipWithIndex.map {
           case (aggregate, resultIndex) =>
-            initArray(aggregate._2._2) = Option(t(resultIndex + keySize))
+            initArray(aggregate._2._2) = set(t(resultIndex + keySize))
         }
         initArray.toList
       }

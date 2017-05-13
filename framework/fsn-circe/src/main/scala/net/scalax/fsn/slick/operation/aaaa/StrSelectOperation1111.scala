@@ -203,7 +203,6 @@ trait StrSlickQuery1111 extends FAtomicValueHelper {
   }
 }
 
-/*
 object CommonResult1111 {
 
   type CommonRType[T] = (List[T], Int)
@@ -218,24 +217,6 @@ object CommonResult1111 {
 
     val result: SlickParam => DBIO[CommonRType[U]] = slickParam => {
       val baseQuery = sortedQuery
-      /*{
-        autualOrders.foldLeft(mappedQuery) {
-          case (eachQuery, ColumnOrder(eachOrderName, eachIsDesc)) =>
-            sortMap.get(eachOrderName) match {
-              case Some(convert) =>
-                eachQuery.sortBy { s =>
-                  val colOrder = convert(s)
-
-                  if (eachIsDesc)
-                    colOrder.desc
-                  else
-                    colOrder.asc
-                }
-              case _ =>
-                eachQuery
-            }
-        }
-      }*/
 
       slickParam match {
         case SlickParam(_, Some(SlickRange(drop1, Some(take1))), Some(SlickPage(pageIndex1, pageSize1))) =>
@@ -258,10 +239,6 @@ object CommonResult1111 {
             val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(autalLimit)
 
             limitQuery.result.map(s => {
-              /*val dataGen = s.toList.map(t => {
-                modelConvert(t)
-              })
-              (dataGen, endCount - startCount)*/
               (s, endCount - startCount)
             })
           })
@@ -271,10 +248,6 @@ object CommonResult1111 {
           val dropQuery = mappedQuery.drop(drop)
 
           baseQuery.drop(drop).take(take - drop).result.map(s => {
-            /*val dataGen = s.toList.map(t => {
-              modelConvert(t)
-            })
-            (dataGen, s.size)*/
             (s, s.size)
           })
 
@@ -292,10 +265,6 @@ object CommonResult1111 {
             val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(pageSize)
 
             limitQuery.result.map(s => {
-              /*val dataGen = s.toList.map(t => {
-                modelConvert(t)
-              })
-              (dataGen, sum)*/
               (s, sum)
             })
           })
@@ -303,10 +272,6 @@ object CommonResult1111 {
 
         case SlickParam(_, Some(SlickRange(drop, None)), None) =>
           baseQuery.drop(drop).result.map(s => {
-            /*val dataGen = s.toList.map(t => {
-              modelConvert(t)
-            })
-            (dataGen, s.size)*/
             (s, s.size)
           })
 
@@ -318,18 +283,10 @@ object CommonResult1111 {
             sum <- mappedQuery.size.result
             s <- takeQuery.result
           } yield {
-            /*val dataGen = s.toList.map(t => {
-              modelConvert(t)
-            })
-            (dataGen, sum)*/
             (s, sum)
           }
         case _ =>
           baseQuery.result.map(s => {
-            /*val dataGen = s.toList.map(t => {
-              modelConvert(t)
-            })
-            (dataGen, s.size)*/
             (s, s.size)
           })
       }
@@ -339,4 +296,4 @@ object CommonResult1111 {
 
   }
 
-}*/ 
+}
