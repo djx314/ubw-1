@@ -1,9 +1,7 @@
 package net.scalax.fsn.slick.atomic
-
 import net.scalax.fsn.core.{ FAtomic, FAtomicPathImpl }
 import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Shape }
-
-trait SlickSelect[E] extends FAtomic[E] {
+/*trait SlickSelect[E] extends FAtomic[E] {
   type SourceType
   type SlickType
   type TargetType
@@ -37,14 +35,18 @@ trait OrderNullsLast[E] extends FAtomic[E] {
   val isOrderNullsLast: Boolean
 }
 
-trait DefaultDesc[E] extends FAtomic[E] {
-  val isDefaultDesc: Boolean
-}
-
 trait InRetrieve[E] extends FAtomic[E] {
   val isInRetrieve: Boolean
 }
 
 trait OrderTargetName[E] extends FAtomic[E] {
   val orderTargetName: String
+}*/
+
+trait InRetrieve[E] extends FAtomic[E] {
+  val isInRetrieve: Boolean
+}
+
+trait DefaultDesc[E] extends FAtomic[E] {
+  val isDefaultDesc: Boolean
 }

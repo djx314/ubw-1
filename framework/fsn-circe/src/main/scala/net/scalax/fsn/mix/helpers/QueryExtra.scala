@@ -6,6 +6,7 @@ import net.scalax.fsn.mix.operation.PropertiesOperation
 import net.scalax.fsn.mix.slickbase.{ FQueryWrap, PileListQueryWrap }
 import net.scalax.fsn.slick.model._
 import net.scalax.fsn.slick.operation._
+import slick.ast.BaseTypedType
 import slick.basic.BasicProfile
 import slick.dbio._
 import slick.jdbc.JdbcActionComponent
@@ -18,7 +19,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
   implicit class slick2jsonExtraClass1111(listQueryWrap: PileListQueryWrap) {
 
-    /*def groupResult(defaultOrders: GroupParam)(
+    def groupResult(defaultOrders: GroupParam)(
       implicit
       jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
       intTyped: BaseTypedType[Int],
@@ -27,7 +28,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
     ): ResultWrap = {
       lazy val outJsonGen = PropertiesOperation.slick2jsonGroupOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns).apply(defaultOrders)
       outJsonGen
-    }*/
+    }
 
     def strResult(defaultOrders: List[ColumnOrder])(
       implicit
