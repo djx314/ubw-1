@@ -153,19 +153,6 @@ object FPile1111 {
     apply(paths)
   }*/
 
-  trait FQueryTranform1111[U] {
-    type QueryType
-    val path: FAtomicPath
-    val gen: Either[FAtomicException, QueryType]
-    def apply(rep: QueryType, data: FAtomicValueImpl[path.DataType]): U
-  }
-
-  trait FQueryTranformWithOutData1111[U] {
-    type QueryType
-    val gen: Either[FAtomicException, QueryType]
-    def apply(rep: QueryType): U
-  }
-
   def genTreeTailCall[U](pathGen: FAtomicPath => FQueryTranform1111[U], oldPile: FPile1111, newPile: FPile1111): Either[FAtomicException, (FPile1111, FPile1111, List[FPile1111])] = {
     if (newPile.subs.isEmpty) {
       val transforms = newPile.paths.map(pathGen)

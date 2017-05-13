@@ -24,15 +24,13 @@ trait FAtomicValueHelper {
     }
   }
 
-  def set[D](value: D): AtomicValueWrap[D] = new FAtomicValueImpl[D] {
+  def set[D](value: D): FAtomicValueImpl[D] = new FAtomicValueImpl[D] {
     val value1 = value
     override val atomic = Option {
       new FValue[D] {
         override val value = value1
       }
-
     }
-
   }
 
   def mergeDefault[D](default: Option[DefaultValue[D]], atomicValue: FAtomicValueImpl[D]): Option[D] = {
