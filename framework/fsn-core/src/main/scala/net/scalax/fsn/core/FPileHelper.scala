@@ -173,4 +173,16 @@ trait FPilesGenHelper {
     }
   }
 
+  implicit def pileExtensionMethods1111[T](pilesGenList: FPileSyntax1111.PileGen[T]): FPileSyntax1111[T] = {
+    new FPileSyntax1111[T] {
+      override val pilesGen = pilesGenList
+    }
+  }
+
+  implicit def pileWithoutDataExtensionMethods1111[T](pilesGenList: FPileSyntaxWithoutData1111.PileGen[T]): FPileSyntaxWithoutData1111[T] = {
+    new FPileSyntaxWithoutData1111[T] {
+      override val pilesGen = pilesGenList
+    }
+  }
+
 }

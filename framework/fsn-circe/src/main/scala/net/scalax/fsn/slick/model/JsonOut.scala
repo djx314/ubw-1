@@ -1,8 +1,9 @@
 package net.scalax.fsn.slick.model
 
 import io.circe.Json
-
+import net.scalax.fsn.core.FAtomicValue
 import slick.dbio.DBIO
+
 import scala.concurrent.ExecutionContext
 
 case class JsonView(properties: List[SelectProperty], data: List[Map[String, Json]], sum: Option[Int])
@@ -20,3 +21,6 @@ case class ResultWrap(resultAction: DBIO[ResultCollection], statements: List[Str
 
 case class ListAnyCollection(data: List[List[Option[Any]]], sum: Option[Int])
 case class ListAnyWrap(resultAction: DBIO[ListAnyCollection], statements: List[String])
+
+case class ListAnyCollection1111(data: List[List[FAtomicValue]], sum: Option[Int])
+case class ListAnyWrap1111(resultAction: DBIO[ListAnyCollection1111], statements: List[String])

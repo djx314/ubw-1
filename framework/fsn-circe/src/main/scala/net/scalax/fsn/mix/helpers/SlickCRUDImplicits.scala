@@ -14,51 +14,20 @@ import scala.language.implicitConversions
 
 trait SlickCRUDImplicits {
 
-  class FColumnStringImplicits(proName1: String) {
-    /*def column[D](converts: List[FAtomic[D]]): FsnColumn[D] = {
+  trait FColumnStringImplicits {
+    val proName1: String
+
+    def ofPile[D](path: FAtomicPathImpl[D]): FPileImpl1111[FAtomicPathImpl[D], FAtomicValueImpl[D]] = {
       val proName = new FProperty[D] {
         override val proName = proName1
       }
-      FsnColumn(proName :: converts)
+      FPile1111.apply(FAtomicPathImpl(proName :: path.atomics))
     }
-    def column[D](converts: FAtomic[D]*): FsnColumn[D] = {
-      val proName = new FProperty[D] {
-        override val proName = proName1
-      }
-      FsnColumn(proName :: converts.toList)
-    }
-    def columns[D](converts: List[FAtomic[D]]*): FsnColumn[D] = {
-      val proName = new FProperty[D] {
-        override val proName = proName1
-      }
-      FsnColumn(proName :: converts.toList.flatten)
-    }*/
-    def ofPile[D](path: FAtomicPathImpl[D]): FPileImpl[FAtomicPathImpl[D], Option[D], Option] = {
-      val proName = new FProperty[D] {
-        override val proName = proName1
-      }
-      FPile.applyOpt(FAtomicPathImpl(proName :: path.atomics)) /*(implicitly[FsnShape[FAtomicPathImpl[D], Option[D], FAtomicPathImpl[D], Option]])*/
-    }
-    /*def ofPath[D](path: FAtomicPathImpl[D]): FAtomicPathImpl[D] = {
-      val proName = new FProperty[D] {
-        override val proName = proName1
-      }
-      FAtomicPathImpl(proName :: path.atomics)
-    }*/
   }
 
-  implicit def fColumnStringExtesionMethods(proName: String): FColumnStringImplicits = new FColumnStringImplicits(proName)
+  class FColumnStringImplicitsImpl(override val proName1: String) extends FColumnStringImplicits
 
-  /*implicit class slickColumn2OutputColumn[S, D, T](repLike: S)(
-    implicit
-    shape1: Shape[_ <: FlatShapeLevel, S, D, T],
-    encoder: Encoder[D],
-    weakTypeTag: WeakTypeTag[D]
-  ) {
-    def out: SSelect[S, D, T, D] = {
-      SSelect.out(repLike)
-    }
-  }*/
+  implicit def fColumnStringExtesionMethods(proName: String): FColumnStringImplicits = new FColumnStringImplicitsImpl(proName)
 
   implicit class slickColumn2CommonColumn[S, D, T](repLike: S)(
       implicit
@@ -84,45 +53,12 @@ trait SlickCRUDImplicits {
     }
   }
 
-  /*implicit def slickFsnColumn2FAtomic[S, D, T](repLike: S)(
-    implicit
-    shape: Shape[_ <: FlatShapeLevel, S, D, T],
-    encoder: Encoder[D],
-    decoder: Decoder[D],
-    weakTypeTag: WeakTypeTag[D]
-  ): List[FAtomic[D]] = {
-    SCRUD.in(repLike).result
-  }*/
-
   implicit def SCRUD2FAtomin[T](crud: SCRUD[_, _, _, T]): List[FAtomic[T]] = {
     crud.result
   }
 
-  /*implicit def slickFsnColumn2SelectColumn[S, D, T](repLike: S)(
-    implicit
-    shape1: Shape[_ <: FlatShapeLevel, S, D, T],
-    encoder: Encoder[D],
-    weakTypeTag: WeakTypeTag[D]
-  ): SSelect[S, D, T, D] = {
-    SSelect.out(repLike)
-  }
-
-  implicit def slickSelectColumn2FAtomic[S, D, T](repLike: S)(
-    implicit
-    shape1: Shape[_ <: FlatShapeLevel, S, D, T],
-    encoder: Encoder[D],
-    weakTypeTag: WeakTypeTag[D]
-  ): List[FAtomic[D]] = {
-    SSelect.out(repLike).result
-  }*/
-
-  /*implicit def Select2FAtomin[T](crud: SSelect[_, _, _, T]): List[FAtomic[T]] = {
-    crud.result
-  }*/
-
   implicit class queryToUQueryExtendsionMethodGen[E, U](query: Query[E, U, Seq]) {
 
-    //def out = new ListQueryExtensionMethods[E, U](query)
     def out = new PileListQueryExtensionMethods[E, U](query)
 
   }

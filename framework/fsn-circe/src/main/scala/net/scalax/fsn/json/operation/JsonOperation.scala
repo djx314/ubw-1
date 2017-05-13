@@ -6,7 +6,7 @@ import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
 import shapeless._
-object JsonOperation {
+object JsonOperation extends FAtomicValueHelper {
 
   val readGen = FPile.transformTreeList {
     new FAtomicQuery(_) {
@@ -101,6 +101,22 @@ object JsonOperation {
         .mapToOption {
           case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
             val exportData = data.fold(defaultOpt.map(_.value))(Option(_))
+            //val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
+            implicit val writerJ = jsonWriter.writer
+            exportData.map(s => property.proName -> jsonWriter.convert(s).asJson)
+          }
+        }
+    }.aa
+  } { jsonTupleList =>
+    jsonTupleList.collect { case Some(s) => s }.toMap: Map[String, Json]
+  }
+
+  def unSafewriteGen1111 = FPile1111.transformTreeList {
+    new FAtomicQuery1111(_) {
+      val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
+        .mapTo {
+          case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
+            val exportData = data.opt.fold(defaultOpt.map(_.value))(Option(_))
             //val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
             implicit val writerJ = jsonWriter.writer
             exportData.map(s => property.proName -> jsonWriter.convert(s).asJson)
