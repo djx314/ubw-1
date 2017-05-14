@@ -7,7 +7,7 @@ import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.model._
 import net.scalax.fsn.slick.helpers.{ SlickQueryBindImpl, TypeHelpers }
 import net.scalax.fsn.slick.operation._
-import net.scalax.fsn.json.operation.{ ExcelOperation, JsonOperation }
+import net.scalax.fsn.json.operation.{ ExcelOperation, JsonOperation, SlickCompareOperation }
 import net.scalax.fsn.excel.atomic.PoiWriter
 import slick.jdbc.JdbcActionComponent
 import shapeless._
@@ -80,7 +80,7 @@ object PropertiesOperation extends FPilesGenHelper {
   ): List[FPile] => JsonOut = { optPiles: List[FPile] =>
 
     val jsonFilter: FPileSyntax.PileGen[SlickParam => StrSlickQuery] =
-      JsonOperation.unfullReadGen1111.flatMap(StrOutSelectConvert.ubwGen(wQuery)) { (jsonGen, slickQuery) =>
+      SlickCompareOperation.unfullReadCompareGen.flatMap(StrOutSelectConvert.ubwGen(wQuery)) { (jsonGen, slickQuery) =>
         { slickParam: SlickParam =>
           slickQuery(jsonGen(slickParam.filter))
         }

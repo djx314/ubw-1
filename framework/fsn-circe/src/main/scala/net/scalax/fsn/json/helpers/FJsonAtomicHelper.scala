@@ -1,7 +1,8 @@
 package net.scalax.fsn.slick.helpers
 
 import io.circe.{ Decoder, Encoder }
-import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
+import io.circe.generic.auto._
+import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter, SlickCompare }
 import net.scalax.fsn.json.operation.FAtomicHelper
 
 import scala.reflect.runtime.universe._
@@ -15,10 +16,16 @@ trait FJsonAtomicHelper[E] extends FAtomicHelper[E] {
     override val typeTag = tag
   })
 
-  def readJ(implicit decoder: Decoder[E], tag: WeakTypeTag[E]) = path.appendAtomic(new JsonReader[E] {
+  def readJ(implicit decoder: Decoder[E]) = path.appendAtomic(new JsonReader[E] {
     override type JsonType = E
     override val reader = decoder
     override val convert = identity[E] _
   })
+
+  def readSlickComp(implicit decoder: Decoder[E], tag: WeakTypeTag[E]) = {
+    path.appendAtomic(new SlickCompare[E] {
+      override val reader = Decoder[FilterModel[E]]
+    })
+  }
 
 }

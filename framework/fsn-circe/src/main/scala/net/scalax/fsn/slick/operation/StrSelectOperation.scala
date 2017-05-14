@@ -4,7 +4,7 @@ import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.json.operation.FAtomicValueHelper
 import net.scalax.fsn.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
-import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListColumnShape, SlickQueryBindImpl }
+import net.scalax.fsn.slick.helpers.{ FilterColumnGen, FilterModelHelper, ListColumnShape, SlickQueryBindImpl }
 import net.scalax.fsn.slick.model._
 import shapeless._
 import slick.dbio.{ DBIO, NoStream }
@@ -47,7 +47,7 @@ case class StrSReader[S, T, D](
 
 case class StrReaderWithIndex(reader: StrSlickReader, index: Int)
 
-object StrOutSelectConvert extends FAtomicValueHelper {
+object StrOutSelectConvert extends FilterModelHelper {
 
   def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[StrSlickQuery] = {
     FPile.transformTreeList {
@@ -61,7 +61,7 @@ object StrOutSelectConvert extends FAtomicValueHelper {
 
               val filterGen = for {
                 eachPri <- slickSelect.filterGen
-                eachData <- data.opt
+                eachData <- data.opt.flatMap(_.eq)
               } yield {
                 new FilterColumnGen[slickSelect.TargetType] {
                   override type BooleanTypeRep = eachPri.BooleanTypeRep
