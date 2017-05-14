@@ -58,6 +58,15 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
       strResult(Nil)
     }
 
+    def filterResult(
+      implicit
+      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+      repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      ec: ExecutionContext
+    ): JsonOut = {
+      PropertiesOperation.filterStrSlick2jsonOperation(listQueryWrap.listQueryBind, Nil).apply(listQueryWrap.columns)
+    }
+
     def result(defaultOrders: List[ColumnOrder])(
       implicit
       jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],

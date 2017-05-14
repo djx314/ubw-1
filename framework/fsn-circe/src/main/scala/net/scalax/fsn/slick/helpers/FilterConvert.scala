@@ -71,7 +71,7 @@ trait FilterOptConvertGen[S, T] extends FilterOptConvert {
 
 }
 
-object FilterWrapper {
+object FilterWrapper extends FilterRepImplicitHelper {
   def fromIBaseConvert[S, T](convert1: FilterBaseConvertGen[S, T]): FilterWrapper[S, T] = {
     new FilterWrapper[convert1.SourceRep, convert1.FilterType] {
       override type BooleanTypeRep = Rep[convert1.BooleanType]

@@ -72,14 +72,46 @@ object PropertiesOperation extends FPilesGenHelper {
     }
   }
 
-  def strSlick2jsonOperation(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
+  def filterStrSlick2jsonOperation(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
     implicit
     jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): List[FPile] => JsonOut = { optPiles: List[FPile] =>
 
-    //val jsonGen: FPileSyntax.PileGen[Option, SlickParam => ResultWrap] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.writeGen) { (slickQuery, jsonGen) =>
+    val jsonFilter: FPileSyntax.PileGen[SlickParam => StrSlickQuery] =
+      JsonOperation.unfullReadGen1111.flatMap(StrOutSelectConvert.ubwGen(wQuery)) { (jsonGen, slickQuery) =>
+        { slickParam: SlickParam =>
+          slickQuery(jsonGen(slickParam.filter))
+        }
+      }
+    val jsonGen: FPileSyntax.PileGen[SlickParam => ResultWrap] = jsonFilter.flatMap(JsonOperation.unSafewriteGen1111) { (slickQuery, jsonGen) =>
+      { slickParam: SlickParam =>
+        val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
+        val result = slickQuery(slickParam).slickResult.apply(addedParam)
+        val collection = result.resultAction.map {
+          case ListAnyCollection1111(dataList, sum) =>
+            ResultCollection(dataList.map(s => jsonGen(s)), sum)
+        }
+        ResultWrap(collection, result.statements)
+      }
+    }
+
+    strJsonPropertiesGen.result(optPiles) -> jsonGen.result(optPiles) match {
+      case (Left(e1), Left(e2)) => throw e1
+      case (Left(e), Right(_)) => throw e
+      case (Right(_), Left(e)) => throw e
+      case (Right(properties), Right(data)) =>
+        JsonOut(properties, data)
+    }
+  }
+
+  def strSlick2jsonOperation(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
+    implicit
+    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    ec: ExecutionContext
+  ): List[FPile] => JsonOut = { optPiles: List[FPile] =>
     val jsonGen: FPileSyntax.PileGen[SlickParam => ResultWrap] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen1111) { (slickQuery, jsonGen) =>
       { slickParam: SlickParam =>
         val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
