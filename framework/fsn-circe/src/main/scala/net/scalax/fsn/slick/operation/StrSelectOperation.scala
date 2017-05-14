@@ -4,7 +4,7 @@ import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.json.operation.FAtomicValueHelper
 import net.scalax.fsn.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
-import net.scalax.fsn.slick.helpers.{ FilterColumnGen, FilterModelHelper, ListColumnShape, SlickQueryBindImpl }
+import net.scalax.fsn.slick.helpers._
 import net.scalax.fsn.slick.model._
 import shapeless._
 import slick.dbio.{ DBIO, NoStream }
@@ -26,7 +26,7 @@ trait StrSlickReader {
   val inView: Boolean
 
   val mainShape: Shape[_ <: FlatShapeLevel, SourceColumn, DataType, TargetColumn]
-  val primaryGen: Option[FilterColumnGen[TargetColumn]]
+  val primaryGen: List[FilterColumnGen[TargetColumn]]
 
 }
 
@@ -36,7 +36,7 @@ case class StrSReader[S, T, D](
     override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
     override val orderGen: Option[(String, T => ColumnOrdered[_])],
     override val orderTargetGen: Option[(String, String)],
-    override val primaryGen: Option[FilterColumnGen[T]] = None
+    override val primaryGen: List[FilterColumnGen[T]] = Nil
 ) extends StrSlickReader {
 
   override type SourceColumn = S
@@ -72,6 +72,19 @@ object StrOutSelectConvert extends FilterModelHelper {
                 }: FilterColumnGen[slickSelect.TargetType]
               }
 
+              val likeFilterGen = for {
+                eachPri <- slickSelect.likeableGen
+                eachData <- data.opt.flatMap(_.like)
+              } yield {
+                new FilterColumnGen[slickSelect.TargetType] {
+                  override type BooleanTypeRep = eachPri.BooleanTypeRep
+                  override val dataToCondition = (sourceCol: slickSelect.TargetType) => {
+                    eachPri.dataToCondition(sourceCol, eachData)
+                  }
+                  override val wt = eachPri.wt
+                }: FilterColumnGen[slickSelect.TargetType]
+              }
+
               def slickReaderGen: StrSReader[slickSelect.SourceType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
                 StrSReader(
                   slickSelect.outCol,
@@ -79,7 +92,7 @@ object StrOutSelectConvert extends FilterModelHelper {
                   slickSelect.shape,
                   slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
                   orderTargetName.map(s => property.proName -> s),
-                  filterGen
+                  filterGen.toList ::: likeFilterGen.toList
                 )
               else
                 StrSReader(
@@ -88,7 +101,8 @@ object StrOutSelectConvert extends FilterModelHelper {
                   slickSelect.shape,
                   slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
                   orderTargetName.map(s => property.proName -> s),
-                  filterGen
+                  filterGen.toList ::: likeFilterGen.toList
+
                 )
               slickReaderGen: StrSlickReader
             }
@@ -124,7 +138,7 @@ object StrOutSelectConvert extends FilterModelHelper {
               eachPri.dataToCondition(cols(index).asInstanceOf[reader.TargetColumn])
             }
             override val wt = eachPri.wt
-          }).toList: List[FilterColumnGen[List[Any]]]
+          }): List[FilterColumnGen[List[Any]]]
       }
 
       new StrSlickQuery {

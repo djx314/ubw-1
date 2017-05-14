@@ -23,13 +23,15 @@ object Sample09 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
     }
   }
 
+  FriendTable.filter(_.name like "aabb")
+
   val fQuery = for {
     friend <- FriendTable.out
   } yield {
     List(
       "id" ofPile friend.id.out.order.describe("自增主键").readSlickComp.writeJ,
-      "name" ofPile friend.name.out.filter.orderTarget("nick").describe("昵称").readSlickComp.writeJ,
-      "nick" ofPile friend.nick.out.order.filter.describe("昵称").readSlickComp.writeJ,
+      "name" ofPile friend.name.out.filter.likeable.orderTarget("nick").describe("昵称").readSlickComp.writeJ,
+      "nick" ofPile friend.nick.out.order.filter.likeable.describe("昵称").readSlickComp.writeJ,
       "ageOpt" ofPile friend.age.out.filter.readSlickComp.writeJ
     )
   }
@@ -46,7 +48,7 @@ object Sample09 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
       }
   }, duration.Duration.Inf)
 
-  val view2: DBIO[JsonView] = result1.toView(SlickParam(filter = Map("name" -> Map("eq" -> "魔理沙").asJson), orders = List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))))
+  val view2: DBIO[JsonView] = result1.toView(SlickParam(filter = Map("name" -> Map("like" -> "%魔%").asJson), orders = List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))))
 
   Await.result(Helper.db.run {
     view2.map { s =>
