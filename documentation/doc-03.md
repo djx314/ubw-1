@@ -18,16 +18,19 @@ val fQuery = for {
       ("name" ofPile friend.name.out.orderTarget("nick").describe("昵称")) ::
       ("nick" ofPile friend.nick.out.order.describe("昵称")) ::
       ("age" ofPile friend.age.out) ::
-      HNil
+      FPNil
     ).poly(
         "name" ofPile FAtomicPathImpl.empty[String].writeJ
       ).transform {
-          case Some(name) :: Some(nick) :: Some(Some(age)) :: HNil if age < 200 =>
-            Option(s"$name-$nick")
-          case Some(name) :: _ :: _ :: HNil =>
-            Option(name)
-          case _ =>
-            None
+          case nameAt :: nickAt :: ageAt :: HNil if ageAt.opt.flatten.map(_ < 200).getOrElse(false) =>
+            for {
+              name <- nameAt
+              nick <- nickAt
+            } yield s"${name}-${nick}"
+          case name :: _ :: _ :: HNil if name.isDefined =>
+            name
+          case s =>
+            emptyValue[String]
         },
     "ageOpt" ofPile friend.age.out.writeJ
   )

@@ -20,7 +20,7 @@ object Sample07 extends SlickCRUDImplicits
     with StrFSSelectAtomicHelper
     with Slick2JsonFsnImplicit
     with PilesPolyHelper
-    with FAtomicValueHelper {
+    with FAtomicValueHelper with App {
 
   implicit def fPilesOptionImplicit[D](path: FAtomicPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
     val path1 = path
@@ -36,20 +36,22 @@ object Sample07 extends SlickCRUDImplicits
       "id" ofPile friend.id.out.order.describe("自增主键").writeJ,
       (
         ("name" ofPile friend.name.out.orderTarget("nick").describe("昵称")) ::
-        (("nick" ofPile friend.nick.out.order.describe("昵称")) ::
-          ("age" ofPile friend.age.out) :: FPNil) ::
-          FPNil
+        ("nick" ofPile friend.nick.out.order.describe("昵称")) ::
+        ("age" ofPile friend.age.out) ::
+        FPNil
       ).poly(
-            "name" ofPile FAtomicPathImpl.empty[String].writeJ
-          ).transform {
-              case name :: (nick :: age :: HNil) :: HNil if (name.isDefined && nick.isDefined && age.opt.flatten.isDefined) && (age.opt.flatten.get < 200) =>
-                set(s"${name.get}-${nick.get}")
-              case name :: (_ :: _ :: HNil) :: HNil if name.isDefined =>
-                set(name.get)
-              case s =>
-                //println(s)
-                emptyValue[String]
-            },
+          "name" ofPile FAtomicPathImpl.empty[String].writeJ
+        ).transform {
+            case nameAt :: nickAt :: ageAt :: HNil if ageAt.opt.flatten.map(_ < 200).getOrElse(false) =>
+              for {
+                name <- nameAt
+                nick <- nickAt
+              } yield s"${name}-${nick}"
+            case name :: _ :: _ :: HNil if name.isDefined =>
+              name
+            case s =>
+              emptyValue[String]
+          },
       "ageOpt" ofPile friend.age.out.writeJ
     )
   }
