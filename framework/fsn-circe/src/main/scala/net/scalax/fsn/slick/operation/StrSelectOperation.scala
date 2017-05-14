@@ -4,7 +4,7 @@ import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.json.operation.FAtomicValueHelper
 import net.scalax.fsn.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
-import net.scalax.fsn.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
+import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListColumnShape, SlickQueryBindImpl }
 import net.scalax.fsn.slick.model._
 import shapeless._
 import slick.dbio.{ DBIO, NoStream }
@@ -26,6 +26,7 @@ trait StrSlickReader {
   val inView: Boolean
 
   val mainShape: Shape[_ <: FlatShapeLevel, SourceColumn, DataType, TargetColumn]
+  val primaryGen: Option[FilterColumnGen[TargetColumn]]
 
 }
 
@@ -34,7 +35,8 @@ case class StrSReader[S, T, D](
     override val inView: Boolean,
     override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
     override val orderGen: Option[(String, T => ColumnOrdered[_])],
-    override val orderTargetGen: Option[(String, String)]
+    override val orderTargetGen: Option[(String, String)],
+    override val primaryGen: Option[FilterColumnGen[T]] = None
 ) extends StrSlickReader {
 
   override type SourceColumn = S
@@ -45,7 +47,7 @@ case class StrSReader[S, T, D](
 
 case class StrReaderWithIndex(reader: StrSlickReader, index: Int)
 
-object StrOutSelectConvert {
+object StrOutSelectConvert extends FAtomicValueHelper {
 
   def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[StrSlickQuery] = {
     FPile.transformTreeList {
@@ -56,13 +58,28 @@ object StrOutSelectConvert {
               val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
               val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
               val isInView = neededFetchOpt.map(_.isInView).getOrElse(true)
+
+              val filterGen = for {
+                eachPri <- slickSelect.filterGen
+                eachData <- data.opt
+              } yield {
+                new FilterColumnGen[slickSelect.TargetType] {
+                  override type BooleanTypeRep = eachPri.BooleanTypeRep
+                  override val dataToCondition = (sourceCol: slickSelect.TargetType) => {
+                    eachPri.dataToCondition(sourceCol)(eachData)
+                  }
+                  override val wt = eachPri.wt
+                }: FilterColumnGen[slickSelect.TargetType]
+              }
+
               def slickReaderGen: StrSReader[slickSelect.SourceType, slickSelect.TargetType, slickSelect.DataType] = if (isOrderNullsLast)
                 StrSReader(
                   slickSelect.outCol,
                   isInView,
                   slickSelect.shape,
                   slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
-                  orderTargetName.map(s => property.proName -> s)
+                  orderTargetName.map(s => property.proName -> s),
+                  filterGen
                 )
               else
                 StrSReader(
@@ -70,9 +87,9 @@ object StrOutSelectConvert {
                   isInView,
                   slickSelect.shape,
                   slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
-                  orderTargetName.map(s => property.proName -> s)
+                  orderTargetName.map(s => property.proName -> s),
+                  filterGen
                 )
-
               slickReaderGen: StrSlickReader
             }
           }
@@ -99,10 +116,22 @@ object StrOutSelectConvert {
           key -> genSortMap.get(value).getOrElse(throw new Exception(s"$key 需要映射 $value 的排序方案，但找不到 $value 对应的列的排序"))
       } ++ genSortMap
 
+      val slickFilterGen = gensWithIndex.flatMap {
+        case StrReaderWithIndex(reader, index) =>
+          reader.primaryGen.map(eachPri => new FilterColumnGen[List[Any]] {
+            override type BooleanTypeRep = eachPri.BooleanTypeRep
+            override val dataToCondition = (cols: List[Any]) => {
+              eachPri.dataToCondition(cols(index).asInstanceOf[reader.TargetColumn])
+            }
+            override val wt = eachPri.wt
+          }).toList: List[FilterColumnGen[List[Any]]]
+      }
+
       new StrSlickQuery {
         override val readers = gensWithIndex
         override val sortMaps = finalOrderGen
         override val wrapQuery = wQuery
+        override val filterGen = slickFilterGen
       }
     }
   }
@@ -131,6 +160,7 @@ trait StrSlickQuery extends FAtomicValueHelper {
   val readers: List[StrReaderWithIndex]
   val sortMaps: Map[String, Int]
   val wrapQuery: SlickQueryBindImpl
+  val filterGen: List[FilterColumnGen[List[Any]]]
 
   def slickResult(
     implicit
@@ -168,11 +198,15 @@ trait StrSlickQuery extends FAtomicValueHelper {
           throw e
       }*/
       val selectQuery = wrapQuery.bind(Query(cols)(shape))
+      val filterQuery = filterGen.foldLeft(selectQuery) { (query, filterGen) =>
+        query.filter(filterGen.dataToCondition)(filterGen.wt)
+      }
+
       val sortedQuery = (slickParam.orders ::: defaultOrders)
         .filter(s => sortMaps.keySet.contains(s.columnName))
         .map { order =>
           sortMaps(order.columnName) -> order.isDesc
-        }.foldLeft(selectQuery) {
+        }.foldLeft(filterQuery) {
           case (query, (orderIndex, isDesc)) =>
             query.sortBy { cols =>
               val reader = readers(orderIndex).reader
@@ -187,7 +221,7 @@ trait StrSlickQuery extends FAtomicValueHelper {
       val inViewReadersWithIndex = inViewReaders.zipWithIndex
       val mapQuery = sortbyQuery2.map(values => inViewReaders.map(s => values(s.index)))(new ListColumnShape[FlatShapeLevel](inViewReaders.map(_.reader.mainShape)))
 
-      val rs = CommonResult.commonResult(selectQuery.to[List], /*sortbyQuery2*/ mapQuery).apply(slickParam)
+      val rs = CommonResult.commonResult(filterQuery.to[List], /*sortbyQuery2*/ mapQuery).apply(slickParam)
         .map { s =>
           val resultSet = s._1.map { eachRow =>
             val resultArray = Array.fill[FAtomicValue](readers.size)(FAtomicValueImpl.empty)
@@ -219,7 +253,7 @@ object CommonResult {
       val baseQuery = sortedQuery
 
       slickParam match {
-        case SlickParam(_, Some(SlickRange(drop1, Some(take1))), Some(SlickPage(pageIndex1, pageSize1))) =>
+        case SlickParam(_, Some(SlickRange(drop1, Some(take1))), Some(SlickPage(pageIndex1, pageSize1)), _) =>
           val startCount = Math.max(0, drop1)
           val pageIndex = Math.max(0, pageIndex1)
           val pageSize = Math.max(0, pageSize1)
@@ -244,14 +278,14 @@ object CommonResult {
           })
             .flatMap(s => s)
 
-        case SlickParam(_, Some(SlickRange(drop, Some(take))), None) =>
+        case SlickParam(_, Some(SlickRange(drop, Some(take))), None, _) =>
           val dropQuery = mappedQuery.drop(drop)
 
           baseQuery.drop(drop).take(take - drop).result.map(s => {
             (s, s.size)
           })
 
-        case SlickParam(_, Some(SlickRange(drop1, None)), Some(SlickPage(pageIndex1, pageSize1))) =>
+        case SlickParam(_, Some(SlickRange(drop1, None)), Some(SlickPage(pageIndex1, pageSize1)), _) =>
           val startCount = Math.max(0, drop1)
           val pageIndex = Math.max(0, pageIndex1)
           val pageSize = Math.max(0, pageSize1)
@@ -270,12 +304,12 @@ object CommonResult {
           })
             .flatMap(s => s)
 
-        case SlickParam(_, Some(SlickRange(drop, None)), None) =>
+        case SlickParam(_, Some(SlickRange(drop, None)), None, _) =>
           baseQuery.drop(drop).result.map(s => {
             (s, s.size)
           })
 
-        case SlickParam(_, None, Some(SlickPage(pageIndex, pageSize))) =>
+        case SlickParam(_, None, Some(SlickPage(pageIndex, pageSize)), _) =>
           val dropQuery = baseQuery.drop(pageIndex * pageSize)
           val takeQuery = dropQuery.take(pageSize)
 

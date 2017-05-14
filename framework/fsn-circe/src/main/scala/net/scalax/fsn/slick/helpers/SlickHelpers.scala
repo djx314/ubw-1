@@ -97,6 +97,7 @@ trait StrFSSelectAtomicHelper {
     def out: StrSSelect[S, D, T] = StrSSelect(
       shape,
       rep,
+      None,
       None
     )
   }

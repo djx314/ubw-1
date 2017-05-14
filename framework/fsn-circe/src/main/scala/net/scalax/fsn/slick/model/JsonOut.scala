@@ -19,8 +19,8 @@ case class JsonOut(properties: List[SelectProperty], data: SlickParam => ResultW
 case class ResultCollection(data: List[Map[String, Json]], sum: Option[Int])
 case class ResultWrap(resultAction: DBIO[ResultCollection], statements: List[String])
 
-case class ListAnyCollection(data: List[List[Option[Any]]], sum: Option[Int])
-case class ListAnyWrap(resultAction: DBIO[ListAnyCollection], statements: List[String])
+/*case class ListAnyCollection(data: List[List[Option[Any]]], sum: Option[Int])
+case class ListAnyWrap(resultAction: DBIO[ListAnyCollection], statements: List[String])*/
 
 case class ListAnyCollection1111(data: List[List[FAtomicValue]], sum: Option[Int])
 case class ListAnyWrap1111(resultAction: DBIO[ListAnyCollection1111], statements: List[String])
