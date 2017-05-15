@@ -3,7 +3,24 @@ package net.scalax.fsn.slick.helpers
 import net.scalax.fsn.core.FAtomicValueImpl
 import net.scalax.fsn.json.atomic.SlickCompareData
 
-case class FilterModel[T](like: Option[String] = None, eq: Option[T] = None, gt: Option[T] = None, lt: Option[T] = None)
+trait EqType[F, V] {
+  def to(in: F): V
+  def from(out: V): F
+}
+
+object EqType {
+  implicit def eqTypeImplicit[F, V](implicit inCv: F <:< V, outCv: V <:< F): EqType[F, V] = new EqType[F, V] {
+    override def to(in: F): V = inCv(in)
+    override def from(out: V): F = outCv(out)
+  }
+}
+
+case class FilterModel[T](
+  like: Option[String] = None,
+  eq: Option[T] = None,
+  gt: Option[T] = None,
+  lt: Option[T] = None
+)
 
 trait FilterModelHelper {
 
