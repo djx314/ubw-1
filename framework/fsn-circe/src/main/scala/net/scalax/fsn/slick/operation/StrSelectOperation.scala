@@ -72,9 +72,22 @@ object StrOutSelectConvert extends FilterModelHelper {
                 }: FilterColumnGen[slickSelect.TargetType]
               }
 
+              def convertLikeString(str: String) = {
+                val addPrefix = if (str.startsWith("%")) {
+                  str
+                } else {
+                  "%" + str
+                }
+                if (addPrefix.endsWith("%")) {
+                  addPrefix
+                } else {
+                  addPrefix + "%"
+                }
+              }
+
               val likeFilterGen = for {
-                eachPri <- slickSelect.likeableGen
-                eachData <- data.opt.flatMap(_.like)
+                eachPri <- slickSelect.likeableGen.toList
+                eachData <- data.opt.toList.flatMap(_.like.toList.flatMap(s => s.split(" ").toList.filter(!_.isEmpty)).toList).map(convertLikeString)
               } yield {
                 new FilterColumnGen[slickSelect.TargetType] {
                   override type BooleanTypeRep = eachPri.BooleanTypeRep
@@ -92,7 +105,7 @@ object StrOutSelectConvert extends FilterModelHelper {
                   slickSelect.shape,
                   slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
                   orderTargetName.map(s => property.proName -> s),
-                  filterGen.toList ::: likeFilterGen.toList
+                  filterGen.toList ::: likeFilterGen
                 )
               else
                 StrSReader(
@@ -101,7 +114,7 @@ object StrOutSelectConvert extends FilterModelHelper {
                   slickSelect.shape,
                   slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
                   orderTargetName.map(s => property.proName -> s),
-                  filterGen.toList ::: likeFilterGen.toList
+                  filterGen.toList ::: likeFilterGen
 
                 )
               slickReaderGen: StrSlickReader
