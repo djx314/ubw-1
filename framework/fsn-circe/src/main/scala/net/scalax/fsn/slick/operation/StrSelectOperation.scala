@@ -4,7 +4,7 @@ import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.json.operation.FAtomicValueHelper
 import net.scalax.fsn.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
-import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListColumnShape, SlickQueryBindImpl }
+import net.scalax.fsn.slick.helpers._
 import net.scalax.fsn.slick.model._
 import shapeless._
 import slick.dbio.{ DBIO, NoStream }
@@ -26,7 +26,7 @@ trait StrSlickReader {
   val inView: Boolean
 
   val mainShape: Shape[_ <: FlatShapeLevel, SourceColumn, DataType, TargetColumn]
-  val primaryGen: Option[FilterColumnGen[TargetColumn]]
+  val primaryGen: List[FilterColumnGen[TargetColumn]]
 
 }
 
@@ -36,7 +36,7 @@ case class StrSReader[S, T, D](
     override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
     override val orderGen: Option[(String, T => ColumnOrdered[_])],
     override val orderTargetGen: Option[(String, String)],
-    override val primaryGen: Option[FilterColumnGen[T]] = None
+    override val primaryGen: List[FilterColumnGen[T]] = Nil
 ) extends StrSlickReader {
 
   override type SourceColumn = S
@@ -47,7 +47,7 @@ case class StrSReader[S, T, D](
 
 case class StrReaderWithIndex(reader: StrSlickReader, index: Int)
 
-object StrOutSelectConvert extends FAtomicValueHelper {
+object StrOutSelectConvert extends FilterModelHelper {
 
   def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[StrSlickQuery] = {
     FPile.transformTreeList {
@@ -61,12 +61,38 @@ object StrOutSelectConvert extends FAtomicValueHelper {
 
               val filterGen = for {
                 eachPri <- slickSelect.filterGen
-                eachData <- data.opt
+                eachData <- data.opt.flatMap(_.eq)
               } yield {
                 new FilterColumnGen[slickSelect.TargetType] {
                   override type BooleanTypeRep = eachPri.BooleanTypeRep
                   override val dataToCondition = (sourceCol: slickSelect.TargetType) => {
                     eachPri.dataToCondition(sourceCol)(eachData)
+                  }
+                  override val wt = eachPri.wt
+                }: FilterColumnGen[slickSelect.TargetType]
+              }
+
+              def convertLikeString(str: String) = {
+                val addPrefix = if (str.startsWith("%")) {
+                  str
+                } else {
+                  "%" + str
+                }
+                if (addPrefix.endsWith("%")) {
+                  addPrefix
+                } else {
+                  addPrefix + "%"
+                }
+              }
+
+              val likeFilterGen = for {
+                eachPri <- slickSelect.likeableGen.toList
+                eachData <- data.opt.toList.flatMap(_.like.toList.flatMap(s => s.split(" ").toList.filter(!_.isEmpty)).toList).map(convertLikeString)
+              } yield {
+                new FilterColumnGen[slickSelect.TargetType] {
+                  override type BooleanTypeRep = eachPri.BooleanTypeRep
+                  override val dataToCondition = (sourceCol: slickSelect.TargetType) => {
+                    eachPri.dataToCondition(sourceCol, eachData)
                   }
                   override val wt = eachPri.wt
                 }: FilterColumnGen[slickSelect.TargetType]
@@ -79,7 +105,7 @@ object StrOutSelectConvert extends FAtomicValueHelper {
                   slickSelect.shape,
                   slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsLast)),
                   orderTargetName.map(s => property.proName -> s),
-                  filterGen
+                  filterGen.toList ::: likeFilterGen
                 )
               else
                 StrSReader(
@@ -88,7 +114,8 @@ object StrOutSelectConvert extends FAtomicValueHelper {
                   slickSelect.shape,
                   slickSelect.colToOrder.map(s => property.proName -> ((t: slickSelect.TargetType) => s(t).nullsFirst)),
                   orderTargetName.map(s => property.proName -> s),
-                  filterGen
+                  filterGen.toList ::: likeFilterGen
+
                 )
               slickReaderGen: StrSlickReader
             }
@@ -124,7 +151,7 @@ object StrOutSelectConvert extends FAtomicValueHelper {
               eachPri.dataToCondition(cols(index).asInstanceOf[reader.TargetColumn])
             }
             override val wt = eachPri.wt
-          }).toList: List[FilterColumnGen[List[Any]]]
+          }): List[FilterColumnGen[List[Any]]]
       }
 
       new StrSlickQuery {
