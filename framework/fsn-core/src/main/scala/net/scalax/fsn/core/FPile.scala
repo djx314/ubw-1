@@ -86,10 +86,18 @@ class FPileImpl[E, U](
   def poly[A, B](other: FPileImpl[A, B]): Abc[U, A, B] = {
     new Abc[U, A, B] {
       def transform(cv: U => B): FPileImpl[A, B] = {
-        new FPileImpl(other.pathPile, other.fShape, { list: List[Any] =>
-          cv(self.dataFromSub(list))
-        }, self.genPiles(self))({ source => other.genPiles(source) }) { tranSelf =>
+
+        val dataFromSub: List[Any] => B = { list =>
+          val piles = self.genPiles(self)
+          val subData = self.fShape.decodeData(piles.zip(ListUtils.splitList(list, piles.map(_ => 1): _*)).map {
+            case (eachPile, data) =>
+              eachPile.fShape.encodeData(data.head.asInstanceOf[eachPile.DataType])
+          }.flatten)
+
+          cv(subData)
         }
+
+        new FPileImpl(other.pathPile, other.fShape, dataFromSub, self.genPiles(self))({ source => other.genPiles(source) })
       }
     }
   }
