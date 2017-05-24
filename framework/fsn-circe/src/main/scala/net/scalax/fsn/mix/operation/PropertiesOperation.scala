@@ -283,7 +283,12 @@ object PropertiesOperation extends FPilesGenHelper {
               staticMany <- DBIO.from(staticManyReader(execInfo.columns.sortBy(_.index).map(s => s.data)))
             } yield UpdateStaticManyInfo(execInfo.effectRows, staticMany)
           }
-        }.result(optPiles).right.get
+        }.result(optPiles) match {
+          case Left(e: Exception) =>
+            e.printStackTrace()
+            throw e
+          case Right(s) => s
+        }
       }
     }
 
@@ -312,7 +317,12 @@ object PropertiesOperation extends FPilesGenHelper {
               case (execInfo, data) =>
                 slickWriterGen(data).apply(binds).map(_.effectRows)
             }
-        }.result(optPiles).right.get
+        }.result(optPiles) match {
+          case Left(e: Exception) =>
+            e.printStackTrace()
+            throw e
+          case Right(s) => s
+        }
       }
     }
 
@@ -332,7 +342,12 @@ object PropertiesOperation extends FPilesGenHelper {
               staticMany <- DBIO.from(staticManyReader(execInfo.columns.sortBy(_.index).map(s => s.data)))
             } yield UpdateStaticManyInfo(execInfo.effectRows, staticMany)
           }
-        }.result(optPiles).right.get
+        }.result(optPiles) match {
+          case Left(e: Exception) =>
+            e.printStackTrace()
+            throw e
+          case Right(s) => s
+        }
       }
     }
 
@@ -357,7 +372,12 @@ object PropertiesOperation extends FPilesGenHelper {
             case (statMany, rowData) =>
               statMany -> jsonWriter(rowData)
           }
-        }.result(optPiles).right.get
+        }.result(optPiles) match {
+          case Left(e: Exception) =>
+            e.printStackTrace()
+            throw e
+          case Right(s) => s
+        }
       }
     }
 
@@ -369,7 +389,12 @@ object PropertiesOperation extends FPilesGenHelper {
       { data: Map[String, Json] =>
         JsonOperation.readGen1111.flatMap(StaticManyOperation.updateGen) { (jsonReader, staticMayGen) =>
           staticMayGen(jsonReader.apply(data))
-        }.result(optPiles).right.get
+        }.result(optPiles) match {
+          case Left(e: Exception) =>
+            e.printStackTrace()
+            throw e
+          case Right(s) => s
+        }
       }
     }
 

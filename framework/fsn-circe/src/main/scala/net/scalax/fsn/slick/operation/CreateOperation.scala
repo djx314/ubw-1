@@ -83,8 +83,6 @@ object InCreateConvert extends FAtomicValueHelper {
         val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: FANil)
           .mapTo {
             case (slickCreate :: autoIncOpt :: oneToOneCreateOpt :: HNil, data) => {
-              //val slickWriter = FColumn.find(columns)({ case s: SlickUpdate[columns.DataType] => s })
-              //val oneToOneUpdateOpt = FColumn.findOpt(columns)({ case s: OneToOneUpdate[columns.DataType] => s })
               val isAutoInc = autoIncOpt.map(_.isAutoInc).getOrElse(false)
               val writer = if (isAutoInc) {
                 lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate =>

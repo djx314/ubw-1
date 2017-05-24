@@ -6,7 +6,7 @@ resolvers ++= Seq(
 
 externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false)
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.2")
+//addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.3")
 
 addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.6.0")
 

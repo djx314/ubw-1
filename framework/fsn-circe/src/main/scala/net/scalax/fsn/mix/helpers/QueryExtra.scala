@@ -156,7 +156,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
 
   implicit class slick2crudExtraClass(crudQueryWrap: FQueryWrap) {
     val columns = crudQueryWrap.columns
-    lazy val properties = PropertiesOperation.RWPropertiesGen(columns).right.get._2
+    //lazy val properties = PropertiesOperation.RWPropertiesGen(columns).right.get._2
 
     def result(defaultOrders: List[ColumnOrder])(
       implicit
@@ -168,14 +168,14 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
       ec: ExecutionContext
     ): RWInfo = {
       RWInfo(
-        properties = properties,
+        properties = Nil, //properties,
         retrieveGen = { v: Map[String, Json] =>
         val retrieveDBIO = PropertiesOperation.json2SlickRetrieveOperation(crudQueryWrap.binds).apply(columns).apply(v)
 
         for {
           (statcMany, jsonData) <- retrieveDBIO
         } yield {
-          StaticManyInfo(properties, jsonData, statcMany)
+          StaticManyInfo(Nil /*properties*/ , jsonData, statcMany)
         }
       },
         insertGen = { v: Map[String, Json] =>

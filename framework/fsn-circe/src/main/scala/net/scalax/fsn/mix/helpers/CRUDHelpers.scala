@@ -1,22 +1,17 @@
 package net.scalax.fsn.mix.helpers
 
-import io.circe.{ Decoder, Encoder }
 import net.scalax.fsn.core.{ FAtomic, FAtomicPathImpl }
-import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
 import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.helpers.{ FilterWrapper, SlickUtils }
+import net.scalax.fsn.slick.helpers.FilterWrapper
 import slick.lifted.{ FlatShapeLevel, Shape }
-import slick.relational.RelationalProfile
-
-import scala.reflect.runtime.universe._
 
 case class SCRUD[S, D, T, E](
     create: SCreate[S, D, T, E],
     retrieve: SRetrieve[S, D, T, D, E],
     update: SUpdate[S, D, T, D, E],
     delete: SDelete[S, D, T, D, E],
-    jRead: JsonReader[E],
-    jWrite: JsonWriter[E],
+    //jRead: JsonReader[E],
+    //jWrite: JsonWriter[E],
     isAutoInc: Boolean
 ) extends FAtomicPathImpl[E] { self =>
   def primary(implicit priFilter: FilterWrapper[T, D]): SCRUD[S, D, T, E] = {
@@ -37,8 +32,8 @@ case class SCRUD[S, D, T, E](
       retrieve,
       update,
       delete,
-      jRead,
-      jWrite,
+      //jRead,
+      //jWrite,
       new AutoInc[E] {
         override val isAutoInc = self.isAutoInc
       }
@@ -53,10 +48,10 @@ object SCRUD {
 
   def in[S, D, T](repLike: S, owner1: Any)(
     implicit
-    shape: Shape[_ <: FlatShapeLevel, S, D, T],
-    encoder: Encoder[D],
-    decoder: Decoder[D],
-    weakTypeTag: WeakTypeTag[D]
+    shape: Shape[_ <: FlatShapeLevel, S, D, T] //,
+  //encoder: Encoder[D],
+  //decoder: Decoder[D],
+  //weakTypeTag: WeakTypeTag[D]
   ): SCRUD[S, D, T, D] = {
     val sCreate = SCreate[S, D, T, D](
       mainCol = repLike,
@@ -92,7 +87,7 @@ object SCRUD {
       filterConvert = identity[D] _
     )
 
-    val jsonReader = new JsonReader[D] {
+    /*val jsonReader = new JsonReader[D] {
       override val convert = identity[D] _
       override type JsonType = D
       override val reader = decoder
@@ -103,20 +98,20 @@ object SCRUD {
       override type JsonType = D
       override val writer = encoder
       override val typeTag = weakTypeTag
-    }
+    }*/
 
     SCRUD[S, D, T, D](
       create = sCreate,
       retrieve = sRetrieve,
       update = sUpdate,
       delete = sDelete,
-      jRead = jsonReader,
-      jWrite = jsonWriter,
+      //jRead = jsonReader,
+      //jWrite = jsonWriter,
       isAutoInc = false
     )
   }
 
-  case class Embber[S, D, T](repLike: S, owner1: Any)(
+  /*case class Embber[S, D, T](repLike: S, owner1: Any)(
       shape: Shape[_ <: FlatShapeLevel, S, D, T]
   ) {
     def convert[E](out: D => E)(in: E => D)(
@@ -198,7 +193,7 @@ object SCRUD {
     Embber(repLike, SlickUtils.getTableIdFromCol(repLike)(shape))(shape)
   }
 
-  /*def inExt[S <: Rep[_], D, T, A](repLike: FRep[S])(
+  def inExt[S <: Rep[_], D, T, A](repLike: FRep[S])(
     implicit
     shape: Shape[_ <: FlatShapeLevel, S, D, T]
   ): Embber[S, D, T] = {
