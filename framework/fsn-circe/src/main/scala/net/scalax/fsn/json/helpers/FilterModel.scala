@@ -3,6 +3,8 @@ package net.scalax.fsn.slick.helpers
 import net.scalax.fsn.core.FAtomicValueImpl
 import net.scalax.fsn.json.atomic.SlickCompareData
 
+import scala.language.implicitConversions
+
 trait EqType[F, V] {
   def to(in: F): V
   def from(out: V): F

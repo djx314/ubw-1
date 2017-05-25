@@ -1,6 +1,5 @@
 package net.scalax.fsn.slick.atomic
-import net.scalax.fsn.core.{ FAtomic, FAtomicPathImpl }
-import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Shape }
+import net.scalax.fsn.core.FAtomic
 /*trait SlickSelect[E] extends FAtomic[E] {
   type SourceType
   type SlickType
