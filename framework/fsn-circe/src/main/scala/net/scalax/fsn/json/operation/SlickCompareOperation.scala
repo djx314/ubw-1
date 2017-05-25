@@ -1,10 +1,9 @@
 package net.scalax.fsn.json.operation
 
 import io.circe.Json
-import io.circe.syntax._
-import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
+import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.atomic.{ CompareToStringConvert, JsonReader, JsonWriter, SlickCompare }
+import net.scalax.fsn.json.atomic.{ CompareToStringConvert, SlickCompare }
 import net.scalax.fsn.slick.helpers.{ FilterModel, FilterModelHelper }
 import shapeless._
 
