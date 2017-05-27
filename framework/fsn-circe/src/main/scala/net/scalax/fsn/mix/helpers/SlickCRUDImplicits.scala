@@ -23,6 +23,8 @@ trait SlickCRUDImplicits {
     }
   }
 
+  def emptyPath[T] = FAtomicPathImpl.empty[T]
+
   class FColumnStringImplicitsImpl(override val proName: String) extends FColumnStringImplicits
 
   implicit def fColumnStringExtesionMethods(proName: String): FColumnStringImplicits = new FColumnStringImplicitsImpl(proName)
