@@ -1,7 +1,7 @@
 package net.scalax.fsn.database.test
 
 import io.circe.syntax._
-import net.scalax.fsn.core.{ FAtomicPathImpl, FPile }
+import net.scalax.fsn.core.FAtomicPathImpl
 import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper }
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
 import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
@@ -12,7 +12,6 @@ import scala.language.implicitConversions
 import slick.jdbc.H2Profile.api._
 
 import scala.concurrent._
-import shapeless._
 
 object Sample09 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit with FAtomicValueHelper {
 
