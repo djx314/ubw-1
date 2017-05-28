@@ -7,11 +7,21 @@ import net.scalax.fsn.slick.helpers.{ EqType, FilterModel }
 
 trait JsonReader[E] extends FAtomic[E] {
 
-  type JsonType
   type DataType = E
 
-  val reader: Decoder[JsonType]
-  val convert: JsonType => DataType
+  val reader: Decoder[DataType]
+
+}
+
+object JsonReader {
+
+  implicit val functorForOption: Functor[JsonReader] = new Functor[JsonReader] {
+    override def map[A, B](fa: JsonReader[A])(f: A => B): JsonReader[B] = new JsonReader[B] {
+      override val reader = {
+        fa.reader.map(f)
+      }
+    }
+  }
 
 }
 
@@ -26,7 +36,7 @@ trait SlickCompareData[E] extends FAtomic[E] {
 
 object SlickCompareData {
   implicit val functorForOption: Functor[SlickCompareData] = new Functor[SlickCompareData] {
-    def map[A, B](fa: SlickCompareData[A])(f: A => B): SlickCompareData[B] = new SlickCompareData[B] {
+    override def map[A, B](fa: SlickCompareData[A])(f: A => B): SlickCompareData[B] = new SlickCompareData[B] {
       override val compare = {
         FilterModel(fa.compare.like, fa.compare.eq.map(f), fa.compare.gt.map(f), fa.compare.lt.map(f))
       }
