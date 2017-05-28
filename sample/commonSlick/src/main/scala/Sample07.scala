@@ -20,7 +20,8 @@ object Sample07 extends SlickCRUDImplicits
     with StrFSSelectAtomicHelper
     with Slick2JsonFsnImplicit
     with PilesPolyHelper
-    with FAtomicValueHelper {
+    with FAtomicValueHelper
+    with App {
 
   implicit def fPilesOptionImplicit[D](path: FAtomicPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
     val path1 = path
