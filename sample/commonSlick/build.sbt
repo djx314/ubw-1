@@ -9,7 +9,7 @@ externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral
 
 lazy val fsnProject = RootProject(file("../../../fsn"))
 
-scalaVersion := "2.11.11"
+scalaVersion := "2.12.2"
 
 scalacOptions ++= Seq("-feature", "-deprecation", "-Ywarn-unused-import")
 

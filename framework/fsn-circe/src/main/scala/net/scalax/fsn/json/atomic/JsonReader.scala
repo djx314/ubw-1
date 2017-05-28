@@ -1,5 +1,6 @@
 package net.scalax.fsn.json.atomic
 
+import cats.Functor
 import io.circe.Decoder
 import net.scalax.fsn.core.FAtomic
 import net.scalax.fsn.slick.helpers.{ EqType, FilterModel }
@@ -21,6 +22,16 @@ trait SlickCompare[E] extends FAtomic[E] {
 
 trait SlickCompareData[E] extends FAtomic[E] {
   val compare: FilterModel[E]
+}
+
+object SlickCompareData {
+  implicit val functorForOption: Functor[SlickCompareData] = new Functor[SlickCompareData] {
+    def map[A, B](fa: SlickCompareData[A])(f: A => B): SlickCompareData[B] = new SlickCompareData[B] {
+      override val compare = {
+        FilterModel(fa.compare.like, fa.compare.eq.map(f), fa.compare.gt.map(f), fa.compare.lt.map(f))
+      }
+    }
+  }
 }
 
 trait CompareToStringConvert[E] extends FAtomic[E] {
