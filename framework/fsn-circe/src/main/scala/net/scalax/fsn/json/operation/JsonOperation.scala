@@ -17,9 +17,9 @@ object JsonOperation extends FAtomicValueHelper {
             val tran: Map[String, Json] => FAtomicValueImpl[path.DataType] = { sourceData: Map[String, Json] =>
               sourceData.get(property.proName) match {
                 case Some(json) =>
-                  json.as[jsonReader.JsonType](jsonReader.reader) match {
+                  json.as[jsonReader.DataType](jsonReader.reader) match {
                     case Right(data) =>
-                      set(jsonReader.convert(data))
+                      set(data)
                     case _ =>
                       val ifEmptyData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
                       if (ifEmptyData.isEmpty) {
@@ -53,9 +53,9 @@ object JsonOperation extends FAtomicValueHelper {
             val tran: Map[String, Json] => FAtomicValueImpl[path.DataType] = { sourceData: Map[String, Json] =>
               sourceData.get(property.proName) match {
                 case Some(json) =>
-                  json.as[jsonReader.JsonType](jsonReader.reader) match {
+                  json.as[jsonReader.DataType](jsonReader.reader) match {
                     case Right(data) =>
-                      set(jsonReader.convert(data))
+                      set(data)
                     case _ =>
                       val ifEmptyData = data.opt.fold(defaultOpt.map(_.value))(Option(_))
                       //ifEmptyData
@@ -85,7 +85,7 @@ object JsonOperation extends FAtomicValueHelper {
           case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
             val exportData = data.opt.fold(defaultOpt.map(_.value))(Option(_))
             val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
-            property.proName -> jsonWriter.convert(eachColumnData).asJson(jsonWriter.writer)
+            property.proName -> eachColumnData.asJson(jsonWriter.writer)
           }
         }
     }.aa
@@ -101,7 +101,7 @@ object JsonOperation extends FAtomicValueHelper {
             val exportData = data.opt.fold(defaultOpt.map(_.value))(Option(_))
             //val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
             implicit val writerJ = jsonWriter.writer
-            exportData.map(s => property.proName -> jsonWriter.convert(s).asJson)
+            exportData.map(s => property.proName -> s.asJson)
           }
         }
     }.aa

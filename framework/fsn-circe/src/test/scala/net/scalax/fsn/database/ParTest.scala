@@ -91,11 +91,11 @@ class ParTest extends FlatSpec
               val defaultValueOpt = data.opt.fold(defaultOpt.map(_.value))(Option(_))
               //println(property.proName + ":" + defaultValueOpt + "11111111")
               new JsonWriterImpl {
-                override type DataType = writer.JsonType
+                override type DataType = path.DataType
                 override val key = property.proName
                 override val encoder = writer.writer
                 override val isReaderDefined = readerOpt.isDefined
-                override val data = defaultValueOpt.map(writer.convert)
+                override val data = defaultValueOpt
               }: JsonWriterImpl
           }
       }.aa
@@ -121,11 +121,11 @@ class ParTest extends FlatSpec
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
               val defaultValueOpt = data.opt.fold(defaultOpt.map(_.value))(Option(_))
               new JsonWriterImpl {
-                override type DataType = writer.JsonType
+                override type DataType = path.DataType
                 override val key = property.proName
                 override val encoder = writer.writer
                 override val isReaderDefined = readerOpt.isDefined
-                override val data = defaultValueOpt.map(writer.convert)
+                override val data = defaultValueOpt
               }: JsonWriterImpl
           }
       }.aa
@@ -167,11 +167,11 @@ class ParTest extends FlatSpec
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
               val defaultValueOpt = data.opt.fold(defaultOpt.map(_.value))(Option(_))
               new JsonWriterImpl {
-                override type DataType = writer.JsonType
+                override type DataType = path.DataType
                 override val key = property.proName
                 override val encoder = writer.writer
                 override val isReaderDefined = readerOpt.isDefined
-                override val data = defaultValueOpt.map(writer.convert)
+                override val data = defaultValueOpt
               }: JsonWriterImpl
           }
       }.aa
@@ -216,11 +216,11 @@ class ParTest extends FlatSpec
               //println(data1)
               val defaultValueOpt = data1.opt.fold(defaultOpt.map(_.value))(Option(_))
               new JsonWriterImpl {
-                override type DataType = writer.JsonType
+                override type DataType = path.DataType
                 override val key = property.proName
                 override val encoder = writer.writer
                 override val isReaderDefined = defaultOpt.isDefined
-                override val data = defaultValueOpt.map(writer.convert)
+                override val data = defaultValueOpt
               }: JsonWriterImpl
           }
       }.aa

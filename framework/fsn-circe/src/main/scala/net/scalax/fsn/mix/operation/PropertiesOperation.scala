@@ -30,7 +30,7 @@ object PropertiesOperation extends FPilesGenHelper {
             case (jsonWriter :: property :: inRetrieveOpt :: isAutoIncOpt :: slickRetrieve :: HNil) =>
               RWProperty(
                 property = property.proName,
-                typeName = TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString,
+                typeName = "needToFix", //TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString,
                 inRetrieve = inRetrieveOpt.map(_.isInRetrieve).getOrElse(true),
                 isAutoInc = isAutoIncOpt.map(_.isAutoInc).getOrElse(false),
                 isPrimaryKey = slickRetrieve.primaryGen.isDefined
@@ -49,7 +49,7 @@ object PropertiesOperation extends FPilesGenHelper {
           .mapToWithoutData {
             case (jsonWriter :: property :: describeOpt :: defaultOpt :: defaultDescOpt :: neededFetchOpt :: HNil) =>
               val inRetrieve = neededFetchOpt.map(_.isInView).getOrElse(true)
-              (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString, describeOpt.map(_.describe)))
+              (property.proName -> (defaultDescOpt.map(_.isDefaultDesc).getOrElse(true), inRetrieve, "needToFix", /*TypeHelpers.unwrapWeakTypeTag(jsonWriter.typeTag.tpe).toString*/ describeOpt.map(_.describe)))
           }
       }.aa
     } { jsonTupleList =>

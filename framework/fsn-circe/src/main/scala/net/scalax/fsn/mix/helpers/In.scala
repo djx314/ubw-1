@@ -27,9 +27,7 @@ object In {
   }
 
   def jRead[T](implicit decoder: Decoder[T]): List[FAtomic[T]] = List(new JsonReader[T] {
-    override type JsonType = T
     override val reader = decoder
-    override val convert = identity[T] _
   })
 
   def default[T](data: T): List[FAtomic[T]] = List(new DefaultValue[T] {
@@ -38,13 +36,9 @@ object In {
 
   def jWrite[T](
     implicit
-    encoder: Encoder[T],
-    weakTypeTag: WeakTypeTag[T]
+    encoder: Encoder[T]
   ): List[FAtomic[T]] = List(new JsonWriter[T] {
-    override type JsonType = T
     override val writer = encoder
-    override val convert = identity[T] _
-    override val typeTag = weakTypeTag
   })
 
   def create[S, D, T](sourceCol: S)(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T]): List[FAtomic[D]] = List(new SlickCreate[D] {
