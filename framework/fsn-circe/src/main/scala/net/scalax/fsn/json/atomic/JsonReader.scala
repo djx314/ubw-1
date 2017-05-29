@@ -1,6 +1,6 @@
 package net.scalax.fsn.json.atomic
 
-import cats.Functor
+import cats.{ FlatMap, Functor }
 import io.circe.Decoder
 import net.scalax.fsn.core.FAtomic
 import net.scalax.fsn.slick.helpers.{ EqType, FilterModel }
@@ -15,10 +15,41 @@ trait JsonReader[E] extends FAtomic[E] {
 
 object JsonReader {
 
-  implicit val functorForOption: Functor[JsonReader] = new Functor[JsonReader] {
+  implicit val functorForOption: Functor[JsonReader] = new FlatMap[JsonReader] {
     override def map[A, B](fa: JsonReader[A])(f: A => B): JsonReader[B] = new JsonReader[B] {
       override val reader = {
         fa.reader.map(f)
+      }
+    }
+
+    override def flatMap[A, B](fa: JsonReader[A])(f: A => JsonReader[B]): JsonReader[B] = new JsonReader[B] {
+      override val reader = {
+        fa.reader.flatMap(s => f(s).reader)
+      }
+    }
+
+    override def tailRecM[A, B](init: A)(fn: A => JsonReader[Either[A, B]]): JsonReader[B] = {
+      val eitherReader = fn(init)
+      val decoder: Decoder[B] = Decoder.instance { s =>
+        s.as(eitherReader.reader) match {
+          case Left(err) =>
+            Left(err)
+          case Right(t) =>
+            t match {
+              case Left(aResult) =>
+                s.as(tailRecM(aResult)(fn).reader) match {
+                  case Left(err) =>
+                    Left(err)
+                  case Right(result) =>
+                    Right(result)
+                }
+              case Right(result) =>
+                Right(result)
+            }
+        }
+      }
+      new JsonReader[B] {
+        override val reader = decoder
       }
     }
   }
