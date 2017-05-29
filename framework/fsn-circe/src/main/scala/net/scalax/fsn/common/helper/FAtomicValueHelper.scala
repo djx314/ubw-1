@@ -1,7 +1,7 @@
 package net.scalax.fsn.json.operation
 
 import net.scalax.fsn.common.atomic.{ DefaultValue, FValue }
-import net.scalax.fsn.core.FAtomicValueImpl
+import net.scalax.fsn.core.{ FAtomicValue, FAtomicValueImpl }
 
 import scala.language.implicitConversions
 
@@ -72,6 +72,19 @@ trait FAtomicValueHelper {
     (defaultOpt -> atomicValue.opt) match {
       case (_, valueOpt @ Some(_)) => valueOpt
       case (defaultOpt @ Some(_), None) => defaultOpt
+      case _ => None
+    }
+  }
+
+}
+
+sealed abstract trait FValueUnapply
+
+object FSomeValue extends FValueUnapply {
+
+  def unapply[T](fValue: FAtomicValueImpl[T]): Option[T] = {
+    fValue.atomics match {
+      case Some(elem: FValue[T]) => Option(elem.value)
       case _ => None
     }
   }

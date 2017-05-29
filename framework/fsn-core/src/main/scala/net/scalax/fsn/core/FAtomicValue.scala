@@ -21,10 +21,16 @@ object FAtomicValueImpl {
     }
   }
 
-  def empty[D]: FAtomicValueImpl[D] = {
-    new FAtomicValueImpl[D] {
-      override val atomics = None
+  def empty[T]: FAtomicValueImpl[T] = new FAtomicValueImpl[T] with FAtomicValue {
+    override val atomics = None
+    override type DataType = T
+
+    override def equals(obj: Any): Boolean = obj match {
+      case elem: FAtomicValue if elem.atomics.isEmpty => true
+      case _ => false
     }
   }
+
+  val Zero: FAtomicValue = empty[Nothing]
 
 }
