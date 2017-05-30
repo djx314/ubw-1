@@ -1,11 +1,4 @@
 import net.scalax.sbt.CustomSettings
-import org.slf4j.LoggerFactory
-
-CustomSettings.baseSettings
-
-lazy val logger = {
-  LoggerFactory.getLogger("sbt init")
-}
 
 val slickVersion = "3.2.0"
 val circeVersion = "0.7.0"
