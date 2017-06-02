@@ -1,21 +1,16 @@
 package net.scalax.fsn.mix.operation
 
-import net.scalax.fsn.common.atomic.{ DefaultValue, FDescribe, FProperty }
-import net.scalax.fsn.core._
-import net.scalax.fsn.json.atomic.JsonWriter
-import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.model._
-import net.scalax.fsn.slick.helpers.{ SlickQueryBindImpl, TypeHelpers }
-import net.scalax.fsn.slick.operation._
-import net.scalax.fsn.json.operation._
-import net.scalax.fsn.excel.atomic.PoiWriter
-import slick.jdbc.JdbcActionComponent
-import shapeless._
 import io.circe.Json
-import slick.ast.{ BaseTypedType, Ordering }
-import slick.dbio._
-import slick.lifted._
-import slick.relational.RelationalProfile
+import net.scalax.fsn.core._
+import net.scalax.fsn.slick.atomic._
+import net.scalax.fsn.json.operation._
+import net.scalax.fsn.mix.slickbase.InOutQueryWrap
+import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
+import net.scalax.fsn.slick.model.{ SlickParam, UpdateStaticManyInfo }
+import net.scalax.fsn.slick.operation.{ ExecInfo3, InCreateConvert, StaticManyOperation, StrOutSelectConvert }
+import slick.dbio.{ DBIO, NoStream }
+import slick.jdbc.JdbcActionComponent
+import slick.lifted.{ Query, Rep }
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
@@ -39,6 +34,41 @@ object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
     } { genList =>
       Future.sequence(genList)
     }
+  }
+
+  def json2SlickCreateOperation(binds: InOutQueryWrap)(
+    implicit
+    ec: ExecutionContext,
+    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
+    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+  ): SlickParam => DBIO[Future[List[DBIO[ExecInfo3]]]] = {
+    { param: SlickParam =>
+      val gen = StrOutSelectConvert.ubwGen(binds.listQueryBind).flatMap(futureGen) { (slickReader, futureConvert) =>
+        slickReader.slickResult.apply(param).resultAction.map { action =>
+          val data = action.data
+          Future.sequence(data.map(futureConvert))
+        }
+      }.flatMap(InCreateConvert.createGen) { (futureData, slickWriterGen) =>
+        futureData.map { action =>
+          action.map { data =>
+            val resultActions = data.map { eachData =>
+              slickWriterGen(eachData)(binds.crudBinds)
+            }
+            resultActions
+          }
+        }
+      }
+
+      gen.result(binds.columns) match {
+        case Left(e: Exception) =>
+          e.printStackTrace()
+          throw e
+        case Right(s) => s
+      }
+    }
+
   }
 
 }

@@ -1,9 +1,9 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{FAtomicValueHelper, FSomeValue}
-import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
-import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
+import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
+import net.scalax.fsn.slick.atomic.{ OneToOneRetrieve, SlickRetrieve }
+import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
 import slick.dbio.DBIO
 import slick.lifted._
 import shapeless._

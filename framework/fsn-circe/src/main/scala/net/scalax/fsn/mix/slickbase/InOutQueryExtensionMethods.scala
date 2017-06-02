@@ -1,17 +1,36 @@
 package net.scalax.fsn.mix.slickbase
 
 import net.scalax.fsn.core.FPile
+import net.scalax.fsn.mix.operation.InAndOutOperation
+import net.scalax.fsn.mix.operation.InAndOutOperation.futureGen
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
-import slick.ast.{ AnonSymbol, Ref }
+import net.scalax.fsn.slick.model.SlickParam
+import net.scalax.fsn.slick.operation.{ExecInfo3, InCreateConvert, StrOutSelectConvert}
+import slick.ast.{AnonSymbol, Ref}
+import slick.dbio.{DBIO, NoStream}
+import slick.jdbc.JdbcActionComponent
 import slick.lifted._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 case class InOutQueryWrap(
   columns: List[FPile],
   crudBinds: List[(Any, SlickQueryBindImpl)],
   listQueryBind: SlickQueryBindImpl
-)(implicit val ec: ExecutionContext)
+) { self =>
+
+  def result(
+    implicit
+    ec: ExecutionContext,
+    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
+    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+  ): SlickParam => DBIO[Future[List[DBIO[ExecInfo3]]]] = {
+    InAndOutOperation.json2SlickCreateOperation(self)
+  }
+
+}
 
 class InOutQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
 
@@ -25,7 +44,7 @@ class InOutQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
         new WrappingQuery[E, U, Seq](new slick.ast.Bind(generator, queryToExt.toNode, newQuery.toNode), newQuery.shaped)
       }
     }
-    InOutQueryWrap(fv.columns, fv.crudBinds, slickJsonQuery)(fv.ec)
+    InOutQueryWrap(fv.columns, fv.crudBinds, slickJsonQuery) //(fv.ec)
   }
 
   def map(ev: E => FQueryWrap)(implicit ec: ExecutionContext): InOutQueryWrap = {
@@ -37,7 +56,7 @@ class InOutQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
         new WrappingQuery[E, U, Seq](new slick.ast.Bind(generator, queryToExt.toNode, query.toNode), query.shaped)
       }
     }
-    InOutQueryWrap(columns.columns, columns.binds, slickJsonQuery)(ec)
+    InOutQueryWrap(columns.columns, columns.binds, slickJsonQuery) //(ec)
   }
 
   def filter[T <: Rep[_]: CanBeQueryCondition](f: E => T): PileListQueryExtensionMethods[E, U] = {
