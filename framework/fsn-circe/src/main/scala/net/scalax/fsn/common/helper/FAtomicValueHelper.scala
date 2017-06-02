@@ -54,6 +54,15 @@ trait FAtomicValueHelper {
     }
   }
 
+  def setF[D](value: Future[D]): FAtomicValueImpl[D] = new FAtomicValueImpl[D] {
+    val value1 = value
+    override val atomics = Option {
+      new FFutureValue[D] {
+        override val value = value1
+      }
+    }
+  }
+
   def setOpt[D](valueOpt: Option[D]): FAtomicValueImpl[D] =
     valueOpt match {
       case Some(s) =>

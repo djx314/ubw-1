@@ -5,18 +5,18 @@ import net.scalax.fsn.mix.operation.InAndOutOperation
 import net.scalax.fsn.mix.operation.InAndOutOperation.futureGen
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import net.scalax.fsn.slick.model.SlickParam
-import net.scalax.fsn.slick.operation.{ExecInfo3, InCreateConvert, StrOutSelectConvert}
-import slick.ast.{AnonSymbol, Ref}
-import slick.dbio.{DBIO, NoStream}
+import net.scalax.fsn.slick.operation.{ ExecInfo3, InCreateConvert, StrOutSelectConvert }
+import slick.ast.{ AnonSymbol, Ref }
+import slick.dbio.{ DBIO, NoStream }
 import slick.jdbc.JdbcActionComponent
 import slick.lifted._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 case class InOutQueryWrap(
-  columns: List[FPile],
-  crudBinds: List[(Any, SlickQueryBindImpl)],
-  listQueryBind: SlickQueryBindImpl
+    columns: List[FPile],
+    crudBinds: List[(Any, SlickQueryBindImpl)],
+    listQueryBind: SlickQueryBindImpl
 ) { self =>
 
   def result(
@@ -26,7 +26,7 @@ case class InOutQueryWrap(
     repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
     retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): SlickParam => DBIO[Future[List[DBIO[ExecInfo3]]]] = {
+  ): SlickParam => DBIO[List[Future[DBIO[ExecInfo3]]]] = {
     InAndOutOperation.json2SlickCreateOperation(self)
   }
 
