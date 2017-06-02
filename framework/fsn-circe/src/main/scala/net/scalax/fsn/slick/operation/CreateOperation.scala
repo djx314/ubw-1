@@ -1,7 +1,7 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.FAtomicValueHelper
+import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.{ AutoInc, OneToOneCrate, SlickCreate }
 import net.scalax.fsn.slick.helpers.{ ListAnyShape, SlickQueryBindImpl, SlickUtils }
 import slick.dbio.DBIO
@@ -82,7 +82,7 @@ object InCreateConvert extends FAtomicValueHelper {
       new FAtomicQuery(_) {
         val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: FANil)
           .mapTo {
-            case (slickCreate :: autoIncOpt :: oneToOneCreateOpt :: HNil, data) => {
+            case (slickCreate :: autoIncOpt :: oneToOneCreateOpt :: HNil, data) =>
               val isAutoInc = autoIncOpt.map(_.isAutoInc).getOrElse(false)
               val writer = if (isAutoInc) {
                 lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate =>
@@ -119,12 +119,12 @@ object InCreateConvert extends FAtomicValueHelper {
                   new InsertWrapTran[Unit] {
                     override val table = oneToOneCreate.owner
                     def convert(sourceData: Unit, source: InsertDataQuery): InsertDataQuery = {
-                      val commonData = data
+                      val FSomeValue(commonData) = data
                       new InsertDataQuery {
                         override val bind = source.bind
                         override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
                         override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
-                        override val data = source.data ::: oneToOneCreate.convert(commonData.get) :: Nil
+                        override val data = source.data ::: oneToOneCreate.convert(commonData) :: Nil
                         override val returningCols = source.returningCols
                         override val returningShapes = source.returningShapes
                         override def dataGen(returningData: List[Any]): List[DataWithIndex] = source.dataGen(returningData)
@@ -135,7 +135,8 @@ object InCreateConvert extends FAtomicValueHelper {
 
                 ISWriter(
                   preData = {
-                  slickCreate.reverseConvert(data.get)
+                  val FSomeValue(data1) = data
+                  slickCreate.reverseConvert(data1)
                 },
                   table = slickCreate.owner,
                   preRep = slickCreate.mainCol,
@@ -143,11 +144,13 @@ object InCreateConvert extends FAtomicValueHelper {
                   autoIncRep = (),
                   autoIncShape = implicitly[Shape[FlatShapeLevel, Unit, Unit, Unit]],
                   subGen = oneToOneSubGen,
-                  autalColumn = (s: Unit) => data.get
+                  autalColumn = { (s: Unit) =>
+                  val FSomeValue(data1) = data
+                  data1
+                }
                 )
               }
               writer: ISlickWriter
-            }
           }
       }.aa
     } { genList =>

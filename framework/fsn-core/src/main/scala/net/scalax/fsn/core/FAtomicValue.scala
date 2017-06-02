@@ -21,7 +21,7 @@ object FAtomicValueImpl {
     }
   }
 
-  def empty[T]: FAtomicValueImpl[T] = new FAtomicValueImpl[T] with FAtomicValue {
+  def empty[T]: FAtomicValueImpl[T] = new FAtomicValueImpl[T] {
     override val atomics = None
     override type DataType = T
 

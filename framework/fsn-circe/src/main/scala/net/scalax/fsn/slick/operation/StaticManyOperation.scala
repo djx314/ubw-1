@@ -2,7 +2,7 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.json.operation.FAtomicValueHelper
+import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.StaticMany
 import net.scalax.fsn.slick.model.{ QueryJsonInfo, StaticManyUbw }
 import shapeless._
@@ -21,7 +21,8 @@ object StaticManyOperation extends FAtomicValueHelper {
               Future.sequence(staticMayOpt.toList.map { eachStatic =>
                 eachStatic.staticMany.map {
                   _.map { eachMany =>
-                    eachMany.proName -> eachMany.gen(data.get)
+                    val FSomeValue(data1) = data
+                    eachMany.proName -> eachMany.gen(data1)
                   }
                 }
               }).map(_.flatten.toMap)

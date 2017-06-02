@@ -1,9 +1,9 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.FAtomicValueHelper
-import net.scalax.fsn.slick.atomic.{ OneToOneRetrieve, SlickRetrieve }
-import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
+import net.scalax.fsn.json.operation.{FAtomicValueHelper, FSomeValue}
+import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
+import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
 import slick.dbio.DBIO
 import slick.lifted._
 import shapeless._
@@ -89,9 +89,10 @@ object InRetrieveConvert extends FAtomicValueHelper {
                 primaryGen = slickReader.primaryGen.map(eachPri => new FilterColumnGen[slickReader.TargetType] {
                   override type BooleanTypeRep = eachPri.BooleanTypeRep
                   override val dataToCondition = (sourceCol: slickReader.TargetType) => {
-                    eachPri.dataToCondition(sourceCol)(
-                      slickReader.filterConvert(data.get)
-                    )
+                    eachPri.dataToCondition(sourceCol) {
+                      val FSomeValue(data1) = data
+                      slickReader.filterConvert(data1)
+                    }
                   }
                   override val wt = eachPri.wt
                 }),
