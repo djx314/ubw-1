@@ -10,6 +10,8 @@ trait FAtomicValueImpl[D] extends FAtomicValue {
   self =>
   override val atomics: Option[FAtomic[D]]
   override type DataType = D
+
+  override def toString = s"FAtomicValueImpl($atomics)"
 }
 
 object FAtomicValueImpl {

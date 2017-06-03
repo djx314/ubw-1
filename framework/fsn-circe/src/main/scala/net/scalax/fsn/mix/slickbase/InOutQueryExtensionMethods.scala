@@ -2,13 +2,12 @@ package net.scalax.fsn.mix.slickbase
 
 import net.scalax.fsn.core.FPile
 import net.scalax.fsn.mix.operation.InAndOutOperation
-import net.scalax.fsn.mix.operation.InAndOutOperation.futureGen
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import net.scalax.fsn.slick.model.SlickParam
-import net.scalax.fsn.slick.operation.{ ExecInfo3, InCreateConvert, StrOutSelectConvert }
+import net.scalax.fsn.slick.operation.ExecInfo3
 import slick.ast.{ AnonSymbol, Ref }
 import slick.dbio.{ DBIO, NoStream }
-import slick.jdbc.JdbcActionComponent
+import slick.jdbc.{ JdbcActionComponent, JdbcBackend }
 import slick.lifted._
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -20,14 +19,33 @@ case class InOutQueryWrap(
 ) { self =>
 
   def result(
+    slickParam: SlickParam,
+    sourceDB: JdbcBackend#Database,
+    targetDB: JdbcBackend#Database,
+    groupedSize: Int
+  )(
     implicit
     ec: ExecutionContext,
     jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
     repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
     retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): SlickParam => DBIO[List[Future[DBIO[ExecInfo3]]]] = {
-    InAndOutOperation.json2SlickCreateOperation(self)
+  ): Future[List[ExecInfo3]] = {
+    val execPlan = InAndOutOperation.json2SlickCreateOperation(self)
+    val resultAction = execPlan(slickParam)
+    sourceDB.run(resultAction).flatMap { futures =>
+      futures.grouped(groupedSize).foldLeft(Future successful List.empty[ExecInfo3]) { (effectRow, futureList) =>
+        lazy val insertActions = Future.sequence(futureList.map(_.apply))
+        lazy val insertFuture = insertActions.flatMap(actions => targetDB.run(
+          DBIO.sequence(actions.collect { case Some(s) => s })
+        ))
+        effectRow.flatMap { row =>
+          insertFuture.map { insetResult =>
+            row ::: insetResult
+          }
+        }
+      }
+    }
   }
 
 }

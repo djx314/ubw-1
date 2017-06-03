@@ -1,8 +1,8 @@
 package net.scalax.fsn.database.test
 
 import io.circe.syntax._
-import net.scalax.fsn.core.FAtomicPathImpl
-import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper }
+import net.scalax.fsn.core.{ FAtomicPathImpl, FAtomicValueImpl }
+import net.scalax.fsn.json.operation.{ FSomeValue, FAtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper }
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
 import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
 import net.scalax.fsn.slick.model.{ ColumnOrder, JsonOut, JsonView, SlickParam }
@@ -34,7 +34,10 @@ object Sample09 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
       //"ageOpt" ofPile friend.age.out.filter.readSlickComp.writeJ,
       (("ageOpt" ofPile friend.age.out.filter.readSlickComp))
         .poly("ageOpt1111" ofPile FAtomicPathImpl.empty[Int].writeJ)
-        .transform { s => s.map(t => t.map(r => r + 2).getOrElse(1122)) }
+        .transform {
+          case FSomeValue(t) => set(t.map(r => r + 2).getOrElse(1122))
+          case FAtomicValueImpl.Zero => emptyValue[Int]
+        }
     )
   }
 

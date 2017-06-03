@@ -1,13 +1,11 @@
 package net.scalax.fsn.mix.operation
 
-import io.circe.Json
 import net.scalax.fsn.core._
 import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.json.operation._
 import net.scalax.fsn.mix.slickbase.InOutQueryWrap
-import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
-import net.scalax.fsn.slick.model.{ SlickParam, UpdateStaticManyInfo }
-import net.scalax.fsn.slick.operation.{ ExecInfo3, InCreateConvert, StaticManyOperation, StrOutSelectConvert }
+import net.scalax.fsn.slick.model.SlickParam
+import net.scalax.fsn.slick.operation.{ ExecInfo3, InCreateConvert, StrOutSelectConvert }
 import slick.dbio.{ DBIO, NoStream }
 import slick.jdbc.JdbcActionComponent
 import slick.lifted.{ Query, Rep }
@@ -17,7 +15,7 @@ import scala.concurrent.ExecutionContext
 
 object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
 
-  def futureGen(implicit ec: ExecutionContext): FPileSyntax.PileGen[Future[List[FAtomicValue]]] = {
+  def futureGen(implicit ec: ExecutionContext): FPileSyntax.PileGen[Future[Option[List[FAtomicValue]]]] = {
     FPile.transformTreeList {
       new FAtomicQuery(_) {
         val aa = withRep(needAtomic[SlickCreate])
@@ -28,11 +26,21 @@ object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
                   Future successful dataWrap
                 case FFValue(futureData) =>
                   futureData.map(set)
+                case FAtomicValueImpl.Zero => Future successful FAtomicValueImpl.Zero
+                case x =>
+                  println(x.atomics)
+                  Future successful x
               }): Future[FAtomicValue]
           }
       }.aa
     } { genList =>
-      Future.sequence(genList)
+      Future.sequence(genList).map(Option(_)).recover {
+        case e: NoSuchElementException =>
+          None
+        case e: Exception =>
+          e.printStackTrace
+          None
+      }
     }
   }
 
@@ -43,18 +51,22 @@ object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
     repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
     retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): SlickParam => DBIO[List[Future[DBIO[ExecInfo3]]]] = {
+  ): SlickParam => DBIO[List[() => Future[Option[DBIO[ExecInfo3]]]]] = {
     { param: SlickParam =>
       val gen = StrOutSelectConvert.ubwGen(binds.listQueryBind).flatMap(futureGen) { (slickReader, futureConvert) =>
         slickReader.slickResult.apply(param).resultAction.map { action =>
           val data = action.data
-          data.map(futureConvert)
+          println("已获得全部数据")
+          data.map(s => () => futureConvert(s))
         }
       }.flatMap(InCreateConvert.createGen) { (execAction, slickWriterGen) =>
         execAction.map { futureList =>
-          futureList.map { eachFuture =>
-            eachFuture.map { data =>
-              slickWriterGen(data)(binds.crudBinds)
+          futureList.map { eachFuture => () =>
+            eachFuture().map {
+              _.map {
+                t =>
+                  slickWriterGen(t)(binds.crudBinds)
+              }
             }
           }
         }

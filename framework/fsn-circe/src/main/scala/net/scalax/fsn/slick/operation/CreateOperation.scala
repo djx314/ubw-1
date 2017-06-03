@@ -1,5 +1,6 @@
 package net.scalax.fsn.slick.operation
 
+import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.{ AutoInc, OneToOneCrate, SlickCreate }
@@ -80,9 +81,9 @@ object InCreateConvert extends FAtomicValueHelper {
   ): FPileSyntax.PileGen[List[(Any, SlickQueryBindImpl)] => DBIO[ExecInfo3]] = {
     FPile.transformTreeList {
       new FAtomicQuery(_) {
-        val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: FANil)
+        val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: needAtomic[FProperty] :: FANil)
           .mapTo {
-            case (slickCreate :: autoIncOpt :: oneToOneCreateOpt :: HNil, data) =>
+            case (slickCreate :: autoIncOpt :: oneToOneCreateOpt :: property :: HNil, data) =>
               val isAutoInc = autoIncOpt.map(_.isAutoInc).getOrElse(false)
               val writer = if (isAutoInc) {
                 lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate =>
@@ -135,8 +136,15 @@ object InCreateConvert extends FAtomicValueHelper {
 
                 ISWriter(
                   preData = {
-                  val FSomeValue(data1) = data
-                  slickCreate.reverseConvert(data1)
+                  try {
+                    val FSomeValue(data1) = data
+                    slickCreate.reverseConvert(data1)
+                  } catch {
+                    case e: MatchError =>
+                      println(property.proName)
+                      println(data.atomics)
+                      throw e
+                  }
                 },
                   table = slickCreate.owner,
                   preRep = slickCreate.mainCol,
