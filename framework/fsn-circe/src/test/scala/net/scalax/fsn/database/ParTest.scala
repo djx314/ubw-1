@@ -88,7 +88,7 @@ class ParTest extends FlatSpec
         val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
-              val defaultValueOpt = data.opt.fold(defaultOpt.map(_.value))(Option(_))
+              val defaultValueOpt = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
               //println(property.proName + ":" + defaultValueOpt + "11111111")
               new JsonWriterImpl {
                 override type DataType = path.DataType
@@ -119,7 +119,7 @@ class ParTest extends FlatSpec
         val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
-              val defaultValueOpt = data.opt.fold(defaultOpt.map(_.value))(Option(_))
+              val defaultValueOpt = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
               new JsonWriterImpl {
                 override type DataType = path.DataType
                 override val key = property.proName
@@ -165,7 +165,7 @@ class ParTest extends FlatSpec
         val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
-              val defaultValueOpt = data.opt.fold(defaultOpt.map(_.value))(Option(_))
+              val defaultValueOpt = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
               new JsonWriterImpl {
                 override type DataType = path.DataType
                 override val key = property.proName
@@ -197,7 +197,7 @@ class ParTest extends FlatSpec
         val aa = withRep((needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: FANil) :: FANil)
           .mapTo {
             case ((defaultOpt :: property :: HNil) :: HNil, data) =>
-              val defaultValueOpt = data.opt.fold(defaultOpt.map(_.value))(Option(_))
+              val defaultValueOpt = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
               //println(defaultValueOpt)
               //println(property.proName)
               defaultValueOpt: Option[Any]
@@ -214,7 +214,7 @@ class ParTest extends FlatSpec
           .mapTo {
             case (writer :: (defaultOpt :: HNil) :: property :: HNil, data1) =>
               //println(data1)
-              val defaultValueOpt = data1.opt.fold(defaultOpt.map(_.value))(Option(_))
+              val defaultValueOpt = mergeDefault(defaultOpt, data1) //data1.opt.fold(defaultOpt.map(_.value))(Option(_))
               new JsonWriterImpl {
                 override type DataType = path.DataType
                 override val key = property.proName
@@ -256,7 +256,7 @@ class ParTest extends FlatSpec
         FPNil
     ).transform {
         case (stringData :: longData1 :: HNil) :: (longData2 :: stringData3 :: HNil) :: HNil =>
-          emptyValue[String] :: setOpt(longData2.opt) :: HNil
+          emptyValue[String] :: longData2 :: HNil
       }
 
     /*val pileList = convertPile2 :: mainPile1 :: Nil

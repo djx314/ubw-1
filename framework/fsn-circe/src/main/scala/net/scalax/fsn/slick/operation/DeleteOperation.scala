@@ -1,7 +1,7 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.FAtomicValueHelper
+import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.{ OneToOneRetrieve, SlickDelete }
 import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
 import slick.dbio.DBIO
@@ -93,7 +93,8 @@ object InDeleteConvert extends FAtomicValueHelper {
                           override type BooleanTypeRep = oneToOneDelete.primaryGen.BooleanTypeRep
                           override val dataToCondition = { cols: Seq[Any] =>
                             val col = cols(index).asInstanceOf[oneToOneDelete.TargetType]
-                            val slickData = oneToOneDelete.filterConvert(data.get)
+                            val FSomeValue(data1) = data
+                            val slickData = oneToOneDelete.filterConvert(data1)
                             oneToOneDelete.primaryGen.dataToCondition(col)(slickData)
                           }
                           override val wt = oneToOneDelete.primaryGen.wt
@@ -111,14 +112,18 @@ object InDeleteConvert extends FAtomicValueHelper {
                   (new FilterColumnGen[slickDelete.TargetType] {
                     override type BooleanTypeRep = eachPri.BooleanTypeRep
                     override val dataToCondition = { sourceCol: slickDelete.TargetType =>
-                      eachPri.dataToCondition(sourceCol)(
-                        slickDelete.filterConvert(data.get)
-                      )
+                      eachPri.dataToCondition(sourceCol) {
+                        val FSomeValue(data1) = data
+                        slickDelete.filterConvert(data1)
+                      }
                     }
                     override val wt = eachPri.wt
                   })
                 },
-                data = data.get,
+                data = {
+                  val FSomeValue(data1) = data
+                  data1
+                },
                 subGen = subGenOpt
               ): DSlickWriter2
           }

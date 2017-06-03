@@ -1,7 +1,7 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.FAtomicValueHelper
+import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.{ OneToOneUpdate, SlickUpdate }
 import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
 import slick.dbio.DBIO
@@ -98,7 +98,8 @@ object InUpdateConvert extends FAtomicValueHelper {
                           override type BooleanTypeRep = oneToOneUpdate.primaryGen.BooleanTypeRep
                           override val dataToCondition = { cols: Seq[Any] =>
                             val col = cols(index).asInstanceOf[oneToOneUpdate.TargetType]
-                            val slickData = oneToOneUpdate.filterConvert(data.get)
+                            val FSomeValue(data1) = data
+                            val slickData = oneToOneUpdate.filterConvert(data1)
                             oneToOneUpdate.primaryGen.dataToCondition(col)(slickData)
                           }
                           override val wt = oneToOneUpdate.primaryGen.wt
@@ -116,14 +117,18 @@ object InUpdateConvert extends FAtomicValueHelper {
                 mainCol = slickWriter.mainCol,
                 mainShape = slickWriter.mainShape,
                 table = slickWriter.owner,
-                data = slickWriter.convert(data.get),
+                data = {
+                val FSomeValue(data1) = data
+                slickWriter.convert(data1)
+              },
                 primaryGen = slickWriter.primaryGen.map { eachPri =>
                   (new FilterColumnGen[slickWriter.TargetType] {
                     override type BooleanTypeRep = eachPri.BooleanTypeRep
                     override val dataToCondition = { sourceCol: slickWriter.TargetType =>
-                      eachPri.dataToCondition(sourceCol)(
-                        slickWriter.filterConvert(data.get)
-                      )
+                      eachPri.dataToCondition(sourceCol) {
+                        val FSomeValue(data1) = data
+                        slickWriter.filterConvert(data1)
+                      }
                     }
                     override val wt = eachPri.wt
                   })

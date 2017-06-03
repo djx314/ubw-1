@@ -6,6 +6,11 @@ import slick.ast.{ AnonSymbol, Ref }
 import slick.lifted._
 import slick.relational.RelationalProfile
 
+case class FQueryWrap(
+  binds: List[(Any, SlickQueryBindImpl)],
+  columns: List[FPile]
+)
+
 //TODO 看日后能否去掉 table 的绑定
 class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToExt: Query[E, U, Seq]) {
 

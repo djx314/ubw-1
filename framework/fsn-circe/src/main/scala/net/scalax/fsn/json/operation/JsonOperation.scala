@@ -57,15 +57,16 @@ object JsonOperation extends FAtomicValueHelper {
                     case Right(data) =>
                       set(data)
                     case _ =>
-                      val ifEmptyData = data.opt.fold(defaultOpt.map(_.value))(Option(_))
+                      val ifEmptyData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
                       //ifEmptyData
-                      ifEmptyData.map(set).getOrElse(FAtomicValueImpl.empty)
-
+                      //ifEmptyData.map(set).getOrElse(FAtomicValueImpl.empty)
+                      setOpt(ifEmptyData)
                   }
                 case None =>
-                  val ifEmptyData = data.opt.fold(defaultOpt.map(_.value))(Option(_))
+                  val ifEmptyData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
                   //ifEmptyData
-                  ifEmptyData.map(set).getOrElse(FAtomicValueImpl.empty)
+                  //ifEmptyData.map(set).getOrElse(FAtomicValueImpl.empty)
+                  setOpt(ifEmptyData)
               }
             }
 
@@ -83,7 +84,7 @@ object JsonOperation extends FAtomicValueHelper {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
-            val exportData = data.opt.fold(defaultOpt.map(_.value))(Option(_))
+            val exportData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
             val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
             property.proName -> eachColumnData.asJson(jsonWriter.writer)
           }
@@ -98,7 +99,7 @@ object JsonOperation extends FAtomicValueHelper {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
-            val exportData = data.opt.fold(defaultOpt.map(_.value))(Option(_))
+            val exportData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
             //val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
             implicit val writerJ = jsonWriter.writer
             exportData.map(s => property.proName -> s.asJson)

@@ -2,7 +2,7 @@ package net.scalax.fsn.mix.helpers
 
 import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.core._
-import net.scalax.fsn.mix.slickbase.{ CrudQueryExtensionMethods, PileListQueryExtensionMethods }
+import net.scalax.fsn.mix.slickbase.{ CrudQueryExtensionMethods, InOutQueryExtensionMethods, PileListQueryExtensionMethods }
 import net.scalax.fsn.slick.helpers.{ FRep, SlickUtils }
 import slick.lifted.{ FlatShapeLevel, Query, Shape }
 import slick.relational.RelationalProfile
@@ -66,6 +66,12 @@ trait SlickCRUDImplicits {
   implicit class queryToCrudQueryExtendsionMethodGen[E <: RelationalProfile#Table[_], U](query: Query[E, U, Seq]) {
 
     def crud = new CrudQueryExtensionMethods[E, U](query)
+
+  }
+
+  implicit class queryToCRUDOutQueryExtendsionMethodGen[E, U](query: Query[E, U, Seq]) {
+
+    def transformOut = new InOutQueryExtensionMethods[E, U](query)
 
   }
 

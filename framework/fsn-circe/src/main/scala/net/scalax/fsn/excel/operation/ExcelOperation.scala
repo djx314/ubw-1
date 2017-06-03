@@ -96,7 +96,7 @@ object ExcelOperation extends FAtomicValueHelper /*extends FAtomicGenHelper with
       val aa = withRep(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (poiWriter :: transforms :: property :: defaultOpt :: HNil, data) => {
-            val exportData = data.opt.fold(defaultOpt.map(_.value))(Option(_))
+            val exportData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
             val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
             property.proName -> CellData.gen(poiWriter.convert(eachColumnData))(poiWriter.writer).addTransform(transforms.toList.flatMap(_.transforms)): (String, CellData[_])
           }
