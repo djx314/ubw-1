@@ -15,7 +15,7 @@ trait FsnShape[Packed_, DataType_] {
 
   def zero: DataType_
 
-  val dataLength: Int
+  def dataLength: Int
 
 }
 

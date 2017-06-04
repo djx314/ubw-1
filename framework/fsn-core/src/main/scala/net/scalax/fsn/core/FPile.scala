@@ -17,7 +17,7 @@ trait FPileAbstract {
   val dataFromSub: List[Any] => DataType
   val subs: List[FPileAbstract]
 
-  val genPiles: List[FPileAbstract]
+  def genPiles: List[FPileAbstract]
 
 }
 
@@ -27,26 +27,47 @@ trait FPile extends FPileAbstract {
   //val genPiles: FPile => List[FPile]
 
   val dataListFromSubList: List[FAtomicValue] => List[FAtomicValue] = { list =>
-    val autalSubs = genPiles.flatMap(_.subs)
-    //println("22 " + autalSubs.map(_.dataLengthSum))
-    /*if (autalSubs.isEmpty) {
-      list
-    } else {*/
-    genPiles.zip(ListUtils.splitList(list, genPiles.map(_.dataLengthSum): _*)).flatMap {
+    /*val result = genPiles.zip(ListUtils.splitList(list, genPiles.map(_.dataLengthSum): _*)).flatMap {
       case (eachPile, eachData) =>
-        println(eachData)
-        println("11 " + eachPile.dataLengthSum)
-        println("22 " + eachPile.subs.map(_.dataLengthSum))
         if (eachPile.subs.isEmpty) {
           list
-        } else {
+        } else if (eachPile.subs.forall(_.subs.isEmpty)) {
           eachPile.fShape.encodeData(eachPile.dataFromSub(eachPile.subs.zip(ListUtils.splitList(eachData, eachPile.subs.map(_.dataLengthSum): _*)).map {
             case (eachSub, subData) =>
               eachSub.fShape.decodeData(eachSub.dataListFromSubList(subData))
           }))
+        } else {
+          eachPile.subs.zip(ListUtils.splitList(eachData, eachPile.subs.map(_.dataLengthSum): _*)).flatMap {
+            case (pile, data) =>
+              pile.dataListFromSubList(data)
+          }
         }
     }
-    //}
+    println(result)
+    result*/
+    if (self.subs.isEmpty) {
+      list
+    } else if (self.subs.forall(_.subs.isEmpty)) {
+      self.fShape.encodeData(self.dataFromSub(self.subs.zip(ListUtils.splitList(list, self.subs.map(_.dataLengthSum): _*)).map {
+        case (eachSub, subData) =>
+          eachSub.fShape.decodeData(eachSub.dataListFromSubList(subData))
+      }))
+    } else {
+      println(self)
+      println(self.subs.map(_.dataLengthSum))
+      println(list)
+      self.subs.zip(ListUtils.splitList(list, self.subs.map(_.dataLengthSum): _*)).flatMap {
+        case (pile, data) =>
+          pile.dataListFromSubList(data)
+      }
+      /*genPiles.zip(ListUtils.splitList(list, genPiles.map(_.dataLengthSum): _*)).flatMap {
+        case (eachPile, eachData) =>
+          eachPile.subs.zip(ListUtils.splitList(list, eachPile.subs.map(_.dataLengthSum): _*)).flatMap {
+            case (pile, data) =>
+              pile.dataListFromSubList(eachData)
+          }
+      }*/
+    }
   }
 
   lazy val paths: List[FAtomicPath] = fShape.encodeColumn(pathPile)
@@ -77,13 +98,20 @@ trait FPile extends FPileAbstract {
       subs.flatMap(s => s.genPiles.flatMap(_.deepZero))
       //subs.flatMap(s => s.deepZero)
     }
+    genPiles.flatMap { s =>
+      if (s.subs.isEmpty) {
+        s.fShape.encodeData(s.fShape.zero)
+      } else {
+        s.subs.flatMap(_.deepZero)
+      }
+    }
   }
 
   override val subs: List[FPile]
 
   override def toString: String = {
     s"""Node(length:${dataLengthSum}): {
-       |${fShape.encodeColumn(pathPile).mkString("\n").split("\\n").map(s => "  " + s).mkString("\n")}
+       |${genPiles.flatMap(s => s.fShape.encodeColumn(s.pathPile)).mkString("\n").split("\\n").map(s => "  " + s).mkString("\n")}
        |""".stripMargin +
       s"""
        |  Children: {
@@ -92,11 +120,11 @@ trait FPile extends FPileAbstract {
        |}""".stripMargin
   }
 
-  override val genPiles: List[FPile] = List(self)
+  override def genPiles: List[FPile]
 
 }
 
-class FPileImpl[E, U](
+abstract class FPileImpl[E, U](
     override val pathPile: E,
     override val fShape: FsnShape[E, U],
     override val dataFromSub: List[Any] => U,
@@ -104,7 +132,7 @@ class FPileImpl[E, U](
 ) extends FPile {
   self =>
 
-  override val genPiles: List[FPile] = List(self)
+  override def genPiles: List[FPile] //= List(self)
 
   override type PathType = E
   override type DataType = U
@@ -132,13 +160,13 @@ class FPileImpl[E, U](
             case (eachPile, data) =>
               eachPile.fShape.encodeData(data.asInstanceOf[eachPile.DataType])
           }.flatten)*/
-          //println("33" * 100)
-          //println(list)
-          //println("44" * 100)
           cv(list.head.asInstanceOf[self.DataType])
         }
 
-        new FPileImpl(other.pathPile, other.fShape, dataFromSub, List(self) /*.genPiles(self)*/ ) /*({ source => other.genPiles(source) })*/
+        new FPileImpl(other.pathPile, other.fShape, dataFromSub, List(self) /*.genPiles(self)*/ ) {
+          implSelf =>
+          override def genPiles = List(implSelf) //throw new Exception("不应该使用")
+        } /*({ source => other.genPiles(source) })*/
       }
     }
   }
@@ -152,21 +180,30 @@ object FPile {
     def ::[A, B](cc: FPileImpl[A, B]): FPileImpl[A :: E, B :: U] = {
       val pathPile = cc.pathPile :: bb.pathPile
       val shape: FsnShape[A :: E, B :: U] = new FsnShape[A :: E, B :: U] {
-        def encodeColumn(pile: A :: E): List[FAtomicPath] = {
-          val sub :: tail = pile
-          cc.fShape.encodeColumn(sub) ::: bb.fShape.encodeColumn(tail)
+        override def encodeColumn(pile: A :: E): List[FAtomicPath] = {
+          //val sub :: tail = pile
+          //cc.fShape.encodeColumn(sub) ::: bb.fShape.encodeColumn(tail)
+          throw new Exception("合并后的 FPile 不应该使用 encodeColumn")
         }
-        def encodeData(pileData: B :: U): List[FAtomicValue] = {
-          val sub :: tail = pileData
-          cc.fShape.encodeData(sub) ::: bb.fShape.encodeData(tail)
+        override def encodeData(pileData: B :: U): List[FAtomicValue] = {
+          //val sub :: tail = pileData
+          //cc.fShape.encodeData(sub) ::: bb.fShape.encodeData(tail)
+          throw new Exception("合并后的 FPile 不应该使用 encodeData")
         }
-        def decodeData(data: List[FAtomicValue]): B :: U = {
+        override def decodeData(data: List[FAtomicValue]): B :: U = {
           cc.fShape.decodeData(data.take(cc.fShape.dataLength)) :: bb.fShape.decodeData(data.drop(cc.fShape.dataLength))
+          //throw new Exception("合并后的 FPile 不应该使用 decodeData")
         }
 
-        def zero = cc.fShape.zero :: bb.fShape.zero
+        override def zero = {
+          //cc.fShape.zero :: bb.fShape.zero
+          throw new Exception("合并后的 FPile 不应该使用 zero")
+        }
 
-        val dataLength = cc.fShape.dataLength + bb.fShape.dataLength
+        override def dataLength = {
+          //cc.fShape.dataLength + bb.fShape.dataLength
+          throw new Exception("合并后的 FPile 不能求出长度")
+        }
       }
       val dataFromSub: List[Any] => (B :: U) = { list =>
         /*val piles: List[FPile] = cc.subs ::: bb.subs
@@ -174,16 +211,11 @@ object FPile {
           case (eachPile, data) =>
             eachPile.fShape.encodeData(data.head.asInstanceOf[eachPile.DataType])
         }.flatten)*/
-        //println("11" * 100)
-        //println(list)
-        //println(cc.dataFromSub(list.take(cc.subs.size)))
-        //println(bb.dataFromSub(list.drop(cc.subs.size)))
-        //println("22" * 100)
         cc.dataFromSub(list.take(cc.subs.size)) :: bb.dataFromSub(list.drop(cc.subs.size))
       }
 
       new FPileImpl(pathPile, shape, dataFromSub, cc.subs ::: bb.subs) {
-        override val genPiles: List[FPile] = List(cc, bb)
+        override val genPiles: List[FPile] = cc.genPiles ::: bb.genPiles //List(cc, bb)
       } /*({ cusType =>
         val newCus = cusType.asInstanceOf[FPileImpl[A :: E, B :: U]]
         val ccPathImpl = new FPileImpl(newCus.pathPile.head, cc.fShape, cc.dataFromSub,)
@@ -196,7 +228,10 @@ object FPile {
 
   val empty: FPileImpl[HNil, HNil] = {
     val shape = FsnShape.hnilFsnShape
-    new FPileImpl(HNil, shape, { _: List[Any] => shape.zero }, List.empty[FPile]) /*({ cusType =>
+    new FPileImpl(HNil, shape, { _: List[Any] => shape.zero }, List.empty[FPile]) {
+      self =>
+      override def genPiles = List(self) //throw new Exception("不应该使用")
+    } /*({ cusType =>
       cusType :: Nil
     })*/
   }
@@ -205,7 +240,10 @@ object FPile {
     val shape = FsnShape.fpathFsnShape[D]
     new FPileImpl(paths, shape, { _: List[Any] =>
       shape.zero
-    }, List.empty[FPile]) /*({ cusType =>
+    }, List.empty[FPile]) {
+      self =>
+      override def genPiles = List(self) //throw new Exception("不应该使用")
+    } /*({ cusType =>
       cusType :: Nil
     })*/
   }
@@ -235,7 +273,6 @@ object FPile {
   }
 
   def genTree[U](pathGen: FAtomicPath => FQueryTranform[U], pile: FPile): Either[FAtomicException, (FPile, List[FPile])] = {
-    //println(genTreeTailCall(pathGen, pile, pile))
     genTreeTailCall(pathGen, pile, pile).right.map { case (oldPile, newPile, piles) => newPile -> piles }
   }
 
@@ -275,8 +312,9 @@ object FPile {
       calculatePiles.right.map { pileList =>
         val (newPile, summaryPiles) = pileList.unzip
         newPile -> { anyList: List[FAtomicValue] =>
-          println(anyList)
-          println(summaryPiles.map(_.map(_.dataLengthSum).sum))
+          //println(anyList)
+          //println(summaryPiles.map(_.map(_.dataLengthSum).sum))
+          println(newPile)
           columnGen(ListUtils.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*)
             .zip(summaryPiles)
             .flatMap {
@@ -295,6 +333,14 @@ object FPile {
   }
 
   def genTreeTailCallWithoutData[U](pathGen: FAtomicPath => FQueryTranformWithOutData[U], oldPile: FPile, newPile: FPile): Either[FAtomicException, (FPile, FPile, List[FPile])] = {
+    /*if (newPile.subs.isEmpty) {
+      val transforms = newPile.paths.map(pathGen)
+      if (transforms.forall(_.gen.isRight)) {
+        Right(oldPile, newPile, List(oldPile))
+      } else {
+        Left(FAtomicException(transforms.map(_.gen).collect { case Left(FAtomicException(s)) => s }.flatten))
+      }
+    } else {*/
     if (newPile.subs.isEmpty) {
       val transforms = newPile.paths.map(pathGen)
       if (transforms.forall(_.gen.isRight)) {
@@ -303,13 +349,22 @@ object FPile {
         Left(FAtomicException(transforms.map(_.gen).collect { case Left(FAtomicException(s)) => s }.flatten))
       }
     } else {
-      val newSubs = oldPile.subs.zip(newPile.subs).map { case (eachOldPile, eachNewPile) => genTreeTailCallWithoutData(pathGen, eachOldPile, eachNewPile) }
+      val newSubs = oldPile.subs.flatMap(_.genPiles).zip(newPile.subs.flatMap(_.genPiles)).map { case (eachOldPile, eachNewPile) => genTreeTailCallWithoutData(pathGen, eachOldPile, eachNewPile) }
+      //val newSubs = oldPile.subs.zip(newPile.subs).map { case (eachOldPile, eachNewPile) => genTreeTailCallWithoutData(pathGen, eachOldPile, eachNewPile) }
       if (newSubs.forall(_.isRight)) {
         val (_, newSubTree, successNodes) = newSubs.map(_.right.get).unzip3
-        val newNode = new FPileImpl(newPile.pathPile, newPile.fShape, newPile.dataFromSub, newSubTree) /*()*/
+        val newNode = new FPileImpl(newPile.pathPile, newPile.fShape, newPile.dataFromSub, newSubTree) {
+          self =>
+          //TODO
+          override def genPiles = List(self) //throw new Exception("不应该使用")
+        } /*()*/
         Right(oldPile, newNode, successNodes.flatten)
       } else {
-        genTreeTailCallWithoutData(pathGen, oldPile, new FPileImpl(newPile.pathPile, newPile.fShape, (_: List[Any]) => newPile.fShape.zero, Nil))
+        genTreeTailCallWithoutData(pathGen, oldPile, new FPileImpl(newPile.pathPile, newPile.fShape, (_: List[Any]) => newPile.fShape.zero, Nil) {
+          self =>
+          //TODO
+          override def genPiles = List(self) //throw new Exception("不应该使用")
+        })
       }
     }
   }
@@ -321,7 +376,7 @@ object FPile {
   def transformTreeListWithoutData[U, T](pathGen: FAtomicPath => FQueryTranformWithOutData[U])(columnGen: List[U] => T): FPileSyntaxWithoutData.PileGen[T] = {
     prePiles: List[FPile] =>
       //防止定义 FPile 时最后一步使用了混合后不能识别最后一层 path
-      val piles = prePiles //.flatMap(eachPile => eachPile.genPiles)
+      val piles = prePiles.flatMap(eachPile => eachPile.genPiles)
       val calculatePiles = piles.map { s =>
         genTreeWithoutData(pathGen, s)
       }.foldLeft(Right(Nil): Either[FAtomicException, List[(FPile, List[FPile])]]) {
