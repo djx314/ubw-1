@@ -27,25 +27,35 @@ trait FPile extends FPileAbstract {
   //val genPiles: FPile => List[FPile]
 
   val dataListFromSubList: List[FAtomicValue] => List[FAtomicValue] = { list =>
-    /*val result = genPiles.zip(ListUtils.splitList(list, genPiles.map(_.dataLengthSum): _*)).flatMap {
+    val result = genPiles.zip(ListUtils.splitList(list, genPiles.map(_.dataLengthSum): _*)).flatMap {
       case (eachPile, eachData) =>
         if (eachPile.subs.isEmpty) {
           list
-        } else if (eachPile.subs.forall(_.subs.isEmpty)) {
-          eachPile.fShape.encodeData(eachPile.dataFromSub(eachPile.subs.zip(ListUtils.splitList(eachData, eachPile.subs.map(_.dataLengthSum): _*)).map {
-            case (eachSub, subData) =>
-              eachSub.fShape.decodeData(eachSub.dataListFromSubList(subData))
-          }))
+        } else if (eachPile.subs.forall(_.genPiles.forall(_.subs.isEmpty))) {
+          val totalSubs = eachPile.subs.flatMap(_.genPiles)
+          eachPile.fShape.encodeData(eachPile.dataFromSub {
+            val dataList = totalSubs.zip(ListUtils.splitList(eachData, totalSubs.map(_.dataLengthSum): _*)).flatMap {
+              case (eachSub, subData) =>
+                //eachSub.fShape.decodeData()
+                eachSub.dataListFromSubList(subData)
+            }
+            eachPile.subs.zip(ListUtils.splitList(dataList, eachPile.subs.map(_.dataLengthSum): _*)).map {
+              case (eachSub, subData) =>
+                //eachSub.fShape.decodeData()
+                eachSub.fShape.decodeData(subData)
+            }
+          })
         } else {
-          eachPile.subs.zip(ListUtils.splitList(eachData, eachPile.subs.map(_.dataLengthSum): _*)).flatMap {
+          val totalSubs = eachPile.subs.flatMap(_.genPiles)
+          totalSubs.zip(ListUtils.splitList(eachData, totalSubs.map(_.dataLengthSum): _*)).flatMap {
             case (pile, data) =>
               pile.dataListFromSubList(data)
           }
         }
     }
     println(result)
-    result*/
-    if (self.subs.isEmpty) {
+    result
+    /*if (self.subs.isEmpty) {
       list
     } else if (self.subs.forall(_.subs.isEmpty)) {
       self.fShape.encodeData(self.dataFromSub(self.subs.zip(ListUtils.splitList(list, self.subs.map(_.dataLengthSum): _*)).map {
@@ -60,17 +70,10 @@ trait FPile extends FPileAbstract {
         case (pile, data) =>
           pile.dataListFromSubList(data)
       }
-      /*genPiles.zip(ListUtils.splitList(list, genPiles.map(_.dataLengthSum): _*)).flatMap {
-        case (eachPile, eachData) =>
-          eachPile.subs.zip(ListUtils.splitList(list, eachPile.subs.map(_.dataLengthSum): _*)).flatMap {
-            case (pile, data) =>
-              pile.dataListFromSubList(eachData)
-          }
-      }*/
-    }
+    }*/
   }
 
-  lazy val paths: List[FAtomicPath] = fShape.encodeColumn(pathPile)
+  lazy val paths: List[FAtomicPath] = genPiles.flatMap(s => s.fShape.encodeColumn(s.pathPile))
 
   lazy val dataLengthSum: Int = {
     /*val autalSubs = genPiles.flatMap(_.subs)
@@ -143,7 +146,7 @@ abstract class FPileImpl[E, U](
 
   def poly[A, B](other: FPileImpl[A, B]): Abc[U, A, B] = {
     new Abc[U, A, B] {
-      def transform(cv: U => B): FPileImpl[A, B] = {
+      override def transform(cv: U => B): FPileImpl[A, B] = {
 
         /*val dataFromSub: List[Any] => B = { list =>
           val piles = List(self) //self.genPiles(self)
@@ -250,6 +253,7 @@ object FPile {
 
   def genTreeTailCall[U](pathGen: FAtomicPath => FQueryTranform[U], oldPile: FPile, newPile: FPile): Either[FAtomicException, (FPile, FPile, List[FPile])] = {
     if (newPile.subs.isEmpty) {
+      println(newPile)
       val transforms = newPile.paths.map(pathGen)
       if (transforms.forall(_.gen.isRight)) {
         Right(oldPile, newPile, List(oldPile))
@@ -261,12 +265,12 @@ object FPile {
       if (newSubs.forall(_.isRight)) {
         val (_, newSubTree, successNodes) = newSubs.map(_.right.get).unzip3
         val newNode = new FPileImpl(newPile.pathPile, newPile.fShape, newPile.dataFromSub, newSubTree) {
-          override val genPiles: List[FPile] = newPile.genPiles
+          override val genPiles: List[FPile] = List(this) //newPile.genPiles
         } /*(newPile.genPiles)*/
         Right(oldPile, newNode, successNodes.flatten)
       } else {
         genTreeTailCall(pathGen, oldPile, new FPileImpl(newPile.pathPile, newPile.fShape, (_: List[Any]) => newPile.fShape.zero, Nil) {
-          override val genPiles: List[FPile] = newPile.genPiles
+          override val genPiles: List[FPile] = List(this) //newPile.genPiles
         } /*()*/ )
       }
     }
