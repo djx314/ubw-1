@@ -1,7 +1,26 @@
 package net.scalax.fsn.core
 
+import net.scalax.fsn.core.ListUtils.WeightData
+
 sealed abstract trait FPileAbs1111 {
+  self =>
   type DataType
+
+  def dataLengthSum: Int = {
+    self match {
+      case pList: FPileList =>
+        pList.encodePiles(pList.pileEntity).map(_.dataLengthSum).sum
+      case pile: FPile1111 =>
+        if (pile.subs.isEmpty)
+          pile.fShape.dataLength
+        else
+          pile.subs.map(_.dataLengthSum).sum
+    }
+  }
+
+  def dataListFromSubList(atomicDatas: List[WeightData[FAtomicValue]]): List[WeightData[FAtomicValue]] = {
+    ???
+  }
 }
 
 trait FPileList extends FPileAbs1111 {
@@ -11,19 +30,23 @@ trait FPileList extends FPileAbs1111 {
   val pileEntity: PileType
 
   def encodePiles(piles: PileType): List[FPile]
-  def decodeData(datas: List[Any]): DataType
+  def decodePileData(datas: List[Any]): DataType
+  def encodePileData(data: DataType): List[Any]
+
 }
 
 case class FPileListImpl[PT, DT](
     override val pileEntity: PT,
     encoder: PT => List[FPile],
-    decoder: List[Any] => DT
+    dataDecoder: List[Any] => DT,
+    dataEncoder: DT => List[Any]
 ) extends FPileList {
   override type PileType = PT
   override type DataType = DT
 
   override def encodePiles(piles: PT): List[FPile] = encoder(piles)
-  override def decodeData(datas: List[Any]): DT = decoder(datas)
+  override def decodePileData(datas: List[Any]): DT = dataDecoder(datas)
+  override def encodePileData(data: DataType): List[Any] = dataEncoder(data)
 }
 
 trait FPile1111 extends FPileAbs1111 {
