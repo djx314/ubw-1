@@ -49,24 +49,38 @@ case class FPileListImpl[PT, DT](
   override def encodePileData(data: DataType): List[Any] = dataEncoder(data)
 }
 
-trait FPile1111 extends FPileAbs1111 {
+abstract trait FCommonPile extends FPileAbs1111 {
   type PathType
   override type DataType
 
   val pathPile: PathType
-
   val fShape: FsnShape[PathType, DataType]
+  //val dataFromSub: List[Any] => DataType
+  //val subs: List[FPileAbs1111]
+}
 
+trait FPile1111 extends FCommonPile {
   val dataFromSub: List[Any] => DataType
-  val subs: List[FPileAbs1111]
+  val subs: FPileAbs1111
 }
 
 case class FPile1111Impl[PT, DT](
     override val pathPile: PT,
     override val fShape: FsnShape[PT, DT],
     override val dataFromSub: List[Any] => DT,
-    override val subs: List[FPileAbs1111]
+    override val subs: FPileAbs1111
 ) extends FPile1111 {
+  override type PathType = PT
+  override type DataType = DT
+}
+
+trait FLeafPile extends FCommonPile {
+}
+
+case class FLeafPileImpl[PT, DT](
+    override val pathPile: PT,
+    override val fShape: FsnShape[PT, DT]
+) extends FLeafPile {
   override type PathType = PT
   override type DataType = DT
 }
