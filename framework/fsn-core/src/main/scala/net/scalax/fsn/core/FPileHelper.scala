@@ -60,6 +60,7 @@ trait FPileSyntax[T] {
 object FPileSyntax {
 
   type PileGen[T] = List[FPile] => Either[FAtomicException, (List[FPile], List[FAtomicValue] => T)]
+  type PileGen1111[T] = List[FPileAbs1111] => Either[FAtomicException, (List[FPileAbs1111], List[FAtomicValue] => T)]
 
   def apply1111[T](piles: FPileSyntax.PileGen[T]): FPileSyntax[T] = {
     new FPileSyntax[T] {

@@ -251,6 +251,32 @@ object FPile {
     })*/
   }
 
+  def genTreeTailCall[U](pathGen: FAtomicPath => FQueryTranform[U], oldPile: FPile, newPile: FPile): Either[FAtomicException, (FPile, List[FPile])] = {
+    if (newPile.subs.isEmpty) {
+      println(newPile)
+      val transforms = newPile.paths.map(pathGen)
+      if (transforms.forall(_.gen.isRight)) {
+        Right(newPile, List(oldPile))
+      } else {
+        Left(FAtomicException(transforms.map(_.gen).collect { case Left(FAtomicException(s)) => s }.flatten))
+      }
+    } else {
+      val newSubs = oldPile.subs.flatMap(_.genPiles).zip(newPile.subs.flatMap(_.genPiles)).map { case (eachOldPile, eachNewPile) => genTreeTailCall(pathGen, eachOldPile, eachNewPile) }
+      if (newSubs.forall(_.isRight)) {
+        val (newSubTree, successNodes) = newSubs.map(_.right.get).unzip
+        val newNode = new FPileImpl(newPile.pathPile, newPile.fShape, newPile.dataFromSub, newSubTree) {
+          override val genPiles: List[FPile] = List(this) //newPile.genPiles
+        } /*(newPile.genPiles)*/
+        Right(newNode, successNodes.flatten)
+      } else {
+        genTreeTailCall(pathGen, oldPile, new FPileImpl(newPile.pathPile, newPile.fShape, (_: List[Any]) => newPile.fShape.zero, Nil) {
+          override val genPiles: List[FPile] = List(this) //newPile.genPiles
+        } /*()*/ )
+      }
+    }
+  }
+
+  /*
   def genTreeTailCall[U](pathGen: FAtomicPath => FQueryTranform[U], oldPile: FPile, newPile: FPile): Either[FAtomicException, (FPile, FPile, List[FPile])] = {
     if (newPile.subs.isEmpty) {
       println(newPile)
@@ -275,9 +301,10 @@ object FPile {
       }
     }
   }
+    */
 
   def genTree[U](pathGen: FAtomicPath => FQueryTranform[U], pile: FPile): Either[FAtomicException, (FPile, List[FPile])] = {
-    genTreeTailCall(pathGen, pile, pile).right.map { case (oldPile, newPile, piles) => newPile -> piles }
+    genTreeTailCall(pathGen, pile, pile).right.map { case (newPile, piles) => newPile -> piles }
   }
 
   def transformTree[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): FPile => Either[FAtomicException, (FPile, List[FAtomicValue] => T)] = {
