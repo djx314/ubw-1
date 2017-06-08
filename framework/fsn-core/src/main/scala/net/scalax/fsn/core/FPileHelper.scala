@@ -105,10 +105,23 @@ trait FPilesGenHelper1111 {
   trait FLeafPileListPileMerge[LS, LE, D] {
     val basePilePath: LS
     def toPileList(source: LS): FPileListImpl[LS, D]
-    def toLeafPile(source: LS): FLeafPile[LE, D]
+    def toLeafPile(source: LS): FLeafPileImpl[LE, D]
   }
 
-  val FPNil: FLeafPileImpl[HNil, HNil] = new FLeafPileImpl(HNil, FsnShape.hnilFsnShape)
+  val FPNil: FLeafPileListPileMerge[HNil, HNil, HNil] = {
+    val leafPile = new FLeafPileImpl(HNil, FsnShape.hnilFsnShape)
+    val emptyPileHlist = new FPileListImpl[HNil, HNil](
+      HNil,
+      { _ => Nil },
+      { _ => HNil },
+      { _ => HNil }
+    )
+    new FLeafPileListPileMerge[HNil, HNil, HNil] {
+      override val basePilePath = HNil
+      override def toPileList(source: HNil): FPileListImpl[HNil, HNil] = emptyPileHlist
+      override def toLeafPile(source: HNil): FLeafPileImpl[HNil, HNil] = leafPile
+    }
+  }
 
   trait Abc[G, H, I] {
     def transform(cv: G => I): FPile1111Impl[H, I]
