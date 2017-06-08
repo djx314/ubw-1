@@ -307,7 +307,8 @@ object FPile {
     genTreeTailCall(pathGen, pile, pile).right.map { case (newPile, piles) => newPile -> piles }
   }
 
-  def transformTree[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): FPile => Either[FAtomicException, (FPile, List[FAtomicValue] => T)] = {
+  //TODO 看看是否可以删除
+  /*def transformTree[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): FPile => Either[FAtomicException, (FPile, List[FAtomicValue] => T)] = {
     (pile: FPile) =>
       {
         genTree(pathGen, pile).right.map {
@@ -318,7 +319,7 @@ object FPile {
             }
         }
       }
-  }
+  }*/
 
   def transformTreeList[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): FPileSyntax.PileGen[T] = {
     prePiles: List[FPile] =>
