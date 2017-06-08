@@ -102,6 +102,12 @@ trait FPilesGenHelper {
 
 trait FPilesGenHelper1111 {
 
+  trait FLeafPileListPileMerge[LS, LE, D] {
+    val basePilePath: LS
+    def toPileList(source: LS): FPileListImpl[LS, D]
+    def toLeafPile(source: LS): FLeafPile[LE, D]
+  }
+
   val FPNil: FLeafPileImpl[HNil, HNil] = new FLeafPileImpl(HNil, FsnShape.hnilFsnShape)
 
   trait Abc[G, H, I] {
