@@ -56,7 +56,7 @@ sealed abstract trait FPileAbs1111 {
           case (eachPile, eachData) =>
             eachPile.weightDataListFromSubList(eachData)
         }
-      case s: FLeafPile =>
+      case _: FLeafPile =>
         atomicDatas
       case s: FPile1111 =>
         val subPiles = s.subs
