@@ -10,7 +10,7 @@ trait FPileSyntax[T] {
   val pilesGen: FPileSyntax.PileGen[T]
 
   def flatMap[S, U](mapPiles: FPileSyntax.PileGen[S])(cv: (T, List[FAtomicValue] => S) => U): FPileSyntax.PileGen[U] = {
-    (piles: List[FPile]) =>
+    (piles: List[FPileAbs1111]) =>
       {
         pilesGen(piles).right.flatMap {
           case (newPiles, gen) =>
@@ -24,7 +24,7 @@ trait FPileSyntax[T] {
       }
   }
 
-  def result(piles: List[FPile]): Either[FAtomicException, T] = {
+  def result(piles: List[FPileAbs1111]): Either[FAtomicException, T] = {
     pilesGen(piles).right.map { s =>
       s._2.apply(piles.flatMap(_.deepZero))
     }
@@ -34,10 +34,10 @@ trait FPileSyntax[T] {
 
 object FPileSyntax {
 
-  type PileGen[T] = List[FPile] => Either[FAtomicException, (List[FPile], List[FAtomicValue] => T)]
-  type PileGen1111[T] = List[FPileAbs1111] => Either[FAtomicException, (List[FPileAbs1111], List[FAtomicValue] => T)]
+  //type PileGen[T] = List[FPile] => Either[FAtomicException, (List[FPile], List[FAtomicValue] => T)]
+  type PileGen[T] = List[FPileAbs1111] => Either[FAtomicException, (List[FPileAbs1111], List[FAtomicValue] => T)]
 
-  def apply1111[T](piles: FPileSyntax.PileGen[T]): FPileSyntax[T] = {
+  def apply[T](piles: FPileSyntax.PileGen[T]): FPileSyntax[T] = {
     new FPileSyntax[T] {
       override val pilesGen = piles
     }
@@ -45,7 +45,7 @@ object FPileSyntax {
 
 }
 
-trait FPileSyntaxWithoutData[T] {
+/*trait FPileSyntaxWithoutData[T] {
 
   val pilesGen: FPileSyntaxWithoutData.PileGen[T]
 
@@ -82,7 +82,7 @@ object FPileSyntaxWithoutData {
     }
   }
 
-}
+}*/
 
 trait FPilesGenHelper {
 
@@ -92,11 +92,11 @@ trait FPilesGenHelper {
     }
   }
 
-  implicit def pileWithoutDataExtensionMethods[T](pilesGenList: FPileSyntaxWithoutData.PileGen[T]): FPileSyntaxWithoutData[T] = {
+  /*implicit def pileWithoutDataExtensionMethods[T](pilesGenList: FPileSyntaxWithoutData.PileGen[T]): FPileSyntaxWithoutData[T] = {
     new FPileSyntaxWithoutData[T] {
       override val pilesGen = pilesGenList
     }
-  }
+  }*/
 
 }
 
@@ -154,16 +154,16 @@ trait FPilesGenHelper1111 {
       )
     }
 
-    def ::[PE, D1](fPileList: FPile1111Impl[PE, D1]): FPileListImpl[FPile1111Impl[PE, D1] :: LS, D1 :: D] = {
+    def ::[PE, D1](fPileList: FPileImpl[PE, D1]): FPileListImpl[FPileImpl[PE, D1] :: LS, D1 :: D] = {
 
-      new FPileListImpl[FPile1111Impl[PE, D1] :: LS, D1 :: D](
+      new FPileListImpl[FPileImpl[PE, D1] :: LS, D1 :: D](
         fPileList :: self.toPileList.pileEntity,
         encoder = {
           case head :: tail =>
             fPileList :: self.toPileList.encodePiles(tail)
         },
         decoder = { list =>
-          list.head.asInstanceOf[FPile1111Impl[PE, D1]] :: self.toPileList.decodePiles(list.tail)
+          list.head.asInstanceOf[FPileImpl[PE, D1]] :: self.toPileList.decodePiles(list.tail)
         },
         dataDecoder = { list =>
           list.head.asInstanceOf[D1] :: self.toPileList.decodePileData(list.tail)
@@ -188,12 +188,12 @@ trait FPilesGenHelper1111 {
   }
 
   trait Abc[G, H, I] {
-    def transform(cv: G => I): FPile1111Impl[H, I]
+    def transform(cv: G => I): FPileImpl[H, I]
   }
 
-  implicit class helper01[T, G](pileAbs: FPile1111Impl[T, G]) {
+  implicit class helper01[T, G](pileAbs: FPileImpl[T, G]) {
     def poly[PT, DT](leafPile: FLeafPileImpl[PT, DT]): Abc[G, PT, DT] = new Abc[G, PT, DT] {
-      override def transform(cv: G => DT): FPile1111Impl[PT, DT] = new FPile1111Impl[PT, DT](
+      override def transform(cv: G => DT): FPileImpl[PT, DT] = new FPileImpl[PT, DT](
         leafPile.pathPile,
         leafPile.fShape,
         pileAbs,
@@ -208,7 +208,7 @@ trait FPilesGenHelper1111 {
 
   implicit class helper02[G](pileAbs: FLeafPileImpl[_, G]) {
     def poly[PT, DT](leafPile: FLeafPileImpl[PT, DT]): Abc[G, PT, DT] = new Abc[G, PT, DT] {
-      override def transform(cv: G => DT): FPile1111Impl[PT, DT] = new FPile1111Impl[PT, DT](
+      override def transform(cv: G => DT): FPileImpl[PT, DT] = new FPileImpl[PT, DT](
         leafPile.pathPile,
         leafPile.fShape,
         pileAbs,
@@ -216,14 +216,14 @@ trait FPilesGenHelper1111 {
       )
     }
 
-    def poly[PT <: HList, DT <: HList](mergePile: FLeafPileListPileMerge[_, PT, DT]): Abc[G, PT, DT] = {
+    def poly[PT <: HList, DT <: HList](mergePile: FLeafPileListPileMerge[_ <: HList, PT, DT]): Abc[G, PT, DT] = {
       poly(mergePile.toLeafPile)
     }
   }
 
   implicit class helper03[G](pileAbs: FPileListImpl[_, G]) {
     def poly[PT, DT](leafPile: FLeafPileImpl[PT, DT]): Abc[G, PT, DT] = new Abc[G, PT, DT] {
-      override def transform(cv: G => DT): FPile1111Impl[PT, DT] = new FPile1111Impl[PT, DT](
+      override def transform(cv: G => DT): FPileImpl[PT, DT] = new FPileImpl[PT, DT](
         leafPile.pathPile,
         leafPile.fShape,
         pileAbs,
@@ -231,7 +231,22 @@ trait FPilesGenHelper1111 {
       )
     }
 
-    def poly[PT <: HList, DT <: HList](mergePile: FLeafPileListPileMerge[_, PT, DT]): Abc[G, PT, DT] = {
+    def poly[PT <: HList, DT <: HList](mergePile: FLeafPileListPileMerge[_ <: HList, PT, DT]): Abc[G, PT, DT] = {
+      poly(mergePile.toLeafPile)
+    }
+  }
+
+  implicit class helper04[G <: HList](pileAbs: FLeafPileListPileMerge[_ <: HList, _ <: HList, G]) {
+    def poly[PT, DT](leafPile: FLeafPileImpl[PT, DT]): Abc[G, PT, DT] = new Abc[G, PT, DT] {
+      override def transform(cv: G => DT): FPileImpl[PT, DT] = new FPileImpl[PT, DT](
+        leafPile.pathPile,
+        leafPile.fShape,
+        pileAbs.toPileList,
+        (s: Any) => cv(s.asInstanceOf[G])
+      )
+    }
+
+    def poly[PT <: HList, DT <: HList](mergePile: FLeafPileListPileMerge[_ <: HList, PT, DT]): Abc[G, PT, DT] = {
       poly(mergePile.toLeafPile)
     }
   }

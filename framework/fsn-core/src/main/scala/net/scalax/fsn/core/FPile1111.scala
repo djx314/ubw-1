@@ -13,15 +13,26 @@ sealed abstract trait FPileAbs1111 {
         pList.encodePiles(pList.pileEntity).map(_.dataLengthSum).sum
       case pile: FLeafPile =>
         pile.fShape.dataLength
-      case pile: FPile1111 =>
+      case pile: FPile =>
         pile.subs.dataLengthSum
+    }
+  }
+
+  def deepZero: List[FAtomicValue] = {
+    self match {
+      case pList: FPileList =>
+        pList.encodePiles(pList.pileEntity).flatMap(_.deepZero)
+      case pile: FLeafPile =>
+        pile.fShape.encodeData(pile.fShape.zero)
+      case pile: FPile =>
+        pile.subs.deepZero
     }
   }
 
   def subsCommonPile: List[FLeafPile] = self match {
     case pile: FLeafPile =>
       List(pile)
-    case pile: FPile1111 =>
+    case pile: FPile =>
       pile.subs.subsCommonPile
     case pile: FPileList =>
       pile.encodePiles(pile.pileEntity).flatMap(_.subsCommonPile)
@@ -58,7 +69,7 @@ sealed abstract trait FPileAbs1111 {
         }
       case _: FLeafPile =>
         atomicDatas
-      case s: FPile1111 =>
+      case s: FPile =>
         val subPiles = s.subs
         val subData = subPiles.weightDataListFromSubList(atomicDatas)
         subPiles match {
@@ -134,17 +145,17 @@ abstract trait FCommonPile extends FPileAbs1111 {
   val fShape: FsnShape[PathType, DataType]
 }
 
-trait FPile1111 extends FCommonPile {
+trait FPile extends FCommonPile {
   val subs: FPileAbs1111
   def dataFromSub(subDatas: Any): DataType
 }
 
-class FPile1111Impl[PT, DT](
+class FPileImpl[PT, DT](
     override val pathPile: PT,
     override val fShape: FsnShape[PT, DT],
     override val subs: FPileAbs1111,
     dataFromSubFunc: Any => DT
-) extends FPile1111 {
+) extends FPile {
   override type PathType = PT
   override type DataType = DT
 
@@ -162,7 +173,7 @@ class FLeafPileImpl[PT, DT](
   override type DataType = DT
 }
 
-object FPile1111 {
+object FPile {
 
   def genTreeTailCall[U](pathGen: FAtomicPath => FQueryTranform[U], oldPile: FPileAbs1111, newPile: FPileAbs1111): Either[FAtomicException, (FPileAbs1111, List[FPileAbs1111])] = {
     oldPile -> newPile match {
@@ -174,14 +185,14 @@ object FPile1111 {
           Left(FAtomicException(transforms.map(_.gen).collect { case Left(FAtomicException(s)) => s }.flatten))
         }
 
-      case (oldPile: FPile1111, newPile: FPile1111) =>
+      case (oldPile: FPile, newPile: FPile) =>
         genTreeTailCall(pathGen, oldPile.subs, newPile.subs) match {
           case Left(_) =>
             genTreeTailCall(pathGen, oldPile, new FLeafPileImpl(
               newPile.pathPile, newPile.fShape
             ))
           case Right((newSubResultPile, pileList)) =>
-            Right((new FPile1111Impl(
+            Right((new FPileImpl(
               newPile.pathPile,
               newPile.fShape,
               newSubResultPile,
@@ -216,7 +227,7 @@ object FPile1111 {
     genTreeTailCall(pathGen, pile, pile).right.map { case (newPile, piles) => newPile -> piles }
   }
 
-  def transformTreeList[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): FPileSyntax.PileGen1111[T] = {
+  def transformTreeList[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): FPileSyntax.PileGen[T] = {
     prePiles: List[FPileAbs1111] =>
       //防止定义 FPile 时最后一步使用了混合后不能识别最后一层 path
       val piles = prePiles //.flatMap(eachPile => eachPile.genPiles)
@@ -283,7 +294,7 @@ object FPile1111 {
       }
   }
 
-  def genTreeTailCallWithoutData[U](pathGen: FAtomicPath => FQueryTranformWithOutData[U], oldPile: FPile, newPile: FPile): Either[FAtomicException, (FPile, FPile, List[FPile])] = {
+  /*def genTreeTailCallWithoutData[U](pathGen: FAtomicPath => FQueryTranformWithOutData[U], oldPile: FPile, newPile: FPile): Either[FAtomicException, (FPile, FPile, List[FPile])] = {
     /*if (newPile.subs.isEmpty) {
       val transforms = newPile.paths.map(pathGen)
       if (transforms.forall(_.gen.isRight)) {
@@ -357,7 +368,7 @@ object FPile1111 {
         }
       }*/
       ???
-  }
+  }*/
 
   /*def transformOf[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): List[FAtomicPath] => Either[FAtomicException, List[FAtomicValue] => T] = {
      (initPaths: List[FAtomicPath]) =>

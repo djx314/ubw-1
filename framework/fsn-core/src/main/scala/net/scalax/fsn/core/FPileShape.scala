@@ -4,8 +4,8 @@ package net.scalax.fsn.core
   val FPNil = FPile.empty
 
 }*/
-trait PilesPolyHelper {
+trait PilesPolyHelper extends FPilesGenHelper1111 {
 
-  val FPNil = FPile.empty
+  //val FPNil = FPile.empty
 
 }

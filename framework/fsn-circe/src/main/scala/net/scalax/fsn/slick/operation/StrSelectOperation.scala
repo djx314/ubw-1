@@ -163,24 +163,23 @@ object StrOutSelectConvert extends FilterModelHelper {
     }
   }
 
-  def ubwGenWithoutData: FPileSyntaxWithoutData.PileGen[List[String]] = {
-    FPile.transformTreeListWithoutData {
-      new FAtomicQuery(_) {
-        val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: FANil)
-          .mapToWithoutData {
-            case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
-              if (slickSelect.colToOrder.isDefined || orderTargetNameContent.isDefined) {
-                Option(property.proName)
-              } else {
-                None
-              }
-          }
-      }.aa
-    } { genList =>
-      genList.flatten
-    }
-  }
-
+  /*def ubwGenWithoutData: FPileSyntaxWithoutData.PileGen[List[String]] = {
+      FPile.transformTreeListWithoutData {
+        new FAtomicQuery(_) {
+          val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: FANil)
+            .mapToWithoutData {
+              case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
+                if (slickSelect.colToOrder.isDefined || orderTargetNameContent.isDefined) {
+                  Option(property.proName)
+                } else {
+                  None
+                }
+            }
+        }.aa
+      } { genList =>
+        genList.flatten
+      }
+    }*/
 }
 
 trait StrSlickQuery extends FAtomicValueHelper {

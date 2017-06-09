@@ -13,7 +13,7 @@ import slick.jdbc.JdbcActionComponent
 import slick.lifted.{ Query, Rep }
 import slick.relational.RelationalProfile
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
@@ -193,7 +193,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
         updateGen = (v: Map[String, Json]) => {
         PropertiesOperation.json2SlickUpdateOperation(crudQueryWrap.binds).apply(columns).apply(v)
       },
-        staticMany = StaticManyOperation.ubwStaticManyGen.result(columns).right.get
+        staticMany = Future successful Nil //TODO StaticManyOperation.ubwStaticManyGen.result(columns).right.get
       )
     }
 
