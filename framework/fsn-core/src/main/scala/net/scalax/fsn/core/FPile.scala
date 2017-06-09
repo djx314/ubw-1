@@ -27,7 +27,7 @@ sealed abstract trait FPile {
       case s: FPileList =>
         //如果是 pileList，直接分组再递归调用
         val piles = s.encodePiles(s.pileEntity)
-        val datas = ListUtils.splitWithWeight1111(atomicDatas, piles.map(_.dataLengthSum): _*)
+        val datas = ListUtils.splitWithWeight(atomicDatas, piles.map(_.dataLengthSum): _*)
         val pileWithData = if (piles.size == datas.size) {
           piles.zip(datas)
         } else {
@@ -56,7 +56,7 @@ sealed abstract trait FPile {
             if (subData.size != piles.size) {
               throw new Exception("FPileList 的权重数据长度和 pile 数量不一致")
             }
-            val subDataList = ListUtils.splitWithWeight1111(subData, piles.map(_.dataLengthSum): _*)
+            val subDataList = ListUtils.splitWithWeight(subData, piles.map(_.dataLengthSum): _*)
             val pileWithData = piles.zip(subDataList)
             val currentPileData = sp.decodePileData {
               pileWithData.map {

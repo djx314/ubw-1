@@ -108,6 +108,18 @@ trait FPilesGenHelper1111 {
     def toPileList: FPileListImpl[LS, D]
     def toLeafPile: FLeafPileImpl[LE, D]
 
+    def ::[LS1 <: HList, LE1 <: HList, D1 <: HList](fLeafPile: FLeafPileListPileMerge[LS1, LE1, D1]): FLeafPileListPileMerge[LS1 :: LS, LE1 :: LE, D1 :: D] = {
+      new FLeafPileListPileMerge[LS1 :: LS, LE1 :: LE, D1 :: D] {
+        //override val basePilePath: FLeafPileImpl[LE1, D1] :: LS = fLeafPile :: self.basePilePath
+        override def toPileList: FPileListImpl[LS1 :: LS, D1 :: D] = {
+          self.::(fLeafPile.toPileList)
+        }
+        override def toLeafPile: FLeafPileImpl[LE1 :: LE, D1 :: D] = {
+          self.::(fLeafPile.toLeafPile).toLeafPile
+        }
+      }
+    }
+
     def ::[LE1, D1](fLeafPile: FLeafPileImpl[LE1, D1]): FLeafPileListPileMerge[FLeafPileImpl[LE1, D1] :: LS, LE1 :: LE, D1 :: D] = {
       new FLeafPileListPileMerge[FLeafPileImpl[LE1, D1] :: LS, LE1 :: LE, D1 :: D] {
         //override val basePilePath: FLeafPileImpl[LE1, D1] :: LS = fLeafPile :: self.basePilePath

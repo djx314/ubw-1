@@ -114,7 +114,7 @@ class ParTest extends FlatSpec
         result
     }*/
 
-    val resultGen2 = FPile.transformTree {
+    /*val resultGen2 = FPile.transformTree {
       new FAtomicQuery(_) {
         val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
@@ -134,7 +134,7 @@ class ParTest extends FlatSpec
         implicit val encoderForOpt = s.encoder
         s.key -> s.data.asJson
       }.toMap.asJson
-    }
+    }*/
 
     val jx3Pile = (
       ("小萌师父的徒弟个数" ofPile FAtomicPathImpl(In.default(6L) ::: In.jRead[Long] ::: In.jWrite[Long])) ::

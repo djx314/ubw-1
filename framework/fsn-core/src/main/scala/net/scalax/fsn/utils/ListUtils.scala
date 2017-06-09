@@ -16,7 +16,7 @@ object ListUtils {
 
   case class CatchIndexException(index: Int) extends Exception("已经捕获到 index")
 
-  def splitWithWeight[X](spList: List[WeightData[X]], length: Int*): List[WeightData[X]] = {
+  /*def splitWithWeight[X](spList: List[WeightData[X]], length: Int*): List[WeightData[X]] = {
     val (foldResult, leftList) = length.foldLeft(List.empty[WeightData[X]] -> spList) {
       case ((eachData, eachSplit), eachLenght) =>
         val catchIndex = try {
@@ -42,9 +42,9 @@ object ListUtils {
     }
     if (!leftList.isEmpty) throw new Exception("分离的数组还有剩下的元素")
     foldResult
-  }
+  }*/
 
-  def splitWithWeight1111[X](spList: List[WeightData[X]], length: Int*): List[List[WeightData[X]]] = {
+  def splitWithWeight[X](spList: List[WeightData[X]], length: Int*): List[List[WeightData[X]]] = {
     val (foldResult, leftList) = length.foldLeft(List.empty[List[WeightData[X]]] -> spList) {
       case ((eachData, eachSplit), eachLenght) =>
         val catchIndex = try {
