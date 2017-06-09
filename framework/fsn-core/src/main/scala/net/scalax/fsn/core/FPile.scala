@@ -6,8 +6,7 @@ import shapeless._
 sealed abstract trait FPileAbs1111 {
   self =>
   type DataType
-
-  def dataLengthSum: Int = {
+  /*def dataLengthSum: Int = {
     self match {
       case pList: FPileList =>
         pList.encodePiles(pList.pileEntity).map(_.dataLengthSum).sum
@@ -16,9 +15,11 @@ sealed abstract trait FPileAbs1111 {
       case pile: FPile =>
         pile.subs.dataLengthSum
     }
-  }
+  }*/
+  def dataLengthSum: Int
 
-  def deepZero: List[FAtomicValue] = {
+  def deepZero: List[FAtomicValue]
+  /*def deepZero: List[FAtomicValue] = {
     self match {
       case pList: FPileList =>
         pList.encodePiles(pList.pileEntity).flatMap(_.deepZero)
@@ -27,23 +28,25 @@ sealed abstract trait FPileAbs1111 {
       case pile: FPile =>
         pile.subs.deepZero
     }
-  }
+  }*/
 
-  def subsCommonPile: List[FLeafPile] = self match {
+  /*def subsCommonPile: List[FLeafPile] = self match {
     case pile: FLeafPile =>
       List(pile)
     case pile: FPile =>
       pile.subs.subsCommonPile
     case pile: FPileList =>
       pile.encodePiles(pile.pileEntity).flatMap(_.subsCommonPile)
-  }
+  }*/
+  def subsCommonPile: List[FLeafPile]
 
-  def selfPaths: List[FAtomicPath] = self match {
+  def selfPaths: List[FAtomicPath]
+  /*def selfPaths: List[FAtomicPath] = self match {
     case pile: FCommonPile =>
       pile.fShape.encodeColumn(pile.pathPile)
     case pile: FPileList =>
       pile.encodePiles(pile.pileEntity).flatMap(_.selfPaths)
-  }
+  }*/
 
   def dataListFromSubList(atomicDatas: List[FAtomicValue]): List[FAtomicValue] = {
     val leave = subsCommonPile
@@ -112,8 +115,26 @@ object FPileAbs1111 {
 }
 
 trait FPileList extends FPileAbs1111 {
+  self =>
+
   type PileType
   override type DataType
+
+  override def dataLengthSum: Int = {
+    self.encodePiles(self.pileEntity).map(_.dataLengthSum).sum
+  }
+
+  override def deepZero: List[FAtomicValue] = {
+    self.encodePiles(self.pileEntity).flatMap(_.deepZero)
+  }
+
+  override def selfPaths: List[FAtomicPath] = {
+    self.encodePiles(self.pileEntity).flatMap(_.selfPaths)
+  }
+
+  override def subsCommonPile: List[FLeafPile] = {
+    self.encodePiles(self.pileEntity).flatMap(_.subsCommonPile)
+  }
 
   val pileEntity: PileType
 
@@ -138,16 +159,38 @@ class FPileListImpl[PT, DT](
 }
 
 abstract trait FCommonPile extends FPileAbs1111 {
+  self =>
+
   type PathType
   override type DataType
 
   val pathPile: PathType
   val fShape: FsnShape[PathType, DataType]
+
+  override def selfPaths: List[FAtomicPath] = {
+    self.fShape.encodeColumn(self.pathPile)
+  }
+
 }
 
 trait FPile extends FCommonPile {
+  self =>
+
   val subs: FPileAbs1111
   def dataFromSub(subDatas: Any): DataType
+
+  override def dataLengthSum: Int = {
+    self.subs.dataLengthSum
+  }
+
+  override def deepZero: List[FAtomicValue] = {
+    self.subs.deepZero
+  }
+
+  override def subsCommonPile: List[FLeafPile] = {
+    self.subs.subsCommonPile
+  }
+
 }
 
 class FPileImpl[PT, DT](
@@ -163,7 +206,22 @@ class FPileImpl[PT, DT](
 
 }
 
-trait FLeafPile extends FCommonPile
+trait FLeafPile extends FCommonPile {
+  self =>
+
+  override def dataLengthSum: Int = {
+    self.fShape.dataLength
+  }
+
+  override def deepZero: List[FAtomicValue] = {
+    self.fShape.encodeData(self.fShape.zero)
+  }
+
+  override def subsCommonPile: List[FLeafPile] = {
+    List(self)
+  }
+
+}
 
 class FLeafPileImpl[PT, DT](
     override val pathPile: PT,
