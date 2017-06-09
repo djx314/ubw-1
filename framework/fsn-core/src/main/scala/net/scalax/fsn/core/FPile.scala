@@ -6,47 +6,14 @@ import shapeless._
 sealed abstract trait FPile {
   self =>
   type DataType
-  /*def dataLengthSum: Int = {
-    self match {
-      case pList: FPileList =>
-        pList.encodePiles(pList.pileEntity).map(_.dataLengthSum).sum
-      case pile: FLeafPile =>
-        pile.fShape.dataLength
-      case pile: FPile =>
-        pile.subs.dataLengthSum
-    }
-  }*/
+
   def dataLengthSum: Int
 
   def deepZero: List[FAtomicValue]
-  /*def deepZero: List[FAtomicValue] = {
-    self match {
-      case pList: FPileList =>
-        pList.encodePiles(pList.pileEntity).flatMap(_.deepZero)
-      case pile: FLeafPile =>
-        pile.fShape.encodeData(pile.fShape.zero)
-      case pile: FPile =>
-        pile.subs.deepZero
-    }
-  }*/
 
-  /*def subsCommonPile: List[FLeafPile] = self match {
-    case pile: FLeafPile =>
-      List(pile)
-    case pile: FPile =>
-      pile.subs.subsCommonPile
-    case pile: FPileList =>
-      pile.encodePiles(pile.pileEntity).flatMap(_.subsCommonPile)
-  }*/
   def subsCommonPile: List[FLeafPile]
 
   def selfPaths: List[FAtomicPath]
-  /*def selfPaths: List[FAtomicPath] = self match {
-    case pile: FCommonPile =>
-      pile.fShape.encodeColumn(pile.pathPile)
-    case pile: FPileList =>
-      pile.encodePiles(pile.pileEntity).flatMap(_.selfPaths)
-  }*/
 
   def dataListFromSubList(atomicDatas: List[FAtomicValue]): List[FAtomicValue] = {
     val leave = subsCommonPile
