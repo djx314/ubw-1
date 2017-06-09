@@ -250,7 +250,6 @@ object FPile {
       calculatePiles.right.map { pileList =>
         val (newPile, summaryPiles) = pileList.unzip
         newPile -> { anyList: List[FAtomicValue] =>
-          println(newPile)
           columnGen(ListUtils.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*)
             .zip(summaryPiles)
             .flatMap {

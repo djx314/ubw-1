@@ -88,7 +88,6 @@ object Sample07 extends SlickCRUDImplicits
             case _ =>
               emptyValue[String]
           }) :: ("ageOpt" ofPile friend.age.out) :: FPNil).poly("account" ofPile FAtomicPathImpl.empty[Aa]).transform { t =>
-            println("1234 " + t.toString)
             t match {
               case FSomeValue(name) :: FSomeValue(Some(age)) :: HNil =>
                 set(Aa(name, age))
@@ -97,7 +96,6 @@ object Sample07 extends SlickCRUDImplicits
                 set(Aa("喵", 2334455))
             }
           } :: ("id" ofPile friend.id.out.order.describe("自增主键")) :: ("id" ofPile friend.age.out.order.describe("年龄")) :: FPNil).poly("info" ofPile FAtomicPathImpl.empty[Map[String, Json]].writeJ).transform { t =>
-            println("5678 " + t)
             t match {
               case FSomeValue(aa) :: FSomeValue(id) :: FSomeValue(ageOpt) :: HNil =>
                 set(Map("id" -> id.asJson, "accountInfo" -> aa.asJson, "ageOpt" -> ageOpt.asJson))
