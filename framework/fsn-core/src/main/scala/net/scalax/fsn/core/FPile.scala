@@ -1,7 +1,6 @@
 package net.scalax.fsn.core
 
 import net.scalax.fsn.core.ListUtils.WeightData
-import shapeless._
 
 sealed abstract trait FPile {
   self =>
@@ -22,7 +21,8 @@ sealed abstract trait FPile {
     weightDataListFromSubList(weightData).flatMap(_.data)
   }
 
-  def weightDataListFromSubList(atomicDatas: List[WeightData[FAtomicValue]]): List[WeightData[FAtomicValue]] = {
+  def weightDataListFromSubList(atomicDatas: List[WeightData[FAtomicValue]]): List[WeightData[FAtomicValue]]
+  /*def weightDataListFromSubList(atomicDatas: List[WeightData[FAtomicValue]]): List[WeightData[FAtomicValue]] = {
     self match {
       case s: FPileList =>
         //如果是 pileList，直接分组再递归调用
@@ -71,7 +71,7 @@ sealed abstract trait FPile {
             List(WeightData(resultDataList, s.dataLengthSum))
         }
     }
-  }
+  }*/
 }
 
 trait FPileList extends FPile {
@@ -94,6 +94,21 @@ trait FPileList extends FPile {
 
   override def subsCommonPile: List[FLeafPile] = {
     self.encodePiles(self.pileEntity).flatMap(_.subsCommonPile)
+  }
+
+  override def weightDataListFromSubList(atomicDatas: List[WeightData[FAtomicValue]]): List[WeightData[FAtomicValue]] = {
+    //如果是 pileList，直接分组再递归调用
+    val piles = self.encodePiles(self.pileEntity)
+    val datas = ListUtils.splitWithWeight(atomicDatas, piles.map(_.dataLengthSum): _*)
+    val pileWithData = if (piles.size == datas.size) {
+      piles.zip(datas)
+    } else {
+      throw new Exception("pile 与数据长度不匹配")
+    }
+    pileWithData.flatMap {
+      case (eachPile, eachData) =>
+        eachPile.weightDataListFromSubList(eachData)
+    }
   }
 
   val pileEntity: PileType
@@ -151,6 +166,39 @@ trait FBranchPile extends FCommonPile {
     self.subs.subsCommonPile
   }
 
+  override def weightDataListFromSubList(atomicDatas: List[WeightData[FAtomicValue]]): List[WeightData[FAtomicValue]] = {
+    val subPiles = self.subs
+    val subData = subPiles.weightDataListFromSubList(atomicDatas)
+    subPiles match {
+      case sp: FCommonPile =>
+        if (subData.size != 1) {
+          throw new Exception("FCommonPile 的权重数据长度必须为 1")
+        }
+        val subPileData = sp.fShape.decodeData(subData.head.data)
+        val currentPileData = self.dataFromSub(subPileData)
+        val resultDataList = self.fShape.encodeData(currentPileData)
+        List(WeightData(resultDataList, self.dataLengthSum))
+      case sp: FPileList =>
+        val piles = sp.encodePiles(sp.pileEntity)
+        if (subData.size != piles.size) {
+          throw new Exception("FPileList 的权重数据长度和 pile 数量不一致")
+        }
+        val subDataList = ListUtils.splitWithWeight(subData, piles.map(_.dataLengthSum): _*)
+        val pileWithData = piles.zip(subDataList)
+        val currentPileData = sp.decodePileData {
+          pileWithData.map {
+            case (eachPile, subData) =>
+              if (subData.size != 1) {
+                throw new Exception("FCommonPile 的权重数据长度必须为 1")
+              }
+              eachPile.fShape.decodeData(subData.head.data)
+          }
+        }
+        val resultDataList = self.fShape.encodeData(self.dataFromSub(currentPileData))
+        List(WeightData(resultDataList, self.dataLengthSum))
+    }
+  }
+
 }
 
 class FBranchPileImpl[PT, DT](
@@ -179,6 +227,10 @@ trait FLeafPile extends FCommonPile {
 
   override def subsCommonPile: List[FLeafPile] = {
     List(self)
+  }
+
+  override def weightDataListFromSubList(atomicDatas: List[WeightData[FAtomicValue]]): List[WeightData[FAtomicValue]] = {
+    atomicDatas
   }
 
 }
@@ -250,8 +302,8 @@ object FPile {
     genTreeTailCall(pathGen, pile, pile).right.map { case (newPile, piles) => newPile -> piles }
   }
 
-  def transformTreeList[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): FPileSyntax.PileGen[T] = {
-    prePiles: List[FPile] =>
+  def transformTreeList[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): FPileSyntax.PileGen[T] = new FPileSyntax.PileGen[T] {
+    override def gen(prePiles: List[FPile]) = {
       //防止定义 FPile 时最后一步使用了混合后不能识别最后一层 path
       val piles = prePiles //.flatMap(eachPile => eachPile.genPiles)
 
@@ -272,7 +324,7 @@ object FPile {
       }.right.map(_.reverse)
       calculatePiles.right.map { pileList =>
         val (newPile, summaryPiles) = pileList.unzip
-        newPile -> { anyList: List[FAtomicValue] =>
+        FPileSyntax.PilePip(newPile, { anyList: List[FAtomicValue] =>
           columnGen(ListUtils.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*)
             .zip(summaryPiles)
             .flatMap {
@@ -287,8 +339,10 @@ object FPile {
               //???
             })
           //???
-        }
+        })
       }
+
+    }
 
   }
 

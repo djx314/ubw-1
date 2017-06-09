@@ -2,31 +2,29 @@ package net.scalax.fsn.core
 
 import shapeless._
 
-import scala.language.higherKinds
 import scala.language.implicitConversions
 
 trait FPileSyntax[T] {
 
   val pilesGen: FPileSyntax.PileGen[T]
 
-  def flatMap[S, U](mapPiles: FPileSyntax.PileGen[S])(cv: (T, List[FAtomicValue] => S) => U): FPileSyntax.PileGen[U] = {
-    (piles: List[FPile]) =>
-      {
-        pilesGen(piles).right.flatMap {
-          case (newPiles, gen) =>
-            mapPiles(newPiles).right.map {
-              case (anOtherNewPiles, anOtherGen) =>
-                anOtherNewPiles -> { list: List[FAtomicValue] =>
-                  cv(gen(list), anOtherGen)
-                }
-            }
-        }
+  def flatMap[S, U](mapPiles: FPileSyntax.PileGen[S])(cv: (T, List[FAtomicValue] => S) => U): FPileSyntax.PileGen[U] = new FPileSyntax.PileGen[U] {
+    def gen(piles: List[FPile]): Either[FAtomicException, FPileSyntax.PilePip[U]] = {
+      pilesGen.gen(piles).right.flatMap {
+        case FPileSyntax.PilePip(newPiles, gen) =>
+          mapPiles.gen(newPiles).right.map {
+            case FPileSyntax.PilePip(anOtherNewPiles, anOtherGen) =>
+              FPileSyntax.PilePip(anOtherNewPiles, { list: List[FAtomicValue] =>
+                cv(gen(list), anOtherGen)
+              })
+          }
       }
+    }
   }
 
   def result(piles: List[FPile]): Either[FAtomicException, T] = {
-    pilesGen(piles).right.map { s =>
-      s._2.apply(piles.flatMap(_.deepZero))
+    pilesGen.gen(piles).right.map { s =>
+      s.atomicValues.apply(piles.flatMap(_.deepZero))
     }
   }
 
@@ -34,14 +32,19 @@ trait FPileSyntax[T] {
 
 object FPileSyntax {
 
-  //type PileGen[T] = List[FPile] => Either[FAtomicException, (List[FPile], List[FAtomicValue] => T)]
-  type PileGen[T] = List[FPile] => Either[FAtomicException, (List[FPile], List[FAtomicValue] => T)]
+  case class PilePip[T](piles: List[FPile], atomicValues: List[FAtomicValue] => T)
 
-  def apply[T](piles: FPileSyntax.PileGen[T]): FPileSyntax[T] = {
+  trait PileGen[T] {
+    def gen(piles: List[FPile]): Either[FAtomicException, PilePip[T]]
+  }
+
+  //type PileGen[T] = List[FPile] => Either[FAtomicException, (List[FPile], List[FAtomicValue] => T)]
+
+  /*def apply[T](piles: FPileSyntax.PileGen[T]): FPileSyntax[T] = {
     new FPileSyntax[T] {
       override val pilesGen = piles
     }
-  }
+  }*/
 
 }
 
