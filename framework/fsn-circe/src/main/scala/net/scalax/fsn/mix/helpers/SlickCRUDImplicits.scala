@@ -19,7 +19,7 @@ trait SlickCRUDImplicits {
       val proNameAtomic = new FProperty[D] {
         override val proName = proName1
       }
-      FPileAbs1111.apply(FAtomicPathImpl(proNameAtomic :: path.atomics))
+      FPile.apply(FAtomicPathImpl(proNameAtomic :: path.atomics))
     }
   }
 

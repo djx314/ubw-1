@@ -10,7 +10,7 @@ trait FPileSyntax[T] {
   val pilesGen: FPileSyntax.PileGen[T]
 
   def flatMap[S, U](mapPiles: FPileSyntax.PileGen[S])(cv: (T, List[FAtomicValue] => S) => U): FPileSyntax.PileGen[U] = {
-    (piles: List[FPileAbs1111]) =>
+    (piles: List[FPile]) =>
       {
         pilesGen(piles).right.flatMap {
           case (newPiles, gen) =>
@@ -24,7 +24,7 @@ trait FPileSyntax[T] {
       }
   }
 
-  def result(piles: List[FPileAbs1111]): Either[FAtomicException, T] = {
+  def result(piles: List[FPile]): Either[FAtomicException, T] = {
     pilesGen(piles).right.map { s =>
       s._2.apply(piles.flatMap(_.deepZero))
     }
@@ -35,7 +35,7 @@ trait FPileSyntax[T] {
 object FPileSyntax {
 
   //type PileGen[T] = List[FPile] => Either[FAtomicException, (List[FPile], List[FAtomicValue] => T)]
-  type PileGen[T] = List[FPileAbs1111] => Either[FAtomicException, (List[FPileAbs1111], List[FAtomicValue] => T)]
+  type PileGen[T] = List[FPile] => Either[FAtomicException, (List[FPile], List[FAtomicValue] => T)]
 
   def apply[T](piles: FPileSyntax.PileGen[T]): FPileSyntax[T] = {
     new FPileSyntax[T] {
@@ -154,16 +154,16 @@ trait FPilesGenHelper1111 {
       )
     }
 
-    def ::[PE, D1](fPileList: FPileImpl[PE, D1]): FPileListImpl[FPileImpl[PE, D1] :: LS, D1 :: D] = {
+    def ::[PE, D1](fPileList: FBranchPileImpl[PE, D1]): FPileListImpl[FBranchPileImpl[PE, D1] :: LS, D1 :: D] = {
 
-      new FPileListImpl[FPileImpl[PE, D1] :: LS, D1 :: D](
+      new FPileListImpl[FBranchPileImpl[PE, D1] :: LS, D1 :: D](
         fPileList :: self.toPileList.pileEntity,
         encoder = {
           case head :: tail =>
             fPileList :: self.toPileList.encodePiles(tail)
         },
         decoder = { list =>
-          list.head.asInstanceOf[FPileImpl[PE, D1]] :: self.toPileList.decodePiles(list.tail)
+          list.head.asInstanceOf[FBranchPileImpl[PE, D1]] :: self.toPileList.decodePiles(list.tail)
         },
         dataDecoder = { list =>
           list.head.asInstanceOf[D1] :: self.toPileList.decodePileData(list.tail)
@@ -188,12 +188,12 @@ trait FPilesGenHelper1111 {
   }
 
   trait Abc[G, H, I] {
-    def transform(cv: G => I): FPileImpl[H, I]
+    def transform(cv: G => I): FBranchPileImpl[H, I]
   }
 
-  implicit class helper01[T, G](pileAbs: FPileImpl[T, G]) {
+  implicit class helper01[T, G](pileAbs: FBranchPileImpl[T, G]) {
     def poly[PT, DT](leafPile: FLeafPileImpl[PT, DT]): Abc[G, PT, DT] = new Abc[G, PT, DT] {
-      override def transform(cv: G => DT): FPileImpl[PT, DT] = new FPileImpl[PT, DT](
+      override def transform(cv: G => DT): FBranchPileImpl[PT, DT] = new FBranchPileImpl[PT, DT](
         leafPile.pathPile,
         leafPile.fShape,
         pileAbs,
@@ -208,7 +208,7 @@ trait FPilesGenHelper1111 {
 
   implicit class helper02[G](pileAbs: FLeafPileImpl[_, G]) {
     def poly[PT, DT](leafPile: FLeafPileImpl[PT, DT]): Abc[G, PT, DT] = new Abc[G, PT, DT] {
-      override def transform(cv: G => DT): FPileImpl[PT, DT] = new FPileImpl[PT, DT](
+      override def transform(cv: G => DT): FBranchPileImpl[PT, DT] = new FBranchPileImpl[PT, DT](
         leafPile.pathPile,
         leafPile.fShape,
         pileAbs,
@@ -223,7 +223,7 @@ trait FPilesGenHelper1111 {
 
   implicit class helper03[G](pileAbs: FPileListImpl[_, G]) {
     def poly[PT, DT](leafPile: FLeafPileImpl[PT, DT]): Abc[G, PT, DT] = new Abc[G, PT, DT] {
-      override def transform(cv: G => DT): FPileImpl[PT, DT] = new FPileImpl[PT, DT](
+      override def transform(cv: G => DT): FBranchPileImpl[PT, DT] = new FBranchPileImpl[PT, DT](
         leafPile.pathPile,
         leafPile.fShape,
         pileAbs,
@@ -238,7 +238,7 @@ trait FPilesGenHelper1111 {
 
   implicit class helper04[G <: HList](pileAbs: FLeafPileListPileMerge[_ <: HList, _ <: HList, G]) {
     def poly[PT, DT](leafPile: FLeafPileImpl[PT, DT]): Abc[G, PT, DT] = new Abc[G, PT, DT] {
-      override def transform(cv: G => DT): FPileImpl[PT, DT] = new FPileImpl[PT, DT](
+      override def transform(cv: G => DT): FBranchPileImpl[PT, DT] = new FBranchPileImpl[PT, DT](
         leafPile.pathPile,
         leafPile.fShape,
         pileAbs.toPileList,
