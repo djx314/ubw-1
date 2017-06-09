@@ -68,7 +68,7 @@ object StaticManyOperation extends FAtomicValueHelper {
   }*/
 
   //TODO change option selector to list selector
-  def ubwStaticManyGen(implicit ec: ExecutionContext): FPileSyntaxWithoutData.PileGen[Future[List[StaticManyUbw]]] = {
+  /*def ubwStaticManyGen(implicit ec: ExecutionContext): FPileSyntaxWithoutData.PileGen[Future[List[StaticManyUbw]]] = {
     FPile.transformTreeListWithoutData {
       new FAtomicQuery(_) {
         val aa = withRep(needAtomicOpt[StaticMany] :: needAtomic[FProperty] :: FANil)
@@ -81,11 +81,8 @@ object StaticManyOperation extends FAtomicValueHelper {
           }
       }.aa
     } { staticManyList =>
-      /*staticManyList.map(_.map(_.foldLeft(List.empty[StaticManyUbw]) { (font, back) =>
-        font ++: back
-      }))*/
       Future.sequence(staticManyList).map(_.flatten)
     }
-  }
+  }*/
 
 }

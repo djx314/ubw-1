@@ -15,13 +15,13 @@ trait FsnShape[Packed_, DataType_] {
 
   def zero: DataType_
 
-  val dataLength: Int
+  def dataLength: Int
 
 }
 
 object FsnShape {
 
-  def hnilFsnShape: FsnShape[HNil, HNil] = new FsnShape[HNil, HNil] {
+  val hnilFsnShape: FsnShape[HNil, HNil] = new FsnShape[HNil, HNil] {
     self =>
     override def encodeColumn(pile: HNil): List[FAtomicPath] = Nil
     override def encodeData(pileData: HNil): List[FAtomicValue] = Nil
@@ -41,4 +41,25 @@ object FsnShape {
 
       override val dataLength = 1
     }
+
+  def fpathHListFsnShape[S, T <: HList, A, B <: HList](head: FsnShape[S, A], tail: FsnShape[T, B]): FsnShape[S :: T, A :: B] = {
+    new FsnShape[S :: T, A :: B] {
+      self =>
+      override def encodeColumn(pile: S :: T): List[FAtomicPath] = {
+        val headPile :: tailPile = pile
+        head.encodeColumn(headPile) ::: tail.encodeColumn(tailPile)
+      }
+      override def encodeData(pileData: A :: B): List[FAtomicValue] = {
+        val headData :: tailData = pileData
+        head.encodeData(headData) ::: tail.encodeData(tailData)
+      }
+      override def decodeData(data: List[FAtomicValue]): A :: B = {
+        head.decodeData(data.take(head.dataLength)) :: tail.decodeData(data.drop(head.dataLength))
+      }
+
+      override def zero = head.zero :: tail.zero
+
+      override val dataLength = head.dataLength + tail.dataLength
+    }
+  }
 }

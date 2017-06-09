@@ -15,7 +15,7 @@ object CustomSettings {
 
   def scalaSettings =
     Seq(
-      scalaVersion := "2.12.2",
+      scalaVersion := "2.11.11",
       scalacOptions ++= Seq("-feature", "-deprecation", "-Ywarn-unused-import", "-language:existentials")
     )
   

@@ -22,7 +22,8 @@ import scala.concurrent.ExecutionContext
 
 object PropertiesOperation extends FPilesGenHelper {
 
-  val RWPropertiesGen: FPileSyntaxWithoutData.PileGen[List[RWProperty]] = {
+  //TODO
+  /*val RWPropertiesGen: FPileSyntaxWithoutData.PileGen[List[RWProperty]] = {
     FPile.transformTreeListWithoutData {
       new FAtomicQuery(_) {
         val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[InRetrieve] :: needAtomicOpt[AutoInc] :: needAtomic[SlickRetrieve] :: FANil)
@@ -40,9 +41,10 @@ object PropertiesOperation extends FPilesGenHelper {
     } { rwProperties =>
       rwProperties
     }
-  }
+  }*/
 
-  val strJsonPropertiesGen: FPileSyntaxWithoutData.PileGen[List[SelectProperty]] = StrOutSelectConvert.ubwGenWithoutData.flatMap {
+  //TODO
+  /*val strJsonPropertiesGen: FPileSyntaxWithoutData.PileGen[List[SelectProperty]] = StrOutSelectConvert.ubwGenWithoutData.flatMap {
     FPile.transformTreeListWithoutData {
       new FAtomicQuery(_) {
         val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[StrDefaultDesc] :: needAtomicOpt[StrNeededFetch] :: FANil)
@@ -70,7 +72,7 @@ object PropertiesOperation extends FPilesGenHelper {
       }
       properties
     }
-  }
+  }*/
 
   def filterStrSlick2jsonOperation(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
     implicit
@@ -97,7 +99,7 @@ object PropertiesOperation extends FPilesGenHelper {
       }
     }
 
-    strJsonPropertiesGen.result(optPiles) -> jsonGen.result(optPiles) match {
+    /*strJsonPropertiesGen.result(optPiles)*/ (Right(Nil): Either[Exception, List[SelectProperty]]) -> jsonGen.result(optPiles) match {
       case (Left(e1), Left(e2)) => throw e1
       case (Left(e), Right(_)) => throw e
       case (Right(_), Left(e)) => throw e
@@ -124,7 +126,7 @@ object PropertiesOperation extends FPilesGenHelper {
       }
     }
 
-    strJsonPropertiesGen.result(optPiles) -> jsonGen.result(optPiles) match {
+    /*strJsonPropertiesGen.result(optPiles)*/ (Right(Nil): Either[Exception, List[SelectProperty]]) -> jsonGen.result(optPiles) match {
       case (Left(e1), Left(e2)) => throw e1
       case (Left(e), Right(_)) => throw e
       case (Right(_), Left(e)) => throw e
@@ -212,7 +214,8 @@ object PropertiesOperation extends FPilesGenHelper {
     }
   }
 
-  val poiPropertiesGen: FPileSyntaxWithoutData.PileGen[List[SelectProperty]] = StrOutSelectConvert.ubwGenWithoutData /*(wQuery)*/ .flatMap {
+  //TODO
+  /*val poiPropertiesGen: FPileSyntaxWithoutData.PileGen[List[SelectProperty]] = StrOutSelectConvert.ubwGenWithoutData /*(wQuery)*/ .flatMap {
     FPile.transformTreeListWithoutData {
       new FAtomicQuery(_) {
         val aa = withRep(needAtomic[PoiWriter] :: needAtomic[FProperty] :: needAtomicOpt[FDescribe] :: needAtomicOpt[DefaultValue] :: needAtomicOpt[DefaultDesc] :: needAtomicOpt[InRetrieve] :: FANil)
@@ -240,7 +243,7 @@ object PropertiesOperation extends FPilesGenHelper {
       }
       properties
     }
-  }
+  }*/
 
   def slick2PoiOperation(wQuery: SlickQueryBindImpl)(
     implicit
@@ -259,7 +262,7 @@ object PropertiesOperation extends FPilesGenHelper {
       }
     }
 
-    poiPropertiesGen.result(optPiles) -> poiGen.result(optPiles) match {
+    /*poiPropertiesGen.result(optPiles)*/ (Right(Nil): Either[Exception, List[SelectProperty]]) -> poiGen.result(optPiles) match {
       case (Left(e1), Left(e2)) => throw e1
       case (Left(e), Right(_)) => throw e
       case (Right(_), Left(e)) => throw e
