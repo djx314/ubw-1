@@ -48,6 +48,36 @@ case class InOutQueryWrap(
     }
   }
 
+  def updateResult(
+    slickParam: SlickParam,
+    sourceDB: JdbcBackend#Database,
+    targetDB: JdbcBackend#Database,
+    groupedSize: Int
+  )(
+    implicit
+    ec: ExecutionContext,
+    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+    updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
+  ): Future[List[ExecInfo3]] = {
+    val execPlan = InAndOutOperation.json2SlickUpdateOperation(self)
+    val resultAction = execPlan(slickParam)
+    sourceDB.run(resultAction).flatMap { futures =>
+      futures.grouped(groupedSize).foldLeft(Future successful List.empty[ExecInfo3]) { (effectRow, futureList) =>
+        lazy val insertActions = Future.sequence(futureList.map(_.apply))
+        lazy val insertFuture = insertActions.flatMap(actions => targetDB.run(
+          DBIO.sequence(actions.collect { case Some(s) => s })
+        ))
+        effectRow.flatMap { row =>
+          insertFuture.map { insetResult =>
+            row ::: insetResult
+          }
+        }
+      }
+    }
+  }
+
 }
 
 class InOutQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
