@@ -29,13 +29,14 @@ trait DeleteQuery {
 trait DSlickWriter2 {
 
   type MainSColumn
-  type MainDColumn
+  //type MainDColumn
   type MainTColumn
   type DataType
 
   val mainCol: MainSColumn
 
-  val mainShape: Shape[_ <: FlatShapeLevel, MainSColumn, MainDColumn, MainTColumn]
+  //val mainShape: Shape[_ <: FlatShapeLevel, MainSColumn, MainDColumn, MainTColumn]
+  val mainShape: Shape[_ <: FlatShapeLevel, MainSColumn, DataType, MainTColumn]
 
   val table: Any
   val primaryGen: Option[FilterColumnGen[MainTColumn]]
@@ -46,9 +47,9 @@ trait DSlickWriter2 {
 
 }
 
-case class DSWriter2[MS, MD, MT, D](
+case class DSWriter2[MS /*, MD*/ , MT, D](
     override val mainCol: MS,
-    override val mainShape: Shape[_ <: FlatShapeLevel, MS, MD, MT],
+    override val mainShape: Shape[_ <: FlatShapeLevel, MS, D, MT],
     override val table: Any,
     override val primaryGen: Option[FilterColumnGen[MT]],
     override val data: D,
@@ -56,7 +57,7 @@ case class DSWriter2[MS, MD, MT, D](
 ) extends DSlickWriter2 {
 
   override type MainSColumn = MS
-  override type MainDColumn = MD
+  //override type MainDColumn = MD
   override type MainTColumn = MT
   override type DataType = D
 
@@ -114,7 +115,8 @@ object InDeleteConvert extends FAtomicValueHelper {
                     override val dataToCondition = { sourceCol: slickDelete.TargetType =>
                       eachPri.dataToCondition(sourceCol) {
                         val FSomeValue(data1) = data
-                        slickDelete.filterConvert(data1)
+                        //slickDelete.filterConvert(data1)
+                        data1
                       }
                     }
                     override val wt = eachPri.wt

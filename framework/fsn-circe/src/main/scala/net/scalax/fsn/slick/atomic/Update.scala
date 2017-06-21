@@ -7,31 +7,33 @@ import slick.lifted.{ FlatShapeLevel, Shape }
 trait SlickUpdate[E] extends FAtomic[E] {
 
   type SourceType
-  type SlickType
+  //type SlickType
   type TargetType
-  type FilterData
+  //type FilterData
 
   type DataType = E
 
   val mainCol: SourceType
   val owner: Any
-  val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
-  val primaryGen: Option[FilterWrapper[TargetType, FilterData]]
-  val convert: DataType => SlickType
-  val filterConvert: DataType => FilterData
+  val mainShape: Shape[_ <: FlatShapeLevel, SourceType, DataType, TargetType]
+  val primaryGen: Option[FilterWrapper[TargetType, DataType]]
+  //val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
+  //val primaryGen: Option[FilterWrapper[TargetType, FilterData]]
+  //val convert: DataType => SlickType
+  //val filterConvert: DataType => FilterData
 
 }
 
-case class SUpdate[S, D, T, C, E](
+case class SUpdate[S, D, T](
     override val mainCol: S,
     override val owner: Any,
     override val mainShape: Shape[_ <: FlatShapeLevel, S, D, T],
-    override val primaryGen: Option[FilterWrapper[T, C]],
-    override val convert: E => D,
-    override val filterConvert: E => C
-) extends SlickUpdate[E] {
+    override val primaryGen: Option[FilterWrapper[T, D]]
+//override val convert: E => D,
+//override val filterConvert: E => C
+) extends SlickUpdate[D] {
   override type SourceType = S
-  override type SlickType = D
+  //override type SlickType = D
   override type TargetType = T
-  override type FilterData = C
+  //override type FilterData = C
 }

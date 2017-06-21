@@ -5,16 +5,16 @@ import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.helpers.FilterWrapper
 import slick.lifted.{ FlatShapeLevel, Shape }
 
-case class SCRUD[S, D, T, E](
-    create: SCreate[S, D, T, E],
-    retrieve: SRetrieve[S, D, T, D, E],
-    update: SUpdate[S, D, T, D, E],
-    delete: SDelete[S, D, T, D, E],
+case class SCRUD[S, D, T](
+    create: SCreate[S, D, T /*, D*/ ],
+    retrieve: SRetrieve[S, D, T],
+    update: SUpdate[S, D, T],
+    delete: SDelete[S, D, T /*, D, D*/ ],
     //jRead: JsonReader[E],
     //jWrite: JsonWriter[E],
     isAutoInc: Boolean
-) extends FAtomicPathImpl[E] { self =>
-  def primary(implicit priFilter: FilterWrapper[T, D]): SCRUD[S, D, T, E] = {
+) extends FAtomicPathImpl[D] { self =>
+  def primary(implicit priFilter: FilterWrapper[T, D]): SCRUD[S, D, T] = {
     this.copy(
       retrieve = retrieve.copy(primaryGen = Option(priFilter)),
       update = update.copy(primaryGen = Option(priFilter)),
@@ -22,11 +22,11 @@ case class SCRUD[S, D, T, E](
     )
   }
 
-  def autoInc: SCRUD[S, D, T, E] = {
+  def autoInc: SCRUD[S, D, T] = {
     this.copy(isAutoInc = true)
   }
 
-  def result: List[FAtomic[E]] = {
+  def result: List[FAtomic[D]] = {
     List(
       create,
       retrieve,
@@ -34,13 +34,13 @@ case class SCRUD[S, D, T, E](
       delete,
       //jRead,
       //jWrite,
-      new AutoInc[E] {
+      new AutoInc[D] {
         override val isAutoInc = self.isAutoInc
       }
     )
   }
 
-  override type DataType = E
+  override type DataType = D
   override val atomics = result
 }
 
@@ -52,39 +52,39 @@ object SCRUD {
   //encoder: Encoder[D],
   //decoder: Decoder[D],
   //weakTypeTag: WeakTypeTag[D]
-  ): SCRUD[S, D, T, D] = {
-    val sCreate = SCreate[S, D, T, D](
+  ): SCRUD[S, D, T] = {
+    val sCreate = SCreate[S, D, T /*, D*/ ](
       mainCol = repLike,
       owner = owner1,
-      mainShape = shape,
-      convert = identity[D] _,
-      reverseConvert = identity[D] _
+      mainShape = shape //,
+    //convert = identity[D] _,
+    //reverseConvert = identity[D] _
     )
 
-    val sRetrieve = SRetrieve[S, D, T, D, D](
+    val sRetrieve = SRetrieve[S, D, T](
       mainCol = repLike,
       owner = owner1,
       mainShape = shape,
-      primaryGen = None,
-      convert = identity[D] _,
-      filterConvert = identity[D] _
+      primaryGen = None //,
+    //convert = identity[D] _,
+    //filterConvert = identity[D] _
     )
 
-    val sUpdate = SUpdate[S, D, T, D, D](
+    val sUpdate = SUpdate[S, D, T /*, D, D*/ ](
       mainCol = repLike,
       owner = owner1,
       mainShape = shape,
-      primaryGen = None,
-      convert = identity[D] _,
-      filterConvert = identity[D] _
+      primaryGen = None //,
+    //convert = identity[D] _,
+    //filterConvert = identity[D] _
     )
 
-    val sDelete = SDelete[S, D, T, D, D](
+    val sDelete = SDelete[S, D, T /*, D, D*/ ](
       mainCol = repLike,
       owner = owner1,
       mainShape = shape,
-      primaryGen = None,
-      filterConvert = identity[D] _
+      primaryGen = None //,
+    //filterConvert = identity[D] _
     )
 
     /*val jsonReader = new JsonReader[D] {
@@ -100,7 +100,7 @@ object SCRUD {
       override val typeTag = weakTypeTag
     }*/
 
-    SCRUD[S, D, T, D](
+    SCRUD[S, D, T](
       create = sCreate,
       retrieve = sRetrieve,
       update = sUpdate,

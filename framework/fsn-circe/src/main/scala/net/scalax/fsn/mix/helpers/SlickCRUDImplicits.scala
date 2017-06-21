@@ -36,7 +36,7 @@ trait SlickCRUDImplicits {
   //decoder: Decoder[D],
   //weakTypeTag: WeakTypeTag[D]
   ) {
-    def crud: SCRUD[S, D, T, D] = {
+    def crud: SCRUD[S, D, T] = {
       SCRUD.in(repLike, SlickUtils.getTableIdFromCol(repLike)(shape))
     }
   }
@@ -48,13 +48,9 @@ trait SlickCRUDImplicits {
   //decoder: Decoder[D],
   //weakTypeTag: WeakTypeTag[D]
   ) {
-    def crud: SCRUD[S, D, T, D] = {
+    def crud: SCRUD[S, D, T] = {
       SCRUD.in(fRepLike.rep, SlickUtils.getTableIdFromTable(fRepLike.owner))
     }
-  }
-
-  implicit def SCRUD2FAtomin[T](crud: SCRUD[_, _, _, T]): List[FAtomic[T]] = {
-    crud.result
   }
 
   implicit class queryToUQueryExtendsionMethodGen[E, U](query: Query[E, U, Seq]) {

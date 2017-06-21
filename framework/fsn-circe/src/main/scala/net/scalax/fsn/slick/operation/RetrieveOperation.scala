@@ -85,21 +85,22 @@ object InRetrieveConvert extends FAtomicValueHelper {
                 mainCol = (slickReader.mainCol: slickReader.SourceType),
                 table = slickReader.owner,
                 mainShape = slickReader.mainShape,
-                autalColumn = { s: slickReader.SlickType => slickReader.convert(s) },
+                autalColumn = { s: slickReader.DataType => s /*slickReader.convert(s)*/ },
                 primaryGen = slickReader.primaryGen.map(eachPri => new FilterColumnGen[slickReader.TargetType] {
                   override type BooleanTypeRep = eachPri.BooleanTypeRep
                   override val dataToCondition = (sourceCol: slickReader.TargetType) => {
                     eachPri.dataToCondition(sourceCol) {
                       val FSomeValue(data1) = data
-                      slickReader.filterConvert(data1)
+                      //slickReader.filterConvert(data1)
+                      data1
                     }
                   }
                   override val wt = eachPri.wt
                 }),
                 subGen = oneToOneRetrieveOpt.map { oneToOneRetrieve =>
-                  new IWrapTran2[slickReader.SlickType] {
+                  new IWrapTran2[slickReader.DataType] {
                     override val table = oneToOneRetrieve.owner
-                    override def convert(data: slickReader.SlickType, source: RetrieveQuery): RetrieveQuery = {
+                    override def convert(data: slickReader.DataType, source: RetrieveQuery): RetrieveQuery = {
                       new RetrieveQuery {
                         override val bind = source.bind
                         override val cols = source.cols ::: oneToOneRetrieve.mainCol :: Nil
@@ -110,7 +111,7 @@ object InRetrieveConvert extends FAtomicValueHelper {
                             override type BooleanTypeRep = oneToOneRetrieve.primaryGen.BooleanTypeRep
                             override val dataToCondition = { cols: Seq[Any] =>
                               val col = cols(index).asInstanceOf[oneToOneRetrieve.TargetType]
-                              val slickData = oneToOneRetrieve.filterConvert(slickReader.convert(data))
+                              val slickData = oneToOneRetrieve.filterConvert(data /*slickReader.convert(data)*/ )
                               oneToOneRetrieve.primaryGen.dataToCondition(col)(slickData)
                             }
                             override val wt = oneToOneRetrieve.primaryGen.wt
