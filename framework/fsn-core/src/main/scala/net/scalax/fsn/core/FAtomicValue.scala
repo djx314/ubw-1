@@ -33,6 +33,16 @@ object FAtomicValueImpl {
     }
   }
 
-  val Zero: FAtomicValue = empty[Nothing]
+  //val Zero: FAtomicValue = empty[Nothing]
+
+  object Zero {
+    def unapply[T](fValue: FAtomicValueImpl[T]): Option[Unit] = {
+      if (empty[T].equals(fValue)) {
+        Option(())
+      } else {
+        None
+      }
+    }
+  }
 
 }

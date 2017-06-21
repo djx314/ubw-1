@@ -119,7 +119,8 @@ object InUpdateConvert extends FAtomicValueHelper {
                 table = slickWriter.owner,
                 data = {
                 val FSomeValue(data1) = data
-                slickWriter.convert(data1)
+                //slickWriter.convert(data1)
+                data1
               },
                 primaryGen = slickWriter.primaryGen.map { eachPri =>
                   (new FilterColumnGen[slickWriter.TargetType] {
@@ -127,7 +128,8 @@ object InUpdateConvert extends FAtomicValueHelper {
                     override val dataToCondition = { sourceCol: slickWriter.TargetType =>
                       eachPri.dataToCondition(sourceCol) {
                         val FSomeValue(data1) = data
-                        slickWriter.filterConvert(data1)
+                        //slickWriter.filterConvert(data1)
+                        data1
                       }
                     }
                     override val wt = eachPri.wt

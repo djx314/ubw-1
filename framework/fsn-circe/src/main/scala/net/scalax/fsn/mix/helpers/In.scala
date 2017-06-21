@@ -41,17 +41,17 @@ object In {
     override val writer = encoder
   })
 
-  def create[S, D, T](sourceCol: S)(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T]): List[FAtomic[D]] = List(new SlickCreate[D] {
+  /*def create[S, D, T](sourceCol: S)(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T]): List[FAtomic[D]] = List(new SlickCreate[D] {
     override type SourceType = S
-    override type SlickType = D
+    //override type SlickType = D
     override type TargetType = T
 
     override val mainCol = sourceCol
     override val owner = SlickUtils.getTableIdFromCol(sourceCol)(shape)
     override val mainShape = shape
-    override val convert = identity[D] _
-    override val reverseConvert = identity[D] _
-  })
+    //override val convert = identity[D] _
+    //override val reverseConvert = identity[D] _
+  })*/
 
   def autoInc[T]: List[FAtomic[T]] = List(new AutoInc[T] {
     override val isAutoInc = true

@@ -87,14 +87,14 @@ object InCreateConvert extends FAtomicValueHelper {
               val isAutoInc = autoIncOpt.map(_.isAutoInc).getOrElse(false)
               val writer = if (isAutoInc) {
                 lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate =>
-                  new InsertWrapTran[slickCreate.SlickType] {
+                  new InsertWrapTran[slickCreate.DataType] {
                     override val table = oneToOneCreate.owner
-                    def convert(sourceData: slickCreate.SlickType, source: InsertDataQuery): InsertDataQuery = {
+                    def convert(sourceData: slickCreate.DataType, source: InsertDataQuery): InsertDataQuery = {
                       new InsertDataQuery {
                         override val bind = source.bind
                         override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
                         override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
-                        override val data = source.data ::: oneToOneCreate.convert(slickCreate.convert(sourceData)) :: Nil
+                        override val data = source.data ::: oneToOneCreate.convert(sourceData /*slickCreate.convert(sourceData)*/ ) :: Nil
                         override val returningCols = source.returningCols
                         override val returningShapes = source.returningShapes
                         override def dataGen(returningData: List[Any]): List[DataWithIndex] = source.dataGen(returningData)
@@ -111,8 +111,9 @@ object InCreateConvert extends FAtomicValueHelper {
                   autoIncRep = (slickCreate.mainCol: slickCreate.SourceType),
                   autoIncShape = slickCreate.mainShape,
                   subGen = oneToOneSubGen,
-                  autalColumn = (s: slickCreate.SlickType) => {
-                  slickCreate.convert(s)
+                  autalColumn = (s: slickCreate.DataType) => {
+                  //slickCreate.convert(s)
+                  s
                 }
                 )
               } else {
@@ -138,7 +139,8 @@ object InCreateConvert extends FAtomicValueHelper {
                   preData = {
                   try {
                     val FSomeValue(data1) = data
-                    slickCreate.reverseConvert(data1)
+                    //slickCreate.reverseConvert(data1)
+                    data1
                   } catch {
                     case e: MatchError =>
                       println(property.proName)
