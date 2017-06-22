@@ -26,7 +26,7 @@ object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
                   Future successful dataWrap
                 case FFValue(futureData) =>
                   futureData.map(set)
-                case FAtomicValueImpl.Zero => Future successful FAtomicValueImpl.Zero
+                case zero @ (FAtomicValueImpl.Zero(_)) => Future successful zero
                 case x =>
                   println(x.atomics)
                   Future successful x
@@ -35,7 +35,8 @@ object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
       }.aa
     } { genList =>
       Future.sequence(genList).map(Option(_)).recover {
-        case e: NoSuchElementException =>
+        case _: NoSuchElementException =>
+          //忽略因错误在数据库取不到数据的行
           None
         case e: Exception =>
           e.printStackTrace

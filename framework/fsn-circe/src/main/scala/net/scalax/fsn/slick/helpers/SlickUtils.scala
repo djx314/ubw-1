@@ -48,11 +48,20 @@ object SlickUtils {
     }
   }*/
   def getTableIdFromCol[S, D, T](rep: S)(implicit shape: Shape[_ <: ShapeLevel, S, D, T]): Any = {
-    shape.toNode(rep) match {
-      case Select(tableNode: TableNode, _) =>
-        tableNode.profileTable
-      case Select(pathNode, _) =>
-        pathNode
+    rep match {
+      case table: AbstractTable[_] =>
+        table.tableTag match {
+          case r: RefTag => r.path
+          case _ => table.tableNode.profileTable
+        }
+      case commonRep =>
+        shape.toNode(commonRep) match {
+          case Select(tableNode: TableNode, _) =>
+            tableNode.profileTable
+          case Select(pathNode, _) =>
+            pathNode
+          case r: Ref => r.pathString
+        }
     }
   }
 
