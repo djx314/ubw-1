@@ -81,7 +81,8 @@ trait FAtomicValueHelper {
     val defaultOpt = default.map(_.value)
     (defaultOpt -> atomicValue) match {
       case (_, FSomeValue(s)) => Option(s)
-      case (defaultOpt @ Some(_), FAtomicValueImpl.Zero(_)) => defaultOpt
+      case (defaultOpt @ Some(_), zero) =>
+        defaultOpt
       case _ => None
     }
   }

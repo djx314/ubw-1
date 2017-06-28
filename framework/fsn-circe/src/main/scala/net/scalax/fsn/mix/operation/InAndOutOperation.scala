@@ -26,7 +26,7 @@ object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
                   Future successful dataWrap
                 case FFValue(futureData) =>
                   futureData.map(set)
-                case zero @ (FAtomicValueImpl.Zero(_)) => Future successful zero
+                case zero => Future successful zero
                 case x =>
                   println(x.atomics)
                   Future successful x
