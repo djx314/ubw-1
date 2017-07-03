@@ -111,7 +111,7 @@ object InRetrieveConvert extends FAtomicValueHelper {
                             override type BooleanTypeRep = oneToOneRetrieve.primaryGen.BooleanTypeRep
                             override val dataToCondition = { cols: Seq[Any] =>
                               val col = cols(index).asInstanceOf[oneToOneRetrieve.TargetType]
-                              val slickData = oneToOneRetrieve.filterConvert(data /*slickReader.convert(data)*/ )
+                              val slickData = data //oneToOneRetrieve.filterConvert(data /*slickReader.convert(data)*/ )
                               oneToOneRetrieve.primaryGen.dataToCondition(col)(slickData)
                             }
                             override val wt = oneToOneRetrieve.primaryGen.wt

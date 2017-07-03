@@ -12,7 +12,6 @@ import org.xarcher.cpoi.{ ReadableCellOperationAbs, StyleTransform, WriteableCel
 import slick.lifted.{ FlatShapeLevel, Shape }
 
 import scala.concurrent.Future
-import scala.reflect.runtime.universe._
 
 object In {
   /*def subUbw[T](cols: FColumn*): List[FAtomic[T]] = new SubUbw[T] {
@@ -59,15 +58,15 @@ object In {
 
   def oneTOneR[S, D, T](sourceCol: S)(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T], filterGen: FilterWrapper[T, D]): List[FAtomic[D]] = List(new OneToOneRetrieve[D] {
     override type SourceType = S
-    override type SlickType = D
+    //override type SlickType = D
     override type TargetType = T
-    override type FilterData = D
+    //override type FilterData = D
 
     override val mainCol = sourceCol
     override val owner = SlickUtils.getTableIdFromCol(sourceCol)(shape)
     override val mainShape = shape
     override val primaryGen = filterGen
-    override val filterConvert = identity[D] _
+    //override val filterConvert = identity[D] _
   })
 
   def oneTOneU[S, D, T](sourceCol: S)(
@@ -76,27 +75,27 @@ object In {
     filterGen: FilterWrapper[T, D]
   ): List[FAtomic[D]] = List(new OneToOneUpdate[D] {
     override type SourceType = S
-    override type SlickType = D
+    //override type SlickType = D
     override type TargetType = T
-    override type FilterData = D
+    //override type FilterData = D
 
     override val mainCol = sourceCol
     override val owner = SlickUtils.getTableIdFromCol(sourceCol)(shape)
     override val mainShape = shape
     override val primaryGen = filterGen
-    override val convert = identity[D] _
-    override val filterConvert = identity[D] _
+    //override val convert = identity[D] _
+    //override val filterConvert = identity[D] _
   })
 
   def oneTOneC[S, D, T](sourceCol: S)(implicit shape: Shape[_ <: FlatShapeLevel, S, D, T]): List[FAtomic[D]] = List(new OneToOneCrate[D] {
     override type SourceType = S
-    override type SlickType = D
+    //override type SlickType = D
     override type TargetType = T
 
     override val mainCol = sourceCol
     override val owner = SlickUtils.getTableIdFromCol(sourceCol)(shape)
     override val mainShape = shape
-    override val convert = identity[D] _
+    //override val convert = identity[D] _
   })
 
   def oneTOne[S, D, T](sourceCol: S)(
@@ -106,38 +105,38 @@ object In {
   ): List[FAtomic[D]] = List(
     new OneToOneRetrieve[D] {
       override type SourceType = S
-      override type SlickType = D
+      //override type SlickType = D
       override type TargetType = T
-      override type FilterData = D
+      //override type FilterData = D
 
       override val mainCol = sourceCol
       override val owner = SlickUtils.getTableIdFromCol(sourceCol)(shape)
       override val mainShape = shape
       override val primaryGen = filterGen
-      override val filterConvert = identity[D] _
+      //override val filterConvert = identity[D] _
     },
     new OneToOneUpdate[D] {
       override type SourceType = S
-      override type SlickType = D
+      //override type SlickType = D
       override type TargetType = T
-      override type FilterData = D
+      //override type FilterData = D
 
       override val mainCol = sourceCol
       override val owner = SlickUtils.getTableIdFromCol(sourceCol)(shape)
       override val mainShape = shape
       override val primaryGen = filterGen
-      override val convert = identity[D] _
-      override val filterConvert = identity[D] _
+      //override val convert = identity[D] _
+      //override val filterConvert = identity[D] _
     },
     new OneToOneCrate[D] {
       override type SourceType = S
-      override type SlickType = D
+      //override type SlickType = D
       override type TargetType = T
 
       override val mainCol = sourceCol
       override val owner = SlickUtils.getTableIdFromCol(sourceCol)(shape)
       override val mainShape = shape
-      override val convert = identity[D] _
+      //override val convert = identity[D] _
     }
   )
 

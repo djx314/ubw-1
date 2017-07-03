@@ -94,7 +94,7 @@ object InCreateConvert extends FAtomicValueHelper {
                         override val bind = source.bind
                         override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
                         override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
-                        override val data = source.data ::: oneToOneCreate.convert(sourceData /*slickCreate.convert(sourceData)*/ ) :: Nil
+                        override val data = source.data ::: sourceData :: Nil
                         override val returningCols = source.returningCols
                         override val returningShapes = source.returningShapes
                         override def dataGen(returningData: List[Any]): List[DataWithIndex] = source.dataGen(returningData)
@@ -126,7 +126,7 @@ object InCreateConvert extends FAtomicValueHelper {
                         override val bind = source.bind
                         override val cols = source.cols ::: oneToOneCreate.mainCol :: Nil
                         override val shapes = source.shapes ::: oneToOneCreate.mainShape :: Nil
-                        override val data = source.data ::: oneToOneCreate.convert(commonData) :: Nil
+                        override val data = source.data ::: commonData /*oneToOneCreate.convert(commonData)*/ :: Nil
                         override val returningCols = source.returningCols
                         override val returningShapes = source.returningShapes
                         override def dataGen(returningData: List[Any]): List[DataWithIndex] = source.dataGen(returningData)

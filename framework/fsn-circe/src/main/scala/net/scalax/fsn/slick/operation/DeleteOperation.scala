@@ -95,7 +95,7 @@ object InDeleteConvert extends FAtomicValueHelper {
                           override val dataToCondition = { cols: Seq[Any] =>
                             val col = cols(index).asInstanceOf[oneToOneDelete.TargetType]
                             val FSomeValue(data1) = data
-                            val slickData = oneToOneDelete.filterConvert(data1)
+                            val slickData = data1 //oneToOneDelete.filterConvert(data1)
                             oneToOneDelete.primaryGen.dataToCondition(col)(slickData)
                           }
                           override val wt = oneToOneDelete.primaryGen.wt
