@@ -11,16 +11,12 @@ trait FValue[E] extends FAtomic[E] {
 
 object FValue {
   implicit def applicativeForEither: Applicative[FValue] = new Applicative[FValue] {
-    override def ap[A, B](ff: FValue[A => B])(fa: FValue[A]): FValue[B] = new FValue[B] {
-      override val value = ff.value(fa.value)
-    }
+    override def ap[A, B](ff: FValue[A => B])(fa: FValue[A]): FValue[B] = apply(ff.value(fa.value))
+    override def pure[A](a: A): FValue[A] = apply(a)
+    override def map[A, B](fa: FValue[A])(f: A => B): FValue[B] = apply(f(fa.value))
+  }
 
-    override def pure[A](a: A): FValue[A] = new FValue[A] {
-      override val value = a
-    }
-
-    override def map[A, B](fa: FValue[A])(f: A => B): FValue[B] = new FValue[B] {
-      override val value = f(fa.value)
-    }
+  def apply[E](value1: E): FValue[E] = new FValue[E] {
+    override val value = value1
   }
 }
