@@ -1,7 +1,6 @@
 val slickVersion = "3.2.0"
 val circeVersion = "0.7.0"
-val poiVersion = "3.15"
-val scalazVersion = "7.3.0-M7"
+val scalazVersion = "7.3.0-M14"
 
 name := "fsn-circe"
 
@@ -9,6 +8,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % slickVersion,
   "com.typesafe.slick" %% "slick-hikaricp" % slickVersion exclude("com.zaxxer", "HikariCP-java6")
 )
+
 libraryDependencies ++= Seq(
   "io.circe" %% "circe-core",
   "io.circe" %% "circe-generic",
@@ -28,3 +28,9 @@ libraryDependencies ++= Seq(
   "org.scalaz" %% "scalaz-iteratee" % scalazVersion,
   "org.scalaz" %% "scalaz-concurrent" % scalazVersion
 )
+
+
+lazy val `fsn-core` = (project in file("../fsn-core"))
+  .settings(net.scalax.sbt.CustomSettings.customSettings: _*)
+
+dependsOn(`fsn-core`)

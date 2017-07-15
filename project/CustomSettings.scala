@@ -5,9 +5,7 @@ import sbt.Keys._
 
 object CustomSettings {
   
-  def customSettings = scalaSettings ++ resolversSettings ++ extAlias ++ projectSettings
-
-  def baseSettings = scalaSettings ++ projectSettings
+  def customSettings = scalaSettings ++ resolversSettings ++ projectSettings
 
   def projectSettings = Seq(
     organization := "net.scalax"
@@ -29,23 +27,5 @@ object CustomSettings {
       ),
       externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false)
     )
-  
-  def extAlias = List(
-    if (scala.util.Properties.isWin)
-      addCommandAlias("windowsGitInit",
-        """|;
-          |git config --global i18n.commitencoding utf-8;
-          |git config --global i18n.logoutputencoding gbk;
-          |git config --global core.autocrlf true
-        """.stripMargin)
-    else
-      addCommandAlias("linuxGitInit",
-        """|;
-          |git config --global i18n.commitencoding utf-8;
-          |git config --global i18n.logoutputencoding utf-8;
-          |git config --global core.autocrlf true;
-          |git config core.editor gedit
-        """.stripMargin)
-  ).flatten
 
 }
