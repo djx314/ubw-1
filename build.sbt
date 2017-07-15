@@ -4,7 +4,7 @@ transitiveClassifiers in ThisBuild := Seq("sources", "javadoc")
 
 CustomSettings.customSettings
 
-name := "fsn-parent"
+name := "ubw-parent"
 
 addCommandAlias("t", "allTest")
 addCommandAlias("allTest", "fsn-circe/test")
