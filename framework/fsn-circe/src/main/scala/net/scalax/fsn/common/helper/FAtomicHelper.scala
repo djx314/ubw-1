@@ -15,15 +15,11 @@ trait FAtomicHelper[D] {
 trait FPropertyAtomicHelper[D] extends FAtomicHelper[D] {
 
   def named(name: String) = {
-    path.appendAtomic(new FProperty[D] {
-      override val proName = name
-    })
+    path.appendAtomic(FProperty.apply(name))
   }
 
   def describe(describe1: String) = {
-    path.appendAtomic(new FDescribe[D] {
-      override val describe = describe1
-    })
+    path.appendAtomic(FDescribe.apply(describe1))
   }
 
 }
@@ -31,9 +27,7 @@ trait FPropertyAtomicHelper[D] extends FAtomicHelper[D] {
 trait FDefaultAtomicHelper[D] extends FAtomicHelper[D] {
 
   def defaultValue(default: D) = {
-    path.appendAtomic(new DefaultValue[D] {
-      override val value = default
-    })
+    path.appendAtomic(DefaultValue.apply(default))
   }
 
 }

@@ -11,9 +11,11 @@ trait FProperty[E] extends FAtomic[E] {
 
 object FProperty {
   implicit val functorForOption: Functor[FProperty] = new Functor[FProperty] {
-    def map[A, B](fa: FProperty[A])(f: A => B): FProperty[B] = new FProperty[B] {
-      override val proName = fa.proName
-    }
+    def map[A, B](fa: FProperty[A])(f: A => B): FProperty[B] = apply(fa.proName)
+  }
+
+  def apply[E](name: String): FProperty[E] = new FProperty[E] {
+    override val proName = name
   }
 }
 
@@ -28,6 +30,10 @@ object FDescribe {
       override val describe = fa.describe
     }
   }
+
+  def apply[E](name: String): FDescribe[E] = new FDescribe[E] {
+    override val describe = name
+  }
 }
 
 trait DefaultValue[E] extends FAtomic[E] {
@@ -38,16 +44,14 @@ trait DefaultValue[E] extends FAtomic[E] {
 
 object DefaultValue {
   implicit def applicativeForEither: Applicative[DefaultValue] = new Applicative[DefaultValue] {
-    override def ap[A, B](ff: DefaultValue[A => B])(fa: DefaultValue[A]): DefaultValue[B] = new DefaultValue[B] {
-      override val value = ff.value(fa.value)
-    }
+    override def ap[A, B](ff: DefaultValue[A => B])(fa: DefaultValue[A]): DefaultValue[B] = apply(ff.value(fa.value))
 
-    override def pure[A](a: A): DefaultValue[A] = new DefaultValue[A] {
-      override val value = a
-    }
+    override def pure[A](a: A): DefaultValue[A] = apply(a)
 
-    override def map[A, B](fa: DefaultValue[A])(f: A => B): DefaultValue[B] = new DefaultValue[B] {
-      override val value = f(fa.value)
-    }
+    override def map[A, B](fa: DefaultValue[A])(f: A => B): DefaultValue[B] = apply(f(fa.value))
+  }
+
+  def apply[E](value1: E): DefaultValue[E] = new DefaultValue[E] {
+    override val value = value1
   }
 }

@@ -10,50 +10,47 @@ import scala.concurrent.Future
   val subCols: List[FColumn]
 }*/
 trait OneToOneRetrieve[E] extends FAtomic[E] {
-
   type SourceType
-  type SlickType
+  //type SlickType
   type TargetType
-  type FilterData
+  //type FilterData
   type DataType = E
 
   val mainCol: SourceType
   val owner: Any
-  val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
-  val primaryGen: FilterWrapper[TargetType, FilterData]
-  val filterConvert: DataType => FilterData
-
+  //val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
+  val mainShape: Shape[_ <: FlatShapeLevel, SourceType, DataType, TargetType]
+  val primaryGen: FilterWrapper[TargetType, DataType]
+  //val filterConvert: DataType => FilterData
 }
 
 trait OneToOneCrate[E] extends FAtomic[E] {
-
   type SourceType
-  type SlickType
+  //type SlickType
   type TargetType
   type DataType = E
 
   val mainCol: SourceType
   val owner: Any
-  val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
-  val convert: DataType => SlickType
-
+  //val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
+  val mainShape: Shape[_ <: FlatShapeLevel, SourceType, DataType, TargetType]
+  //val convert: DataType => SlickType
 }
 
 trait OneToOneUpdate[E] extends FAtomic[E] {
-
   type SourceType
-  type SlickType
+  //type SlickType
   type TargetType
-  type FilterData
+  //type FilterData
   type DataType = E
 
   val mainCol: SourceType
   val owner: Any
-  val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
-  val primaryGen: FilterWrapper[TargetType, FilterData]
-  val convert: DataType => SlickType
-  val filterConvert: DataType => FilterData
-
+  //val mainShape: Shape[_ <: FlatShapeLevel, SourceType, SlickType, TargetType]
+  val mainShape: Shape[_ <: FlatShapeLevel, SourceType, DataType, TargetType]
+  val primaryGen: FilterWrapper[TargetType, DataType]
+  //val convert: DataType => SlickType
+  //val filterConvert: DataType => FilterData
 }
 
 trait StaticMany[E] extends FAtomic[E] {

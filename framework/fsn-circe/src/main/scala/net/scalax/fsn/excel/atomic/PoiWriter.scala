@@ -4,11 +4,9 @@ import net.scalax.fsn.core.FAtomic
 import org.xarcher.cpoi.{ StyleTransform, WriteableCellOperationAbs }
 
 trait PoiWriter[E] extends FAtomic[E] {
-  type PoiType
   type DataType = E
 
-  val writer: WriteableCellOperationAbs[PoiType]
-  val convert: DataType => PoiType
+  val writer: WriteableCellOperationAbs[DataType]
 }
 
 trait PoiStyleTransform[E] extends FAtomic[E] {

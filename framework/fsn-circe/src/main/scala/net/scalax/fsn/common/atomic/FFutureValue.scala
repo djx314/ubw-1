@@ -15,16 +15,14 @@ trait FFutureValue[E] extends FAtomic[E] {
 
 object FFutureValue {
   implicit def applicativeForEither(implicit ec: ExecutionContext): Applicative[FFutureValue] = new Applicative[FFutureValue] {
-    override def ap[A, B](ff: FFutureValue[A => B])(fa: FFutureValue[A]): FFutureValue[B] = new FFutureValue[B] {
-      override val value = ff.value.flatMap(t => fa.value.map(u => t(u)))
-    }
+    override def ap[A, B](ff: FFutureValue[A => B])(fa: FFutureValue[A]): FFutureValue[B] = apply(ff.value.flatMap(t => fa.value.map(u => t(u))))
 
-    override def pure[A](a: A): FFutureValue[A] = new FFutureValue[A] {
-      override val value = Future successful a
-    }
+    override def pure[A](a: A): FFutureValue[A] = apply(Future successful a)
 
-    override def map[A, B](fa: FFutureValue[A])(f: A => B): FFutureValue[B] = new FFutureValue[B] {
-      override val value = fa.value.map(f)
-    }
+    override def map[A, B](fa: FFutureValue[A])(f: A => B): FFutureValue[B] = apply(fa.value.map(f))
+  }
+
+  def apply[E](fValue: Future[E]): FFutureValue[E] = new FFutureValue[E] {
+    override val value = fValue
   }
 }

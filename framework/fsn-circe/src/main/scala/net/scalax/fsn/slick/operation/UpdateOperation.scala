@@ -99,7 +99,7 @@ object InUpdateConvert extends FAtomicValueHelper {
                           override val dataToCondition = { cols: Seq[Any] =>
                             val col = cols(index).asInstanceOf[oneToOneUpdate.TargetType]
                             val FSomeValue(data1) = data
-                            val slickData = oneToOneUpdate.filterConvert(data1)
+                            val slickData = data1 //oneToOneUpdate.filterConvert(data1)
                             oneToOneUpdate.primaryGen.dataToCondition(col)(slickData)
                           }
                           override val wt = oneToOneUpdate.primaryGen.wt
