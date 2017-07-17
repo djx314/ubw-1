@@ -245,17 +245,20 @@ class FLeafPileImpl[PT, DT](
 
 object FPile {
 
+  case class TransPileWrap(root: FPile, drops: List[FPile])
+  type TransResult[T] = Either[FAtomicException, T]
+
   def apply[D](paths: FAtomicPathImpl[D]): FLeafPileImpl[FAtomicPathImpl[D], FAtomicValueImpl[D]] = {
     val shape = FsnShape.fpathFsnShape[D]
     new FLeafPileImpl(paths, shape)
   }
 
-  def genTreeTailCall[U](pathGen: FAtomicPath => FQueryTranform[U], oldPile: FPile, newPile: FPile): Either[FAtomicException, (FPile, List[FPile])] = {
+  def genTreeTailCall[U](pathGen: FAtomicPath => FQueryTranform[U], oldPile: FPile, newPile: FPile): TransResult[TransPileWrap] = {
     oldPile -> newPile match {
       case (commonPile: FCommonPile, leafPile: FLeafPile) =>
         val transforms = leafPile.fShape.encodeColumn(leafPile.pathPile).map(pathGen)
         if (transforms.forall(_.gen.isRight)) {
-          Right(newPile, List(commonPile))
+          Right(TransPileWrap(newPile, List(commonPile)))
         } else {
           Left(FAtomicException(transforms.map(_.gen).collect { case Left(FAtomicException(s)) => s }.flatten))
         }
@@ -266,8 +269,8 @@ object FPile {
             genTreeTailCall(pathGen, oldPile, new FLeafPileImpl(
               newPile.pathPile, newPile.fShape
             ))
-          case Right((newSubResultPile, pileList)) =>
-            Right((new FBranchPileImpl(
+          case Right(TransPileWrap(newSubResultPile, pileList)) =>
+            Right(TransPileWrap(new FBranchPileImpl(
               newPile.pathPile,
               newPile.fShape,
               newSubResultPile,
@@ -284,13 +287,13 @@ object FPile {
         }
         val isSuccess = listResult.forall(_.isRight)
         if (isSuccess) {
-          val (newPiles, newPileList) = listResult.map(s => s.right.get).unzip
-          Right(new FPileListImpl(
+          val (newPiles, newPileList) = listResult.map { case Right(TransPileWrap(root, drops)) => root -> drops }.unzip
+          Right(TransPileWrap(new FPileListImpl(
             newPile.decodePiles(newPiles.map(_.asInstanceOf[FCommonPile])),
             newPile.encodePiles _,
             newPile.decodePiles _,
             newPile.decodePileData _
-          ), newPileList.flatten)
+          ), newPileList.flatten))
         } else {
           Left(listResult.collect { case Left(ex) => ex }.reduce((a1, a2) =>
             FAtomicException(a1.typeTags ::: a2.typeTags)))
@@ -298,8 +301,8 @@ object FPile {
     }
   }
 
-  def genTree[U](pathGen: FAtomicPath => FQueryTranform[U], pile: FPile): Either[FAtomicException, (FPile, List[FPile])] = {
-    genTreeTailCall(pathGen, pile, pile).right.map { case (newPile, piles) => newPile -> piles }
+  def genTree[U](pathGen: FAtomicPath => FQueryTranform[U], pile: FPile): TransResult[TransPileWrap] = {
+    genTreeTailCall(pathGen, pile, pile) //.right.map { case (newPile, piles) => newPile -> piles }
   }
 
   def transformTreeList[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): FPileSyntax.PileGen[T] = new FPileSyntax.PileGen[T] {
@@ -309,7 +312,7 @@ object FPile {
 
       val calculatePiles = piles.map { s =>
         genTree(pathGen, s)
-      }.foldLeft(Right(Nil): Either[FAtomicException, List[(FPile, List[FPile])]]) {
+      }.foldLeft(Right(Nil): TransResult[List[TransPileWrap]]) {
         (append, eitherResult) =>
           (append -> eitherResult) match {
             case (Left(s), Left(t)) =>
@@ -323,7 +326,7 @@ object FPile {
           }
       }.right.map(_.reverse)
       calculatePiles.right.map { pileList =>
-        val (newPile, summaryPiles) = pileList.unzip
+        val (newPile, summaryPiles) = pileList.map(s => s.root -> s.drops).unzip
         FPileSyntax.PilePip(newPile, { anyList: List[FAtomicValue] =>
           columnGen(ListUtils.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*)
             .zip(summaryPiles)
@@ -346,7 +349,7 @@ object FPile {
 
   }
 
-  def transformOf[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): List[FAtomicPath] => Either[FAtomicException, List[FAtomicValue] => T] = {
+  def transformOf[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): List[FAtomicPath] => TransResult[List[FAtomicValue] => T] = {
     (initPaths: List[FAtomicPath]) =>
       {
         initPaths.map(pathGen).zipWithIndex.foldLeft(Right { _: List[FAtomicValue] => Nil }: Either[FAtomicException, List[FAtomicValue] => List[U]]) {

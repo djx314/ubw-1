@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick.helpers
+package net.scalax.ubw.validate.helpers
 
 import net.scalax.fsn.json.operation.FAtomicHelper
 import net.scalax.ubw.validate.atomic.{ ErrorMessage, Validator }
