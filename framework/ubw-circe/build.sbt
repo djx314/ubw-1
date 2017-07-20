@@ -1,4 +1,4 @@
-val slickVersion = "3.2.0"
+val slickVersion = "3.2.1"
 val circeVersion = "0.8.0"
 val scalazVersion = "7.3.0-M14"
 
