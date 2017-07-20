@@ -3,7 +3,7 @@ package net.scalax.ubw.core
 import cats.{ Functor, Monad, Semigroup, Traverse }
 import net.scalax.fsn.core.{ FAtomicValueImpl, FQueryTranform }
 import cats.instances.list._
-
+import cats._
 import scala.language.higherKinds
 
 trait PileFilter[U, F[_]] {
@@ -12,7 +12,14 @@ trait PileFilter[U, F[_]] {
 
   val monad: Monad[F]
   val semigroup: Semigroup[U]
-  val aa = cats.data.Validated
+
+  val mixSemigroup: Semigroup[F[U]] = {
+    new Semigroup[F[U]] {
+      override def combine(x: F[U], y: F[U]): F[U] = {
+        monad.flatMap(x) { a => monad.map(y) { b => semigroup.combine(a, b) } }
+      }
+    }
+  }
 
   val listTraverse: Traverse[List] = implicitly[Traverse[List]]
 

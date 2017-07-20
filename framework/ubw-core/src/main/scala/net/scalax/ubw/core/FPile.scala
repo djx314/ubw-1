@@ -1,6 +1,8 @@
 package net.scalax.fsn.core
 
 import net.scalax.fsn.core.ListUtils.WeightData
+import net.scalax.ubw.core.PileFilter
+import scala.language.higherKinds
 
 sealed abstract trait FPile {
   self =>
@@ -19,6 +21,35 @@ sealed abstract trait FPile {
     val atomicValueList = ListUtils.splitList(atomicDatas, leave.map(_.dataLengthSum): _*)
     val weightData = leave.zip(atomicValueList).map { case (eachPile, values) => WeightData(values, eachPile.dataLengthSum) }
     weightDataListFromSubList(weightData).flatMap(_.data)
+  }
+
+  def dataListFromSubListWithFilter[U, F[_]](atomicDatas: List[(FAtomicValue, FAtomicPath)], filter: PileFilter[U, F]): (F[List[FAtomicValue]], List[F[U]]) = {
+    val leave = subsCommonPile
+    val atomicValueList = ListUtils.splitList(atomicDatas, leave.map(_.dataLengthSum): _*)
+    val weightData = leave.zip(atomicValueList).map { case (eachPile, values) => WeightData(values, eachPile.dataLengthSum) }
+    val (weightValues, filterResults) = weightDataListFromSubWithFilter(weightData, filter)
+    filter.monad.map(weightValues) { values => values.flatMap(_.data) } -> filterResults
+  }
+
+  def weightDataListFromSubWithFilter[U, F[_]](atomicDatas: List[WeightData[(FAtomicValue, FAtomicPath)]], filter: PileFilter[U, F]): (F[List[WeightData[FAtomicValue]]], List[F[U]]) = {
+    val atomicValues = atomicDatas.map { s =>
+      val (newAtomnicValues, filterResults) = s.data.map {
+        case (atomicValue, atomicPath) =>
+          val transform = filter.transform[atomicPath.DataType]
+          transform.gen match {
+            case Left(e) =>
+              filter.monad.pure(atomicValue: FAtomicValue) -> List.empty[F[U]]
+            case Right(query) =>
+              val result = transform.apply(query, atomicValue.asInstanceOf[FAtomicValueImpl[transform.path.DataType]])
+              val (newValue, filterResult) = filter.unzip(result)
+              filter.monad.map(newValue)({ s => s: FAtomicValue }) -> List(filterResult)
+          }
+      }.unzip
+      val fAtomicValues = filter.listTraverse(newAtomnicValues)
+      filter.monad.map(fAtomicValues)({ values => WeightData(values, s.weight) }) -> filterResults.flatten
+    }
+    val (newAtomicValues, filterResult) = atomicValues.unzip
+    filter.monad.map(filter.listTraverse(newAtomicValues))(s => weightDataListFromSubList(s)) -> filterResult.flatten
   }
 
   def weightDataListFromSubList(atomicDatas: List[WeightData[FAtomicValue]]): List[WeightData[FAtomicValue]]
@@ -342,6 +373,52 @@ object FPile {
               //???
             })
           //???
+        })
+      }
+
+    }
+
+  }
+
+  def transformTreeListWithFilter[U, T, E, F[_], G](pathGen: FAtomicPath => FQueryTranform[U], filter: PileFilter[E, F])(columnGen: List[F[List[U]]] => T, filterGen: List[F[E]] => G): FPileSyntax.PileGen[(T, G)] = new FPileSyntax.PileGen[(T, G)] {
+    override def gen(prePiles: List[FPile]) = {
+      //防止定义 FPile 时最后一步使用了混合后不能识别最后一层 path
+      val piles = prePiles //.flatMap(eachPile => eachPile.genPiles)
+
+      val calculatePiles = piles.map { s =>
+        genTree(pathGen, s)
+      }.foldLeft(Right(Nil): TransResult[List[TransPileWrap]]) {
+        (append, eitherResult) =>
+          (append -> eitherResult) match {
+            case (Left(s), Left(t)) =>
+              Left(FAtomicException(s.typeTags ::: t.typeTags))
+            case (Left(s), Right(_)) =>
+              Left(FAtomicException(s.typeTags))
+            case (Right(_), Left(s)) =>
+              Left(FAtomicException(s.typeTags))
+            case (Right(s), Right(t)) =>
+              Right(t :: s)
+          }
+      }.right.map(_.reverse)
+      calculatePiles.right.map { pileList =>
+        val (newPiles, summaryPiles) = pileList.map(s => s.root -> s.drops).unzip
+        FPileSyntax.PilePip(newPiles, { anyList: List[FAtomicValue] =>
+          val (valueGens, filterResult) = ListUtils.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*)
+            .zip(summaryPiles)
+            .flatMap {
+              case (subList, subPiles) =>
+                ListUtils.splitList(subList, subPiles.map(_.dataLengthSum): _*).zip(subPiles).map {
+                  case (eachList, eachPiles) =>
+                    val (newDataList, filterResults) = eachPiles.dataListFromSubListWithFilter(eachList.zip(eachPiles.selfPaths), filter)
+                    filter.monad.map(newDataList) { dataList =>
+                      eachPiles.selfPaths.map(s => pathGen(s)).zip(dataList /*eachPiles.dataListFromSubList(eachList)*/ ).map {
+                        case (tranform, data) =>
+                          tranform.apply(tranform.gen.right.get, data.asInstanceOf[FAtomicValueImpl[tranform.path.DataType]])
+                      }
+                    } -> filterResults
+                }
+            }.unzip
+          columnGen(valueGens) -> filterGen(filterResult.flatten)
         })
       }
 
