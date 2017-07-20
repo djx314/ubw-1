@@ -23,86 +23,19 @@ sealed abstract trait FPile {
     weightDataListFromSubList(weightData).flatMap(_.data)
   }
 
+  @deprecated("not to use", "0.0.1")
   def dataListFromSubListWithFilter[U, F[_]](atomicDatas: List[(FAtomicValue, FAtomicPath)], filter: PileFilter[U, F]): (F[List[FAtomicValue]], List[F[U]]) = {
     val leave = subsCommonPile
     val atomicValueList = ListUtils.splitList(atomicDatas, leave.map(_.dataLengthSum): _*)
     val weightData = leave.zip(atomicValueList).map { case (eachPile, values) => WeightData(values, eachPile.dataLengthSum) }
-    val (weightValues, filterResults) = weightDataListFromSubWithFilter(weightData, filter)
+    val (weightValues, filterResults) = FPile.weightDataListFromSubWithFilter(weightData, filter)
     filter.monad.map(weightValues) { values => values.flatMap(_.data) } -> filterResults
   }
 
-  def weightDataListFromSubWithFilter[U, F[_]](atomicDatas: List[WeightData[(FAtomicValue, FAtomicPath)]], filter: PileFilter[U, F]): (F[List[WeightData[FAtomicValue]]], List[F[U]]) = {
-    val atomicValues = atomicDatas.map { s =>
-      val (newAtomnicValues, filterResults) = s.data.map {
-        case (atomicValue, atomicPath) =>
-          val transform = filter.transform[atomicPath.DataType]
-          transform.gen match {
-            case Left(e) =>
-              filter.monad.pure(atomicValue: FAtomicValue) -> List.empty[F[U]]
-            case Right(query) =>
-              val result = transform.apply(query, atomicValue.asInstanceOf[FAtomicValueImpl[transform.path.DataType]])
-              val (newValue, filterResult) = filter.unzip(result)
-              filter.monad.map(newValue)({ s => s: FAtomicValue }) -> List(filterResult)
-          }
-      }.unzip
-      val fAtomicValues = filter.listTraverse(newAtomnicValues)
-      filter.monad.map(fAtomicValues)({ values => WeightData(values, s.weight) }) -> filterResults.flatten
-    }
-    val (newAtomicValues, filterResult) = atomicValues.unzip
-    filter.monad.map(filter.listTraverse(newAtomicValues))(s => weightDataListFromSubList(s)) -> filterResult.flatten
-  }
+  def dataListFromSubListWithFilter1[U, F[_]](atomicDatas: List[WeightData[FAtomicValue]], filter: PileFilter[U, F]): (F[List[WeightData[FAtomicValue]]], List[F[U]]) = ???
 
   def weightDataListFromSubList(atomicDatas: List[WeightData[FAtomicValue]]): List[WeightData[FAtomicValue]]
-  /*def weightDataListFromSubList(atomicDatas: List[WeightData[FAtomicValue]]): List[WeightData[FAtomicValue]] = {
-    self match {
-      case s: FPileList =>
-        //如果是 pileList，直接分组再递归调用
-        val piles = s.encodePiles(s.pileEntity)
-        val datas = ListUtils.splitWithWeight(atomicDatas, piles.map(_.dataLengthSum): _*)
-        val pileWithData = if (piles.size == datas.size) {
-          piles.zip(datas)
-        } else {
-          throw new Exception("pile 与数据长度不匹配")
-        }
-        pileWithData.flatMap {
-          case (eachPile, eachData) =>
-            eachPile.weightDataListFromSubList(eachData)
-        }
-      case _: FLeafPile =>
-        atomicDatas
-      case s: FBranchPile =>
-        val subPiles = s.subs
-        val subData = subPiles.weightDataListFromSubList(atomicDatas)
-        subPiles match {
-          case sp: FCommonPile =>
-            if (subData.size != 1) {
-              throw new Exception("FCommonPile 的权重数据长度必须为 1")
-            }
-            val subPileData = sp.fShape.decodeData(subData.head.data)
-            val currentPileData = s.dataFromSub(subPileData)
-            val resultDataList = s.fShape.encodeData(currentPileData)
-            List(WeightData(resultDataList, s.dataLengthSum))
-          case sp: FPileList =>
-            val piles = sp.encodePiles(sp.pileEntity)
-            if (subData.size != piles.size) {
-              throw new Exception("FPileList 的权重数据长度和 pile 数量不一致")
-            }
-            val subDataList = ListUtils.splitWithWeight(subData, piles.map(_.dataLengthSum): _*)
-            val pileWithData = piles.zip(subDataList)
-            val currentPileData = sp.decodePileData {
-              pileWithData.map {
-                case (eachPile, subData) =>
-                  if (subData.size != 1) {
-                    throw new Exception("FCommonPile 的权重数据长度必须为 1")
-                  }
-                  eachPile.fShape.decodeData(subData.head.data)
-              }
-            }
-            val resultDataList = s.fShape.encodeData(s.dataFromSub(currentPileData))
-            List(WeightData(resultDataList, s.dataLengthSum))
-        }
-    }
-  }*/
+
 }
 
 trait FPileList extends FPile {
@@ -140,6 +73,17 @@ trait FPileList extends FPile {
       case (eachPile, eachData) =>
         eachPile.weightDataListFromSubList(eachData)
     }
+  }
+
+  override def dataListFromSubListWithFilter1[U, F[_]](atomicDatas: List[WeightData[FAtomicValue]], filter: PileFilter[U, F]): (F[List[WeightData[FAtomicValue]]], List[F[U]]) = {
+    val piles = self.encodePiles(self.pileEntity)
+
+    val dataWithPiles = ListUtils.splitWithWeight(atomicDatas, piles.map(_.dataLengthSum): _*).zip(piles)
+    val pileWithData = dataWithPiles.map {
+      case (weightData, pile) =>
+        pile.dataListFromSubListWithFilter1(weightData, filter)
+    }.unzip
+    filter.monad.map(filter.listTraverse(pileWithData._1)) { s => s.flatten } -> pileWithData._2.flatten
   }
 
   val pileEntity: PileType
@@ -264,6 +208,21 @@ trait FLeafPile extends FCommonPile {
     atomicDatas
   }
 
+  override def dataListFromSubListWithFilter1[U, F[_]](atomicDatas: List[WeightData[FAtomicValue]], filter: PileFilter[U, F]): (F[List[WeightData[FAtomicValue]]], List[F[U]]) = {
+    val leave = subsCommonPile
+    if (atomicDatas.size != 1) {
+      throw new Exception("LeafPile 的数据束数量只能为 1")
+    }
+    if (atomicDatas.head.data.size != selfPaths.size) {
+      throw new Exception("LeafPile 的 AtomicValue 数量和 AtomicPath 数量不匹配")
+    }
+    val singleWeightData = atomicDatas.head.copy(data = atomicDatas.head.data.zip(selfPaths))
+    //val atomicValueList = ListUtils.splitList(atomicDatas.zip(selfPaths), leave.map(_.dataLengthSum): _*)
+    //val weightData = leave.zip(atomicValueList).map { case (eachPile, values) => WeightData(values, eachPile.dataLengthSum) }
+    val (weightValues, filterResults) = FPile.weightDataListFromSubWithFilter(List(singleWeightData), filter)
+    weightValues -> filterResults
+  }
+
 }
 
 class FLeafPileImpl[PT, DT](
@@ -282,6 +241,27 @@ object FPile {
   def apply[D](paths: FAtomicPathImpl[D]): FLeafPileImpl[FAtomicPathImpl[D], FAtomicValueImpl[D]] = {
     val shape = FsnShape.fpathFsnShape[D]
     new FLeafPileImpl(paths, shape)
+  }
+
+  def weightDataListFromSubWithFilter[U, F[_]](atomicDatas: List[WeightData[(FAtomicValue, FAtomicPath)]], filter: PileFilter[U, F]): (F[List[WeightData[FAtomicValue]]], List[F[U]]) = {
+    val atomicValues = atomicDatas.map { s =>
+      val (newAtomnicValues, filterResults) = s.data.map {
+        case (atomicValue, atomicPath) =>
+          val transform = filter.transform[atomicPath.DataType]
+          transform.gen match {
+            case Left(e) =>
+              filter.monad.pure(atomicValue: FAtomicValue) -> List.empty[F[U]]
+            case Right(query) =>
+              val result = transform.apply(query, atomicValue.asInstanceOf[FAtomicValueImpl[transform.path.DataType]])
+              val (newValue, filterResult) = filter.unzip(result)
+              filter.monad.map(newValue)({ s => s: FAtomicValue }) -> List(filterResult)
+          }
+      }.unzip
+      val fAtomicValues = filter.listTraverse(newAtomnicValues)
+      filter.monad.map(fAtomicValues)({ values => WeightData(values, s.weight) }) -> filterResults.flatten
+    }
+    val (newAtomicValues, filterResult) = atomicValues.unzip
+    filter.listTraverse(newAtomicValues) -> filterResult.flatten
   }
 
   def genTreeTailCall[U](pathGen: FAtomicPath => FQueryTranform[U], oldPile: FPile, newPile: FPile): TransResult[TransPileWrap] = {
@@ -380,7 +360,7 @@ object FPile {
 
   }
 
-  def transformTreeListWithFilter[U, T, E, F[_], G](pathGen: FAtomicPath => FQueryTranform[U], filter: PileFilter[E, F])(columnGen: List[F[List[U]]] => T, filterGen: List[F[E]] => G): FPileSyntax.PileGen[(T, G)] = new FPileSyntax.PileGen[(T, G)] {
+  def transformTreeListWithFilter[U, T, E, F[_], G](pathGen: FAtomicPath => FQueryTranform[U], filter: PileFilter[E, F])(columnGen: F[List[U]] => T, filterGen: F[List[E]] => G): FPileSyntax.PileGen[(T, G)] = new FPileSyntax.PileGen[(T, G)] {
     override def gen(prePiles: List[FPile]) = {
       //防止定义 FPile 时最后一步使用了混合后不能识别最后一层 path
       val piles = prePiles //.flatMap(eachPile => eachPile.genPiles)
@@ -418,7 +398,7 @@ object FPile {
                     } -> filterResults
                 }
             }.unzip
-          columnGen(valueGens) -> filterGen(filterResult.flatten)
+          columnGen(filter.monad.map(filter.listTraverse(valueGens))(_.flatten)) -> filterGen(filter.listTraverse(filterResult.flatten))
         })
       }
 
