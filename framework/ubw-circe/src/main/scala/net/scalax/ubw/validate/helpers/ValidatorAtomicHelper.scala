@@ -24,7 +24,7 @@ trait ValidatorAtomicHelper[E] extends FAtomicHelper[E] {
   def notEmptyString(implicit strOptUnWrap: NestEmptyUnWrap[Option[E], String]) = path.appendAtomic(new Validator[E] {
     override def validate(proName: String): PartialFunction[Option[E], Option[ErrorMessage]] = {
       case s =>
-        lazy val emptyErrMsg = Option(ErrorMessage(s"${proName}不能为空"))
+        lazy val emptyErrMsg = Option(ErrorMessage.error(s"${proName}不能为空"))
         strOptUnWrap.unWrap(s) match {
           case Some(s) if !s.isEmpty =>
             None
@@ -39,7 +39,7 @@ trait ValidatorAtomicHelper[E] extends FAtomicHelper[E] {
   def specNotNull[T](implicit optUnWrap: NestEmptyUnWrap[Option[E], T]) = path.appendAtomic(new Validator[E] {
     override def validate(proName: String): PartialFunction[Option[E], Option[ErrorMessage]] = {
       case s =>
-        lazy val emptyErrMsg = Option(ErrorMessage(s"${proName}不能为空"))
+        lazy val emptyErrMsg = Option(ErrorMessage.error(s"${proName}不能为空"))
         optUnWrap.unWrap(s) match {
           case Some(_) =>
             None
@@ -52,7 +52,7 @@ trait ValidatorAtomicHelper[E] extends FAtomicHelper[E] {
   def notNull = path.appendAtomic(new Validator[E] {
     override def validate(proName: String): PartialFunction[Option[E], Option[ErrorMessage]] = {
       case s =>
-        lazy val emptyErrMsg = Option(ErrorMessage(s"${proName}不能为空"))
+        lazy val emptyErrMsg = Option(ErrorMessage.error(s"${proName}不能为空"))
         s.fold(emptyErrMsg) { s => None }
     }
   })
@@ -60,7 +60,7 @@ trait ValidatorAtomicHelper[E] extends FAtomicHelper[E] {
   def isInt(implicit strOptUnWrap: NestEmptyUnWrap[Option[E], String]) = path.appendAtomic(new Validator[E] {
     override def validate(proName: String): PartialFunction[Option[E], Option[ErrorMessage]] = {
       case s @ (Some(_)) =>
-        lazy val emptyErrMsg = Option(ErrorMessage(s"${proName}不是数字"))
+        lazy val emptyErrMsg = Option(ErrorMessage.error(s"${proName}不是数字"))
         strOptUnWrap.unWrap(s).filterNot(_.isEmpty).flatMap { t =>
           try {
             Integer.valueOf(t)
@@ -76,7 +76,7 @@ trait ValidatorAtomicHelper[E] extends FAtomicHelper[E] {
   def isNumber(implicit strOptUnWrap: NestEmptyUnWrap[Option[E], String]) = path.appendAtomic(new Validator[E] {
     override def validate(proName: String): PartialFunction[Option[E], Option[ErrorMessage]] = {
       case s @ (Some(_)) =>
-        lazy val emptyErrMsg = Option(ErrorMessage(s"${proName}不是数字"))
+        lazy val emptyErrMsg = Option(ErrorMessage.error(s"${proName}不是数字"))
         strOptUnWrap.unWrap(s).filterNot(_.isEmpty).flatMap { t =>
           try {
             java.lang.Double.valueOf(t)

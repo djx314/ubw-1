@@ -288,7 +288,7 @@ object FPile {
     val atomicValues = atomicDatas.map { s =>
       val (newAtomnicValues, filterResults) = s.data.map {
         case (atomicValue, atomicPath) =>
-          val transform = filter.transform[atomicPath.DataType]
+          val transform = filter.transform.apply(atomicPath.asInstanceOf[FAtomicPathImpl[atomicPath.DataType]])
           transform.gen match {
             case Left(_) =>
               filter.monad.pure(atomicValue: FAtomicValue) -> List.empty[F[U]]
@@ -359,8 +359,12 @@ object FPile {
 
   def transformTreeList[U, T](pathGen: FAtomicPath => FQueryTranform[U])(columnGen: List[U] => T): FPileSyntax.PileGen[T] = new FPileSyntax.PileGen[T] {
     override def gen(prePiles: List[FPile]) = {
+      transformTreeListWithFilter(pathGen, PileFilter.empty)(columnGen, { s => s }).gen(prePiles) match {
+        case Left(e) => Left(e)
+        case Right(result) => Right(FPileSyntax.PilePip(result.piles, { atomics => result.atomicValues(atomics)._1 }))
+      }
       //防止定义 FPile 时最后一步使用了混合后不能识别最后一层 path
-      val piles = prePiles //.flatMap(eachPile => eachPile.genPiles)
+      /*val piles = prePiles
 
       val calculatePiles = piles.map { s =>
         genTree(pathGen, s)
@@ -391,12 +395,9 @@ object FPile {
                         tranform.apply(tranform.gen.right.get, data.asInstanceOf[FAtomicValueImpl[tranform.path.DataType]])
                     }
                 }
-              //???
             })
-          //???
         })
-      }
-
+      }*/
     }
 
   }
