@@ -7,37 +7,37 @@ import scala.concurrent.Future
 trait ValidatorF[E] extends FAtomic[E] {
 
   type DataType = E
-  def validateF(proName: String): PartialFunction[Option[DataType], Future[Option[ErrorMessage]]]
+  def validateF(proName: String, describe: String): PartialFunction[Option[DataType], Future[Option[ErrorMessage]]]
 }
 
 trait Validator[E] extends ValidatorF[E] {
 
   override type DataType = E
 
-  def validate(proName: String): PartialFunction[Option[DataType], Option[ErrorMessage]]
+  def validate(proName: String, describe: String): PartialFunction[Option[DataType], Option[ErrorMessage]]
 
-  override def validateF(proName: String): PartialFunction[Option[DataType], Future[Option[ErrorMessage]]] = {
+  override def validateF(proName: String, describe: String): PartialFunction[Option[DataType], Future[Option[ErrorMessage]]] = {
     {
-      case data: Option[DataType] if validate(proName).isDefinedAt(data) =>
-        Future successful validate(proName).apply(data)
+      case data: Option[DataType] if validate(proName, describe).isDefinedAt(data) =>
+        Future successful validate(proName, describe).apply(data)
     }
   }
 
 }
 
-case class ErrorMessage(mess: String, level: String)
+case class ErrorMessage(property: String, message: String, level: String)
 
 object ErrorMessage {
 
   val errorType = "error"
   val warnType = "warn"
 
-  def error(message: String): ErrorMessage = {
-    ErrorMessage(message, errorType)
+  def error(property: String, message: String): ErrorMessage = {
+    ErrorMessage(property, message, errorType)
   }
 
-  def warn(message: String): ErrorMessage = {
-    ErrorMessage(message, warnType)
+  def warn(property: String, message: String): ErrorMessage = {
+    ErrorMessage(property, message, warnType)
   }
 
 }

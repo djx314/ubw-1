@@ -284,7 +284,7 @@ object PropertiesOperation extends FPilesGenHelper {
         }.flatMap(StaticManyOperation.updateGen) {
           case ((execInfoDBIOF, validateInfoF), staticManyReader) =>
             validateInfoF.map { validateInfo =>
-              if (validateInfo.isEmpty) {
+              if (!validateInfo.isEmpty) {
                 Left(validateInfo)
               } else {
                 Right(execInfoDBIOF.apply(binds).map { execInfoDBIO =>
