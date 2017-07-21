@@ -3,12 +3,11 @@ package net.scalax.ubw.validate.helpers
 import net.scalax.fsn.json.operation.FAtomicHelper
 import net.scalax.ubw.validate.atomic.{ ErrorMessage, Validator }
 
-trait ValidatorAtomicHelper[E] extends FAtomicHelper[E] {
+trait NestEmptyUnWrap[S, T] {
+  def unWrap(s: S): Option[T]
+}
 
-  trait NestEmptyUnWrap[S, T] {
-    def unWrap(s: S): Option[T]
-  }
-
+object NestEmptyUnWrap {
   implicit def commonStrOptUnWrapImplicit[T]: NestEmptyUnWrap[Option[T], T] = {
     new NestEmptyUnWrap[Option[T], T] {
       override def unWrap(s: Option[T]): Option[T] = s
@@ -20,6 +19,9 @@ trait ValidatorAtomicHelper[E] extends FAtomicHelper[E] {
       override def unWrap(s: Option[R]): Option[T] = s.flatMap(t => sub.unWrap(t))
     }
   }
+}
+
+trait ValidatorAtomicHelper[E] extends FAtomicHelper[E] {
 
   def notEmptyString(implicit strOptUnWrap: NestEmptyUnWrap[Option[E], String]) = path.appendAtomic(new Validator[E] {
     override def validate(proName: String): PartialFunction[Option[E], Option[ErrorMessage]] = {

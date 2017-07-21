@@ -89,7 +89,7 @@ object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
     repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
     updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-  ): SlickParam => DBIO[List[() => Future[Option[DBIO[ExecInfo3]]]]] = {
+  ): SlickParam => DBIO[List[() => Future[Option[Future[DBIO[ExecInfo3]]]]]] = {
     { param: SlickParam =>
       val gen = StrOutSelectConvert.ubwGen(binds.listQueryBind).flatMap(futureGen) { (slickReader, futureConvert) =>
         slickReader.slickResult.apply(param).resultAction.map { action =>
@@ -103,7 +103,8 @@ object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
             eachFuture().map {
               _.map {
                 t =>
-                  slickWriterGen(t)(binds.crudBinds)
+                  slickWriterGen
+                  slickWriterGen(t)._1.apply(binds.crudBinds)
               }
             }
           }
