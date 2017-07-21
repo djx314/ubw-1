@@ -1,9 +1,9 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
-import net.scalax.fsn.slick.atomic.{ OneToOneRetrieve, SlickRetrieve }
-import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
+import net.scalax.fsn.json.operation.{FAtomicValueHelper, FSomeValue, ValidatorOperation}
+import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
+import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
 import slick.dbio.DBIO
 import slick.lifted._
 import shapeless._
@@ -76,7 +76,7 @@ object InRetrieveConvert extends FAtomicValueHelper {
     /*val slickReader = FColumn.find(columns)({ case s: SlickRetrieve[columns.DataType] => s })
     val oneToOneRetrieveOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })*/
 
-    FPile.transformTreeList {
+    FPile.transformTreeListWithFilter({
       new FAtomicQuery(_) {
         val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
           .mapTo {
@@ -127,20 +127,24 @@ object InRetrieveConvert extends FAtomicValueHelper {
             }
           }
       }.aa
-    } { genList =>
+    }, ValidatorOperation.readValidator)({ genListF =>
       { binds: List[(Any, SlickQueryBindImpl)] =>
-        val readersWithData = genList.zipWithIndex.map {
-          case (reader1, index) =>
-            new ISlickReaderWithData {
-              override val reader: reader1.type = reader1
-              override val dataGen = { mainData: reader1.MainDColumn =>
-                DataWithIndex(set(reader1.autalColumn(mainData)), index)
+        genListF.map { genList =>
+          val readersWithData = genList.zipWithIndex.map {
+            case (reader1, index) =>
+              new ISlickReaderWithData {
+                override val reader: reader1.type = reader1
+                override val dataGen = { mainData: reader1.MainDColumn =>
+                  DataWithIndex(set(reader1.autalColumn(mainData)), index)
+                }
               }
-            }
+          }
+          RetrieveOperation.parseInsertWithIndex(binds, readersWithData)
         }
-        RetrieveOperation.parseInsertWithIndex(binds, readersWithData)
       }
-    }
+    }, { genList =>
+      genList.map(_.flatten)
+    })
   }
 }
 
