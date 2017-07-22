@@ -280,11 +280,13 @@ object PropertiesOperation extends FPilesGenHelper {
     { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
         JsonOperation.readGen1111.flatMap(InUpdateConvert.updateGen) { (jsonReader, slickWriterGen) =>
+          println(jsonReader.apply(data) + "11" * 100)
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) {
           case ((execInfoDBIOF, validateInfoF), staticManyReader) =>
             validateInfoF.map { validateInfo =>
-              if (validateInfo.isEmpty) {
+              if (!validateInfo.isEmpty) {
+                println(validateInfo)
                 Left(validateInfo)
               } else {
                 Right(execInfoDBIOF.apply(binds).map { execInfoDBIO =>

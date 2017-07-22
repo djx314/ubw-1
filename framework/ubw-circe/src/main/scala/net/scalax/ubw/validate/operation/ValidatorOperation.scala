@@ -30,9 +30,9 @@ object ValidatorOperation extends FAtomicValueHelper {
             }
             messageResult.map { s =>
               (if (s.isEmpty) {
-                emptyValue[data.DataType] -> s.toList
-              } else {
                 data -> s.toList
+              } else {
+                emptyValue[data.DataType] -> s.toList
               }): (FAtomicValue, List[ErrorMessage])
             }
         }
