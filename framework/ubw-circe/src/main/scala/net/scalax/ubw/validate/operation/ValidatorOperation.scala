@@ -1,6 +1,6 @@
 package net.scalax.fsn.json.operation
 
-import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
+import net.scalax.fsn.common.atomic.{ DefaultValue, FDescribe, FProperty }
 import net.scalax.fsn.core._
 import net.scalax.ubw.core.PileFilter
 import net.scalax.ubw.validate.atomic.{ ErrorMessage, ValidatorF }
@@ -14,25 +14,36 @@ object ValidatorOperation extends FAtomicValueHelper {
 
   def readValidator(implicit ec: ExecutionContext): PileFilter[List[ErrorMessage], Future] = PileFilter {
     new FAtomicQuery(_) {
-      val aa = withRep(needAtomic[FProperty] :: needAtomic[ValidatorF] :: FANil)
+      val aa = withRep(needAtomic[FProperty] :: needAtomicList[ValidatorF] :: needAtomicOpt[FDescribe] :: FANil)
         .mapTo {
-          case (property :: validateF :: HNil, data) =>
-            val par = validateF.validateF(property.proName)
+          case (property :: validateFList :: describeOpt :: HNil, data) =>
             val dataOpt = data match {
               case FSomeValue(s) => Option(s)
               case FAtomicValueImpl.Zero() => Option.empty[data.DataType]
             }
-            val isDefinedAt = par.isDefinedAt(dataOpt)
-            val messageResult: Future[Option[ErrorMessage]] = if (isDefinedAt) {
-              par.apply(dataOpt)
-            } else {
-              Future successful Option.empty[ErrorMessage]
-            }
-            messageResult.map { s =>
-              (if (s.isEmpty) {
-                data -> s.toList
+
+            val validateResultFList = validateFList.map { validateF =>
+              val par = validateF.validateF(property.proName, describeOpt.map(_.describe).getOrElse(property.proName))
+              val isDefinedAt = par.isDefinedAt(dataOpt)
+              val messageResult: Future[Option[ErrorMessage]] = if (isDefinedAt) {
+                par.apply(dataOpt)
               } else {
-                emptyValue[data.DataType] -> s.toList
+                Future successful Option.empty[ErrorMessage]
+              }
+              messageResult /*.map { s =>
+                (if (s.isDefined) {
+                  emptyValue[data.DataType] -> s.toList
+                } else {
+                  data -> s.toList
+                }): (FAtomicValue, List[ErrorMessage])
+              }*/
+            }
+            Future.sequence(validateResultFList).map { s =>
+              val validateResult = s.collect { case Some(s) => s }
+              (if (validateResult.isEmpty) {
+                data -> validateResult
+              } else {
+                emptyValue[data.DataType] -> validateResult
               }): (FAtomicValue, List[ErrorMessage])
             }
         }
