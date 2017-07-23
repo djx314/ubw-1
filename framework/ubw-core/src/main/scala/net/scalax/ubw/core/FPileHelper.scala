@@ -9,19 +9,20 @@ trait FPileSyntax[T] {
 
   val pilesGen: FPileSyntax.PileGen1111[List[FAtomicValue] => T]
 
-  def flatMap1111[S, U](mapPiles: FPileSyntax.PileGen1111[List[FAtomicValue] => S])(cv: (T, List[FAtomicValue] => S) => U): FPileSyntax.PileGen1111[List[FAtomicValue] => U] = new FPileSyntax.PileGen1111[List[FAtomicValue] => U] {
-    def gen(piles: List[FPile]): Either[FAtomicException, FPileSyntax.PilePip1111[List[FAtomicValue] => U]] = {
-      pilesGen.gen(piles).right.flatMap {
-        case FPileSyntax.PilePip(newPiles, gen) =>
-          mapPiles.gen(newPiles).right.map {
-            case FPileSyntax.PilePip(anOtherNewPiles, anOtherGen) =>
-              FPileSyntax.PilePip(anOtherNewPiles, { list: List[FAtomicValue] =>
-                cv(gen(list), anOtherGen)
-              })
-          }
+  def flatMap1111[S, U](mapPiles: FPileSyntax.PileGen[S])(cv: (T, List[FAtomicValue] => S) => U): FPileSyntax.PileGen[U] =
+    new FPileSyntax.PileGen[U] {
+      def gen(piles: List[FPile]): Either[FAtomicException, FPileSyntax.PilePip1111[List[FAtomicValue] => U]] = {
+        pilesGen.gen(piles).right.flatMap {
+          case FPileSyntax.PilePip(newPiles, gen) =>
+            mapPiles.gen(newPiles).right.map {
+              case FPileSyntax.PilePip(anOtherNewPiles, anOtherGen) =>
+                FPileSyntax.PilePip(anOtherNewPiles, { list: List[FAtomicValue] =>
+                  cv(gen(list), anOtherGen)
+                })
+            }
+        }
       }
     }
-  }
 
   def flatMap[S, U](mapPiles: FPileSyntax.PileGen1111[List[FAtomicValue] => S])(cv: (T, List[FAtomicValue] => S) => U): FPileSyntax.PileGen1111[List[FAtomicValue] => U] = {
     val monad = implicitly[Monad[FPileSyntax.PileGen1111]]
