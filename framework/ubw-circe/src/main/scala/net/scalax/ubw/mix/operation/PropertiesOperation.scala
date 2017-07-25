@@ -276,11 +276,10 @@ object PropertiesOperation extends FPilesGenHelper {
     implicit
     ec: ExecutionContext,
     updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-  ): List[FPile] => Map[String, Json] => Future[Either[List[ErrorMessage], Future[DBIO[UpdateStaticManyInfo]]]] =
+  ): List[FPile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[UpdateStaticManyInfo]]] =
     { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
         JsonOperation.readGen1111.flatMap(InUpdateConvert.updateGen) { (jsonReader, slickWriterGen) =>
-          println(jsonReader.apply(data) + "11" * 100)
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) {
           case ((execInfoDBIOF, validateInfoF), staticManyReader) =>
@@ -301,7 +300,10 @@ object PropertiesOperation extends FPilesGenHelper {
           case Left(e: Exception) =>
             e.printStackTrace()
             throw e
-          case Right(s) => s
+          case Right(s) => s.flatMap {
+            case Left(messages) => Future.successful(Left(messages))
+            case Right(t) => t.map(r => Right(r))
+          }
         }
       }
     }
