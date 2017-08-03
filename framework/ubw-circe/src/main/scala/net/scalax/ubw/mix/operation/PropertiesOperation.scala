@@ -279,7 +279,7 @@ object PropertiesOperation extends FPilesGenHelper {
   ): List[FPile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[UpdateStaticManyInfo]]] =
     { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
-        JsonOperation.readGen1111.flatMap(InUpdateConvert.updateGen) { (jsonReader, slickWriterGen) =>
+        JsonOperation.unfullReadGen1111.flatMap(InUpdateConvert.updateGen) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) {
           case ((execInfoDBIOF, validateInfoF), staticManyReader) =>

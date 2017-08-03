@@ -56,17 +56,21 @@ object JsonOperation extends FAtomicValueHelper {
                   json.as[jsonReader.DataType](jsonReader.reader) match {
                     case Right(data) =>
                       set(data)
-                    case _ =>
+                    case Left(_) =>
                       val ifEmptyData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
                       //ifEmptyData
                       //ifEmptyData.map(set).getOrElse(FAtomicValueImpl.empty)
                       setOpt(ifEmptyData)
                   }
                 case None =>
-                  val ifEmptyData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
-                  //ifEmptyData
-                  //ifEmptyData.map(set).getOrElse(FAtomicValueImpl.empty)
-                  setOpt(ifEmptyData)
+                  //防止前端因为值为 null 或 undefined 而删除了该属性
+                  Json.Null.as[jsonReader.DataType](jsonReader.reader) match {
+                    case Right(data) =>
+                      set(data)
+                    case Left(_) =>
+                      val ifEmptyData = mergeDefault(defaultOpt, data)
+                      setOpt(ifEmptyData)
+                  }
               }
             }
 
