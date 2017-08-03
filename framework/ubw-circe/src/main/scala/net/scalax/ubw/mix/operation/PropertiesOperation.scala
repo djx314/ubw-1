@@ -350,7 +350,7 @@ object PropertiesOperation extends FPilesGenHelper {
   ): List[FPile] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
     { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
-        JsonOperation.unfullReadGen1111.flatMap(InCreateConvert.createGen) { (jsonReader, slickWriterGen) =>
+        JsonOperation.unfullReadGen.flatMap(InCreateConvert.createGen) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
           execInfoDBIO.apply(binds).flatMap { execInfo =>

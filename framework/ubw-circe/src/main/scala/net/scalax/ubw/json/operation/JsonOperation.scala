@@ -45,6 +45,8 @@ object JsonOperation extends FAtomicValueHelper {
     }
   }
 
+  val unfullReadGen = unfullReadGen1111
+
   val unfullReadGen1111 = FPile.transformTreeList {
     new FAtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
