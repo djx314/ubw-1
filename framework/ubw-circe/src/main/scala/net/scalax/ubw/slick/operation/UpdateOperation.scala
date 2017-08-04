@@ -1,14 +1,15 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
+import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue, ValidatorOperation }
 import net.scalax.fsn.slick.atomic.{ OneToOneUpdate, SlickUpdate }
 import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
+import net.scalax.ubw.validate.atomic.ErrorMessage
 import slick.dbio.DBIO
 import slick.jdbc.JdbcActionComponent
 import slick.lifted.{ FlatShapeLevel, Query, Shape }
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, Future }
 import shapeless._
 
 case class DataWithIndex(data: FAtomicValue, index: Int)
@@ -78,8 +79,8 @@ object InUpdateConvert extends FAtomicValueHelper {
     implicit
     ec: ExecutionContext,
     updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-  ): FPileSyntax.PileGen[List[(Any, SlickQueryBindImpl)] => DBIO[ExecInfo3]] = {
-    FPile.transformTreeList {
+  ): FPileSyntax.PileGen[(List[(Any, SlickQueryBindImpl)] => Future[DBIO[ExecInfo3]], Future[List[ErrorMessage]])] = {
+    FPile.transformTreeListWithFilter({
       new FAtomicQuery(_) {
         val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: FANil)
           .mapTo {
@@ -141,18 +142,22 @@ object InUpdateConvert extends FAtomicValueHelper {
             }
           }
       }.aa
-    } { genList =>
+    }, ValidatorOperation.readValidator)({ genListF =>
       { binds: List[(Any, SlickQueryBindImpl)] =>
-        val genListWithData = genList.zipWithIndex.map {
-          case (s, index) =>
-            new ISlickUpdaterWithData {
-              override val writer = s
-              override val data = DataWithIndex(set(writer.data), index)
-            }
+        genListF.map { genList =>
+          val genListWithData = genList.zipWithIndex.map {
+            case (s, index) =>
+              new ISlickUpdaterWithData {
+                override val writer = s
+                override val data = DataWithIndex(set(writer.data), index)
+              }
+          }
+          UpdateOperation.parseInsert(binds, genListWithData)
         }
-        UpdateOperation.parseInsert(binds, genListWithData)
       }
-    }
+    }, { validateIfos =>
+      validateIfos.map(_.flatten)
+    })
   }
 }
 

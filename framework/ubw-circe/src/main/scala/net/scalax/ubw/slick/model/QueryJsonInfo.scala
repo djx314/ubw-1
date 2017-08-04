@@ -1,6 +1,7 @@
 package net.scalax.fsn.slick.model
 
 import io.circe.Json
+import net.scalax.ubw.validate.atomic.ErrorMessage
 import slick.dbio.DBIO
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -43,7 +44,7 @@ case class QueryJsonInfo(
   retrieveGen: Map[String, Json] => DBIO[StaticManyInfo],
   insertGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
   deleteGen: Map[String, Json] => DBIO[Int],
-  updateGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
+  updateGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[UpdateStaticManyInfo]]],
   staticMany: Future[List[StaticManyUbw]]
 )
 
@@ -52,7 +53,7 @@ case class RWInfo(
     retrieveGen: Map[String, Json] => DBIO[StaticManyInfo],
     insertGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
     deleteGen: Map[String, Json] => DBIO[Int],
-    updateGen: Map[String, Json] => DBIO[UpdateStaticManyInfo],
+    updateGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[UpdateStaticManyInfo]]],
     staticMany: Future[List[StaticManyUbw]]
 ) {
 

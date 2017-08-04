@@ -66,9 +66,11 @@ case class InOutQueryWrap(
     sourceDB.run(resultAction).flatMap { futures =>
       futures.grouped(groupedSize).foldLeft(Future successful List.empty[ExecInfo3]) { (effectRow, futureList) =>
         lazy val insertActions = Future.sequence(futureList.map(_.apply))
-        lazy val insertFuture = insertActions.flatMap(actions => targetDB.run(
-          DBIO.sequence(actions.collect { case Some(s) => s })
-        ))
+        lazy val insertFuture = insertActions.flatMap { actions =>
+          Future.sequence(actions.collect { case Some(s) => s }).map { s =>
+            targetDB.run(DBIO.sequence(s))
+          }.flatMap(identity)
+        }
         effectRow.flatMap { row =>
           insertFuture.map { insetResult =>
             row ::: insetResult

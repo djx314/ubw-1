@@ -12,6 +12,7 @@ import net.scalax.fsn.excel.atomic.PoiWriter
 import slick.jdbc.JdbcActionComponent
 import shapeless._
 import io.circe.Json
+import net.scalax.ubw.validate.atomic.ErrorMessage
 import slick.ast.BaseTypedType
 import slick.dbio._
 import slick.lifted.{ Query, Rep }
@@ -275,22 +276,34 @@ object PropertiesOperation extends FPilesGenHelper {
     implicit
     ec: ExecutionContext,
     updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-  ): List[FPile] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
+  ): List[FPile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[UpdateStaticManyInfo]]] =
     { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
-        JsonOperation.readGen1111.flatMap(InUpdateConvert.updateGen) { (jsonReader, slickWriterGen) =>
+        JsonOperation.unfullReadGen1111.flatMap(InUpdateConvert.updateGen) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
-        }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
-          execInfoDBIO.apply(binds).flatMap { execInfo =>
-            for {
-              staticMany <- DBIO.from(staticManyReader(execInfo.columns.sortBy(_.index).map(s => s.data)))
-            } yield UpdateStaticManyInfo(execInfo.effectRows, staticMany)
-          }
+        }.flatMap(StaticManyOperation.updateGen) {
+          case ((execInfoDBIOF, validateInfoF), staticManyReader) =>
+            validateInfoF.map { validateInfo =>
+              if (!validateInfo.isEmpty) {
+                Left(validateInfo)
+              } else {
+                Right(execInfoDBIOF.apply(binds).map { execInfoDBIO =>
+                  execInfoDBIO.flatMap { execInfo =>
+                    for {
+                      staticMany <- DBIO.from(staticManyReader(execInfo.columns.sortBy(_.index).map(s => s.data)))
+                    } yield UpdateStaticManyInfo(execInfo.effectRows, staticMany)
+                  }
+                })
+              }
+            }
         }.result(optPiles) match {
           case Left(e: Exception) =>
             e.printStackTrace()
             throw e
-          case Right(s) => s
+          case Right(s) => s.flatMap {
+            case Left(messages) => Future.successful(Left(messages))
+            case Right(t) => t.map(r => Right(r))
+          }
         }
       }
     }
@@ -337,7 +350,7 @@ object PropertiesOperation extends FPilesGenHelper {
   ): List[FPile] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
     { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
-        JsonOperation.unfullReadGen1111.flatMap(InCreateConvert.createGen) { (jsonReader, slickWriterGen) =>
+        JsonOperation.unfullReadGen.flatMap(InCreateConvert.createGen) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
           execInfoDBIO.apply(binds).flatMap { execInfo =>
