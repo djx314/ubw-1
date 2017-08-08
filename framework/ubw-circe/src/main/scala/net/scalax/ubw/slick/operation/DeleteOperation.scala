@@ -158,6 +158,7 @@ object DeleteOperation {
     ec: ExecutionContext
   //deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
   ): slickProfile.api.DBIO[ExecInfo3] = {
+    val slickProfileI = slickProfile
     import slickProfile.api._
 
     val wrapList = updateList
@@ -192,11 +193,14 @@ object DeleteOperation {
         val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
           x.filter(s => y.dataToCondition(s))(y.wt)
         }
-        val updateDBIO = filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]].delete
+        val updateDBIO = queryDeleteActionExtensionMethods(filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]]).delete
         for {
           effectRows <- updateDBIO
           subs = eachWrap.map(_.writer.subGen.toList).flatten
-          subResult <- parseInsertGen(binds, updateList, subs)
+          subResult <- {
+            implicit val _ = slickProfileI
+            parseInsertGen(binds, updateList, subs)
+          }
         } yield {
           ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
         }
@@ -220,6 +224,7 @@ object DeleteOperation {
     ec: ExecutionContext
   //deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
   ): slickProfile.api.DBIO[ExecInfo3] = {
+    val slickProfileI = slickProfile
     import slickProfile.api._
 
     val wrapList = updateList
@@ -253,11 +258,14 @@ object DeleteOperation {
         val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
           x.filter(s => y.dataToCondition(s))(y.wt)
         }
-        val updateDBIO = filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]].delete
+        val updateDBIO = queryDeleteActionExtensionMethods(filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]]).delete
         for {
           effectRows <- updateDBIO
           subs = eachWrap.map(_.writer.subGen.toList).flatten
-          subResult <- parseInsertGen(binds, updateList, subs)
+          subResult <- {
+            implicit val _ = slickProfileI
+            parseInsertGen(binds, updateList, subs)
+          }
         } yield {
           ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
         }

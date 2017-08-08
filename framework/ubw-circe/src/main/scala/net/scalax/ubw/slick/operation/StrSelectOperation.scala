@@ -262,7 +262,7 @@ trait StrSlickQuery extends FAtomicValueHelper {
           ListAnyCollection1111(resultSet, Option(s._2))
         }
       import slickProfile.api._
-      ListAnyWrap1111(rs, sortbyQuery2.result.statements.toList)
+      ListAnyWrap1111(rs, streamableQueryActionExtensionMethods(sortbyQuery2).result.statements.toList)
   }
 }
 
@@ -293,7 +293,7 @@ object CommonResult {
           val dropQuery = mappedQuery.drop(startCount)
 
           (for {
-            sum <- dropQuery.size.result
+            sum <- recordQueryActionExtensionMethods(dropQuery.size).result
           } yield {
             val pageStart = startCount + pageIndex * pageSize
             val pageEnd = pageStart + pageSize
@@ -304,7 +304,7 @@ object CommonResult {
 
             val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(autalLimit)
 
-            limitQuery.result.map(s => {
+            streamableQueryActionExtensionMethods(limitQuery).result.map(s => {
               (s, endCount - startCount)
             })
           })
@@ -313,7 +313,7 @@ object CommonResult {
         case SlickParam(_, Some(SlickRange(drop, Some(take))), None, _) =>
           val dropQuery = mappedQuery.drop(drop)
 
-          baseQuery.drop(drop).take(take - drop).result.map(s => {
+          streamableQueryActionExtensionMethods(baseQuery.drop(drop).take(take - drop)).result.map(s => {
             (s, s.size)
           })
 
@@ -325,19 +325,19 @@ object CommonResult {
           val dropQuery = mappedQuery.drop(startCount)
 
           (for {
-            sum <- dropQuery.size.result
+            sum <- recordQueryActionExtensionMethods(dropQuery.size).result
           } yield {
 
             val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(pageSize)
 
-            limitQuery.result.map(s => {
+            streamableQueryActionExtensionMethods(limitQuery).result.map(s => {
               (s, sum)
             })
           })
             .flatMap(s => s)
 
         case SlickParam(_, Some(SlickRange(drop, None)), None, _) =>
-          baseQuery.drop(drop).result.map(s => {
+          streamableQueryActionExtensionMethods(baseQuery.drop(drop)).result.map(s => {
             (s, s.size)
           })
 
@@ -346,13 +346,13 @@ object CommonResult {
           val takeQuery = dropQuery.take(pageSize)
 
           for {
-            sum <- mappedQuery.size.result
-            s <- takeQuery.result
+            sum <- recordQueryActionExtensionMethods(mappedQuery.size).result
+            s <- streamableQueryActionExtensionMethods(takeQuery).result
           } yield {
             (s, sum)
           }
         case _ =>
-          baseQuery.result.map(s => {
+          streamableQueryActionExtensionMethods(baseQuery).result.map(s => {
             (s, s.size)
           })
       }

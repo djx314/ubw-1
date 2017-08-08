@@ -239,7 +239,7 @@ trait FGroupQuery extends FAtomicValueHelper {
       }.getOrElse(query)
     }
 
-    val action = orderedQuery.to[List].result.map { s =>
+    val action = streamableQueryActionExtensionMethods(orderedQuery.to[List]).result.map { s =>
       val result = s.map { t =>
         val initArray = Array.fill[FAtomicValue](readers.size)(FAtomicValueImpl.empty)
         keyIndexs.zipWithIndex.map {
@@ -254,6 +254,6 @@ trait FGroupQuery extends FAtomicValueHelper {
       }
       result
     }
-    GroupResult(action, orderedQuery.to[List].result.statements.toList)
+    GroupResult(action, streamableQueryActionExtensionMethods(orderedQuery.to[List]).result.statements.toList)
   }
 }

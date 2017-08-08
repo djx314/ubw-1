@@ -6,8 +6,7 @@ import net.scalax.fsn.json.operation._
 import net.scalax.fsn.mix.slickbase.InOutQueryWrap
 import net.scalax.fsn.slick.model.SlickParam
 import net.scalax.fsn.slick.operation.{ ExecInfo3, InCreateConvert, InUpdateConvert, StrOutSelectConvert }
-import slick.dbio.{ DBIO, NoStream }
-import slick.jdbc.JdbcActionComponent
+import slick.jdbc.{ JdbcActionComponent, JdbcProfile }
 import slick.lifted.{ Query, Rep }
 
 import scala.concurrent.Future
@@ -47,12 +46,13 @@ object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
 
   def json2SlickCreateOperation(binds: InOutQueryWrap)(
     implicit
-    ec: ExecutionContext,
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-    cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): SlickParam => DBIO[List[() => Future[Option[DBIO[ExecInfo3]]]]] = {
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
+  //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+  //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+  //cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
+  //retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+  ): SlickParam => slickProfile.api.DBIO[List[() => Future[Option[slickProfile.api.DBIO[ExecInfo3]]]]] = {
     { param: SlickParam =>
       val gen = StrOutSelectConvert.ubwGen(binds.listQueryBind).flatMap(futureGen) { (slickReader, futureConvert) =>
         slickReader.slickResult.apply(param).resultAction.map { action =>
@@ -84,12 +84,13 @@ object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
 
   def json2SlickUpdateOperation(binds: InOutQueryWrap)(
     implicit
-    ec: ExecutionContext,
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-    updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-  ): SlickParam => DBIO[List[() => Future[Option[Future[DBIO[ExecInfo3]]]]]] = {
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
+  //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+  //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+  //retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+  //updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
+  ): SlickParam => slickProfile.api.DBIO[List[() => Future[Option[Future[slickProfile.api.DBIO[ExecInfo3]]]]]] = {
     { param: SlickParam =>
       val gen = StrOutSelectConvert.ubwGen(binds.listQueryBind).flatMap(futureGen) { (slickReader, futureConvert) =>
         slickReader.slickResult.apply(param).resultAction.map { action =>

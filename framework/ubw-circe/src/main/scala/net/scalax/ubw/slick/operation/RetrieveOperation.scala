@@ -172,6 +172,7 @@ object RetrieveOperation {
     slickProfile: JdbcProfile,
     //jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ): slickProfile.api.DBIO[ExecInfo3] = try {
+    val slickProfileI = slickProfile
     import slickProfile.api._
 
     val wrapList = retrieveList //.map(InRetrieveConvert2.convert)
@@ -205,7 +206,7 @@ object RetrieveOperation {
           x.filter(s => y.dataToCondition(s))(y.wt)
         }
         for {
-          retrieveData <- filterQuery.result.head
+          retrieveData <- streamableQueryActionExtensionMethods(filterQuery).result.head
           (fillCols, fillSubGens) = eachWrap.zip(retrieveData).map {
             case (wrap, dataItem) =>
               val wrapSlickData = dataItem.asInstanceOf[wrap.reader.MainDColumn]
@@ -220,7 +221,10 @@ object RetrieveOperation {
               }
               (newCols -> subGens)
           }.unzip
-          subResult <- parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
+          subResult <- {
+            implicit val _ = slickProfileI
+            parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
+          }
         } yield {
           ExecInfo3(subResult.effectRows + 1, subResult.columns ::: fillCols)
         }
@@ -249,6 +253,7 @@ object RetrieveOperation {
     ec: ExecutionContext,
     //jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ): slickProfile.api.DBIO[ExecInfo3] = try {
+    val slickProfileI = slickProfile
     import slickProfile.api._
 
     val wrapList = retrieveList //.map(InRetrieveConvert2.convert)
@@ -281,7 +286,7 @@ object RetrieveOperation {
           x.filter(s => y.dataToCondition(s))(y.wt)
         }
         for {
-          retrieveData <- filterQuery.result.head
+          retrieveData <- streamableQueryActionExtensionMethods(filterQuery).result.head
           (fillCols, fillSubGens) = eachWrap.zip(retrieveData).map {
             case (wrap, dataItem) =>
               val wrapSlickData = dataItem.asInstanceOf[wrap.reader.MainDColumn]
@@ -296,7 +301,10 @@ object RetrieveOperation {
               }
               (newCols -> subGens)
           }.unzip
-          subResult <- parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
+          subResult <- {
+            implicit val _ = slickProfileI
+            parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
+          }
         } yield {
           ExecInfo3(subResult.effectRows + 1, subResult.columns ::: fillCols) //UpdateStaticManyInfo(subResult.effectRows + 1, subResult.many ++ Map())
         }
