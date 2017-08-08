@@ -2,7 +2,7 @@ package net.scalax.fsn.core
 
 import shapeless._
 
-trait FsnShape[Packed_, DataType_] {
+trait PileShape[Packed_, DataType_] {
   self =>
 
   type Packed = Packed_
@@ -19,9 +19,9 @@ trait FsnShape[Packed_, DataType_] {
 
 }
 
-object FsnShape {
+object PileShape {
 
-  val hnilFsnShape: FsnShape[HNil, HNil] = new FsnShape[HNil, HNil] {
+  val hnilPileShape: PileShape[HNil, HNil] = new PileShape[HNil, HNil] {
     self =>
     override def encodeColumn(pile: HNil): List[AtomicPath] = Nil
     override def encodeData(pileData: HNil): List[AtomicValue] = Nil
@@ -30,8 +30,8 @@ object FsnShape {
     override val dataLength = 0
   }
 
-  def fpathFsnShape[T]: FsnShape[AtomicPathImpl[T], AtomicValueImpl[T]] =
-    new FsnShape[AtomicPathImpl[T], AtomicValueImpl[T]] {
+  def fpathPileShape[T]: PileShape[AtomicPathImpl[T], AtomicValueImpl[T]] =
+    new PileShape[AtomicPathImpl[T], AtomicValueImpl[T]] {
       self =>
       override def encodeColumn(pile: AtomicPathImpl[T]): List[AtomicPath] = pile :: Nil
       override def encodeData(pileData: AtomicValueImpl[T]): List[AtomicValue] = pileData :: Nil
@@ -42,8 +42,8 @@ object FsnShape {
       override val dataLength = 1
     }
 
-  def fpathHListFsnShape[S, T <: HList, A, B <: HList](head: FsnShape[S, A], tail: FsnShape[T, B]): FsnShape[S :: T, A :: B] = {
-    new FsnShape[S :: T, A :: B] {
+  def fpathHListPileShape[S, T <: HList, A, B <: HList](head: PileShape[S, A], tail: PileShape[T, B]): PileShape[S :: T, A :: B] = {
+    new PileShape[S :: T, A :: B] {
       self =>
       override def encodeColumn(pile: S :: T): List[AtomicPath] = {
         val headPile :: tailPile = pile

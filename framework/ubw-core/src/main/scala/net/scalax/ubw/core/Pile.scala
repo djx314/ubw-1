@@ -114,7 +114,7 @@ abstract trait CommonPile extends Pile {
   override type DataType
 
   val pathPile: PathType
-  val fShape: FsnShape[PathType, DataType]
+  val fShape: PileShape[PathType, DataType]
 
   override def selfPaths: List[AtomicPath] = {
     self.fShape.encodeColumn(self.pathPile)
@@ -219,7 +219,7 @@ trait BranchPile extends CommonPile {
 
 class BranchPileImpl[PT, DT](
     override val pathPile: PT,
-    override val fShape: FsnShape[PT, DT],
+    override val fShape: PileShape[PT, DT],
     override val subs: Pile,
     dataFromSubFunc: Any => DT
 ) extends BranchPile {
@@ -268,7 +268,7 @@ trait FLeafPile extends CommonPile {
 
 class FLeafPileImpl[PT, DT](
     override val pathPile: PT,
-    override val fShape: FsnShape[PT, DT]
+    override val fShape: PileShape[PT, DT]
 ) extends FLeafPile {
   override type PathType = PT
   override type DataType = DT
@@ -280,7 +280,7 @@ object Pile {
   type TransResult[T] = Either[AtomicException, T]
 
   def apply[D](paths: AtomicPathImpl[D]): FLeafPileImpl[AtomicPathImpl[D], AtomicValueImpl[D]] = {
-    val shape = FsnShape.fpathFsnShape[D]
+    val shape = PileShape.fpathPileShape[D]
     new FLeafPileImpl(paths, shape)
   }
 
