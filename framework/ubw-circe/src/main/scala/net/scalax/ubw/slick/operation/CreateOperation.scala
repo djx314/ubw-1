@@ -5,9 +5,7 @@ import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.{ AutoInc, OneToOneCrate, SlickCreate }
 import net.scalax.fsn.slick.helpers.{ ListAnyShape, SlickQueryBindImpl, SlickUtils }
-import slick.dbio.DBIO
-import slick.jdbc.JdbcActionComponent
-import slick.lifted.{ FlatShapeLevel, Query, Shape }
+import slick.jdbc.JdbcProfile
 import shapeless._
 
 import scala.concurrent.ExecutionContext
@@ -18,6 +16,7 @@ trait ISlickWriterWithData {
 }
 
 trait InsertDataQuery {
+  import slick.lifted.{ FlatShapeLevel, Query, Shape }
 
   val bind: SlickQueryBindImpl
   val cols: List[Any]
@@ -36,6 +35,8 @@ trait InsertWrapTran[I] {
 }
 
 trait ISlickWriter {
+  import slick.lifted.{ FlatShapeLevel, Query, Shape }
+
   type PreRep
   type PreValue
   type PreTarget
@@ -57,9 +58,9 @@ case class ISWriter[A, B, C, D, E, F](
     override val preData: B,
     override val table: Any,
     override val preRep: A,
-    override val preShape: Shape[_ <: FlatShapeLevel, A, B, C],
+    override val preShape: slick.lifted.Shape[_ <: slick.lifted.FlatShapeLevel, A, B, C],
     override val autoIncRep: D,
-    override val autoIncShape: Shape[_ <: FlatShapeLevel, D, E, F],
+    override val autoIncShape: slick.lifted.Shape[_ <: slick.lifted.FlatShapeLevel, D, E, F],
     override val subGen: Option[InsertWrapTran[E]],
     override val autalColumn: E => Any
 ) extends ISlickWriter {
@@ -75,12 +76,15 @@ object InCreateConvert extends FAtomicValueHelper {
 
   def createGen(
     implicit
-    ec: ExecutionContext,
-    cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): FPileSyntax.PileGen[List[(Any, SlickQueryBindImpl)] => DBIO[ExecInfo3]] = {
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
+  //cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
+  //retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+  ): FPileSyntax.PileGen[List[(Any, SlickQueryBindImpl)] => slickProfile.api.DBIO[ExecInfo3]] = {
     FPile.transformTreeList {
       new FAtomicQuery(_) {
+        import slickProfile.api._
+
         val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (slickCreate :: autoIncOpt :: oneToOneCreateOpt :: property :: HNil, data) =>
@@ -195,10 +199,14 @@ object CreateOperation {
     converts: List[InsWrapTran2]
   )(
     implicit
-    ec: ExecutionContext,
-    cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): DBIO[ExecInfo3] = try {
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
+  //cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
+  //retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+  ): slickProfile.api.DBIO[ExecInfo3] = try {
+    val slickProfileI = slickProfile
+    import slickProfile.api._
+
     val wrapList = insertList
 
     val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => converts.exists(t => key == t.table) }
@@ -224,10 +232,10 @@ object CreateOperation {
         val returningShape = new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.returningShapes)
         val returingQuery = Query(convertRetrieveQuery.returningCols)(returningShape)
         val incDataDBIO = if (SlickUtils.isShapeEmpty(returningShape)) {
-          (bindQuery += convertRetrieveQuery.data) >> returingQuery.result.head
+          (queryInsertActionExtensionMethods(bindQuery) += convertRetrieveQuery.data) >> streamableQueryActionExtensionMethods(returingQuery).result.head
         } else {
           val bindReturingQuery = convertRetrieveQuery.bind.bind(returingQuery)
-          val createQuery = bindQuery returning bindReturingQuery
+          val createQuery = queryInsertActionExtensionMethods(bindQuery) returning bindReturingQuery
           createQuery += convertRetrieveQuery.data
         }
         for {
@@ -245,7 +253,10 @@ object CreateOperation {
               }
               subGens //-> wrap.autalColumn(wrapSlickData)
           }
-          subResult <- parseInsertGen(binds, insertList, fillSubGens.flatten)
+          subResult <- {
+            implicit val _ = slickProfileI
+            parseInsertGen(binds, insertList, fillSubGens.flatten)
+          }
         } yield {
           ExecInfo3(subResult.effectRows + 1, convertRetrieveQuery.dataGen(incData.toList) ::: subResult.columns)
         }
@@ -262,7 +273,7 @@ object CreateOperation {
     }
   } catch {
     case e: Exception =>
-      DBIO.failed(e)
+      slickProfile.api.DBIO.failed(e)
   }
 
   def parseInsert(
@@ -270,10 +281,14 @@ object CreateOperation {
     insertList: List[ISlickWriterWithData]
   )(
     implicit
-    ec: ExecutionContext,
-    cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): DBIO[ExecInfo3] = try {
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
+  //cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
+  //retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+  ): slickProfile.api.DBIO[ExecInfo3] = try {
+    val slickProfileI = slickProfile
+    import slickProfile.api._
+
     val wrapList = insertList //.map(InCreateConvert2.convert)
 
     val subGensTables = wrapList.flatMap { t => t.writer.subGen.toList.map(_.table) }
@@ -298,10 +313,10 @@ object CreateOperation {
         val returningShape = new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.returningShapes)
         val returingQuery = Query(convertRetrieveQuery.returningCols)(returningShape)
         val incDataDBIO = if (SlickUtils.isShapeEmpty(returningShape)) {
-          (bindQuery += convertRetrieveQuery.data) >> returingQuery.result.head
+          (queryInsertActionExtensionMethods(bindQuery) += convertRetrieveQuery.data) >> streamableQueryActionExtensionMethods(returingQuery).result.head
         } else {
           val bindReturingQuery = convertRetrieveQuery.bind.bind(returingQuery)
-          val createQuery = bindQuery returning bindReturingQuery
+          val createQuery = queryInsertActionExtensionMethods(bindQuery) returning bindReturingQuery
           createQuery += convertRetrieveQuery.data
         }
         for {
@@ -319,7 +334,10 @@ object CreateOperation {
               }
               subGens
           }
-          subResult <- parseInsertGen(binds, insertList, fillSubGens.flatten)
+          subResult <- {
+            implicit val _ = slickProfileI
+            parseInsertGen(binds, insertList, fillSubGens.flatten)
+          }
         } yield {
           ExecInfo3(subResult.effectRows + 1, convertRetrieveQuery.dataGen(incData.toList) ::: subResult.columns)
         }
@@ -336,7 +354,7 @@ object CreateOperation {
     }
   } catch {
     case e: Exception =>
-      DBIO.failed(e)
+      slickProfile.api.DBIO.failed(e)
   }
 
 }

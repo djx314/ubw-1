@@ -9,7 +9,7 @@ import net.scalax.fsn.slick.helpers.{ SlickQueryBindImpl, TypeHelpers }
 import net.scalax.fsn.slick.operation._
 import net.scalax.fsn.json.operation.{ ExcelOperation, JsonOperation, SlickCompareOperation }
 import net.scalax.fsn.excel.atomic.PoiWriter
-import slick.jdbc.JdbcActionComponent
+import slick.jdbc.{ JdbcActionComponent, JdbcProfile }
 import shapeless._
 import io.circe.Json
 import net.scalax.ubw.validate.atomic.ErrorMessage
@@ -77,11 +77,9 @@ object PropertiesOperation extends FPilesGenHelper {
 
   def filterStrSlick2jsonOperation(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
     implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[FPile] => JsonOut = { optPiles: List[FPile] =>
-
     val jsonFilter: FPileSyntax.PileGen[SlickParam => StrSlickQuery] =
       SlickCompareOperation.unfullReadCompareGen.flatMap(StrOutSelectConvert.ubwGen(wQuery)) { (jsonGen, slickQuery) =>
         { slickParam: SlickParam =>
@@ -111,8 +109,7 @@ object PropertiesOperation extends FPilesGenHelper {
 
   def strSlick2jsonOperation(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
     implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[FPile] => JsonOut = { optPiles: List[FPile] =>
     val jsonGen: FPileSyntax.PileGen[SlickParam => ResultWrap] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen1111) { (slickQuery, jsonGen) =>
@@ -193,12 +190,12 @@ object PropertiesOperation extends FPilesGenHelper {
 
   def slick2jsonGroupOperation(wQuery: SlickQueryBindImpl)(
     implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    intTyped: BaseTypedType[Int],
+    //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    //intTyped: BaseTypedType[Int],
     //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[FPile] => GroupParam => ResultWrap = { optPiles: List[FPile] =>
-
     val jsonGen: FPileSyntax.PileGen[GroupParam => ResultWrap] = GroupSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen1111) { (slickQuery, jsonGen) =>
       { slickParam: GroupParam =>
         val result = slickQuery.result(slickParam)
@@ -248,11 +245,9 @@ object PropertiesOperation extends FPilesGenHelper {
 
   def slick2PoiOperation(wQuery: SlickQueryBindImpl)(
     implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[FPile] => PoiOut = { optPiles: List[FPile] =>
-
     val poiGen /*: FPileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]]*/ = StrOutSelectConvert.ubwGen(wQuery).flatMap(ExcelOperation.writeGen1111) { (slickQuery, poiGen) =>
       { slickParam: SlickParam =>
         slickQuery.slickResult.apply(slickParam).resultAction.map {
@@ -274,8 +269,8 @@ object PropertiesOperation extends FPilesGenHelper {
 
   def json2SlickUpdateOperation(binds: List[(Any, SlickQueryBindImpl)])(
     implicit
-    ec: ExecutionContext,
-    updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
   ): List[FPile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[UpdateStaticManyInfo]]] =
     { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
@@ -310,9 +305,8 @@ object PropertiesOperation extends FPilesGenHelper {
 
   def json2SlickDeleteOperation(binds: List[(Any, SlickQueryBindImpl)])(
     implicit
-    ec: ExecutionContext,
-    deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
-    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
   ): List[FPile] => Map[String, Json] => DBIO[Int] =
     { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
@@ -344,9 +338,8 @@ object PropertiesOperation extends FPilesGenHelper {
 
   def json2SlickCreateOperation(binds: List[(Any, SlickQueryBindImpl)])(
     implicit
-    ec: ExecutionContext,
-    cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
   ): List[FPile] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
     { optPiles: List[FPile] =>
       { data: Map[String, Json] =>
@@ -369,8 +362,8 @@ object PropertiesOperation extends FPilesGenHelper {
 
   def json2SlickRetrieveOperation(binds: List[(Any, SlickQueryBindImpl)])(
     implicit
-    ec: ExecutionContext,
-    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
   ): List[FPile] => Map[String, Json] => DBIO[(Map[String, QueryJsonInfo], Map[String, Json])] =
     { optPiles: List[FPile] =>
       { data: Map[String, Json] =>

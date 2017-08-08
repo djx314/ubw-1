@@ -9,7 +9,7 @@ import net.scalax.fsn.slick.model._
 import shapeless._
 import slick.ast.{ BaseTypedType, Ordering, TypedType }
 import slick.dbio.DBIO
-import slick.jdbc.JdbcActionComponent
+import slick.jdbc.{ JdbcActionComponent, JdbcProfile }
 import slick.lifted._
 
 import scala.concurrent.ExecutionContext
@@ -126,11 +126,14 @@ trait FGroupQuery extends FAtomicValueHelper {
 
   def result(param: GroupParam)(
     implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    intTyped: BaseTypedType[Int],
+    slickProfile: JdbcProfile,
+    //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    //intTyped: BaseTypedType[Int],
     //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): GroupResult = {
+    import slickProfile.api._
+
     val baseQuery = wQuery.bind(Query(readers.map(_._1.selectModel.outCol))(new ListColumnShape[FlatShapeLevel](readers.map(_._1.selectModel.shape))))
     val keySize = param.keys.size
     val keyIndexs = param.keys.map { s =>
@@ -199,7 +202,8 @@ trait FGroupQuery extends FAtomicValueHelper {
       val aa = keyIndexs.map(index => readers(index)._1.selectModel.shape.packedShape.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]])
       val bb = aggregateIndexsAndMethods.map {
         case ("count", reader) =>
-          Shape.repColumnShape[Int, FlatShapeLevel](intTyped)
+          //Shape.repColumnShape[Int, FlatShapeLevel](intTyped)
+          implicitly[Shape[FlatShapeLevel, Rep[Int], Int, Rep[Int]]]
         //reader._1.groupModel.get.groupShape.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]]
         case (_, reader) =>
           reader._1.groupModel.get.groupShape.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]]
@@ -235,7 +239,7 @@ trait FGroupQuery extends FAtomicValueHelper {
       }.getOrElse(query)
     }
 
-    val action = jsonEv(orderedQuery.to[List]).result.map { s =>
+    val action = streamableQueryActionExtensionMethods(orderedQuery.to[List]).result.map { s =>
       val result = s.map { t =>
         val initArray = Array.fill[FAtomicValue](readers.size)(FAtomicValueImpl.empty)
         keyIndexs.zipWithIndex.map {
@@ -250,6 +254,6 @@ trait FGroupQuery extends FAtomicValueHelper {
       }
       result
     }
-    GroupResult(action, orderedQuery.to[List].result.statements.toList)
+    GroupResult(action, streamableQueryActionExtensionMethods(orderedQuery.to[List]).result.statements.toList)
   }
 }

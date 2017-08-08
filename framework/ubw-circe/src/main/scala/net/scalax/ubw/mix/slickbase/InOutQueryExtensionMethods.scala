@@ -7,7 +7,7 @@ import net.scalax.fsn.slick.model.SlickParam
 import net.scalax.fsn.slick.operation.ExecInfo3
 import slick.ast.{ AnonSymbol, Ref }
 import slick.dbio.{ DBIO, NoStream }
-import slick.jdbc.{ JdbcActionComponent, JdbcBackend }
+import slick.jdbc.{ JdbcActionComponent, JdbcBackend, JdbcProfile }
 import slick.lifted._
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -25,11 +25,12 @@ case class InOutQueryWrap(
     groupedSize: Int
   )(
     implicit
-    ec: ExecutionContext,
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-    cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
+  //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+  //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+  //cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
+  //retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ): Future[List[ExecInfo3]] = {
     val execPlan = InAndOutOperation.json2SlickCreateOperation(self)
     val resultAction = execPlan(slickParam)
@@ -55,11 +56,12 @@ case class InOutQueryWrap(
     groupedSize: Int
   )(
     implicit
-    ec: ExecutionContext,
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-    retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-    updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
+  //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+  //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+  //retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
+  //updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
   ): Future[List[ExecInfo3]] = {
     val execPlan = InAndOutOperation.json2SlickUpdateOperation(self)
     val resultAction = execPlan(slickParam)

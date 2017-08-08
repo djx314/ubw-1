@@ -1,15 +1,13 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue, ValidatorOperation }
-import net.scalax.fsn.slick.atomic.{ OneToOneUpdate, SlickUpdate }
-import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
+import net.scalax.fsn.json.operation.{FAtomicValueHelper, FSomeValue, ValidatorOperation}
+import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate}
+import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
 import net.scalax.ubw.validate.atomic.ErrorMessage
-import slick.dbio.DBIO
-import slick.jdbc.JdbcActionComponent
-import slick.lifted.{ FlatShapeLevel, Query, Shape }
+import slick.jdbc.JdbcProfile
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import shapeless._
 
 case class DataWithIndex(data: FAtomicValue, index: Int)
@@ -21,6 +19,7 @@ trait UpdateTran {
 }
 
 trait UpdateQuery {
+  import slick.lifted.{FlatShapeLevel, Query, Shape}
 
   val bind: SlickQueryBindImpl
   val cols: List[Any]
@@ -34,6 +33,7 @@ trait UpdateQuery {
 }
 
 trait USlickWriter {
+  import slick.lifted.{FlatShapeLevel, Query, Shape}
 
   type MainSColumn
   type MainDColumn
@@ -55,7 +55,7 @@ trait USlickWriter {
 
 case class USWriter[MS, MD, MT](
     override val mainCol: MS,
-    override val mainShape: Shape[_ <: FlatShapeLevel, MS, MD, MT],
+    override val mainShape: slick.lifted.Shape[_ <: slick.lifted.FlatShapeLevel, MS, MD, MT],
     override val table: Any,
     override val data: MD,
     override val primaryGen: Option[FilterColumnGen[MT]],
@@ -77,9 +77,10 @@ object InUpdateConvert extends FAtomicValueHelper {
 
   def updateGen(
     implicit
-    ec: ExecutionContext,
-    updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-  ): FPileSyntax.PileGen[(List[(Any, SlickQueryBindImpl)] => Future[DBIO[ExecInfo3]], Future[List[ErrorMessage]])] = {
+             slickProfile: JdbcProfile,
+  ec: ExecutionContext
+    //updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
+  ): FPileSyntax.PileGen[(List[(Any, SlickQueryBindImpl)] => Future[slickProfile.api.DBIO[ExecInfo3]], Future[List[ErrorMessage]])] = {
     FPile.transformTreeListWithFilter({
       new FAtomicQuery(_) {
         val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: FANil)
@@ -170,11 +171,12 @@ object UpdateOperation {
     converts: List[UpdateTran]
   )(
     implicit
-    ec: ExecutionContext,
-    updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-  ): DBIO[ExecInfo3] = {
-    //val wrapList = updateList.map(InUpdateConvert2.convert)
-
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
+    //updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
+  ): slickProfile.api.DBIO[ExecInfo3] = {
+    val slickProfileI = slickProfile
+    import slickProfile.api._
     val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => converts.exists(t => key == t.table) }
     val results = currents.map {
       case (table, eachWrap) =>
@@ -213,7 +215,10 @@ object UpdateOperation {
         for {
           effectRows <- updateDBIO
           subs = eachWrap.map(_.writer.subGen.toList).flatten
-          subResult <- parseInsertGen(binds, wrapList, subs)
+          subResult <- {
+            implicit val _ = slickProfileI
+            parseInsertGen(binds, wrapList, subs)
+          }
         } yield {
           ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
         }
@@ -233,9 +238,12 @@ object UpdateOperation {
     wrapList: List[ISlickUpdaterWithData]
   )(
     implicit
+    slickProfile: JdbcProfile,
     ec: ExecutionContext,
-    updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-  ): DBIO[ExecInfo3] = {
+    //updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
+  ): slickProfile.api.DBIO[ExecInfo3] = {
+    val slickProfileI = slickProfile
+    import slickProfile.api._
     //val wrapList = updateList.map(InUpdateConvert2.convert)
     val subGensTables = wrapList.flatMap { t => t.writer.subGen.toList.map(_.table) }
     val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => subGensTables.forall(t => key != t) }
@@ -274,7 +282,10 @@ object UpdateOperation {
         for {
           effectRows <- updateDBIO
           subs = eachWrap.map(_.writer.subGen.toList).flatten
-          subResult <- parseInsertGen(binds, wrapList, subs)
+          subResult <- {
+            implicit val _ = slickProfileI
+            parseInsertGen(binds, wrapList, subs)
+          }
         } yield {
           ExecInfo3(effectRows + subResult.effectRows, subResult.columns ::: data)
         }

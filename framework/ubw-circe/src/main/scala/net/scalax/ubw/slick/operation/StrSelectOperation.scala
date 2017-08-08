@@ -7,8 +7,7 @@ import net.scalax.fsn.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrder
 import net.scalax.fsn.slick.helpers._
 import net.scalax.fsn.slick.model._
 import shapeless._
-import slick.dbio.{ DBIO, NoStream }
-import slick.jdbc.JdbcActionComponent
+import slick.jdbc.JdbcProfile
 import slick.lifted._
 
 import scala.concurrent.ExecutionContext
@@ -190,8 +189,9 @@ trait StrSlickQuery extends FAtomicValueHelper {
 
   def slickResult(
     implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): SlickParam => ListAnyWrap1111 = {
     slickResult(Nil)
@@ -199,8 +199,9 @@ trait StrSlickQuery extends FAtomicValueHelper {
 
   def slickResult(orderColumn: String, isDesc: Boolean = true)(
     implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): SlickParam => ListAnyWrap1111 = {
     slickResult(List(ColumnOrder(orderColumn, isDesc)))
@@ -208,8 +209,9 @@ trait StrSlickQuery extends FAtomicValueHelper {
 
   def slickResult(defaultOrders: List[ColumnOrder])(
     implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): SlickParam => ListAnyWrap1111 = {
     (slickParam: SlickParam) =>
@@ -259,7 +261,8 @@ trait StrSlickQuery extends FAtomicValueHelper {
           }
           ListAnyCollection1111(resultSet, Option(s._2))
         }
-      ListAnyWrap1111(rs, sortbyQuery2.result.statements.toList)
+      import slickProfile.api._
+      ListAnyWrap1111(rs, streamableQueryActionExtensionMethods(sortbyQuery2).result.statements.toList)
   }
 }
 
@@ -269,10 +272,13 @@ object CommonResult {
 
   def commonResult[E, U](commonQuery: Query[E, U, List], sortedQuery: Query[E, U, List])(
     implicit
-    jsonEv: Query[E, U, List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[U], U],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    slickProfile: JdbcProfile,
+    //jsonEv: Query[E, U, List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[U], U],
+    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
-  ): SlickParam => DBIO[CommonRType[U]] = {
+  ): SlickParam => slickProfile.api.DBIO[CommonRType[U]] = {
+    import slickProfile.api._
+
     val mappedQuery = commonQuery
 
     val result: SlickParam => DBIO[CommonRType[U]] = slickParam => {
@@ -287,7 +293,7 @@ object CommonResult {
           val dropQuery = mappedQuery.drop(startCount)
 
           (for {
-            sum <- dropQuery.size.result
+            sum <- recordQueryActionExtensionMethods(dropQuery.size).result
           } yield {
             val pageStart = startCount + pageIndex * pageSize
             val pageEnd = pageStart + pageSize
@@ -298,7 +304,7 @@ object CommonResult {
 
             val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(autalLimit)
 
-            limitQuery.result.map(s => {
+            streamableQueryActionExtensionMethods(limitQuery).result.map(s => {
               (s, endCount - startCount)
             })
           })
@@ -307,7 +313,7 @@ object CommonResult {
         case SlickParam(_, Some(SlickRange(drop, Some(take))), None, _) =>
           val dropQuery = mappedQuery.drop(drop)
 
-          baseQuery.drop(drop).take(take - drop).result.map(s => {
+          streamableQueryActionExtensionMethods(baseQuery.drop(drop).take(take - drop)).result.map(s => {
             (s, s.size)
           })
 
@@ -319,19 +325,19 @@ object CommonResult {
           val dropQuery = mappedQuery.drop(startCount)
 
           (for {
-            sum <- dropQuery.size.result
+            sum <- recordQueryActionExtensionMethods(dropQuery.size).result
           } yield {
 
             val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(pageSize)
 
-            limitQuery.result.map(s => {
+            streamableQueryActionExtensionMethods(limitQuery).result.map(s => {
               (s, sum)
             })
           })
             .flatMap(s => s)
 
         case SlickParam(_, Some(SlickRange(drop, None)), None, _) =>
-          baseQuery.drop(drop).result.map(s => {
+          streamableQueryActionExtensionMethods(baseQuery.drop(drop)).result.map(s => {
             (s, s.size)
           })
 
@@ -340,13 +346,13 @@ object CommonResult {
           val takeQuery = dropQuery.take(pageSize)
 
           for {
-            sum <- mappedQuery.size.result
-            s <- takeQuery.result
+            sum <- recordQueryActionExtensionMethods(mappedQuery.size).result
+            s <- streamableQueryActionExtensionMethods(takeQuery).result
           } yield {
             (s, sum)
           }
         case _ =>
-          baseQuery.result.map(s => {
+          streamableQueryActionExtensionMethods(baseQuery).result.map(s => {
             (s, s.size)
           })
       }

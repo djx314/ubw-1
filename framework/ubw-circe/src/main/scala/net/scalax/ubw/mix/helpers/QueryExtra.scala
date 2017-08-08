@@ -9,7 +9,7 @@ import net.scalax.fsn.slick.operation._
 import slick.ast.BaseTypedType
 import slick.basic.BasicProfile
 import slick.dbio._
-import slick.jdbc.JdbcActionComponent
+import slick.jdbc.{ JdbcActionComponent, JdbcProfile }
 import slick.lifted.{ Query, Rep }
 import slick.relational.RelationalProfile
 
@@ -21,8 +21,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def groupResult(defaultOrders: GroupParam)(
       implicit
-      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-      intTyped: BaseTypedType[Int],
+      slickProfile: JdbcProfile,
       //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
       ec: ExecutionContext
     ): ResultWrap = {
@@ -32,8 +31,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def strResult(defaultOrders: List[ColumnOrder])(
       implicit
-      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-      repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): JsonOut = {
       lazy val outJsonGen = PropertiesOperation.strSlick2jsonOperation(listQueryWrap.listQueryBind, defaultOrders).apply(listQueryWrap.columns)
@@ -42,8 +40,9 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def strResult(orderColumn: String, isDesc: Boolean = true)(
       implicit
-      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-      repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+      //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): JsonOut = {
       strResult(List(ColumnOrder(orderColumn, isDesc)))
@@ -51,8 +50,9 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def strResult(
       implicit
-      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-      repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+      //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): JsonOut = {
       strResult(Nil)
@@ -60,8 +60,9 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def filterResult(
       implicit
-      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-      repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+      //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): JsonOut = {
       PropertiesOperation.filterStrSlick2jsonOperation(listQueryWrap.listQueryBind, Nil).apply(listQueryWrap.columns)
@@ -69,8 +70,9 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def result(defaultOrders: List[ColumnOrder])(
       implicit
-      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-      repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+      //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): JsonOut = {
       /*lazy val outJsonGen = PropertiesOperation.slick2jsonOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
@@ -80,8 +82,9 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def result(orderColumn: String, isDesc: Boolean = true)(
       implicit
-      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-      repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+      //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): JsonOut = {
       result(List(ColumnOrder(orderColumn, isDesc)))
@@ -89,8 +92,9 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def result(
       implicit
-      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-      repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+      //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): JsonOut = {
       result(Nil)
@@ -98,8 +102,9 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def jpResult(defaultOrders: List[ColumnOrder])(
       implicit
-      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-      repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+      //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): (() => JsonOut, () => PoiOut) = {
       /*lazy val withExtraCols = OutSelectConvert.extraSubCol(listQueryWrap.columns)
@@ -132,8 +137,9 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def jpResult(orderColumn: String, isDesc: Boolean = true)(
       implicit
-      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-      repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+      //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): (() => JsonOut, () => PoiOut) = {
       jpResult(List(ColumnOrder(orderColumn, isDesc)))
@@ -141,8 +147,9 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
 
     def jpResult(
       implicit
-      jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-      repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+      //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): (() => JsonOut, () => PoiOut) = {
       jpResult(Nil)
@@ -160,11 +167,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
 
     def result(defaultOrders: List[ColumnOrder])(
       implicit
-      jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-      retrieve: Query[_, String, Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[String], String],
-      insertConv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-      deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
-      updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): RWInfo = {
       RWInfo(
@@ -199,11 +202,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
 
     def result(orderColumn: String, isDesc: Boolean = true)(
       implicit
-      jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-      retrieve: Query[_, String, Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[String], String],
-      insertConv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-      deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
-      updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): RWInfo = {
       result(List(ColumnOrder(orderColumn, isDesc)))
@@ -211,11 +210,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
 
     def result(
       implicit
-      jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-      retrieve: Query[_, String, Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[String], String],
-      insertConv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-      deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods,
-      updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]],
+      slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): RWInfo = {
       result(Nil)

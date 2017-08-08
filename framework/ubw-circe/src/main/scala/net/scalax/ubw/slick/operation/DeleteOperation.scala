@@ -4,9 +4,7 @@ import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.{ OneToOneRetrieve, SlickDelete }
 import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
-import slick.dbio.DBIO
-import slick.jdbc.JdbcActionComponent
-import slick.lifted._
+import slick.jdbc.JdbcProfile
 import slick.relational.RelationalProfile
 import shapeless._
 
@@ -18,6 +16,7 @@ trait DeleteTran2 {
 }
 
 trait DeleteQuery {
+  import slick.lifted._
 
   val bind: SlickQueryBindImpl
   val cols: List[Any]
@@ -27,6 +26,7 @@ trait DeleteQuery {
 }
 
 trait DSlickWriter2 {
+  import slick.lifted._
 
   type MainSColumn
   //type MainDColumn
@@ -49,7 +49,7 @@ trait DSlickWriter2 {
 
 case class DSWriter2[MS /*, MD*/ , MT, D](
     override val mainCol: MS,
-    override val mainShape: Shape[_ <: FlatShapeLevel, MS, D, MT],
+    override val mainShape: slick.lifted.Shape[_ <: slick.lifted.FlatShapeLevel, MS, D, MT],
     override val table: Any,
     override val primaryGen: Option[FilterColumnGen[MT]],
     override val data: D,
@@ -71,8 +71,9 @@ trait ISlickDeleteWithData {
 object InDeleteConvert extends FAtomicValueHelper {
   def convert(
     implicit
-    ec: ExecutionContext,
-    deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
+  //deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
   ) = {
     FPile.transformTreeList {
       new FAtomicQuery(_) {
@@ -153,9 +154,13 @@ object DeleteOperation {
     converts: List[DeleteTran2]
   )(
     implicit
-    ec: ExecutionContext,
-    deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
-  ): DBIO[ExecInfo3] = {
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
+  //deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
+  ): slickProfile.api.DBIO[ExecInfo3] = {
+    val slickProfileI = slickProfile
+    import slickProfile.api._
+
     val wrapList = updateList
 
     val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => converts.exists(t => key == t.table) }
@@ -188,11 +193,14 @@ object DeleteOperation {
         val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
           x.filter(s => y.dataToCondition(s))(y.wt)
         }
-        val updateDBIO = filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]].delete
+        val updateDBIO = queryDeleteActionExtensionMethods(filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]]).delete
         for {
           effectRows <- updateDBIO
           subs = eachWrap.map(_.writer.subGen.toList).flatten
-          subResult <- parseInsertGen(binds, updateList, subs)
+          subResult <- {
+            implicit val _ = slickProfileI
+            parseInsertGen(binds, updateList, subs)
+          }
         } yield {
           ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
         }
@@ -212,9 +220,13 @@ object DeleteOperation {
     updateList: List[ISlickDeleteWithData]
   )(
     implicit
-    ec: ExecutionContext,
-    deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
-  ): DBIO[ExecInfo3] = {
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
+  //deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
+  ): slickProfile.api.DBIO[ExecInfo3] = {
+    val slickProfileI = slickProfile
+    import slickProfile.api._
+
     val wrapList = updateList
 
     val subGensTables = wrapList.flatMap { t => t.writer.subGen.toList.map(_.table) }
@@ -246,11 +258,14 @@ object DeleteOperation {
         val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
           x.filter(s => y.dataToCondition(s))(y.wt)
         }
-        val updateDBIO = filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]].delete
+        val updateDBIO = queryDeleteActionExtensionMethods(filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]]).delete
         for {
           effectRows <- updateDBIO
           subs = eachWrap.map(_.writer.subGen.toList).flatten
-          subResult <- parseInsertGen(binds, updateList, subs)
+          subResult <- {
+            implicit val _ = slickProfileI
+            parseInsertGen(binds, updateList, subs)
+          }
         } yield {
           ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
         }
