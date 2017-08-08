@@ -10,7 +10,7 @@ import scala.language.higherKinds
 
 trait PileFilter[U, F[_]] {
 
-  val transform: FAtomicPath => FQueryTranform[F[(FAtomicValue, U)]]
+  val transform: AtomicPath => QueryTranform[F[(AtomicValue, U)]]
 
   val monad: Monad[F]
   val semigroup: Semigroup[U]
@@ -25,7 +25,7 @@ trait PileFilter[U, F[_]] {
 
   val listTraverse: Traverse[List] = implicitly[Traverse[List]]
 
-  def unzip[T](fab: F[(FAtomicValue, U)]): (F[FAtomicValue], F[U]) =
+  def unzip[T](fab: F[(AtomicValue, U)]): (F[AtomicValue], F[U]) =
     (monad.map(fab)(_._1), monad.map(fab)(_._2))
 
   def listTraverse[T](a: List[F[T]]): F[List[T]] = {
@@ -37,12 +37,12 @@ trait PileFilter[U, F[_]] {
 object PileFilter {
 
   def empty: PileFilter[shapeless.HNil, cats.Id] = new PileFilter[shapeless.HNil, cats.Id] {
-    override val transform = { fAtomicPath =>
-      new FQueryTranform[cats.Id[(FAtomicValue, shapeless.HNil)]] {
+    override val transform = { AtomicPath =>
+      new QueryTranform[cats.Id[(AtomicValue, shapeless.HNil)]] {
         type QueryType = shapeless.HList
-        val path = fAtomicPath
-        val gen: Either[FAtomicException, QueryType] = Right(shapeless.HNil)
-        def apply(rep: QueryType, data: FAtomicValueImpl[path.DataType]): cats.Id[(FAtomicValue, shapeless.HNil)] = data -> shapeless.HNil
+        val path = AtomicPath
+        val gen: Either[AtomicException, QueryType] = Right(shapeless.HNil)
+        def apply(rep: QueryType, data: AtomicValueImpl[path.DataType]): cats.Id[(AtomicValue, shapeless.HNil)] = data -> shapeless.HNil
       }
     }
     override val monad = implicitly[Monad[cats.Id]]
@@ -53,7 +53,7 @@ object PileFilter {
     }
   }
 
-  def apply[U, F[_]](gen: FAtomicPath => FQueryTranform[F[(FAtomicValue, U)]])(implicit monad1: Monad[F], semigroup1: Semigroup[U]): PileFilter[U, F] = {
+  def apply[U, F[_]](gen: AtomicPath => QueryTranform[F[(AtomicValue, U)]])(implicit monad1: Monad[F], semigroup1: Semigroup[U]): PileFilter[U, F] = {
     new PileFilter[U, F] {
       override val transform = gen
       override val monad = monad1

@@ -1,6 +1,6 @@
 package net.scalax.fsn.mix.slickbase
 
-import net.scalax.fsn.core.FPile
+import net.scalax.fsn.core.Pile
 import net.scalax.fsn.slick.helpers.{ SlickQueryBindImpl, SlickUtils }
 import slick.ast.{ AnonSymbol, Ref }
 import slick.lifted._
@@ -8,7 +8,7 @@ import slick.relational.RelationalProfile
 
 case class FQueryWrap(
   binds: List[(Any, SlickQueryBindImpl)],
-  columns: List[FPile]
+  columns: List[Pile]
 )
 
 //TODO 看日后能否去掉 table 的绑定
@@ -29,7 +29,7 @@ class CrudQueryExtensionMethods[E <: RelationalProfile#Table[_], U](val queryToE
     FQueryWrap(deleteWrap, fv.columns)
   }
 
-  def map[A, B](f: E => List[FPile]): FQueryWrap = {
+  def map[A, B](f: E => List[Pile]): FQueryWrap = {
     val generator = new AnonSymbol
     val aliased = queryToExt.shaped.encodeRef(Ref(generator)).value
     val fv = f(aliased)

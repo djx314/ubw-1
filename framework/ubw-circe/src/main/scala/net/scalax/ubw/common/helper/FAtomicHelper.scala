@@ -1,18 +1,18 @@
 package net.scalax.fsn.json.operation
 
 import net.scalax.fsn.common.atomic.{ DefaultValue, FDescribe, FProperty }
-import net.scalax.fsn.core.FAtomicPathImpl
+import net.scalax.fsn.core.AtomicPathImpl
 
-trait FAtomicHelper[D] {
+trait AtomicHelper[D] {
 
-  val path: FAtomicPathImpl[D]
+  val path: AtomicPathImpl[D]
 
-  /*def appendAll(atomics: List[FAtomic[D]]): List[FAtomic[D]] = this.atomics ::: atomics
-  def append(atomic: FAtomic[D]): List[FAtomic[D]] = atomic :: this.atomics*/
+  /*def appendAll(atomics: List[Atomic[D]]): List[Atomic[D]] = this.atomics ::: atomics
+  def append(atomic: Atomic[D]): List[Atomic[D]] = atomic :: this.atomics*/
 
 }
 
-trait FPropertyAtomicHelper[D] extends FAtomicHelper[D] {
+trait FPropertyAtomicHelper[D] extends AtomicHelper[D] {
 
   def named(name: String) = {
     path.appendAtomic(FProperty.apply(name))
@@ -24,7 +24,7 @@ trait FPropertyAtomicHelper[D] extends FAtomicHelper[D] {
 
 }
 
-trait FDefaultAtomicHelper[D] extends FAtomicHelper[D] {
+trait FDefaultAtomicHelper[D] extends AtomicHelper[D] {
 
   def defaultValue(default: D) = {
     path.appendAtomic(DefaultValue.apply(default))

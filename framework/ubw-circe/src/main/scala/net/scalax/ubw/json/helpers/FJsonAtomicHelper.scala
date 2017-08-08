@@ -3,9 +3,9 @@ package net.scalax.fsn.slick.helpers
 import io.circe.{ Decoder, Encoder }
 import io.circe.generic.auto._
 import net.scalax.fsn.json.atomic.{ CompareToStringConvert, JsonReader, JsonWriter, SlickCompare }
-import net.scalax.fsn.json.operation.FAtomicHelper
+import net.scalax.fsn.json.operation.AtomicHelper
 
-trait FJsonAtomicHelper[E] extends FAtomicHelper[E] {
+trait FJsonAtomicHelper[E] extends AtomicHelper[E] {
 
   def writeJ(implicit encoder: Encoder[E]) = path.appendAtomic(new JsonWriter[E] {
     override val writer = encoder

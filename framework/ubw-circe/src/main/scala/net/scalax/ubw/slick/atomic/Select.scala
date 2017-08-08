@@ -1,6 +1,6 @@
 package net.scalax.fsn.slick.atomic
-import net.scalax.fsn.core.FAtomic
-/*trait SlickSelect[E] extends FAtomic[E] {
+import net.scalax.fsn.core.Atomic
+/*trait SlickSelect[E] extends Atomic[E] {
   type SourceType
   type SlickType
   type TargetType
@@ -17,7 +17,7 @@ case class SSelect[S, D, T, E](
     override val outConvert: D => E,
     override val outCol: S,
     override val colToOrder: Option[T => ColumnOrdered[_]]
-) extends SlickSelect[E] with FAtomicPathImpl[E] {
+) extends SlickSelect[E] with AtomicPathImpl[E] {
   override type SourceType = S
   override type SlickType = D
   override type TargetType = T
@@ -27,25 +27,25 @@ case class SSelect[S, D, T, E](
     this.copy(colToOrder = Option(cv))
   }
 
-  override val atomics: List[FAtomic[E]] = this :: Nil
+  override val atomics: List[Atomic[E]] = this :: Nil
 }
 
-trait OrderNullsLast[E] extends FAtomic[E] {
+trait OrderNullsLast[E] extends Atomic[E] {
   val isOrderNullsLast: Boolean
 }
 
-trait InRetrieve[E] extends FAtomic[E] {
+trait InRetrieve[E] extends Atomic[E] {
   val isInRetrieve: Boolean
 }
 
-trait OrderTargetName[E] extends FAtomic[E] {
+trait OrderTargetName[E] extends Atomic[E] {
   val orderTargetName: String
 }*/
 
-trait InRetrieve[E] extends FAtomic[E] {
+trait InRetrieve[E] extends Atomic[E] {
   val isInRetrieve: Boolean
 }
 
-trait DefaultDesc[E] extends FAtomic[E] {
+trait DefaultDesc[E] extends Atomic[E] {
   val isDefaultDesc: Boolean
 }

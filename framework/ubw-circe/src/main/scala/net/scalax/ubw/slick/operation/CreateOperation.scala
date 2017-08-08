@@ -2,11 +2,12 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
+import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.{ AutoInc, OneToOneCrate, SlickCreate }
 import net.scalax.fsn.slick.helpers.{ ListAnyShape, SlickQueryBindImpl, SlickUtils }
 import slick.jdbc.JdbcProfile
 import shapeless._
+import slick.lifted._
 
 import scala.concurrent.ExecutionContext
 
@@ -16,7 +17,6 @@ trait ISlickWriterWithData {
 }
 
 trait InsertDataQuery {
-  import slick.lifted.{ FlatShapeLevel, Query, Shape }
 
   val bind: SlickQueryBindImpl
   val cols: List[Any]
@@ -35,7 +35,6 @@ trait InsertWrapTran[I] {
 }
 
 trait ISlickWriter {
-  import slick.lifted.{ FlatShapeLevel, Query, Shape }
 
   type PreRep
   type PreValue
@@ -58,7 +57,7 @@ case class ISWriter[A, B, C, D, E, F](
     override val preData: B,
     override val table: Any,
     override val preRep: A,
-    override val preShape: slick.lifted.Shape[_ <: slick.lifted.FlatShapeLevel, A, B, C],
+    override val preShape: Shape[_ <: FlatShapeLevel, A, B, C],
     override val autoIncRep: D,
     override val autoIncShape: slick.lifted.Shape[_ <: slick.lifted.FlatShapeLevel, D, E, F],
     override val subGen: Option[InsertWrapTran[E]],
@@ -72,17 +71,15 @@ case class ISWriter[A, B, C, D, E, F](
   override type IncTarget = F
 }
 
-object InCreateConvert extends FAtomicValueHelper {
+object InCreateConvert extends AtomicValueHelper {
 
   def createGen(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  //cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-  //retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): FPileSyntax.PileGen[List[(Any, SlickQueryBindImpl)] => slickProfile.api.DBIO[ExecInfo3]] = {
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
+  ): PileSyntax.PileGen[List[(Any, SlickQueryBindImpl)] => slickProfile.api.DBIO[ExecInfo3]] = {
+    Pile.transformTreeList {
+      new AtomicQuery(_) {
         import slickProfile.api._
 
         val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: needAtomic[FProperty] :: FANil)
@@ -195,14 +192,11 @@ object CreateOperation {
   def parseInsertGen(
     binds: List[(Any, SlickQueryBindImpl)],
     insertList: List[ISlickWriterWithData],
-    //autoIncCols: List[ISlickWriterWithData],
     converts: List[InsWrapTran2]
   )(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  //cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-  //retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ): slickProfile.api.DBIO[ExecInfo3] = try {
     val slickProfileI = slickProfile
     import slickProfile.api._
@@ -238,9 +232,9 @@ object CreateOperation {
           val createQuery = queryInsertActionExtensionMethods(bindQuery) returning bindReturingQuery
           createQuery += convertRetrieveQuery.data
         }
-        for {
-          incData <- incDataDBIO
-          fillSubGens = eachWrap.zip(incData).map {
+
+        def fillSubGenAction(autoIncData: Seq[Any]) = {
+          eachWrap.zip(autoIncData).map {
             case (wrap, dataItem) =>
               val wrapSlickData = dataItem.asInstanceOf[wrap.writer.IncValue]
               val subGens = wrap.writer.subGen.map { gen =>
@@ -251,14 +245,19 @@ object CreateOperation {
                   }
                 }
               }
-              subGens //-> wrap.autalColumn(wrapSlickData)
+              subGens
           }
+        }
+
+        for {
+          autoIncData <- incDataDBIO
+          fillSubGens = fillSubGenAction(autoIncData)
           subResult <- {
             implicit val _ = slickProfileI
             parseInsertGen(binds, insertList, fillSubGens.flatten)
           }
         } yield {
-          ExecInfo3(subResult.effectRows + 1, convertRetrieveQuery.dataGen(incData.toList) ::: subResult.columns)
+          ExecInfo3(subResult.effectRows + 1, convertRetrieveQuery.dataGen(autoIncData.toList) ::: subResult.columns)
         }
 
     }
@@ -319,9 +318,9 @@ object CreateOperation {
           val createQuery = queryInsertActionExtensionMethods(bindQuery) returning bindReturingQuery
           createQuery += convertRetrieveQuery.data
         }
-        for {
-          incData <- incDataDBIO
-          fillSubGens = eachWrap.zip(incData).map {
+
+        def fillSubGenAction(autoIncData: Seq[Any]) = {
+          eachWrap.zip(autoIncData).map {
             case (wrap, dataItem) =>
               val wrapSlickData = dataItem.asInstanceOf[wrap.writer.IncValue]
               val subGens = wrap.writer.subGen.map { gen =>
@@ -334,12 +333,17 @@ object CreateOperation {
               }
               subGens
           }
+        }
+
+        for {
+          autoIncData <- incDataDBIO
+          fillSubGens = fillSubGenAction(autoIncData)
           subResult <- {
             implicit val _ = slickProfileI
             parseInsertGen(binds, insertList, fillSubGens.flatten)
           }
         } yield {
-          ExecInfo3(subResult.effectRows + 1, convertRetrieveQuery.dataGen(incData.toList) ::: subResult.columns)
+          ExecInfo3(subResult.effectRows + 1, convertRetrieveQuery.dataGen(autoIncData.toList) ::: subResult.columns)
         }
 
     }

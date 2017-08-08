@@ -1,12 +1,12 @@
 package net.scalax.fsn.slick.atomic
 
-import net.scalax.fsn.core.{ FAtomic, FAtomicPathImpl }
+import net.scalax.fsn.core.{ Atomic, AtomicPathImpl }
 import slick.ast.{ BaseTypedType, TypedType }
 import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Rep, Shape }
 
 import scala.language.existentials
 
-trait GroupSlickSelect[D] extends FAtomic[D] {
+trait GroupSlickSelect[D] extends Atomic[D] {
   type SourceType
   type TargetType
   type DataType = D
@@ -18,7 +18,7 @@ trait GroupSlickSelect[D] extends FAtomic[D] {
 case class GroupSSelect[S, D, T](
     override val shape: Shape[_ <: FlatShapeLevel, S, D, T],
     override val outCol: S
-) extends GroupSlickSelect[D] with FAtomicPathImpl[D] {
+) extends GroupSlickSelect[D] with AtomicPathImpl[D] {
   self =>
   override type SourceType = S
   override type TargetType = T
@@ -78,7 +78,7 @@ case class GroupSSelect[S, D, T](
 
 }
 
-sealed trait GroupableColumnAbs[E] extends FAtomic[E] {
+sealed trait GroupableColumnAbs[E] extends Atomic[E] {
   type SourceType
   type TargetType
   type DType
@@ -86,7 +86,7 @@ sealed trait GroupableColumnAbs[E] extends FAtomic[E] {
   val selectModel: GroupSSelect[SourceType, DType, TargetType]
 }
 
-trait CountableGroupColumn[E] extends GroupableColumnAbs[Int] with FAtomicPathImpl[Int] {
+trait CountableGroupColumn[E] extends GroupableColumnAbs[Int] with AtomicPathImpl[Int] {
   override val atomics = this :: Nil
 }
 
@@ -104,13 +104,13 @@ abstract trait GroupableColumnBase[E] extends GroupableColumnAbs[Option[E]] {
   val typedType: TypedType[Option[E]]
 }
 
-trait GroupableNoOptionColumn[E] extends GroupableColumnBase[E] with FAtomicPathImpl[Option[E]] {
+trait GroupableNoOptionColumn[E] extends GroupableColumnBase[E] with AtomicPathImpl[Option[E]] {
   val targetColConvert: TargetType => Rep[E]
 
   override val atomics = this :: Nil
 }
 
-trait GroupableOptionColumn[E] extends GroupableColumnBase[E] with FAtomicPathImpl[Option[E]] {
+trait GroupableOptionColumn[E] extends GroupableColumnBase[E] with AtomicPathImpl[Option[E]] {
   val targetColConvert: TargetType => Rep[Option[E]]
 
   override val atomics = this :: Nil

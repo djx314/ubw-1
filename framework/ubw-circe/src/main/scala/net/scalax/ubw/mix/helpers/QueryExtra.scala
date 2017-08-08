@@ -15,7 +15,7 @@ import slick.relational.RelationalProfile
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-trait Slick2JsonFsnImplicit extends FPilesGenHelper {
+trait Slick2JsonFsnImplicit extends PilesGenHelper {
 
   implicit class slick2jsonExtraClass1111(listQueryWrap: PileListQueryWrap) {
 
@@ -127,7 +127,7 @@ trait Slick2JsonFsnImplicit extends FPilesGenHelper {
         PoiOut(withExtraCols.map(PropertiesOperation.convertProperty), poiGen)*/
 
       //==========================================================================================
-      //val newPiles = withExtraCols.map(col => FPile.applyOpt(FAtomicPathImpl(col.cols)))
+      //val newPiles = withExtraCols.map(col => Pile.applyOpt(AtomicPathImpl(col.cols)))
       lazy val outJsonGen = PropertiesOperation.strSlick2jsonOperation(listQueryWrap.listQueryBind, defaultOrders).apply(listQueryWrap.columns)
 
       lazy val outPoiGen = PropertiesOperation.slick2PoiOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)

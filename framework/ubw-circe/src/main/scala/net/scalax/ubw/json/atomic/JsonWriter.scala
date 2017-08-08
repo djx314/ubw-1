@@ -3,9 +3,9 @@ package net.scalax.fsn.json.atomic
 import cats.functor.Contravariant
 import io.circe.Encoder
 import io.circe.syntax._
-import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.core.Atomic
 
-trait JsonWriter[E] extends FAtomic[E] {
+trait JsonWriter[E] extends Atomic[E] {
 
   type DataType = E
   val writer: Encoder[DataType]

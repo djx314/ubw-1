@@ -1,10 +1,10 @@
 package net.scalax.fsn.slick.atomic
 
-import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.core.Atomic
 import net.scalax.fsn.slick.helpers.FilterWrapper
 import slick.lifted.{ FlatShapeLevel, Shape }
 
-trait SlickUpdate[E] extends FAtomic[E] {
+trait SlickUpdate[E] extends Atomic[E] {
 
   type SourceType
   //type SlickType

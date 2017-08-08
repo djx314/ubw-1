@@ -1,6 +1,6 @@
 package net.scalax.ubw.validate.helpers
 
-import net.scalax.fsn.json.operation.FAtomicHelper
+import net.scalax.fsn.json.operation.AtomicHelper
 import net.scalax.ubw.validate.atomic.{ ErrorMessage, Validator }
 
 trait NestEmptyUnWrap[S, T] {
@@ -21,7 +21,7 @@ object NestEmptyUnWrap {
   }
 }
 
-trait ValidatorAtomicHelper[E] extends FAtomicHelper[E] {
+trait ValidatorAtomicHelper[E] extends AtomicHelper[E] {
 
   def notEmptyString(implicit strOptUnWrap: NestEmptyUnWrap[Option[E], String]) = path.appendAtomic(new Validator[E] {
     override def validate(proName: String, describe: String): PartialFunction[Option[E], Option[ErrorMessage]] = {

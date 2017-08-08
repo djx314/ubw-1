@@ -9,12 +9,12 @@ import shapeless._
 
 object SlickCompareOperation extends FilterModelHelper {
 
-  val unfullReadCompareGen = FPile.transformTreeList {
-    new FAtomicQuery(_) {
+  val unfullReadCompareGen = Pile.transformTreeList {
+    new AtomicQuery(_) {
       val aa = withRep(needAtomic[SlickCompare] :: needAtomic[FProperty] :: needAtomic[CompareToStringConvert] :: FANil)
         .mapTo {
           case (jsonReader :: property :: compareCv :: HNil, _) =>
-            val tran: Map[String, Json] => FAtomicValueImpl[path.DataType] = { sourceData: Map[String, Json] =>
+            val tran: Map[String, Json] => AtomicValueImpl[path.DataType] = { sourceData: Map[String, Json] =>
               sourceData.get(property.proName) match {
                 case Some(json) =>
                   json.as[FilterModel[jsonReader.DataType]](jsonReader.reader) match {
@@ -35,7 +35,7 @@ object SlickCompareOperation extends FilterModelHelper {
               }
             }
 
-            tran: (Map[String, Json] => FAtomicValue)
+            tran: (Map[String, Json] => AtomicValue)
         }
     }.aa
   } { readlerList =>

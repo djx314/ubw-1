@@ -2,7 +2,7 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.json.operation.FAtomicValueHelper
+import net.scalax.fsn.json.operation.AtomicValueHelper
 import net.scalax.fsn.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
 import net.scalax.fsn.slick.helpers._
 import net.scalax.fsn.slick.model._
@@ -48,9 +48,9 @@ case class StrReaderWithIndex(reader: StrSlickReader, index: Int)
 
 object StrOutSelectConvert extends FilterModelHelper {
 
-  def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[StrSlickQuery] = {
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
+  def ubwGen(wQuery: SlickQueryBindImpl): PileSyntax.PileGen[StrSlickQuery] = {
+    Pile.transformTreeList {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomic[StrSlickSelect] :: (needAtomicOpt[StrNeededFetch] :: (needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: FANil) :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (slickSelect :: (neededFetchOpt :: (isOrderNullsLastContent :: orderTargetNameContent :: HNil) :: HNil) :: property :: HNil, data) => {
@@ -162,9 +162,9 @@ object StrOutSelectConvert extends FilterModelHelper {
     }
   }
 
-  /*def ubwGenWithoutData: FPileSyntaxWithoutData.PileGen[List[String]] = {
-      FPile.transformTreeListWithoutData {
-        new FAtomicQuery(_) {
+  /*def ubwGenWithoutData: PileSyntaxWithoutData.PileGen[List[String]] = {
+      Pile.transformTreeListWithoutData {
+        new AtomicQuery(_) {
           val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: FANil)
             .mapToWithoutData {
               case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
@@ -181,7 +181,7 @@ object StrOutSelectConvert extends FilterModelHelper {
     }*/
 }
 
-trait StrSlickQuery extends FAtomicValueHelper {
+trait StrSlickQuery extends AtomicValueHelper {
   val readers: List[StrReaderWithIndex]
   val sortMaps: Map[String, Int]
   val wrapQuery: SlickQueryBindImpl
@@ -252,7 +252,7 @@ trait StrSlickQuery extends FAtomicValueHelper {
       val rs = CommonResult.commonResult(filterQuery.to[List], /*sortbyQuery2*/ mapQuery).apply(slickParam)
         .map { s =>
           val resultSet = s._1.map { eachRow =>
-            val resultArray = Array.fill[FAtomicValue](readers.size)(FAtomicValueImpl.empty)
+            val resultArray = Array.fill[AtomicValue](readers.size)(AtomicValueImpl.empty)
             inViewReadersWithIndex.foreach {
               case (reader, index) =>
                 resultArray(reader.index) = set(eachRow(index).asInstanceOf[reader.reader.DataType])

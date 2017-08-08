@@ -1,6 +1,6 @@
 package net.scalax.fsn.mix.slickbase
 
-import net.scalax.fsn.core.FPile
+import net.scalax.fsn.core.Pile
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import slick.ast.{ AnonSymbol, Ref }
 import slick.lifted._
@@ -8,7 +8,7 @@ import slick.lifted._
 import scala.concurrent.ExecutionContext
 
 case class PileListQueryWrap(
-  columns: List[FPile],
+  columns: List[Pile],
   listQueryBind: SlickQueryBindImpl
 )(implicit val ec: ExecutionContext)
 
@@ -27,7 +27,7 @@ class PileListQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {
     PileListQueryWrap(fv.columns, slickJsonQuery)(fv.ec)
   }
 
-  def map(ev: E => List[FPile])(implicit ec: ExecutionContext): PileListQueryWrap = {
+  def map(ev: E => List[Pile])(implicit ec: ExecutionContext): PileListQueryWrap = {
     val generator = new AnonSymbol
     val aliased = queryToExt.shaped.encodeRef(Ref(generator)).value
     val columns = ev(aliased)

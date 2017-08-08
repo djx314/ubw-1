@@ -45,9 +45,9 @@ case class SReader[S, U, T, D](
 
 object OutSelectConvert {
 
-  def ubwGen(wQuery: SlickQueryBindImpl): FPileSyntax.PileGen[Option, FSlickQuery] = {
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
+  def ubwGen(wQuery: SlickQueryBindImpl): PileSyntax.PileGen[Option, FSlickQuery] = {
+    Pile.transformTreeList {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickSelect] :: needAtomicOpt[OrderNullsLast] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: FANil)
           .mapToOption {
             case (slickSelect :: isOrderNullsLastContent :: orderTargetNameContent :: property :: HNil, data) => {
@@ -113,9 +113,9 @@ object OutSelectConvert {
     }
   }
 
-  def ubwGenWithoutData: FPileSyntaxWithoutData.PileGen[Option, List[String]] = {
-    FPile.transformTreeListWithoutData {
-      new FAtomicQuery(_) {
+  def ubwGenWithoutData: PileSyntaxWithoutData.PileGen[Option, List[String]] = {
+    Pile.transformTreeListWithoutData {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickSelect] :: needAtomicOpt[OrderTargetName] :: needAtomic[FProperty] :: FANil)
           .mapToOptionWithoutData {
             case (slickSelect :: orderTargetNameContent :: property :: HNil) =>

@@ -1,11 +1,11 @@
 package net.scalax.fsn.common.atomic
 
 import cats.Applicative
-import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.core.Atomic
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-trait FFutureValue[E] extends FAtomic[E] {
+trait FFutureValue[E] extends Atomic[E] {
   self =>
 
   val value: Future[E]

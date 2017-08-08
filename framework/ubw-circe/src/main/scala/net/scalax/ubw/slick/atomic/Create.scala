@@ -1,9 +1,9 @@
 package net.scalax.fsn.slick.atomic
 
-import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.core.Atomic
 import slick.lifted.{ FlatShapeLevel, Shape }
 
-trait SlickCreate[E] extends FAtomic[E] {
+trait SlickCreate[E] extends Atomic[E] {
 
   type SourceType
   //type SlickType
@@ -31,6 +31,6 @@ case class SCreate[S, D, T](
   type TargetType = T
 }
 
-trait AutoInc[E] extends FAtomic[E] {
+trait AutoInc[E] extends Atomic[E] {
   val isAutoInc: Boolean
 }

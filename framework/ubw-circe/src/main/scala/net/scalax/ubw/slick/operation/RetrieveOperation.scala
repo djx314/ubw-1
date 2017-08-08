@@ -1,7 +1,7 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{FAtomicValueHelper, FSomeValue, ValidatorOperation}
+import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue, ValidatorOperation}
 import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
 import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
 import slick.lifted._
@@ -66,7 +66,7 @@ trait ISlickReaderWithData {
   val dataGen: reader.MainDColumn => DataWithIndex
 }
 
-object InRetrieveConvert extends FAtomicValueHelper {
+object InRetrieveConvert extends AtomicValueHelper {
   def convert(
     implicit
              slickProfile: JdbcProfile,
@@ -76,8 +76,8 @@ object InRetrieveConvert extends FAtomicValueHelper {
     /*val slickReader = FColumn.find(columns)({ case s: SlickRetrieve[columns.DataType] => s })
     val oneToOneRetrieveOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })*/
 
-    FPile.transformTreeList({
-      new FAtomicQuery(_) {
+    Pile.transformTreeList({
+      new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
           .mapTo {
             case (slickReader :: oneToOneRetrieveOpt :: HNil, data) => {

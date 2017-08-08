@@ -1,6 +1,6 @@
 package net.scalax.fsn.slick.helpers
 
-import net.scalax.fsn.core.FAtomicValueImpl
+import net.scalax.fsn.core.AtomicValueImpl
 import net.scalax.fsn.json.atomic.SlickCompareData
 
 import scala.language.implicitConversions
@@ -28,44 +28,44 @@ trait FilterModelHelper {
 
   trait AtomicFilterWrap[D] {
     atomicSelf =>
-    val fAtomicValue: FAtomicValueImpl[D]
+    val AtomicValue: AtomicValueImpl[D]
 
-    def opt: Option[FilterModel[D]] = fAtomicValue.atomics.flatMap { s =>
+    def opt: Option[FilterModel[D]] = AtomicValue.atomics.flatMap { s =>
       s match {
         case valueWrap: SlickCompareData[D] => Option(valueWrap.compare)
         case _ => None
       }
     }
 
-    def isDefined: Boolean = fAtomicValue.atomics match {
+    def isDefined: Boolean = AtomicValue.atomics match {
       case Some(valueWrap: SlickCompareData[D]) => true
       case _ => false
     }
 
-    def map[T](cv: D => T): FAtomicValueImpl[T] = {
+    def map[T](cv: D => T): AtomicValueImpl[T] = {
       setOpt(atomicSelf.opt.map { s =>
         FilterModel(s.like, s.eq.map(cv), s.gt.map(cv), s.lt.map(cv))
       })
     }
 
-    def flatMap[T](s: FilterModel[D] => FAtomicValueImpl[T]): FAtomicValueImpl[T] = {
+    def flatMap[T](s: FilterModel[D] => AtomicValueImpl[T]): AtomicValueImpl[T] = {
       setOpt(atomicSelf.opt.flatMap(t => s(t).opt))
     }
 
     def get: FilterModel[D] = opt.get
   }
 
-  implicit def atomicValueWrapImplicit[D](atomicValue: FAtomicValueImpl[D]): AtomicFilterWrap[D] = {
+  implicit def atomicValueWrapImplicit[D](atomicValue: AtomicValueImpl[D]): AtomicFilterWrap[D] = {
     new AtomicFilterWrap[D] {
-      override val fAtomicValue = atomicValue
+      override val AtomicValue = atomicValue
     }
   }
 
-  def emptyValue[D]: FAtomicValueImpl[D] = new FAtomicValueImpl[D] {
+  def emptyValue[D]: AtomicValueImpl[D] = new AtomicValueImpl[D] {
     override val atomics = None
   }
 
-  def set[D](value: FilterModel[D]): FAtomicValueImpl[D] = new FAtomicValueImpl[D] {
+  def set[D](value: FilterModel[D]): AtomicValueImpl[D] = new AtomicValueImpl[D] {
     val value1 = value
     override val atomics = Option {
       new SlickCompareData[D] {
@@ -74,10 +74,10 @@ trait FilterModelHelper {
     }
   }
 
-  def setOpt[D](valueOpt: Option[FilterModel[D]]): FAtomicValueImpl[D] =
+  def setOpt[D](valueOpt: Option[FilterModel[D]]): AtomicValueImpl[D] =
     valueOpt match {
       case Some(s) =>
-        new FAtomicValueImpl[D] {
+        new AtomicValueImpl[D] {
           override val atomics = Option {
             new SlickCompareData[D] {
               override val compare = s

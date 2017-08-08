@@ -1,11 +1,11 @@
 package net.scalax.fsn.slick.helpers
 
-import net.scalax.fsn.json.operation.FAtomicHelper
+import net.scalax.fsn.json.operation.AtomicHelper
 import net.scalax.fsn.slick.atomic._
 import slick.lifted.{ FlatShapeLevel, Shape }
 import scala.language.implicitConversions
 
-trait FStrSelectExtAtomicHelper[E] extends FAtomicHelper[E] {
+trait FStrSelectExtAtomicHelper[E] extends AtomicHelper[E] {
 
   def hidden = path.appendAtomic(new StrNeededFetch[E] {
     override val isInView = false

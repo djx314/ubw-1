@@ -66,8 +66,8 @@ object InRetrieveConvert2222 {
     /*val slickReader = FColumn.find(columns)({ case s: SlickRetrieve[columns.DataType] => s })
     val oneToOneRetrieveOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })*/
 
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
+    Pile.transformTreeList {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
           .mapToOption {
             case (slickReader :: oneToOneRetrieveOpt :: HNil, data) => {

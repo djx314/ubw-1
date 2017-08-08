@@ -1,9 +1,9 @@
 package net.scalax.fsn.common.atomic
 
 import cats.{ Applicative, Functor }
-import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.core.Atomic
 
-trait FProperty[E] extends FAtomic[E] {
+trait FProperty[E] extends Atomic[E] {
   val proName: String
 
   override def toString: String = s"FProperty(${proName})"
@@ -19,7 +19,7 @@ object FProperty {
   }
 }
 
-trait FDescribe[E] extends FAtomic[E] {
+trait FDescribe[E] extends Atomic[E] {
   val describe: String
 
   override def toString: String = s"FDescribe(${describe})"
@@ -36,7 +36,7 @@ object FDescribe {
   }
 }
 
-trait DefaultValue[E] extends FAtomic[E] {
+trait DefaultValue[E] extends Atomic[E] {
   val value: E
 
   override def toString: String = s"DefaultValue(${value.toString})"

@@ -2,7 +2,7 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.json.operation.FAtomicValueHelper
+import net.scalax.fsn.json.operation.AtomicValueHelper
 import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
 import net.scalax.fsn.slick.model._
@@ -42,9 +42,9 @@ trait GroupSlickReader {
 
 object GroupSelectConvert {
 
-  def ubwGen(wQuery1: SlickQueryBindImpl): FPileSyntax.PileGen[FGroupQuery] = {
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
+  def ubwGen(wQuery1: SlickQueryBindImpl): PileSyntax.PileGen[FGroupQuery] = {
+    Pile.transformTreeList {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomic[GroupSlickSelect] :: needAtomicOpt[GroupableColumnBase] :: needAtomicOpt[CountableGroupColumn] :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (select :: groupColOpt :: countOpt :: property :: HNil, data) => {
@@ -118,9 +118,9 @@ object GroupSelectConvert {
 
 }
 
-case class GroupResult(action: DBIO[List[List[FAtomicValue]]], statements: List[String])
+case class GroupResult(action: DBIO[List[List[AtomicValue]]], statements: List[String])
 
-trait FGroupQuery extends FAtomicValueHelper {
+trait FGroupQuery extends AtomicValueHelper {
   val wQuery: SlickQueryBindImpl
   val readers: List[(GroupSlickReader, Int)]
 
@@ -241,7 +241,7 @@ trait FGroupQuery extends FAtomicValueHelper {
 
     val action = streamableQueryActionExtensionMethods(orderedQuery.to[List]).result.map { s =>
       val result = s.map { t =>
-        val initArray = Array.fill[FAtomicValue](readers.size)(FAtomicValueImpl.empty)
+        val initArray = Array.fill[AtomicValue](readers.size)(AtomicValueImpl.empty)
         keyIndexs.zipWithIndex.map {
           case (keyIndexs, resultIndex) =>
             initArray(keyIndexs) = set(t(resultIndex))

@@ -20,7 +20,7 @@ val fQuery = for {
       ("age" ofPile friend.age.out) ::
       FPNil
     ).poly(
-        "name" ofPile FAtomicPathImpl.empty[String].writeJ
+        "name" ofPile AtomicPathImpl.empty[String].writeJ
       ).transform {
           case nameAt :: nickAt :: ageAt :: HNil if ageAt.opt.flatten.map(_ < 200).getOrElse(false) =>
             for {

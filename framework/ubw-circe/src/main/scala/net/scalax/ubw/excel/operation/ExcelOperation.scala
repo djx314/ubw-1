@@ -6,7 +6,7 @@ import net.scalax.fsn.excel.atomic.{ PoiStyleTransform, PoiWriter }
 import org.xarcher.cpoi.CellData
 import shapeless._
 
-object ExcelOperation extends FAtomicValueHelper /*extends FAtomicGenHelper with FAtomicShapeHelper*/ {
+object ExcelOperation extends AtomicValueHelper /*extends AtomicGenHelper with AtomicShapeHelper*/ {
 
   /*def read(eachColumn: FColumn): Map[String, Json] => FColumn = { data: Map[String, Json] =>
     val jsonReader = FColumn.find(eachColumn)({ case s: JsonReader[eachColumn.DataType] => s })
@@ -76,8 +76,8 @@ object ExcelOperation extends FAtomicValueHelper /*extends FAtomicGenHelper with
     }.toMap
   }*/
 
-  /*val writeGen = FPile.transformTreeList {
-    new FAtomicQuery(_) {
+  /*val writeGen = Pile.transformTreeList {
+    new AtomicQuery(_) {
       val aa = withRep(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapToOption {
           case (poiWriter :: transforms :: property :: defaultOpt :: HNil, data) => {
@@ -91,8 +91,8 @@ object ExcelOperation extends FAtomicValueHelper /*extends FAtomicGenHelper with
     cellDataTupleList.toMap: Map[String, CellData[_]]
   }*/
 
-  val writeGen1111 = FPile.transformTreeList {
-    new FAtomicQuery(_) {
+  val writeGen1111 = Pile.transformTreeList {
+    new AtomicQuery(_) {
       val aa = withRep(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (poiWriter :: transforms :: property :: defaultOpt :: HNil, data) => {

@@ -207,17 +207,17 @@ package net.scalax.fsn.core
 
 import scala.reflect.runtime.universe._
 
-trait FAtomic[D]
+trait Atomic[D]
 
 trait FColumn {
 
   type DataType
-  val cols: List[FAtomic[DataType]]
+  val cols: List[Atomic[DataType]]
   val data: Option[DataType]
 
 }
 
-case class FsnColumn[D](override val cols: List[FAtomic[D]], override val data: Option[D] = None) extends FColumn {
+case class FsnColumn[D](override val cols: List[Atomic[D]], override val data: Option[D] = None) extends FColumn {
   override type DataType = D
 }
 
@@ -225,25 +225,25 @@ object FColumn {
 
   type Aux[D] = FColumn { type DataType = D }
 
-  def findOpt[T](column: FColumn)(par: PartialFunction[FAtomic[column.DataType], T]): Option[T] = {
+  def findOpt[T](column: FColumn)(par: PartialFunction[Atomic[column.DataType], T]): Option[T] = {
     column.cols.find(par.isDefinedAt(_)).map(par.apply(_))
   }
 
-  def find[T](column: FColumn)(par: PartialFunction[FAtomic[column.DataType], T])(implicit typeTag: WeakTypeTag[T]): T = {
+  def find[T](column: FColumn)(par: PartialFunction[Atomic[column.DataType], T])(implicit typeTag: WeakTypeTag[T]): T = {
     findOpt(column)(par).getOrElse(throw new Exception(s"找不到匹配类型 ${typeTag.tpe} 的转换器"))
   }
 
-  def filter[T](column: FColumn)(par: PartialFunction[FAtomic[column.DataType], T]): List[T] = {
+  def filter[T](column: FColumn)(par: PartialFunction[Atomic[column.DataType], T]): List[T] = {
     column.cols.filter(par.isDefinedAt(_)).map(par.apply(_))
   }
 
 }
 ```
 
-在 FColumn 中, DataType 就是中间数据类型, `val cols: List[FAtomic[DataType]]` 就是各种 type class
+在 FColumn 中, DataType 就是中间数据类型, `val cols: List[Atomic[DataType]]` 就是各种 type class
 和数据类型转换的载体,例如下面就是 slick 的 Select 的 col:
 ```scala
-trait SlickSelect[E] extends FAtomic[E] {
+trait SlickSelect[E] extends Atomic[E] {
   type SourceType
   type SlickType
   type TargetType

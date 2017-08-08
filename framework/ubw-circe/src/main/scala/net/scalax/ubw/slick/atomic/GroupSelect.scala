@@ -1,10 +1,10 @@
 package net.scalax.fsn.slick.atomic
 
-import net.scalax.fsn.core.{ FAtomic, FAtomicPathImpl }
+import net.scalax.fsn.core.{ Atomic, AtomicPathImpl }
 import slick.ast.BaseTypedType
 import slick.lifted.{ FlatShapeLevel, Ordered, Rep, Shape }
 
-trait GroupSlickSelect[D] extends FAtomic[D] {
+trait GroupSlickSelect[D] extends Atomic[D] {
   type SourceType
   type DataType
   type TargetType
@@ -18,7 +18,7 @@ case class GroupSSelect[S, D, T](
     shape: Shape[_ <: FlatShapeLevel, S, D, T],
     outCol: S,
     colToOrder: Option[T => Ordered] = None
-) extends FAtomicPathImpl[D] {
+) extends AtomicPathImpl[D] {
   self =>
 
   override val atomics = selectWithType[D] :: Nil
@@ -113,9 +113,9 @@ trait GroupColImplicit[T, U] {
   def toGroupColumn: GroupableColumnBase[U]
 }
 
-trait GroupByColumnWrap[T] extends FAtomicPathImpl[T]
+trait GroupByColumnWrap[T] extends AtomicPathImpl[T]
 
-sealed abstract trait GroupableColumnAbs[E] extends FAtomic[E] {
+sealed abstract trait GroupableColumnAbs[E] extends Atomic[E] {
 }
 
 trait CountableGroupColumn[E] extends GroupableColumnAbs[Int] {

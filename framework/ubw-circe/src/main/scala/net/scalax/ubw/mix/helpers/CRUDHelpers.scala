@@ -1,6 +1,6 @@
 package net.scalax.fsn.mix.helpers
 
-import net.scalax.fsn.core.{ FAtomic, FAtomicPathImpl }
+import net.scalax.fsn.core.{ Atomic, AtomicPathImpl }
 import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.helpers.FilterWrapper
 import slick.lifted.{ FlatShapeLevel, Shape }
@@ -13,7 +13,7 @@ case class SCRUD[S, D, T](
     //jRead: JsonReader[E],
     //jWrite: JsonWriter[E],
     isAutoInc: Boolean
-) extends FAtomicPathImpl[D] { self =>
+) extends AtomicPathImpl[D] { self =>
   def primary(implicit priFilter: FilterWrapper[T, D]): SCRUD[S, D, T] = {
     this.copy(
       retrieve = retrieve.copy(primaryGen = Option(priFilter)),
@@ -26,7 +26,7 @@ case class SCRUD[S, D, T](
     this.copy(isAutoInc = true)
   }
 
-  def result: List[FAtomic[D]] = {
+  def result: List[Atomic[D]] = {
     List(
       create,
       retrieve,
@@ -224,7 +224,7 @@ object SCRUD {
     this.copy(select = this.select.copy(colToOrder = Option(cv)))
   }
 
-  def result: List[FAtomic[E]] = {
+  def result: List[Atomic[E]] = {
     List(
       select,
       jsonWriter,

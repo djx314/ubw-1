@@ -1,7 +1,7 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{FAtomicValueHelper, FSomeValue, ValidatorOperation}
+import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue, ValidatorOperation}
 import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate}
 import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
 import net.scalax.ubw.validate.atomic.ErrorMessage
@@ -10,7 +10,7 @@ import slick.jdbc.JdbcProfile
 import scala.concurrent.{ExecutionContext, Future}
 import shapeless._
 
-case class DataWithIndex(data: FAtomicValue, index: Int)
+case class DataWithIndex(data: AtomicValue, index: Int)
 case class ExecInfo3(effectRows: Int, columns: List[DataWithIndex])
 
 trait UpdateTran {
@@ -73,16 +73,16 @@ trait ISlickUpdaterWithData {
   val data: DataWithIndex
 }
 
-object InUpdateConvert extends FAtomicValueHelper {
+object InUpdateConvert extends AtomicValueHelper {
 
   def updateGen(
     implicit
              slickProfile: JdbcProfile,
   ec: ExecutionContext
     //updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-  ): FPileSyntax.PileGen[(List[(Any, SlickQueryBindImpl)] => Future[slickProfile.api.DBIO[ExecInfo3]], Future[List[ErrorMessage]])] = {
-    FPile.transformTreeListWithFilter({
-      new FAtomicQuery(_) {
+  ): PileSyntax.PileGen[(List[(Any, SlickQueryBindImpl)] => Future[slickProfile.api.DBIO[ExecInfo3]], Future[List[ErrorMessage]])] = {
+    Pile.transformTreeListWithFilter({
+      new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: FANil)
           .mapTo {
             case (slickWriter :: oneToOneUpdateOpt :: HNil, data) => {
