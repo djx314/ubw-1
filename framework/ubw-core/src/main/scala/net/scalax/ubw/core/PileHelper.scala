@@ -7,9 +7,8 @@ import scala.language.implicitConversions
 
 trait PileSyntax[T] {
 
-  val pilesGen: PileSyntax.PileGen1111[List[AtomicValue] => T]
-
-  def flatMap1111[S, U](mapPiles: PileSyntax.PileGen[S])(cv: (T, List[AtomicValue] => S) => U): PileSyntax.PileGen[U] =
+  val pilesGen: PileSyntax.PileGenImpl[List[AtomicValue] => T]
+  /*def flatMap1111[S, U](mapPiles: PileSyntax.PileGen[S])(cv: (T, List[AtomicValue] => S) => U): PileSyntax.PileGen[U] =
     new PileSyntax.PileGen[U] {
       def gen(piles: List[Pile]): Either[AtomicException, PileSyntax.PilePip1111[List[AtomicValue] => U]] = {
         pilesGen.gen(piles).right.flatMap {
@@ -22,10 +21,9 @@ trait PileSyntax[T] {
             }
         }
       }
-    }
-
-  def flatMap[S, U](mapPiles: PileSyntax.PileGen1111[List[AtomicValue] => S])(cv: (T, List[AtomicValue] => S) => U): PileSyntax.PileGen1111[List[AtomicValue] => U] = {
-    val monad = implicitly[Monad[PileSyntax.PileGen1111]]
+    }*/
+  def flatMap[S, U](mapPiles: PileSyntax.PileGenImpl[List[AtomicValue] => S])(cv: (T, List[AtomicValue] => S) => U): PileSyntax.PileGenImpl[List[AtomicValue] => U] = {
+    val monad = implicitly[Monad[PileSyntax.PileGenImpl]]
     monad.flatMap(pilesGen) { tGen =>
       monad.map(mapPiles) { sGen =>
         { values: List[AtomicValue] =>
@@ -46,40 +44,40 @@ trait PileSyntax[T] {
 object PileSyntax {
 
   //case class PilePip[T](piles: List[Pile], atomicValues: List[AtomicValue] => T)
-  type PilePip[T] = PilePip1111[List[AtomicValue] => T]
-  type PileGen[T] = PileGen1111[List[AtomicValue] => T]
-  val PilePip = PilePip1111
+  type PilePip[T] = PilePipImpl[List[AtomicValue] => T]
+  type PileGen[T] = PileGenImpl[List[AtomicValue] => T]
+  val PilePip = PilePipImpl
 
   /*trait PileGen[T] {
     def gen(piles: List[Pile]): Either[AtomicException, PilePip[T]]
   }*/
 
-  case class PilePip1111[T](piles: List[Pile], atomicValues: T)
+  case class PilePipImpl[T](piles: List[Pile], atomicValues: T)
 
-  trait PileGen1111[T] {
-    def gen(piles: List[Pile]): Either[AtomicException, PilePip1111[T]]
+  trait PileGenImpl[T] {
+    def gen(piles: List[Pile]): Either[AtomicException, PilePipImpl[T]]
   }
 
-  object PileGen1111 {
-    implicit val pileGenMonadImplicit: Monad[PileGen1111] = new Monad[PileGen1111] {
+  object PileGenImpl {
+    implicit val pileGenMonadImplicit: Monad[PileGenImpl] = new Monad[PileGenImpl] {
       self =>
-      override def pure[A](x: A): PileGen1111[A] = new PileGen1111[A] {
-        def gen(piles: List[Pile]) = Right(PilePip1111(piles, x))
+      override def pure[A](x: A): PileGenImpl[A] = new PileGenImpl[A] {
+        def gen(piles: List[Pile]) = Right(PilePipImpl(piles, x))
       }
-      override def flatMap[A, B](fa: PileGen1111[A])(f: A => PileGen1111[B]): PileGen1111[B] = {
-        new PileGen1111[B] {
+      override def flatMap[A, B](fa: PileGenImpl[A])(f: A => PileGenImpl[B]): PileGenImpl[B] = {
+        new PileGenImpl[B] {
           def gen(piles: List[Pile]) = {
             fa.gen(piles) match {
               case Left(e) =>
                 Left(e)
-              case Right(PilePip1111(newPiles, newValuesGen)) =>
+              case Right(PilePipImpl(newPiles, newValuesGen)) =>
                 val pileB = f(newValuesGen)
                 pileB.gen(newPiles)
             }
           }
         }
       }
-      override def tailRecM[A, B](a: A)(f: A => PileGen1111[Either[A, B]]): PileGen1111[B] = {
+      override def tailRecM[A, B](a: A)(f: A => PileGenImpl[Either[A, B]]): PileGenImpl[B] = {
         val eitherPile = f(a)
         self.flatMap(eitherPile) {
           case Left(a) =>
@@ -202,7 +200,7 @@ trait PilesGenHelper1111 {
           val headLeafPile = self.toLeafPile
           new FLeafPileImpl[LE1 :: LE, D1 :: D](
             fLeafPile.pathPile :: headLeafPile.pathPile,
-            FsnShape.fpathHListFsnShape(fLeafPile.fShape, headLeafPile.fShape)
+            PileShape.fpathHListPileShape(fLeafPile.fShape, headLeafPile.fShape)
           )
         }
       }
@@ -245,7 +243,7 @@ trait PilesGenHelper1111 {
   }
 
   val FPNil: FLeafPileListPileMerge[HNil, HNil, HNil] = {
-    val leafPile = new FLeafPileImpl(HNil, FsnShape.hnilFsnShape)
+    val leafPile = new FLeafPileImpl(HNil, PileShape.hnilPileShape)
     val emptyPileHlist = new PileListImpl[HNil, HNil](
       HNil,
       { _ => Nil },
