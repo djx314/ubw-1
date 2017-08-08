@@ -2,19 +2,19 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
+import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.StaticMany
 import net.scalax.fsn.slick.model.{ QueryJsonInfo, StaticManyUbw }
 import shapeless._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-object StaticManyOperation extends FAtomicValueHelper {
+object StaticManyOperation extends AtomicValueHelper {
 
   //TODO change option selector to list selector
-  def updateGen(implicit ec: ExecutionContext): FPileSyntax.PileGen[Future[Map[String, QueryJsonInfo]]] = {
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
+  def updateGen(implicit ec: ExecutionContext): PileSyntax.PileGen[Future[Map[String, QueryJsonInfo]]] = {
+    Pile.transformTreeList {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomicOpt[StaticMany])
           .mapTo {
             case (staticMayOpt, data) =>
@@ -68,9 +68,9 @@ object StaticManyOperation extends FAtomicValueHelper {
   }*/
 
   //TODO change option selector to list selector
-  /*def ubwStaticManyGen(implicit ec: ExecutionContext): FPileSyntaxWithoutData.PileGen[Future[List[StaticManyUbw]]] = {
-    FPile.transformTreeListWithoutData {
-      new FAtomicQuery(_) {
+  /*def ubwStaticManyGen(implicit ec: ExecutionContext): PileSyntaxWithoutData.PileGen[Future[List[StaticManyUbw]]] = {
+    Pile.transformTreeListWithoutData {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomicOpt[StaticMany] :: needAtomic[FProperty] :: FANil)
           .mapToWithoutData {
             case (staticManyCol :: property :: HNil) =>

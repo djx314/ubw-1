@@ -1,10 +1,10 @@
 package net.scalax.ubw.validate.atomic
 
-import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.core.Atomic
 
 import scala.concurrent.Future
 
-trait ValidatorF[E] extends FAtomic[E] {
+trait ValidatorF[E] extends Atomic[E] {
 
   type DataType = E
   def validateF(proName: String, describe: String): PartialFunction[Option[DataType], Future[Option[ErrorMessage]]]

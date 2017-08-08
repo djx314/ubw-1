@@ -1,10 +1,10 @@
 package net.scalax.fsn.slick.atomic
 
-import net.scalax.fsn.core.{ FAtomic, FAtomicPathImpl }
+import net.scalax.fsn.core.{ Atomic, AtomicPathImpl }
 import net.scalax.fsn.slick.helpers.{ FilterWrapper, LikeableColumnGen }
 import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Shape }
 
-trait StrSlickSelect[D] extends FAtomic[D] {
+trait StrSlickSelect[D] extends Atomic[D] {
   type SourceType
   type TargetType
   type DataType = D
@@ -23,7 +23,7 @@ case class StrSSelect[S, D, T](
     override val colToOrder: Option[T => ColumnOrdered[_]],
     override val filterGen: Option[FilterWrapper[T, D]],
     override val likeableGen: Option[LikeableColumnGen[T]]
-) extends StrSlickSelect[D] with FAtomicPathImpl[D] {
+) extends StrSlickSelect[D] with AtomicPathImpl[D] {
   override type SourceType = S
   override type TargetType = T
   override type DataType = D
@@ -49,18 +49,18 @@ case class StrSSelect[S, D, T](
   override def toString = s"StrSelect(canOrder=${colToOrder.isDefined})"
 }
 
-trait StrOrderNullsLast[E] extends FAtomic[E] {
+trait StrOrderNullsLast[E] extends Atomic[E] {
   val isOrderNullsLast: Boolean
 }
 
-trait StrDefaultDesc[E] extends FAtomic[E] {
+trait StrDefaultDesc[E] extends Atomic[E] {
   val isDefaultDesc: Boolean
 }
 
-trait StrNeededFetch[E] extends FAtomic[E] {
+trait StrNeededFetch[E] extends Atomic[E] {
   val isInView: Boolean
 }
 
-trait StrOrderTargetName[E] extends FAtomic[E] {
+trait StrOrderTargetName[E] extends Atomic[E] {
   val orderTargetName: String
 }

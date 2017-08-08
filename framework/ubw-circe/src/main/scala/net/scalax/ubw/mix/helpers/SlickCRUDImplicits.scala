@@ -14,16 +14,16 @@ trait SlickCRUDImplicits {
   trait FColumnStringImplicits {
     val proName: String
 
-    def ofPile[D](path: FAtomicPathImpl[D]): FLeafPileImpl[FAtomicPathImpl[D], FAtomicValueImpl[D]] = {
+    def ofPile[D](path: AtomicPathImpl[D]): FLeafPileImpl[AtomicPathImpl[D], AtomicValueImpl[D]] = {
       val proName1 = proName
       val proNameAtomic = new FProperty[D] {
         override val proName = proName1
       }
-      FPile.apply(FAtomicPathImpl(proNameAtomic :: path.atomics))
+      Pile.apply(AtomicPathImpl(proNameAtomic :: path.atomics))
     }
   }
 
-  def emptyPath[T] = FAtomicPathImpl.empty[T]
+  def emptyPath[T] = AtomicPathImpl.empty[T]
 
   class FColumnStringImplicitsImpl(override val proName: String) extends FColumnStringImplicits
 

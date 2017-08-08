@@ -1,6 +1,6 @@
 package net.scalax.fsn.database.test
 
-import net.scalax.fsn.core.{ FAtomicPathImpl, PilesPolyHelper }
+import net.scalax.fsn.core.{ AtomicPathImpl, PilesPolyHelper }
 import net.scalax.fsn.json.operation._
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
 import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
@@ -19,10 +19,10 @@ object Sample07 extends SlickCRUDImplicits
     with StrFSSelectAtomicHelper
     with Slick2JsonFsnImplicit
     with PilesPolyHelper
-    with FAtomicValueHelper
+    with AtomicValueHelper
     with App {
 
-  implicit def fPilesOptionImplicit[D](path: FAtomicPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
+  implicit def fPilesOptionImplicit[D](path: AtomicPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
     val path1 = path
     new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
       override val path = path1
@@ -40,7 +40,7 @@ object Sample07 extends SlickCRUDImplicits
         ("age" ofPile friend.age.out) ::
         FPNil
       ).poly(
-          "name" ofPile FAtomicPathImpl.empty[String].writeJ
+          "name" ofPile AtomicPathImpl.empty[String].writeJ
         ).transform {
             case FSomeValue(name) :: FSomeValue(nick) :: FSomeValue(Some(age)) :: HNil if age < 200 =>
               set(s"${name}-${nick}")
@@ -79,7 +79,7 @@ object Sample07 extends SlickCRUDImplicits
         ("age" ofPile friend.age.out) ::
         FPNil
       ).poly(
-          "name" ofPile FAtomicPathImpl.empty[String]
+          "name" ofPile AtomicPathImpl.empty[String]
         ).transform {
             case FSomeValue(name) :: FSomeValue(nick) :: FSomeValue(Some(age)) :: HNil if age < 200 =>
               set(s"${name}-${nick}")
@@ -87,7 +87,7 @@ object Sample07 extends SlickCRUDImplicits
               set(name)
             case _ =>
               emptyValue[String]
-          }) :: ("ageOpt" ofPile friend.age.out) :: FPNil).poly("account" ofPile FAtomicPathImpl.empty[Aa]).transform { t =>
+          }) :: ("ageOpt" ofPile friend.age.out) :: FPNil).poly("account" ofPile AtomicPathImpl.empty[Aa]).transform { t =>
             t match {
               case FSomeValue(name) :: FSomeValue(Some(age)) :: HNil =>
                 set(Aa(name, age))
@@ -95,7 +95,7 @@ object Sample07 extends SlickCRUDImplicits
                 emptyValue[Aa]
                 set(Aa("喵", 2334455))
             }
-          } :: ("id" ofPile friend.id.out.order.describe("自增主键")) :: ("id" ofPile friend.age.out.order.describe("年龄")) :: FPNil).poly("info" ofPile FAtomicPathImpl.empty[Map[String, Json]].writeJ).transform { t =>
+          } :: ("id" ofPile friend.id.out.order.describe("自增主键")) :: ("id" ofPile friend.age.out.order.describe("年龄")) :: FPNil).poly("info" ofPile AtomicPathImpl.empty[Map[String, Json]].writeJ).transform { t =>
             t match {
               case FSomeValue(aa) :: FSomeValue(id) :: FSomeValue(ageOpt) :: HNil =>
                 set(Map("id" -> id.asJson, "accountInfo" -> aa.asJson, "ageOpt" -> ageOpt.asJson))

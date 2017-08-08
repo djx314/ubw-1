@@ -1,9 +1,9 @@
 package net.scalax.fsn.common.atomic
 
 import cats.Applicative
-import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.core.Atomic
 
-trait FValue[E] extends FAtomic[E] {
+trait FValue[E] extends Atomic[E] {
   val value: E
 
   override def toString: String = s"FValue(${value.toString})"

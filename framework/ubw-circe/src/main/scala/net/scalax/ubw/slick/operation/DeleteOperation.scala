@@ -1,7 +1,7 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue }
+import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.{ OneToOneRetrieve, SlickDelete }
 import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
 import slick.jdbc.JdbcProfile
@@ -68,15 +68,15 @@ trait ISlickDeleteWithData {
   val data: DataWithIndex
 }
 
-object InDeleteConvert extends FAtomicValueHelper {
+object InDeleteConvert extends AtomicValueHelper {
   def convert(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   //deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
   ) = {
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
+    Pile.transformTreeList {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickDelete] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
           .mapTo {
             case (slickDelete :: oneToDeleteOpt :: HNil, data) =>

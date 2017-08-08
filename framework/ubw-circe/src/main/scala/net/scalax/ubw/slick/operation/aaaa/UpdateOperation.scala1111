@@ -75,9 +75,9 @@ object InUpdateConvert2 {
     implicit
     ec: ExecutionContext,
     updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
-  ): FPileSyntax.PileGen[Option, List[(Any, SlickQueryBindImpl)] => DBIO[ExecInfo3]] = {
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
+  ): PileSyntax.PileGen[Option, List[(Any, SlickQueryBindImpl)] => DBIO[ExecInfo3]] = {
+    Pile.transformTreeList {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: FANil)
           .mapToOption {
             case (slickWriter :: oneToOneUpdateOpt :: HNil, data) => {

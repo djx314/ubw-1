@@ -7,14 +7,14 @@ import net.scalax.fsn.core._
 import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
 import shapeless._
 
-object JsonOperation extends FAtomicValueHelper {
+object JsonOperation extends AtomicValueHelper {
 
-  val readGen1111 = FPile.transformTreeList {
-    new FAtomicQuery(_) {
+  val readGen1111 = Pile.transformTreeList {
+    new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (jsonReader :: property :: defaultOpt :: HNil, data) =>
-            val tran: Map[String, Json] => FAtomicValueImpl[path.DataType] = { sourceData: Map[String, Json] =>
+            val tran: Map[String, Json] => AtomicValueImpl[path.DataType] = { sourceData: Map[String, Json] =>
               sourceData.get(property.proName) match {
                 case Some(json) =>
                   json.as[jsonReader.DataType](jsonReader.reader) match {
@@ -25,18 +25,18 @@ object JsonOperation extends FAtomicValueHelper {
                       if (ifEmptyData.isEmpty) {
                         throw new Exception(s"字段 ${property.proName} 的值不能被正确转换")
                       }
-                      ifEmptyData.map(set).getOrElse(FAtomicValueImpl.empty)
+                      ifEmptyData.map(set).getOrElse(AtomicValueImpl.empty)
                   }
                 case None =>
                   val ifEmptyData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
                   if (ifEmptyData.isEmpty) {
                     throw new Exception(s"字段 ${property.proName} 未被定义")
                   }
-                  ifEmptyData.map(set).getOrElse(FAtomicValueImpl.empty)
+                  ifEmptyData.map(set).getOrElse(AtomicValueImpl.empty)
               }
             }
 
-            tran: (Map[String, Json] => FAtomicValue)
+            tran: (Map[String, Json] => AtomicValue)
         }
     }.aa
   } { readlerList =>
@@ -47,12 +47,12 @@ object JsonOperation extends FAtomicValueHelper {
 
   val unfullReadGen = unfullReadGen1111
 
-  val unfullReadGen1111 = FPile.transformTreeList {
-    new FAtomicQuery(_) {
+  val unfullReadGen1111 = Pile.transformTreeList {
+    new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (jsonReader :: property :: defaultOpt :: HNil, data) =>
-            val tran: Map[String, Json] => FAtomicValueImpl[path.DataType] = { sourceData: Map[String, Json] =>
+            val tran: Map[String, Json] => AtomicValueImpl[path.DataType] = { sourceData: Map[String, Json] =>
               sourceData.get(property.proName) match {
                 case Some(json) =>
                   json.as[jsonReader.DataType](jsonReader.reader) match {
@@ -61,7 +61,7 @@ object JsonOperation extends FAtomicValueHelper {
                     case Left(_) =>
                       val ifEmptyData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
                       //ifEmptyData
-                      //ifEmptyData.map(set).getOrElse(FAtomicValueImpl.empty)
+                      //ifEmptyData.map(set).getOrElse(AtomicValueImpl.empty)
                       setOpt(ifEmptyData)
                   }
                 case None =>
@@ -76,7 +76,7 @@ object JsonOperation extends FAtomicValueHelper {
               }
             }
 
-            tran: (Map[String, Json] => FAtomicValue)
+            tran: (Map[String, Json] => AtomicValue)
         }
     }.aa
   } { readlerList =>
@@ -85,8 +85,8 @@ object JsonOperation extends FAtomicValueHelper {
     }
   }
 
-  def writeGen1111 = FPile.transformTreeList {
-    new FAtomicQuery(_) {
+  def writeGen1111 = Pile.transformTreeList {
+    new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
@@ -100,8 +100,8 @@ object JsonOperation extends FAtomicValueHelper {
     jsonTupleList.toMap: Map[String, Json]
   }
 
-  def unSafewriteGen1111 = FPile.transformTreeList {
-    new FAtomicQuery(_) {
+  def unSafewriteGen1111 = Pile.transformTreeList {
+    new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (jsonWriter :: property :: defaultOpt :: HNil, data) => {

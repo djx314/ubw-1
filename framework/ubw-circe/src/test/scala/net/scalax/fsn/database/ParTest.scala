@@ -9,7 +9,7 @@ import shapeless._
 import io.circe._
 import io.circe.syntax._
 import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
-import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper }
+import net.scalax.fsn.json.operation.{ AtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper }
 import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper }
 
 class ParTest extends FlatSpec
@@ -19,11 +19,11 @@ class ParTest extends FlatSpec
     with BeforeAndAfterAll
     with BeforeAndAfter
     with PilesPolyHelper
-    with FPilesGenHelper
+    with PilesGenHelper
     with SlickCRUDImplicits
-    with FAtomicValueHelper {
+    with AtomicValueHelper {
 
-  implicit def fPilesOptionImplicit[D](path: FAtomicPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
+  implicit def fPilesOptionImplicit[D](path: AtomicPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
     val path1 = path
     new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
       override val path = path1
@@ -33,18 +33,18 @@ class ParTest extends FlatSpec
   "shapes" should "find readers in Atomic in FPath" in {
     val path = emptyPath[Long].readJ.writeJ
 
-    new FAtomicQuery(path) {
+    new AtomicQuery(path) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: FANil)
     }
 
-    val Right(reader1 :: reader3 :: reader2 :: writer1 :: writer2 :: writer3 :: writer4 :: HNil) = new FAtomicQuery(path) {
+    val Right(reader1 :: reader3 :: reader2 :: writer1 :: writer2 :: writer3 :: writer4 :: HNil) = new AtomicQuery(path) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomicOpt[JsonReader] :: needAtomic[JsonReader] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: needAtomic[JsonWriter] :: FANil)
     }.aa.queryResult
 
     val path1 = emptyPath[Long].writeJ
   }
 
-  "FPile" should "work fine" in {
+  "Pile" should "work fine" in {
 
     trait JsonWriterImpl {
       type DataType
@@ -54,8 +54,8 @@ class ParTest extends FlatSpec
       val data: Option[DataType]
     }
 
-    val resultGen1 = FPile.transformOf {
-      new FAtomicQuery(_) {
+    val resultGen1 = Pile.transformOf {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
@@ -77,8 +77,8 @@ class ParTest extends FlatSpec
       }.toMap.asJson
     }
 
-    val resultGen3 = FPile.transformTreeList {
-      new FAtomicQuery(_) {
+    val resultGen3 = Pile.transformTreeList {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
@@ -109,8 +109,8 @@ class ParTest extends FlatSpec
 
     //println("convertPile1:" + convertPile1)
 
-    val resultGen4 = FPile.transformTreeList {
-      new FAtomicQuery(_) {
+    val resultGen4 = Pile.transformTreeList {
+      new AtomicQuery(_) {
         val aa = withRep((needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: FANil) :: FANil)
           .mapTo {
             case ((defaultOpt :: property :: HNil) :: HNil, data) =>
@@ -125,8 +125,8 @@ class ParTest extends FlatSpec
       result
     }
 
-    val resultGen5 = FPile.transformTreeList {
-      new FAtomicQuery(_) {
+    val resultGen5 = Pile.transformTreeList {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (writer :: (defaultOpt :: HNil) :: property :: HNil, data1) =>

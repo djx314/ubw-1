@@ -72,8 +72,8 @@ object InDeleteConvert2222 {
     ec: ExecutionContext,
     deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
   ) = {
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
+    Pile.transformTreeList {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickDelete] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
           .mapToOption {
             case (slickDelete :: oneToDeleteOpt :: HNil, data) =>

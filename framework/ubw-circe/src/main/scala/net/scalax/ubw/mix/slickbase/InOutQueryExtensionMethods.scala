@@ -1,6 +1,6 @@
 package net.scalax.fsn.mix.slickbase
 
-import net.scalax.fsn.core.FPile
+import net.scalax.fsn.core.Pile
 import net.scalax.fsn.mix.operation.InAndOutOperation
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import net.scalax.fsn.slick.model.SlickParam
@@ -13,7 +13,7 @@ import slick.lifted._
 import scala.concurrent.{ ExecutionContext, Future }
 
 case class InOutQueryWrap(
-    columns: List[FPile],
+    columns: List[Pile],
     crudBinds: List[(Any, SlickQueryBindImpl)],
     listQueryBind: SlickQueryBindImpl
 ) { self =>

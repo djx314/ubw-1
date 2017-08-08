@@ -1,8 +1,8 @@
 package net.scalax.fsn.database.test
 
 import io.circe.syntax._
-import net.scalax.fsn.core.{ FAtomicPathImpl, FAtomicValueImpl, PilesPolyHelper }
-import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper, FSomeValue }
+import net.scalax.fsn.core.{ AtomicPathImpl, AtomicValueImpl, PilesPolyHelper }
+import net.scalax.fsn.json.operation.{ AtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper, FSomeValue }
 import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
 import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
 import net.scalax.fsn.slick.model.{ ColumnOrder, JsonOut, JsonView, SlickParam }
@@ -13,9 +13,9 @@ import slick.jdbc.H2Profile.api._
 
 import scala.concurrent._
 
-object Sample09 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit with FAtomicValueHelper with PilesPolyHelper {
+object Sample09 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Slick2JsonFsnImplicit with AtomicValueHelper with PilesPolyHelper {
 
-  implicit def fPilesOptionImplicit[D](path: FAtomicPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
+  implicit def fPilesOptionImplicit[D](path: AtomicPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
     val path1 = path
     new FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] {
       override val path = path1
@@ -33,10 +33,10 @@ object Sample09 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
       "nick" ofPile friend.nick.out.order.filter.likeable.describe("昵称").readSlickComp.writeJ,
       //"ageOpt" ofPile friend.age.out.filter.readSlickComp.writeJ,
       (("ageOpt" ofPile friend.age.out.filter.readSlickComp))
-        .poly("ageOpt1111" ofPile FAtomicPathImpl.empty[Int].writeJ)
+        .poly("ageOpt1111" ofPile AtomicPathImpl.empty[Int].writeJ)
         .transform {
           case FSomeValue(t) => set(t.map(r => r + 2).getOrElse(1122))
-          case FAtomicValueImpl.Zero => emptyValue[Int]
+          case AtomicValueImpl.Zero => emptyValue[Int]
         }
     )
   }

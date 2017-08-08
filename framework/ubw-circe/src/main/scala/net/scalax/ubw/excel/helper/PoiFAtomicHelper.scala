@@ -1,10 +1,10 @@
 package net.scalax.fsn.excel.operation
 
 import net.scalax.fsn.excel.atomic.{ PoiReader, PoiStyleTransform, PoiWriter }
-import net.scalax.fsn.json.operation.FAtomicHelper
+import net.scalax.fsn.json.operation.AtomicHelper
 import org.xarcher.cpoi.{ ReadableCellOperationAbs, StyleTransform, WriteableCellOperationAbs }
 
-trait ExcelOperation[E] extends FAtomicHelper[E] {
+trait ExcelOperation[E] extends AtomicHelper[E] {
 
   def writeP(implicit writer1: WriteableCellOperationAbs[E]) = path.appendAtomic(new PoiWriter[E] {
     override val writer = writer1

@@ -1,15 +1,15 @@
 package net.scalax.fsn.slick.atomic
 
-import net.scalax.fsn.core.FAtomic
+import net.scalax.fsn.core.Atomic
 import net.scalax.fsn.slick.helpers.FilterWrapper
 import net.scalax.fsn.slick.model.StaticManyGen
 import slick.lifted.{ FlatShapeLevel, Shape }
 
 import scala.concurrent.Future
-/*trait SubUbw[E] extends FAtomic[E] {
+/*trait SubUbw[E] extends Atomic[E] {
   val subCols: List[FColumn]
 }*/
-trait OneToOneRetrieve[E] extends FAtomic[E] {
+trait OneToOneRetrieve[E] extends Atomic[E] {
   type SourceType
   //type SlickType
   type TargetType
@@ -24,7 +24,7 @@ trait OneToOneRetrieve[E] extends FAtomic[E] {
   //val filterConvert: DataType => FilterData
 }
 
-trait OneToOneCrate[E] extends FAtomic[E] {
+trait OneToOneCrate[E] extends Atomic[E] {
   type SourceType
   //type SlickType
   type TargetType
@@ -37,7 +37,7 @@ trait OneToOneCrate[E] extends FAtomic[E] {
   //val convert: DataType => SlickType
 }
 
-trait OneToOneUpdate[E] extends FAtomic[E] {
+trait OneToOneUpdate[E] extends Atomic[E] {
   type SourceType
   //type SlickType
   type TargetType
@@ -53,7 +53,7 @@ trait OneToOneUpdate[E] extends FAtomic[E] {
   //val filterConvert: DataType => FilterData
 }
 
-trait StaticMany[E] extends FAtomic[E] {
+trait StaticMany[E] extends Atomic[E] {
 
   type DataType = E
 

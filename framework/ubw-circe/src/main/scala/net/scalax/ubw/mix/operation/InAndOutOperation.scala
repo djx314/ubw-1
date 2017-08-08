@@ -12,11 +12,11 @@ import slick.lifted.{ Query, Rep }
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 
-object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
+object InAndOutOperation extends PilesGenHelper with AtomicValueHelper {
 
-  def futureGen(implicit ec: ExecutionContext): FPileSyntax.PileGen[Future[Option[List[FAtomicValue]]]] = {
-    FPile.transformTreeList {
-      new FAtomicQuery(_) {
+  def futureGen(implicit ec: ExecutionContext): PileSyntax.PileGen[Future[Option[List[AtomicValue]]]] = {
+    Pile.transformTreeList {
+      new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickCreate])
           .mapTo {
             case (_, data) =>
@@ -25,11 +25,11 @@ object InAndOutOperation extends FPilesGenHelper with FAtomicValueHelper {
                   Future successful dataWrap
                 case FFValue(futureData) =>
                   futureData.map(set)
-                case zero @ FAtomicValueImpl.Zero() => Future successful zero
+                case zero @ AtomicValueImpl.Zero() => Future successful zero
                 case x =>
                   println(x.atomics)
                   Future successful x
-              }): Future[FAtomicValue]
+              }): Future[AtomicValue]
           }
       }.aa
     } { genList =>

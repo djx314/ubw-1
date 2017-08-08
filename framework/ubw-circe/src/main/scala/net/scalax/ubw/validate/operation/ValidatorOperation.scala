@@ -10,16 +10,16 @@ import cats._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-object ValidatorOperation extends FAtomicValueHelper {
+object ValidatorOperation extends AtomicValueHelper {
 
   def readValidator(implicit ec: ExecutionContext): PileFilter[List[ErrorMessage], Future] = PileFilter {
-    new FAtomicQuery(_) {
+    new AtomicQuery(_) {
       val aa = withRep(needAtomic[FProperty] :: needAtomicList[ValidatorF] :: needAtomicOpt[FDescribe] :: FANil)
         .mapTo {
           case (property :: validateFList :: describeOpt :: HNil, data) =>
             val dataOpt = data match {
               case FSomeValue(s) => Option(s)
-              case FAtomicValueImpl.Zero() => Option.empty[data.DataType]
+              case AtomicValueImpl.Zero() => Option.empty[data.DataType]
             }
 
             val validateResultFList = validateFList.map { validateF =>
@@ -35,7 +35,7 @@ object ValidatorOperation extends FAtomicValueHelper {
                   emptyValue[data.DataType] -> s.toList
                 } else {
                   data -> s.toList
-                }): (FAtomicValue, List[ErrorMessage])
+                }): (AtomicValue, List[ErrorMessage])
               }*/
             }
             Future.sequence(validateResultFList).map { s =>
@@ -44,7 +44,7 @@ object ValidatorOperation extends FAtomicValueHelper {
                 data -> validateResult
               } else {
                 emptyValue[data.DataType] -> validateResult
-              }): (FAtomicValue, List[ErrorMessage])
+              }): (AtomicValue, List[ErrorMessage])
             }
         }
     }.aa
