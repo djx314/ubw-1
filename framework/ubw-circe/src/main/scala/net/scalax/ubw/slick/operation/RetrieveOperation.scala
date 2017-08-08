@@ -1,13 +1,12 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{ FAtomicValueHelper, FSomeValue, ValidatorOperation }
-import net.scalax.fsn.slick.atomic.{ OneToOneRetrieve, SlickRetrieve }
-import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
-import slick.dbio.DBIO
+import net.scalax.fsn.json.operation.{FAtomicValueHelper, FSomeValue, ValidatorOperation}
+import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
+import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
 import slick.lifted._
 import shapeless._
-import slick.jdbc.JdbcActionComponent
+import slick.jdbc.JdbcProfile
 
 import scala.concurrent.ExecutionContext
 
@@ -70,8 +69,9 @@ trait ISlickReaderWithData {
 object InRetrieveConvert extends FAtomicValueHelper {
   def convert(
     implicit
-    ec: ExecutionContext,
-    jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+             slickProfile: JdbcProfile,
+    ec: ExecutionContext
+    //jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ) = {
     /*val slickReader = FColumn.find(columns)({ case s: SlickRetrieve[columns.DataType] => s })
     val oneToOneRetrieveOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })*/
@@ -169,8 +169,11 @@ object RetrieveOperation {
   )(
     implicit
     ec: ExecutionContext,
-    jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): DBIO[ExecInfo3] = try {
+    slickProfile: JdbcProfile,
+    //jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+  ): slickProfile.api.DBIO[ExecInfo3] = try {
+    import slickProfile.api._
+
     val wrapList = retrieveList //.map(InRetrieveConvert2.convert)
 
     val currents = wrapList.groupBy(_.reader.table).filter { case (key, s) => converts.exists(t => key == t.table) }
@@ -234,7 +237,7 @@ object RetrieveOperation {
     }
   } catch {
     case e: Exception =>
-      DBIO.failed(e)
+      slickProfile.api.DBIO.failed(e)
   }
 
   def parseInsertWithIndex(
@@ -242,9 +245,12 @@ object RetrieveOperation {
     retrieveList: List[ISlickReaderWithData]
   )(
     implicit
+    slickProfile: JdbcProfile,
     ec: ExecutionContext,
-    jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): DBIO[ExecInfo3] = try {
+    //jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
+  ): slickProfile.api.DBIO[ExecInfo3] = try {
+    import slickProfile.api._
+
     val wrapList = retrieveList //.map(InRetrieveConvert2.convert)
 
     val subGensTables = wrapList.flatMap { t => t.reader.subGen.toList.map(_.table) }
@@ -307,7 +313,7 @@ object RetrieveOperation {
     }
   } catch {
     case e: Exception =>
-      DBIO.failed(e)
+      slickProfile.api.DBIO.failed(e)
   }
   /*def parseInsert(
                    binds: List[(Any, SlickQueryBindImpl)],

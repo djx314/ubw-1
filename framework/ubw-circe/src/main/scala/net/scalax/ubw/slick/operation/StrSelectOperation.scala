@@ -7,8 +7,7 @@ import net.scalax.fsn.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrder
 import net.scalax.fsn.slick.helpers._
 import net.scalax.fsn.slick.model._
 import shapeless._
-import slick.dbio.{ DBIO, NoStream }
-import slick.jdbc.JdbcActionComponent
+import slick.jdbc.JdbcProfile
 import slick.lifted._
 
 import scala.concurrent.ExecutionContext
@@ -190,8 +189,9 @@ trait StrSlickQuery extends FAtomicValueHelper {
 
   def slickResult(
     implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): SlickParam => ListAnyWrap1111 = {
     slickResult(Nil)
@@ -199,8 +199,9 @@ trait StrSlickQuery extends FAtomicValueHelper {
 
   def slickResult(orderColumn: String, isDesc: Boolean = true)(
     implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): SlickParam => ListAnyWrap1111 = {
     slickResult(List(ColumnOrder(orderColumn, isDesc)))
@@ -208,8 +209,9 @@ trait StrSlickQuery extends FAtomicValueHelper {
 
   def slickResult(defaultOrders: List[ColumnOrder])(
     implicit
-    jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
+    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): SlickParam => ListAnyWrap1111 = {
     (slickParam: SlickParam) =>
@@ -259,6 +261,7 @@ trait StrSlickQuery extends FAtomicValueHelper {
           }
           ListAnyCollection1111(resultSet, Option(s._2))
         }
+      import slickProfile.api._
       ListAnyWrap1111(rs, sortbyQuery2.result.statements.toList)
   }
 }
@@ -269,10 +272,13 @@ object CommonResult {
 
   def commonResult[E, U](commonQuery: Query[E, U, List], sortedQuery: Query[E, U, List])(
     implicit
-    jsonEv: Query[E, U, List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[U], U],
-    repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
+    slickProfile: JdbcProfile,
+    //jsonEv: Query[E, U, List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[U], U],
+    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
-  ): SlickParam => DBIO[CommonRType[U]] = {
+  ): SlickParam => slickProfile.api.DBIO[CommonRType[U]] = {
+    import slickProfile.api._
+
     val mappedQuery = commonQuery
 
     val result: SlickParam => DBIO[CommonRType[U]] = slickParam => {
