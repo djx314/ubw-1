@@ -127,9 +127,6 @@ trait FGroupQuery extends AtomicValueHelper {
   def result(param: GroupParam)(
     implicit
     slickProfile: JdbcProfile,
-    //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    //intTyped: BaseTypedType[Int],
-    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     ec: ExecutionContext
   ): GroupResult = {
     import slickProfile.api._
@@ -202,9 +199,7 @@ trait FGroupQuery extends AtomicValueHelper {
       val aa = keyIndexs.map(index => readers(index)._1.selectModel.shape.packedShape.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]])
       val bb = aggregateIndexsAndMethods.map {
         case ("count", reader) =>
-          //Shape.repColumnShape[Int, FlatShapeLevel](intTyped)
           implicitly[Shape[FlatShapeLevel, Rep[Int], Int, Rep[Int]]]
-        //reader._1.groupModel.get.groupShape.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]]
         case (_, reader) =>
           reader._1.groupModel.get.groupShape.asInstanceOf[Shape[FlatShapeLevel, Any, Any, Any]]
       }
