@@ -69,13 +69,9 @@ trait ISlickReaderWithData {
 object InRetrieveConvert extends AtomicValueHelper {
   def convert(
     implicit
-             slickProfile: JdbcProfile,
+    slickProfile: JdbcProfile,
     ec: ExecutionContext
-    //jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ) = {
-    /*val slickReader = FColumn.find(columns)({ case s: SlickRetrieve[columns.DataType] => s })
-    val oneToOneRetrieveOpt = FColumn.findOpt(columns)({ case s: OneToOneRetrieve[columns.DataType] => s })*/
-
     Pile.transformTreeList({
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
@@ -140,20 +136,10 @@ object InRetrieveConvert extends AtomicValueHelper {
             }
         }
         RetrieveOperation.parseInsertWithIndex(binds, readersWithData)
-        //}
       }
     })
   }
 }
-
-/*trait RetrieveQuery {
-
-  val bind: SlickQueryBindImpl
-  val cols: List[Any]
-  val shapes: List[Shape[_ <: FlatShapeLevel, _, _, _]]
-  val filters: List[FilterColumnGen[Seq[Any]]]
-
-}*/
 
 object RetrieveOperation {
 
@@ -170,78 +156,79 @@ object RetrieveOperation {
     implicit
     ec: ExecutionContext,
     slickProfile: JdbcProfile,
-    //jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): slickProfile.api.DBIO[ExecInfo3] = try {
-    val slickProfileI = slickProfile
-    import slickProfile.api._
+  ): slickProfile.api.DBIO[ExecInfo3] = {
+    val profile = slickProfile
+    import profile.api._
+    try {
 
-    val wrapList = retrieveList //.map(InRetrieveConvert2.convert)
+      val wrapList = retrieveList //.map(InRetrieveConvert2.convert)
 
-    val currents = wrapList.groupBy(_.reader.table).filter { case (key, s) => converts.exists(t => key == t.table) }
-    val results = currents.map {
-      case (table, eachWrap) =>
-        val initRetrieveQuery: RetrieveQuery = new RetrieveQuery {
-          override val bind = binds.find(_._1 == table).get._2
-          override val cols = eachWrap.map(_.reader.mainCol)
-          override val shapes = eachWrap.map(_.reader.mainShape)
-          override val filters = eachWrap.zipWithIndex.map {
-            case (gen, index) =>
-              gen.reader.primaryGen.map { priGen =>
-                new FilterColumnGen[Seq[Any]] {
-                  override type BooleanTypeRep = priGen.BooleanTypeRep
-                  override val dataToCondition = { cols: Seq[Any] =>
-                    priGen.dataToCondition(cols(index).asInstanceOf[gen.reader.MainTColumn])
+      val currents = wrapList.groupBy(_.reader.table).filter { case (key, s) => converts.exists(t => key == t.table) }
+      val results = currents.map {
+        case (table, eachWrap) =>
+          val initRetrieveQuery: RetrieveQuery = new RetrieveQuery {
+            override val bind = binds.find(_._1 == table).get._2
+            override val cols = eachWrap.map(_.reader.mainCol)
+            override val shapes = eachWrap.map(_.reader.mainShape)
+            override val filters = eachWrap.zipWithIndex.map {
+              case (gen, index) =>
+                gen.reader.primaryGen.map { priGen =>
+                  new FilterColumnGen[Seq[Any]] {
+                    override type BooleanTypeRep = priGen.BooleanTypeRep
+                    override val dataToCondition = { cols: Seq[Any] =>
+                      priGen.dataToCondition(cols(index).asInstanceOf[gen.reader.MainTColumn])
+                    }
+                    override val wt = priGen.wt
                   }
-                  override val wt = priGen.wt
-                }
-              }.toList: List[FilterColumnGen[Seq[Any]]]
-          }.flatten
-        }
-        val convertRetrieveQuery = converts.filter(_.table == table).foldLeft(initRetrieveQuery) { (x, y) =>
-          y.convert(x)
-        }
-        val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
-        val bindQuery = convertRetrieveQuery.bind.bind(query)
-        val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
-          x.filter(s => y.dataToCondition(s))(y.wt)
-        }
-        for {
-          retrieveData <- streamableQueryActionExtensionMethods(filterQuery).result.head
-          (fillCols, fillSubGens) = eachWrap.zip(retrieveData).map {
-            case (wrap, dataItem) =>
-              val wrapSlickData = dataItem.asInstanceOf[wrap.reader.MainDColumn]
-              val newCols = wrap.dataGen(wrapSlickData)
-              val subGens = wrap.reader.subGen.map { gen =>
-                new WrapTran2 {
-                  override val table = gen.table
-                  override def convert(source: RetrieveQuery): RetrieveQuery = {
-                    gen.convert(wrapSlickData, source)
-                  }
-                }
-              }
-              (newCols -> subGens)
-          }.unzip
-          subResult <- {
-            implicit val _ = slickProfileI
-            parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
+                }.toList: List[FilterColumnGen[Seq[Any]]]
+            }.flatten
           }
+          val convertRetrieveQuery = converts.filter(_.table == table).foldLeft(initRetrieveQuery) { (x, y) =>
+            y.convert(x)
+          }
+          val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
+          val bindQuery = convertRetrieveQuery.bind.bind(query)
+          val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
+            x.filter(s => y.dataToCondition(s))(y.wt)
+          }
+          for {
+            retrieveData <- filterQuery.result.head
+            (fillCols, fillSubGens) = eachWrap.zip(retrieveData).map {
+              case (wrap, dataItem) =>
+                val wrapSlickData = dataItem.asInstanceOf[wrap.reader.MainDColumn]
+                val newCols = wrap.dataGen(wrapSlickData)
+                val subGens = wrap.reader.subGen.map { gen =>
+                  new WrapTran2 {
+                    override val table = gen.table
+                    override def convert(source: RetrieveQuery): RetrieveQuery = {
+                      gen.convert(wrapSlickData, source)
+                    }
+                  }
+                }
+                (newCols -> subGens)
+            }.unzip
+            subResult <- {
+              implicit val _ = profile
+              parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
+            }
+          } yield {
+            ExecInfo3(subResult.effectRows + 1, subResult.columns ::: fillCols)
+          }
+
+      }
+
+      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+        (for {
+          s1 <- s
+          t1 <- t
         } yield {
-          ExecInfo3(subResult.effectRows + 1, subResult.columns ::: fillCols)
-        }
-
+          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+        })
+      }
+    } catch {
+      case e: Exception =>
+        DBIO.failed(e)
     }
-
-    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
-      (for {
-        s1 <- s
-        t1 <- t
-      } yield {
-        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
-      })
-    }
-  } catch {
-    case e: Exception =>
-      slickProfile.api.DBIO.failed(e)
   }
 
   def parseInsertWithIndex(
@@ -251,245 +238,76 @@ object RetrieveOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext,
-    //jsonEv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): slickProfile.api.DBIO[ExecInfo3] = try {
-    val slickProfileI = slickProfile
-    import slickProfile.api._
+  ): slickProfile.api.DBIO[ExecInfo3] = {
+    val profile = slickProfile
+    import profile.api._
+    try {
+      val wrapList = retrieveList //.map(InRetrieveConvert2.convert)
 
-    val wrapList = retrieveList //.map(InRetrieveConvert2.convert)
-
-    val subGensTables = wrapList.flatMap { t => t.reader.subGen.toList.map(_.table) }
-    val currents = wrapList.groupBy(_.reader.table).filter { case (key, s) => subGensTables.forall(t => key != t) }
-    val results = currents.map {
-      case (table, eachWrap) =>
-        val initRetrieveQuery: RetrieveQuery = new RetrieveQuery {
-          override val bind = binds.find(_._1 == table).get._2
-          override val cols = eachWrap.map(_.reader.mainCol)
-          override val shapes = eachWrap.map(_.reader.mainShape)
-          override val filters = eachWrap.zipWithIndex.map {
-            case (gen, index) =>
-              gen.reader.primaryGen.map { priGen =>
-                new FilterColumnGen[Seq[Any]] {
-                  override type BooleanTypeRep = priGen.BooleanTypeRep
-                  override val dataToCondition = { cols: Seq[Any] =>
-                    priGen.dataToCondition(cols(index).asInstanceOf[gen.reader.MainTColumn])
+      val subGensTables = wrapList.flatMap { t => t.reader.subGen.toList.map(_.table) }
+      val currents = wrapList.groupBy(_.reader.table).filter { case (key, s) => subGensTables.forall(t => key != t) }
+      val results = currents.map {
+        case (table, eachWrap) =>
+          val initRetrieveQuery: RetrieveQuery = new RetrieveQuery {
+            override val bind = binds.find(_._1 == table).get._2
+            override val cols = eachWrap.map(_.reader.mainCol)
+            override val shapes = eachWrap.map(_.reader.mainShape)
+            override val filters = eachWrap.zipWithIndex.map {
+              case (gen, index) =>
+                gen.reader.primaryGen.map { priGen =>
+                  new FilterColumnGen[Seq[Any]] {
+                    override type BooleanTypeRep = priGen.BooleanTypeRep
+                    override val dataToCondition = { cols: Seq[Any] =>
+                      priGen.dataToCondition(cols(index).asInstanceOf[gen.reader.MainTColumn])
+                    }
+                    override val wt = priGen.wt
                   }
-                  override val wt = priGen.wt
-                }
-              }.toList: List[FilterColumnGen[Seq[Any]]]
-          }.flatten
-        }
-        val convertRetrieveQuery = initRetrieveQuery
-        val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
-        val bindQuery = convertRetrieveQuery.bind.bind(query)
-        val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
-          x.filter(s => y.dataToCondition(s))(y.wt)
-        }
-        for {
-          retrieveData <- streamableQueryActionExtensionMethods(filterQuery).result.head
-          (fillCols, fillSubGens) = eachWrap.zip(retrieveData).map {
-            case (wrap, dataItem) =>
-              val wrapSlickData = dataItem.asInstanceOf[wrap.reader.MainDColumn]
-              val newCols = wrap.dataGen(wrapSlickData)
-              val subGens = wrap.reader.subGen.map { gen =>
-                new WrapTran2 {
-                  override val table = gen.table
-                  override def convert(source: RetrieveQuery): RetrieveQuery = {
-                    gen.convert(wrapSlickData, source)
-                  }
-                }
-              }
-              (newCols -> subGens)
-          }.unzip
-          subResult <- {
-            implicit val _ = slickProfileI
-            parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
+                }.toList: List[FilterColumnGen[Seq[Any]]]
+            }.flatten
           }
+          val convertRetrieveQuery = initRetrieveQuery
+          val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
+          val bindQuery = convertRetrieveQuery.bind.bind(query)
+          val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
+            x.filter(s => y.dataToCondition(s))(y.wt)
+          }
+          for {
+            retrieveData <- filterQuery.result.head
+            (fillCols, fillSubGens) = eachWrap.zip(retrieveData).map {
+              case (wrap, dataItem) =>
+                val wrapSlickData = dataItem.asInstanceOf[wrap.reader.MainDColumn]
+                val newCols = wrap.dataGen(wrapSlickData)
+                val subGens = wrap.reader.subGen.map { gen =>
+                  new WrapTran2 {
+                    override val table = gen.table
+                    override def convert(source: RetrieveQuery): RetrieveQuery = {
+                      gen.convert(wrapSlickData, source)
+                    }
+                  }
+                }
+                (newCols -> subGens)
+            }.unzip
+            subResult <- {
+              implicit val _ = profile
+              parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
+            }
+          } yield {
+            ExecInfo3(subResult.effectRows + 1, subResult.columns ::: fillCols) //UpdateStaticManyInfo(subResult.effectRows + 1, subResult.many ++ Map())
+          }
+
+      }
+
+      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+        (for {
+          s1 <- s
+          t1 <- t
         } yield {
-          ExecInfo3(subResult.effectRows + 1, subResult.columns ::: fillCols) //UpdateStaticManyInfo(subResult.effectRows + 1, subResult.many ++ Map())
-        }
-
+          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+        })
+      }
+    } catch {
+      case e: Exception =>
+        DBIO.failed(e)
     }
-
-    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
-      (for {
-        s1 <- s
-        t1 <- t
-      } yield {
-        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
-      })
-    }
-  } catch {
-    case e: Exception =>
-      slickProfile.api.DBIO.failed(e)
   }
-  /*def parseInsert(
-                   binds: List[(Any, SlickQueryBindImpl)],
-                   retrieveList: List[ISlickReaderWithData]
-                 )(
-                   implicit
-                   ec: ExecutionContext,
-                   jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-                 ): DBIO[ExecInfo3] = {
-    parseInsertWithIndex(binds, retrieveList)
-  }*/
 }
-/*case class ExecInfo2(effectRows: Int, columns: List[FColumn])
-
-object RetrieveOperation {
-
-  trait WrapTran2 {
-    val table: Any
-    def convert(source: RetrieveQuery): RetrieveQuery
-  }
-
-  def parseInsertGen(
-    binds: List[(Any, SlickQueryBindImpl)],
-    retrieveList: List[FColumn],
-    converts: List[WrapTran2]
-  )(
-    implicit
-    ec: ExecutionContext,
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): DBIO[ExecInfo2] = try {
-    val wrapList = retrieveList.map(InRetrieveConvert2.convert)
-
-    val currents = wrapList.groupBy(_.table).filter { case (key, s) => converts.exists(t => key == t.table) }
-    val results = currents.map { case (table, eachWrap) =>
-      val initRetrieveQuery: RetrieveQuery = new RetrieveQuery {
-        override val bind = binds.find(_._1 == table).get._2
-        override val cols = eachWrap.map(_.mainCol)
-        override val shapes = eachWrap.map(_.mainShape)
-        override val filters = eachWrap.zipWithIndex.map { case (gen, index) =>
-          gen.primaryGen.map { priGen =>
-            new FilterColumnGen[Seq[Any]] {
-              override type BooleanTypeRep = priGen.BooleanTypeRep
-              override val dataToCondition = { cols: Seq[Any] =>
-                priGen.dataToCondition(cols(index).asInstanceOf[gen.MainTColumn])
-              }
-              override val wt = priGen.wt
-            }
-          }.toList: List[FilterColumnGen[Seq[Any]]]
-        }.flatten
-      }
-      val convertRetrieveQuery = converts.filter(_.table == table).foldLeft(initRetrieveQuery) { (x, y) =>
-        y.convert(x)
-      }
-      val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
-      val bindQuery = convertRetrieveQuery.bind.bind(query)
-      val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
-        x.filter(s => y.dataToCondition(s))(y.wt)
-      }
-      for {
-        retrieveData <- filterQuery.result.head
-        (fillCols, fillSubGens) = eachWrap.zip(retrieveData).map { case (wrap, dataItem) =>
-          val wrapSlickData = dataItem.asInstanceOf[wrap.MainDColumn]
-          val newCols = wrap.autalColumn(wrapSlickData)
-          val subGens = wrap.subGen.map { gen => new WrapTran2 {
-            override val table = gen.table
-            override def convert(source: RetrieveQuery): RetrieveQuery = {
-              gen.convert(wrapSlickData, source)
-            }
-          } }
-          (newCols -> subGens)
-        }.unzip
-        subResult <- parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
-      } yield {
-        ExecInfo2(subResult.effectRows + 1, subResult.columns ::: fillCols)
-      }
-
-    }
-
-    results.foldLeft(DBIO.successful(ExecInfo2(0, Nil)): DBIO[ExecInfo2]) { (s, t) =>
-      (for {
-        s1 <- s
-        t1 <- t
-      } yield {
-        ExecInfo2(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
-      })
-    }
-  } catch {
-    case e: Exception =>
-      DBIO.failed(e)
-  }
-
-  def parseInsertWithIndex(
-    binds: List[(Any, SlickQueryBindImpl)],
-    retrieveList: List[FColumn]
-  )(
-    implicit
-    ec: ExecutionContext,
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): DBIO[ExecInfo2] = try {
-    val wrapList = retrieveList.map(InRetrieveConvert2.convert)
-
-    val subGensTables = wrapList.flatMap { t => t.subGen.toList.map(_.table) }
-    val currents = wrapList.groupBy(_.table).filter { case (key, s) => subGensTables.forall(t => key != t) }
-    val results = currents.map { case (table, eachWrap) =>
-      val initRetrieveQuery: RetrieveQuery = new RetrieveQuery {
-        override val bind = binds.find(_._1 == table).get._2
-        override val cols = eachWrap.map(_.mainCol)
-        override val shapes = eachWrap.map(_.mainShape)
-        override val filters = eachWrap.zipWithIndex.map { case (gen, index) =>
-          gen.primaryGen.map { priGen =>
-            new FilterColumnGen[Seq[Any]] {
-              override type BooleanTypeRep = priGen.BooleanTypeRep
-              override val dataToCondition = { cols: Seq[Any] =>
-                priGen.dataToCondition(cols(index).asInstanceOf[gen.MainTColumn])
-              }
-              override val wt = priGen.wt
-            }
-          }.toList: List[FilterColumnGen[Seq[Any]]]
-        }.flatten
-      }
-      val convertRetrieveQuery = initRetrieveQuery
-      val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
-      val bindQuery = convertRetrieveQuery.bind.bind(query)
-      val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
-        x.filter(s => y.dataToCondition(s))(y.wt)
-      }
-      for {
-        retrieveData <- filterQuery.result.head
-        (fillCols, fillSubGens) = eachWrap.zip(retrieveData).map { case (wrap, dataItem) =>
-          val wrapSlickData = dataItem.asInstanceOf[wrap.MainDColumn]
-          val newCols = wrap.autalColumn(wrapSlickData)
-          val subGens = wrap.subGen.map { gen => new WrapTran2 {
-            override val table = gen.table
-            override def convert(source: RetrieveQuery): RetrieveQuery = {
-              gen.convert(wrapSlickData, source)
-            }
-          } }
-          (newCols -> subGens)
-        }.unzip
-        subResult <- parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
-      } yield {
-        ExecInfo2(subResult.effectRows + 1, subResult.columns ::: fillCols)//UpdateStaticManyInfo(subResult.effectRows + 1, subResult.many ++ Map())
-      }
-
-    }
-
-    results.foldLeft(DBIO.successful(ExecInfo2(0, Nil)): DBIO[ExecInfo2]) { (s, t) =>
-      (for {
-        s1 <- s
-        t1 <- t
-      } yield {
-        ExecInfo2(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
-      })
-    }
-  } catch {
-    case e: Exception =>
-      DBIO.failed(e)
-  }
-
-  def parseInsert(
-    binds: List[(Any, SlickQueryBindImpl)],
-    retrieveList: List[FColumn]
-  )(
-    implicit
-    ec: ExecutionContext,
-    jsonEv: Query[_, Seq[Any], Seq] => BasicProfile#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
-  ): DBIO[ExecInfo2] = {
-    parseInsertWithIndex(binds, retrieveList)
-  }
-
-}*/ 

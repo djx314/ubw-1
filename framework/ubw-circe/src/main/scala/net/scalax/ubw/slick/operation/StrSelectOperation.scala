@@ -8,7 +8,7 @@ import net.scalax.fsn.slick.helpers._
 import net.scalax.fsn.slick.model._
 import shapeless._
 import slick.jdbc.JdbcProfile
-import slick.lifted._
+import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Query, Shape }
 
 import scala.concurrent.ExecutionContext
 
@@ -161,24 +161,6 @@ object StrOutSelectConvert extends FilterModelHelper {
       }
     }
   }
-
-  /*def ubwGenWithoutData: PileSyntaxWithoutData.PileGen[List[String]] = {
-      Pile.transformTreeListWithoutData {
-        new AtomicQuery(_) {
-          val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrOrderTargetName] :: needAtomic[FProperty] :: FANil)
-            .mapToWithoutData {
-              case (slickSelect :: orderTargetNameContent :: property :: HNil) =>
-                if (slickSelect.colToOrder.isDefined || orderTargetNameContent.isDefined) {
-                  Option(property.proName)
-                } else {
-                  None
-                }
-            }
-        }.aa
-      } { genList =>
-        genList.flatten
-      }
-    }*/
 }
 
 trait StrSlickQuery extends AtomicValueHelper {
@@ -189,8 +171,6 @@ trait StrSlickQuery extends AtomicValueHelper {
 
   def slickResult(
     implicit
-    //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): SlickParam => ListAnyWrap1111 = {
@@ -199,8 +179,6 @@ trait StrSlickQuery extends AtomicValueHelper {
 
   def slickResult(orderColumn: String, isDesc: Boolean = true)(
     implicit
-    //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): SlickParam => ListAnyWrap1111 = {
@@ -209,22 +187,12 @@ trait StrSlickQuery extends AtomicValueHelper {
 
   def slickResult(defaultOrders: List[ColumnOrder])(
     implicit
-    //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): SlickParam => ListAnyWrap1111 = {
     (slickParam: SlickParam) =>
       val cols: List[Any] = readers.map(_.reader.sourceCol)
       val shape: Shape[FlatShapeLevel, List[Any], List[Any], List[Any]] = new ListColumnShape[FlatShapeLevel](readers.map(_.reader.mainShape))
-      /*try {
-        ShapedValue(cols, shape).packedValue(shape.packedShape).toNode
-        scala.collection.immutable.Vector
-      } catch {
-        case e: Exception =>
-          e.printStackTrace
-          throw e
-      }*/
       val selectQuery = wrapQuery.bind(Query(cols)(shape))
       val filterQuery = filterGen.foldLeft(selectQuery) { (query, filterGen) =>
         query.filter(filterGen.dataToCondition)(filterGen.wt)
@@ -261,105 +229,8 @@ trait StrSlickQuery extends AtomicValueHelper {
           }
           ListAnyCollection1111(resultSet, Option(s._2))
         }
-      import slickProfile.api._
-      ListAnyWrap1111(rs, streamableQueryActionExtensionMethods(sortbyQuery2).result.statements.toList)
+      val profile = slickProfile
+      import profile.api._
+      ListAnyWrap1111(rs, sortbyQuery2.result.statements.toList)
   }
-}
-
-object CommonResult {
-
-  type CommonRType[T] = (List[T], Int)
-
-  def commonResult[E, U](commonQuery: Query[E, U, List], sortedQuery: Query[E, U, List])(
-    implicit
-    slickProfile: JdbcProfile,
-    //jsonEv: Query[E, U, List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[U], U],
-    //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-    ec: ExecutionContext
-  ): SlickParam => slickProfile.api.DBIO[CommonRType[U]] = {
-    import slickProfile.api._
-
-    val mappedQuery = commonQuery
-
-    val result: SlickParam => DBIO[CommonRType[U]] = slickParam => {
-      val baseQuery = sortedQuery
-
-      slickParam match {
-        case SlickParam(_, Some(SlickRange(drop1, Some(take1))), Some(SlickPage(pageIndex1, pageSize1)), _) =>
-          val startCount = Math.max(0, drop1)
-          val pageIndex = Math.max(0, pageIndex1)
-          val pageSize = Math.max(0, pageSize1)
-
-          val dropQuery = mappedQuery.drop(startCount)
-
-          (for {
-            sum <- recordQueryActionExtensionMethods(dropQuery.size).result
-          } yield {
-            val pageStart = startCount + pageIndex * pageSize
-            val pageEnd = pageStart + pageSize
-            val endCount = Math.min(take1, startCount + sum)
-            val autalStart = Math.max(pageStart, startCount)
-            val autalEnd = Math.min(pageEnd, endCount)
-            val autalLimit = Math.max(0, autalEnd - autalStart)
-
-            val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(autalLimit)
-
-            streamableQueryActionExtensionMethods(limitQuery).result.map(s => {
-              (s, endCount - startCount)
-            })
-          })
-            .flatMap(s => s)
-
-        case SlickParam(_, Some(SlickRange(drop, Some(take))), None, _) =>
-          val dropQuery = mappedQuery.drop(drop)
-
-          streamableQueryActionExtensionMethods(baseQuery.drop(drop).take(take - drop)).result.map(s => {
-            (s, s.size)
-          })
-
-        case SlickParam(_, Some(SlickRange(drop1, None)), Some(SlickPage(pageIndex1, pageSize1)), _) =>
-          val startCount = Math.max(0, drop1)
-          val pageIndex = Math.max(0, pageIndex1)
-          val pageSize = Math.max(0, pageSize1)
-
-          val dropQuery = mappedQuery.drop(startCount)
-
-          (for {
-            sum <- recordQueryActionExtensionMethods(dropQuery.size).result
-          } yield {
-
-            val limitQuery = baseQuery.drop(startCount).drop(pageIndex * pageSize).take(pageSize)
-
-            streamableQueryActionExtensionMethods(limitQuery).result.map(s => {
-              (s, sum)
-            })
-          })
-            .flatMap(s => s)
-
-        case SlickParam(_, Some(SlickRange(drop, None)), None, _) =>
-          streamableQueryActionExtensionMethods(baseQuery.drop(drop)).result.map(s => {
-            (s, s.size)
-          })
-
-        case SlickParam(_, None, Some(SlickPage(pageIndex, pageSize)), _) =>
-          val dropQuery = baseQuery.drop(pageIndex * pageSize)
-          val takeQuery = dropQuery.take(pageSize)
-
-          for {
-            sum <- recordQueryActionExtensionMethods(mappedQuery.size).result
-            s <- streamableQueryActionExtensionMethods(takeQuery).result
-          } yield {
-            (s, sum)
-          }
-        case _ =>
-          streamableQueryActionExtensionMethods(baseQuery).result.map(s => {
-            (s, s.size)
-          })
-      }
-    }
-
-    result
-
-  }
-
 }

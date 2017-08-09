@@ -4,11 +4,12 @@ import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.{ OneToOneRetrieve, SlickDelete }
 import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
-import slick.jdbc.JdbcProfile
-import slick.relational.RelationalProfile
-import shapeless._
 
 import scala.concurrent.ExecutionContext
+import shapeless._
+import slick.lifted._
+import slick.jdbc.JdbcProfile
+import slick.relational.RelationalProfile
 
 trait DeleteTran2 {
   val table: Any
@@ -26,7 +27,6 @@ trait DeleteQuery {
 }
 
 trait DSlickWriter2 {
-  import slick.lifted._
 
   type MainSColumn
   //type MainDColumn
@@ -49,7 +49,7 @@ trait DSlickWriter2 {
 
 case class DSWriter2[MS /*, MD*/ , MT, D](
     override val mainCol: MS,
-    override val mainShape: slick.lifted.Shape[_ <: slick.lifted.FlatShapeLevel, MS, D, MT],
+    override val mainShape: Shape[_ <: FlatShapeLevel, MS, D, MT],
     override val table: Any,
     override val primaryGen: Option[FilterColumnGen[MT]],
     override val data: D,
@@ -156,62 +156,63 @@ object DeleteOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  //deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
   ): slickProfile.api.DBIO[ExecInfo3] = {
-    val slickProfileI = slickProfile
-    import slickProfile.api._
-
-    val wrapList = updateList
-
-    val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => converts.exists(t => key == t.table) }
-    val results = currents.map {
-      case (table, eachWrap) =>
-        val initDeleteQuery: DeleteQuery = new DeleteQuery {
-          override val bind = binds.find(_._1 == table).get._2
-          override val cols = eachWrap.map(_.writer.mainCol)
-          override val shapes = eachWrap.map(_.writer.mainShape)
-          override val filters = eachWrap.zipWithIndex.map {
-            case (gen, index) =>
-              gen.writer.primaryGen.map { priGen =>
-                new FilterColumnGen[Seq[Any]] {
-                  override type BooleanTypeRep = priGen.BooleanTypeRep
-                  override val dataToCondition = { cols: Seq[Any] =>
-                    priGen.dataToCondition(cols(index).asInstanceOf[gen.writer.MainTColumn])
+    val profile = slickProfile
+    import profile.api._
+    try {
+      val wrapList = updateList
+      val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => converts.exists(t => key == t.table) }
+      val results = currents.map {
+        case (table, eachWrap) =>
+          val initDeleteQuery: DeleteQuery = new DeleteQuery {
+            override val bind = binds.find(_._1 == table).get._2
+            override val cols = eachWrap.map(_.writer.mainCol)
+            override val shapes = eachWrap.map(_.writer.mainShape)
+            override val filters = eachWrap.zipWithIndex.map {
+              case (gen, index) =>
+                gen.writer.primaryGen.map { priGen =>
+                  new FilterColumnGen[Seq[Any]] {
+                    override type BooleanTypeRep = priGen.BooleanTypeRep
+                    override val dataToCondition = { cols: Seq[Any] =>
+                      priGen.dataToCondition(cols(index).asInstanceOf[gen.writer.MainTColumn])
+                    }
+                    override val wt = priGen.wt
                   }
-                  override val wt = priGen.wt
-                }
-              }.toList: List[FilterColumnGen[Seq[Any]]]
-          }.flatten
-        }
-
-        val data = eachWrap.map(_.data)
-        val convertRetrieveQuery = converts.filter(_.table == table).foldLeft(initDeleteQuery) { (x, y) =>
-          y.convert(x)
-        }
-        val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
-        val bindQuery = convertRetrieveQuery.bind.bind(query)
-        val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
-          x.filter(s => y.dataToCondition(s))(y.wt)
-        }
-        val updateDBIO = queryDeleteActionExtensionMethods(filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]]).delete
-        for {
-          effectRows <- updateDBIO
-          subs = eachWrap.map(_.writer.subGen.toList).flatten
-          subResult <- {
-            implicit val _ = slickProfileI
-            parseInsertGen(binds, updateList, subs)
+                }.toList: List[FilterColumnGen[Seq[Any]]]
+            }.flatten
           }
+
+          val data = eachWrap.map(_.data)
+          val convertRetrieveQuery = converts.filter(_.table == table).foldLeft(initDeleteQuery) { (x, y) =>
+            y.convert(x)
+          }
+          val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
+          val bindQuery = convertRetrieveQuery.bind.bind(query)
+          val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
+            x.filter(s => y.dataToCondition(s))(y.wt)
+          }
+          val updateDBIO = filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]].delete
+          for {
+            effectRows <- updateDBIO
+            subs = eachWrap.map(_.writer.subGen.toList).flatten
+            subResult <- {
+              implicit val _ = profile
+              parseInsertGen(binds, updateList, subs)
+            }
+          } yield {
+            ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
+          }
+      }
+      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+        (for {
+          s1 <- s
+          t1 <- t
         } yield {
-          ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
-        }
-    }
-    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
-      (for {
-        s1 <- s
-        t1 <- t
-      } yield {
-        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
-      })
+          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+        })
+      }
+    } catch {
+      case e: Exception => DBIO.failed(e)
     }
   }
 
@@ -222,61 +223,65 @@ object DeleteOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  //deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
   ): slickProfile.api.DBIO[ExecInfo3] = {
-    val slickProfileI = slickProfile
-    import slickProfile.api._
 
-    val wrapList = updateList
+    val profile = slickProfile
+    import profile.api._
+    try {
 
-    val subGensTables = wrapList.flatMap { t => t.writer.subGen.toList.map(_.table) }
-    val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => subGensTables.forall(t => key != t) }
-    val results = currents.map {
-      case (table, eachWrap) =>
-        val initDeleteQuery: DeleteQuery = new DeleteQuery {
-          override val bind = binds.find(_._1 == table).get._2
-          override val cols = eachWrap.map(_.writer.mainCol)
-          override val shapes = eachWrap.map(_.writer.mainShape)
-          override val filters = eachWrap.zipWithIndex.map {
-            case (gen, index) =>
-              gen.writer.primaryGen.map { priGen =>
-                new FilterColumnGen[Seq[Any]] {
-                  override type BooleanTypeRep = priGen.BooleanTypeRep
-                  override val dataToCondition = { cols: Seq[Any] =>
-                    priGen.dataToCondition(cols(index).asInstanceOf[gen.writer.MainTColumn])
+      val wrapList = updateList
+
+      val subGensTables = wrapList.flatMap { t => t.writer.subGen.toList.map(_.table) }
+      val currents = wrapList.groupBy(_.writer.table).filter { case (key, s) => subGensTables.forall(t => key != t) }
+      val results = currents.map {
+        case (table, eachWrap) =>
+          val initDeleteQuery: DeleteQuery = new DeleteQuery {
+            override val bind = binds.find(_._1 == table).get._2
+            override val cols = eachWrap.map(_.writer.mainCol)
+            override val shapes = eachWrap.map(_.writer.mainShape)
+            override val filters = eachWrap.zipWithIndex.map {
+              case (gen, index) =>
+                gen.writer.primaryGen.map { priGen =>
+                  new FilterColumnGen[Seq[Any]] {
+                    override type BooleanTypeRep = priGen.BooleanTypeRep
+                    override val dataToCondition = { cols: Seq[Any] =>
+                      priGen.dataToCondition(cols(index).asInstanceOf[gen.writer.MainTColumn])
+                    }
+                    override val wt = priGen.wt
                   }
-                  override val wt = priGen.wt
-                }
-              }.toList: List[FilterColumnGen[Seq[Any]]]
-          }.flatten
-        }
-
-        val data = eachWrap.map(_.data)
-        val convertRetrieveQuery = initDeleteQuery
-        val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
-        val bindQuery = convertRetrieveQuery.bind.bind(query)
-        val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
-          x.filter(s => y.dataToCondition(s))(y.wt)
-        }
-        val updateDBIO = queryDeleteActionExtensionMethods(filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]]).delete
-        for {
-          effectRows <- updateDBIO
-          subs = eachWrap.map(_.writer.subGen.toList).flatten
-          subResult <- {
-            implicit val _ = slickProfileI
-            parseInsertGen(binds, updateList, subs)
+                }.toList: List[FilterColumnGen[Seq[Any]]]
+            }.flatten
           }
+
+          val data = eachWrap.map(_.data)
+          val convertRetrieveQuery = initDeleteQuery
+          val query = Query(convertRetrieveQuery.cols)(new ListAnyShape[FlatShapeLevel](convertRetrieveQuery.shapes))
+          val bindQuery = convertRetrieveQuery.bind.bind(query)
+          val filterQuery = convertRetrieveQuery.filters.foldLeft(bindQuery) { (x, y) =>
+            x.filter(s => y.dataToCondition(s))(y.wt)
+          }
+          val updateDBIO = filterQuery.asInstanceOf[Query[RelationalProfile#Table[_], _, Seq]].delete
+          for {
+            effectRows <- updateDBIO
+            subs = eachWrap.map(_.writer.subGen.toList).flatten
+            subResult <- {
+              implicit val _ = profile
+              parseInsertGen(binds, updateList, subs)
+            }
+          } yield {
+            ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
+          }
+      }
+      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+        (for {
+          s1 <- s
+          t1 <- t
         } yield {
-          ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
-        }
-    }
-    results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
-      (for {
-        s1 <- s
-        t1 <- t
-      } yield {
-        ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
-      })
+          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+        })
+      }
+    } catch {
+      case e: Exception => DBIO.failed(e)
     }
   }
 }
