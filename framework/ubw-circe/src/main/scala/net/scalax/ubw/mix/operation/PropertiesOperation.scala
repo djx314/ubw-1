@@ -343,7 +343,7 @@ object PropertiesOperation extends PilesGenHelper {
   ): List[Pile] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
     { optPiles: List[Pile] =>
       { data: Map[String, Json] =>
-        JsonOperation.unfullReadGen.flatMap(InCreateConvert.createGen) { (jsonReader, slickWriterGen) =>
+        JsonOperation.unfullReadGen1111.flatMap(InCreateConvert.createGen) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
           execInfoDBIO.apply(binds).flatMap { execInfo =>

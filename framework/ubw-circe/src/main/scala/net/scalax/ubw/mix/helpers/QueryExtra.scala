@@ -184,11 +184,12 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
         insertGen = { v: Map[String, Json] =>
         val createInfoDBIO = PropertiesOperation.json2SlickCreateOperation(crudQueryWrap.binds).apply(columns).apply(v)
 
-        for {
+        val createAction = for {
           updateStaticManyInfo <- createInfoDBIO
         } yield {
           updateStaticManyInfo
         }
+        Future.successful(Right(createAction))
       },
         deleteGen = (v: Map[String, Json]) => {
         PropertiesOperation.json2SlickDeleteOperation(crudQueryWrap.binds).apply(columns).apply(v)

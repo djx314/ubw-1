@@ -8,9 +8,9 @@ import scala.language.implicitConversions
 trait PileSyntax[T] {
 
   val pilesGen: PileSyntax.PileGenImpl[List[AtomicValue] => T]
-  /*def flatMap1111[S, U](mapPiles: PileSyntax.PileGen[S])(cv: (T, List[AtomicValue] => S) => U): PileSyntax.PileGen[U] =
+  def flatMap1111[S, U](mapPiles: PileSyntax.PileGen[S])(cv: (T, List[AtomicValue] => S) => U): PileSyntax.PileGen[U] =
     new PileSyntax.PileGen[U] {
-      def gen(piles: List[Pile]): Either[AtomicException, PileSyntax.PilePip1111[List[AtomicValue] => U]] = {
+      def gen(piles: List[Pile]): Either[AtomicException, PileSyntax.PilePipImpl[List[AtomicValue] => U]] = {
         pilesGen.gen(piles).right.flatMap {
           case PileSyntax.PilePip(newPiles, gen) =>
             mapPiles.gen(newPiles).right.map {
@@ -21,7 +21,7 @@ trait PileSyntax[T] {
             }
         }
       }
-    }*/
+    }
   def flatMap[S, U](mapPiles: PileSyntax.PileGenImpl[List[AtomicValue] => S])(cv: (T, List[AtomicValue] => S) => U): PileSyntax.PileGenImpl[List[AtomicValue] => U] = {
     val monad = implicitly[Monad[PileSyntax.PileGenImpl]]
     monad.flatMap(pilesGen) { tGen =>
