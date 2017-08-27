@@ -1,6 +1,6 @@
 package net.scalax.fsn.slick.operation
 
-import net.scalax.fsn.common.atomic.FProperty
+import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.{ AutoInc, OneToOneCrate, SlickCreate }
@@ -82,9 +82,9 @@ object InCreateConvert extends AtomicValueHelper {
     import profile.api._
     Pile.transformTreeList {
       new AtomicQuery(_) {
-        val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: needAtomic[FProperty] :: FANil)
+        val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
           .mapTo {
-            case (slickCreate :: autoIncOpt :: oneToOneCreateOpt :: property :: HNil, data) =>
+            case (slickCreate :: autoIncOpt :: oneToOneCreateOpt :: property :: defaultOpt :: HNil, data) =>
               val isAutoInc = autoIncOpt.map(_.isAutoInc).getOrElse(false)
               val writer = if (isAutoInc) {
                 lazy val oneToOneSubGen = oneToOneCreateOpt.map { oneToOneCreate =>
@@ -138,8 +138,10 @@ object InCreateConvert extends AtomicValueHelper {
                 ISWriter(
                   preData = {
                   try {
-                    val FSomeValue(data1) = data
-                    data1
+                    data match {
+                      case FSomeValue(data1) => data1
+                      case _ => defaultOpt.map(_.value).get
+                    }
                   } catch {
                     case e: MatchError =>
                       println(property.proName)
@@ -154,8 +156,10 @@ object InCreateConvert extends AtomicValueHelper {
                   autoIncShape = implicitly[Shape[FlatShapeLevel, Unit, Unit, Unit]],
                   subGen = oneToOneSubGen,
                   autalColumn = { (s: Unit) =>
-                  val FSomeValue(data1) = data
-                  data1
+                  data match {
+                    case FSomeValue(data1) => data1
+                    case _ => defaultOpt.map(_.value).get
+                  }
                 }
                 )
               }

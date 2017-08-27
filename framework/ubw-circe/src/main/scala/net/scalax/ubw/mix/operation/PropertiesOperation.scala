@@ -14,6 +14,7 @@ import shapeless._
 import io.circe.Json
 import net.scalax.ubw.validate.atomic.ErrorMessage
 import slick.ast.BaseTypedType
+import slick.basic.BasicBackend
 import slick.dbio._
 import slick.lifted.{ Query, Rep }
 import slick.relational.RelationalProfile
@@ -359,6 +360,41 @@ object PropertiesOperation extends PilesGenHelper {
         }
       }
     }
+
+  def slick_retrieve_i_slick_update_or_insert_o(binds: List[(Any, SlickQueryBindImpl)], db: BasicBackend#Database)(
+    implicit
+    ec: ExecutionContext,
+    slickProfile: JdbcProfile
+  ): List[Pile] => Future[ExecInfo3] = { optPiles: List[Pile] =>
+    InRetrieveConvert.convert.result(optPiles) match {
+      case Left(e) =>
+        e.printStackTrace()
+        throw e
+      case Right(model) =>
+        db.run(model.apply(binds)).map(_.effectRows).recover {
+          case e: java.util.NoSuchElementException =>
+            0
+        }.flatMap { effectRows =>
+          if (effectRows > 0) {
+            InUpdateConvert.updateGen.result(optPiles) match {
+              case Left(e) =>
+                e.printStackTrace()
+                throw e
+              case Right(t) =>
+                t._1.apply(binds).flatMap(s => db.run(s))
+            }
+          } else {
+            InCreateConvert.createGen.result(optPiles) match {
+              case Left(e) =>
+                e.printStackTrace()
+                throw e
+              case Right(t) =>
+                db.run(t.apply(binds))
+            }
+          }
+        }
+    }
+  }
 
   def json2SlickRetrieveOperation(binds: List[(Any, SlickQueryBindImpl)])(
     implicit
