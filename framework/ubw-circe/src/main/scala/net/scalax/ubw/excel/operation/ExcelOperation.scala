@@ -91,7 +91,7 @@ object ExcelOperation extends AtomicValueHelper /*extends AtomicGenHelper with A
     cellDataTupleList.toMap: Map[String, CellData[_]]
   }*/
 
-  val writeGen1111 = Pile.transformTreeList {
+  val writeGen = Pile.transformTreeList {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[PoiWriter] :: needAtomicOpt[PoiStyleTransform] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {

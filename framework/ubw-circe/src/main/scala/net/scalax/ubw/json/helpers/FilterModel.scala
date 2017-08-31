@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick.helpers
+/*package net.scalax.fsn.slick.helpers
 
 trait EqType[F, V] {
   def to(in: F): V
@@ -11,7 +11,7 @@ object EqType {
     override def from(out: V): F = outCv(out)
   }
 }
-/*case class FilterModel[T](
+case class FilterModel[T](
   like: Option[String] = None,
   eq: Option[T] = None,
   gt: Option[T] = None,

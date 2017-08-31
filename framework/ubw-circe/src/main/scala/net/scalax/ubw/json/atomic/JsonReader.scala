@@ -3,7 +3,6 @@ package net.scalax.fsn.json.atomic
 import cats.{ FlatMap, Functor }
 import io.circe.Decoder
 import net.scalax.fsn.core.Atomic
-import net.scalax.fsn.slick.helpers.EqType
 
 trait JsonReader[E] extends Atomic[E] {
 
