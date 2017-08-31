@@ -1,8 +1,8 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.json.operation.AtomicValueHelper
+import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
+import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
 import net.scalax.fsn.slick.helpers._
 import net.scalax.fsn.slick.model._
@@ -10,6 +10,7 @@ import shapeless._
 import slick.jdbc.JdbcProfile
 import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Query, Shape }
 
+import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext
 
 trait StrSlickReader {
@@ -46,21 +47,25 @@ case class StrSReader[S, T, D](
 
 case class StrReaderWithIndex(reader: StrSlickReader, index: Int)
 
-object StrOutSelectConvert extends FilterModelHelper {
+object StrOutSelectConvert {
 
   def ubwGen(wQuery: SlickQueryBindImpl): PileSyntax.PileGen[StrSlickQuery] = {
     Pile.transformTreeList {
       new AtomicQuery(_) {
-        val aa = withRep(needAtomic[StrSlickSelect] :: (needAtomicOpt[StrNeededFetch] :: (needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: FANil) :: FANil) :: needAtomic[FProperty] :: FANil)
+        val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrNeededFetch] :: needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: FANil)
           .mapTo {
-            case (slickSelect :: (neededFetchOpt :: (isOrderNullsLastContent :: orderTargetNameContent :: HNil) :: HNil) :: property :: HNil, data) => {
+            case (slickSelect :: neededFetchOpt :: isOrderNullsLastContent :: orderTargetNameContent :: defaultOpt :: property :: HNil, data) => {
               val isOrderNullsLast = isOrderNullsLastContent.map(_.isOrderNullsLast).getOrElse(true)
               val orderTargetName = orderTargetNameContent.map(_.orderTargetName)
               val isInView = neededFetchOpt.map(_.isInView).getOrElse(true)
 
+              val dataOpt = data match {
+                case FSomeValue(s) => Option(s)
+                case _ => defaultOpt.map(_.value)
+              }
               val filterGen = for {
                 eachPri <- slickSelect.filterGen
-                eachData <- data.opt.flatMap(_.eq)
+                eachData <- dataOpt
               } yield {
                 new FilterColumnGen[slickSelect.TargetType] {
                   override type BooleanTypeRep = eachPri.BooleanTypeRep
@@ -84,9 +89,18 @@ object StrOutSelectConvert extends FilterModelHelper {
                 }
               }
 
+              @tailrec
+              def unwrapOption2String(s: Any): Option[String] = {
+                s match {
+                  case Some(t) => unwrapOption2String(t)
+                  case t: String => Option(t)
+                  case _ => Option.empty
+                }
+              }
+
               val likeFilterGen = for {
                 eachPri <- slickSelect.likeableGen.toList
-                eachData <- data.opt.toList.flatMap(_.like.toList.flatMap(s => s.split(" ").toList.filter(!_.isEmpty)).toList).map(convertLikeString)
+                eachData <- unwrapOption2String(dataOpt).toList.flatMap(s => s.split(" ").toList.filter(!_.isEmpty)).map(convertLikeString)
               } yield {
                 new FilterColumnGen[slickSelect.TargetType] {
                   override type BooleanTypeRep = eachPri.BooleanTypeRep

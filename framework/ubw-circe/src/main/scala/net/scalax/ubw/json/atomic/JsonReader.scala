@@ -3,7 +3,7 @@ package net.scalax.fsn.json.atomic
 import cats.{ FlatMap, Functor }
 import io.circe.Decoder
 import net.scalax.fsn.core.Atomic
-import net.scalax.fsn.slick.helpers.{ EqType, FilterModel }
+import net.scalax.fsn.slick.helpers.EqType
 
 trait JsonReader[E] extends Atomic[E] {
 
@@ -55,8 +55,7 @@ object JsonReader {
   }
 
 }
-
-trait SlickCompare[E] extends Atomic[E] {
+/*trait SlickCompare[E] extends Atomic[E] {
   type DataType = E
   val reader: Decoder[FilterModel[E]]
 }
@@ -73,9 +72,8 @@ object SlickCompareData {
       }
     }
   }
-}
-
-trait CompareToStringConvert[E] extends Atomic[E] {
+}*/
+/*trait CompareToStringConvert[E] extends Atomic[E] {
   val strCv: EqType[E, String]
   val optStrCv: EqType[E, Option[String]]
-}
+}*/ 

@@ -1,10 +1,5 @@
 package net.scalax.fsn.slick.helpers
 
-import net.scalax.fsn.core.AtomicValueImpl
-import net.scalax.fsn.json.atomic.SlickCompareData
-
-import scala.language.implicitConversions
-
 trait EqType[F, V] {
   def to(in: F): V
   def from(out: V): F
@@ -16,8 +11,7 @@ object EqType {
     override def from(out: V): F = outCv(out)
   }
 }
-
-case class FilterModel[T](
+/*case class FilterModel[T](
   like: Option[String] = None,
   eq: Option[T] = None,
   gt: Option[T] = None,
@@ -88,4 +82,4 @@ trait FilterModelHelper {
         emptyValue[D]
     }
 
-}
+}*/ 
