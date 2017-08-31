@@ -1,4 +1,4 @@
-package net.scalax.fsn.json.operation
+/*package net.scalax.fsn.json.operation
 
 import io.circe.Json
 import net.scalax.fsn.common.atomic.FProperty
@@ -44,4 +44,4 @@ object SlickCompareOperation extends FilterModelHelper {
     }
   }
 
-}
+}*/

@@ -1,5 +1,6 @@
 package net.scalax.fsn.slick.operation
 
+import net.scalax.fsn.common.atomic.DefaultValue
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue, ValidatorOperation}
 import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate}
@@ -81,9 +82,9 @@ object InUpdateConvert extends AtomicValueHelper {
   ): PileSyntax.PileGen[(List[(Any, SlickQueryBindImpl)] => Future[slickProfile.api.DBIO[ExecInfo3]], Future[List[ErrorMessage]])] = {
     Pile.transformTreeListWithFilter({
       new AtomicQuery(_) {
-        val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: FANil)
+        val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: needAtomicOpt[DefaultValue] :: FANil)
           .mapTo {
-            case (slickWriter :: oneToOneUpdateOpt :: HNil, data) => {
+            case (slickWriter :: oneToOneUpdateOpt :: defaultOpt :: HNil, data) => {
               val uSlickSubGen = oneToOneUpdateOpt.map { oneToOneUpdate =>
                 new UpdateTran {
                   override val table = oneToOneUpdate.owner
@@ -118,16 +119,20 @@ object InUpdateConvert extends AtomicValueHelper {
                 mainShape = slickWriter.mainShape,
                 table = slickWriter.owner,
                 data = {
-                val FSomeValue(data1) = data
-                data1
+                  data match {
+                    case FSomeValue(data1) => data1
+                    case _ => defaultOpt.map(_.value).get
+                  }
               },
                 primaryGen = slickWriter.primaryGen.map { eachPri =>
                   (new FilterColumnGen[slickWriter.TargetType] {
                     override type BooleanTypeRep = eachPri.BooleanTypeRep
                     override val dataToCondition = { sourceCol: slickWriter.TargetType =>
                       eachPri.dataToCondition(sourceCol) {
-                        val FSomeValue(data1) = data
-                        data1
+                        data match {
+                          case FSomeValue(data1) => data1
+                          case _ => defaultOpt.map(_.value).get
+                        }
                       }
                     }
                     override val wt = eachPri.wt

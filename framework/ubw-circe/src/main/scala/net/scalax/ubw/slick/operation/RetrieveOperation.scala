@@ -1,5 +1,6 @@
 package net.scalax.fsn.slick.operation
 
+import net.scalax.fsn.common.atomic.DefaultValue
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue, ValidatorOperation}
 import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
@@ -74,9 +75,9 @@ object InRetrieveConvert extends AtomicValueHelper {
   ) = {
     Pile.transformTreeList({
       new AtomicQuery(_) {
-        val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
+        val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: needAtomicOpt[DefaultValue] :: FANil)
           .mapTo {
-            case (slickReader :: oneToOneRetrieveOpt :: HNil, data) => {
+            case (slickReader :: oneToOneRetrieveOpt :: defaultValueOpt :: HNil, data) => {
               val iSlickReader = ISReader(
                 mainCol = (slickReader.mainCol: slickReader.SourceType),
                 table = slickReader.owner,
@@ -86,9 +87,13 @@ object InRetrieveConvert extends AtomicValueHelper {
                   override type BooleanTypeRep = eachPri.BooleanTypeRep
                   override val dataToCondition = (sourceCol: slickReader.TargetType) => {
                     eachPri.dataToCondition(sourceCol) {
-                      val FSomeValue(data1) = data
+                      //val  = data
                       //slickReader.filterConvert(data1)
-                      data1
+                      //data1
+                      data match {
+                        case FSomeValue(data1) => data1
+                        case _ => defaultValueOpt.map(_.value).get
+                      }
                     }
                   }
                   override val wt = eachPri.wt

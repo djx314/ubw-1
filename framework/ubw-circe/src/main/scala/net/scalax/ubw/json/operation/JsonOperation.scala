@@ -9,7 +9,7 @@ import shapeless._
 
 object JsonOperation extends AtomicValueHelper {
 
-  val readGen1111 = Pile.transformTreeList {
+  val readGen = Pile.transformTreeList {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -45,9 +45,9 @@ object JsonOperation extends AtomicValueHelper {
     }
   }
 
-  val unfullReadGen = unfullReadGen1111
+  //val unfullReadGen = unfullreadGen
 
-  val unfullReadGen1111 = Pile.transformTreeList {
+  val unfullreadGen = Pile.transformTreeList {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -85,7 +85,7 @@ object JsonOperation extends AtomicValueHelper {
     }
   }
 
-  def writeGen1111 = Pile.transformTreeList {
+  def writeGen = Pile.transformTreeList {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -100,7 +100,7 @@ object JsonOperation extends AtomicValueHelper {
     jsonTupleList.toMap: Map[String, Json]
   }
 
-  def unSafewriteGen1111 = Pile.transformTreeList {
+  def unSafewriteGen = Pile.transformTreeList {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
