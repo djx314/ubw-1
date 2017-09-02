@@ -1,11 +1,9 @@
 package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.core._
-import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.StaticMany
-import net.scalax.fsn.slick.model.{ QueryJsonInfo, StaticManyUbw }
-import shapeless._
+import net.scalax.fsn.slick.model.QueryJsonInfo
 
 import scala.concurrent.{ ExecutionContext, Future }
 

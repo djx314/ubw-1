@@ -14,7 +14,7 @@ trait SlickCRUDImplicits {
   trait FColumnStringImplicits {
     val proName: String
 
-    def ofPile[D](path: AtomicPathImpl[D]): FLeafPileImpl[AtomicPathImpl[D], AtomicValueImpl[D]] = {
+    def ofPile[D](path: AtomicPathImpl[D]): LeafPileImpl[AtomicPathImpl[D], AtomicValueImpl[D]] = {
       val proName1 = proName
       val proNameAtomic = new FProperty[D] {
         override val proName = proName1

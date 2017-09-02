@@ -1,23 +1,15 @@
 package net.scalax.fsn.mix.operation
 
-import net.scalax.fsn.common.atomic.{ DefaultValue, FDescribe, FProperty }
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.atomic.JsonWriter
-import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.model._
-import net.scalax.fsn.slick.helpers.{ SlickQueryBindImpl, TypeHelpers }
+import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import net.scalax.fsn.slick.operation._
 import net.scalax.fsn.json.operation.{ ExcelOperation, JsonOperation }
-import net.scalax.fsn.excel.atomic.PoiWriter
-import slick.jdbc.{ JdbcActionComponent, JdbcProfile }
-import shapeless._
+import slick.jdbc.JdbcProfile
 import io.circe.Json
 import net.scalax.ubw.validate.atomic.ErrorMessage
-import slick.ast.BaseTypedType
 import slick.basic.BasicBackend
 import slick.dbio._
-import slick.lifted.{ Query, Rep }
-import slick.relational.RelationalProfile
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
