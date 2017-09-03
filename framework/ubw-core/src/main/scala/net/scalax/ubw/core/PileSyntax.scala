@@ -83,33 +83,66 @@ object PileSyntax {
 
 }
 
+trait PileSyntax1111[T] {
+
+  val pilesGen: PileSyntax1111.PileGenImpl[List[DataPile] => T]
+
+  def flatMap[S, U](mapPiles: PileSyntax1111.PileGenImpl[List[DataPile] => S])(cv: (T, List[DataPile] => S) => U): PileSyntax1111.PileGenImpl[List[DataPile] => U] = {
+    val monad = implicitly[Monad[PileSyntax1111.PileGenImpl]]
+    monad.flatMap(pilesGen) { tGen =>
+      monad.map(mapPiles) { sGen =>
+        { values: List[DataPile] =>
+          cv(tGen(values), sGen)
+        }
+      }
+    }
+  }
+
+  def result(piles: List[Pile]): Either[AtomicException, T] = {
+    val listPile = new PileListImpl(
+      piles,
+      piles.map(_.asInstanceOf[CommonPile]),
+      { list: List[Any] => list },
+      { list: List[Any] => list }
+    )
+    result1111(listPile)
+  }
+
+  def result1111(piles: Pile): Either[AtomicException, T] = {
+    pilesGen.gen(piles).right.map { s =>
+      s.valueFunc(piles.leafZero)
+    }
+  }
+
+}
+
 object PileSyntax1111 {
 
   type PilePip[T] = PilePipImpl[List[DataPile] => T]
   type PileGen[T] = PileGenImpl[List[DataPile] => T]
   val PilePip = PilePipImpl
 
-  case class PilePipImpl[T](piles: List[Pile], valueFunc: T)
+  case class PilePipImpl[T](piles: Pile, valueFunc: T)
 
   trait PileGenImpl[T] {
-    def gen(piles: List[Pile]): Either[AtomicException, PilePipImpl[T]]
+    def gen(pile: Pile): Either[AtomicException, PilePipImpl[T]]
   }
 
   object PileGenImpl {
     implicit val pileGenMonadImplicit: Monad[PileGenImpl] = new Monad[PileGenImpl] {
       self =>
       override def pure[A](x: A): PileGenImpl[A] = new PileGenImpl[A] {
-        def gen(piles: List[Pile]) = Right(PilePipImpl(piles, x))
+        def gen(piles: Pile) = Right(PilePipImpl(piles, x))
       }
       override def flatMap[A, B](fa: PileGenImpl[A])(f: A => PileGenImpl[B]): PileGenImpl[B] = {
         new PileGenImpl[B] {
-          def gen(piles: List[Pile]) = {
-            fa.gen(piles) match {
+          def gen(pile: Pile) = {
+            fa.gen(pile) match {
               case Left(e) =>
                 Left(e)
-              case Right(PilePipImpl(newPiles, newValuesGen)) =>
+              case Right(PilePipImpl(newPile, newValuesGen)) =>
                 val pileB = f(newValuesGen)
-                pileB.gen(newPiles)
+                pileB.gen(newPile)
             }
           }
         }

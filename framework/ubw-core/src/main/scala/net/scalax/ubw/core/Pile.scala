@@ -12,6 +12,8 @@ sealed abstract trait Pile {
 
   def deepZero: List[AtomicValue]
 
+  def leafZero: List[DataPile]
+
   def subsCommonPile: List[LeafPile]
 
   def selfPaths: List[AtomicPath]
@@ -55,6 +57,10 @@ trait PileList extends Pile {
 
   override def deepZero: List[AtomicValue] = {
     self.encodePiles /*(self.pileEntity)*/ .flatMap(_.deepZero)
+  }
+
+  def leafZero: List[DataPile] = {
+    encodePiles.map(_.leafZero).flatten
   }
 
   override def selfPaths: List[AtomicPath] = {
@@ -148,6 +154,10 @@ trait BranchPile extends CommonPile {
 
   override def deepZero: List[AtomicValue] = {
     self.subs.deepZero
+  }
+
+  def leafZero: List[DataPile] = {
+    subs.leafZero
   }
 
   override def subsCommonPile: List[LeafPile] = {
@@ -257,6 +267,10 @@ trait LeafPile extends CommonPile {
 
   override def deepZero: List[AtomicValue] = {
     self.fShape.encodeData(self.fShape.zero)
+  }
+
+  def leafZero: List[DataPile] = {
+    DataPile.fromPile(self, fShape.zero :: Nil)._1 :: Nil
   }
 
   override def subsCommonPile: List[LeafPile] = {

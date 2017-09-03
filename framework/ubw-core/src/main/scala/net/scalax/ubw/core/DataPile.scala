@@ -8,6 +8,7 @@ sealed abstract trait DataPile {
   def replaceData(newData: DataType): DataPile
   def renderFromList(newData: List[AtomicValue]): (DataPile, List[AtomicValue])
   def toAtomicValues(data: DataType): List[AtomicValue]
+  def selfPaths: List[AtomicPath]
 }
 
 trait DataPileList extends DataPile {
@@ -30,6 +31,9 @@ trait DataPileList extends DataPile {
       case (eachData, eachPile) =>
         eachPile.fShape.encodeData(eachData.asInstanceOf[eachPile.DataType])
     }
+  }
+  override def selfPaths: List[AtomicPath] = {
+    self.encodePiles.flatMap(_.selfPaths)
   }
 }
 
@@ -92,6 +96,9 @@ abstract trait CommonDataPile extends DataPile {
 
   override def toAtomicValues(data: DataType): List[AtomicValue] = {
     fShape.encodeData(data)
+  }
+  override def selfPaths: List[AtomicPath] = {
+    self.fShape.encodeColumn(self.pathPile)
   }
 }
 
@@ -226,11 +233,59 @@ object DataPile {
     genTreeTailCall(pathGen, pile, pile)
   }
 
-  def transformTreeList[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: List[U] => T): PileSyntax1111.PileGen[T] = new PileSyntax1111.PileGen[T] {
-    override def gen(piles: List[Pile]): Either[AtomicException, PileSyntax1111.PilePip[T]] = {
-      Right(PileSyntax1111.PilePipImpl(piles = ???, valueFunc = { data: List[DataPile] =>
-        ???
-      }))
+  def transformTreeList[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: (List[U], List[AtomicValue] => List[DataPile]) => T): PileSyntax1111.PileGen[T] = new PileSyntax1111.PileGen[T] {
+    override def gen(prePiles: Pile): Either[AtomicException, PileSyntax1111.PilePip[T]] = {
+      val piles = prePiles
+
+      val calculatePiles =
+        genTree(pathGen, piles)
+
+      calculatePiles.right.map {
+        case TransPileWrap(newPiles, summaryPiles) =>
+          PileSyntax1111.PilePipImpl(piles = newPiles, valueFunc = { dataPiles: List[DataPile] =>
+            val (oldDataPile, _) = summaryPiles.foldLeft(List.empty[DataPile], dataPiles.map(_.data.asInstanceOf[Any])) {
+              case ((dataPileList, data), pile) =>
+                val (currentDataPile, remainData) = fromPile(pile, data)
+                (dataPileList ::: currentDataPile :: Nil) -> remainData
+            }
+
+            val result = oldDataPile.map { pile =>
+              val pathWithValue = pile.selfPaths.zip(pile.toAtomicValues(pile.data))
+              pathWithValue.map {
+                case (path, value) =>
+                  val transform = pathGen(path)
+                  transform.apply(transform.gen.right.get, value.asInstanceOf[AtomicValueImpl[transform.path.DataType]])
+              }
+            }.flatten
+
+            val atomicValueGen = { newAtomicValues: List[AtomicValue] =>
+              oldDataPile.foldLeft(List.empty[DataPile] -> newAtomicValues) {
+                case ((newDataPiles, currentValues), oldDataPile) =>
+                  val (newDataPile, remainData) = oldDataPile.renderFromList(currentValues)
+                  (newDataPiles ::: newDataPile :: Nil) -> remainData
+              }._1
+            }
+
+            columnGen(result, atomicValueGen)
+            /*val (valueGens, filterResult) = ListUtils.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*)
+            .zip(summaryPiles)
+            .flatMap {
+              case (subList, subPiles) =>
+                ListUtils.splitList(subList, subPiles.map(_.dataLengthSum): _*).zip(subPiles).map {
+                  case (eachList, eachPiles) =>
+                    val (newDataList, filterResults) = eachPiles.dataListFromSubListWithFilter(eachList, filter)
+                    filter.monad.map(newDataList) { dataList =>
+                      eachPiles.selfPaths.map(s => pathGen(s)).zip(dataList /*eachPiles.dataListFromSubList(eachList)*/ ).map {
+                        case (tranform, data) =>
+                          tranform.apply(tranform.gen.right.get, data.asInstanceOf[AtomicValueImpl[tranform.path.DataType]])
+                      }
+                    } -> filterResults
+                }
+            }.unzip
+          columnGen(filter.monad.map(filter.listTraverse(valueGens))(_.flatten)) -> filterGen(filter.monad.map(filter.listTraverse(filterResult)) { _.flatten })*/
+          })
+      }
+
     }
   }
 
