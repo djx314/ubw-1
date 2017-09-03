@@ -11,6 +11,7 @@ import io.circe.syntax._
 import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
 import net.scalax.fsn.json.operation.{ AtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper }
 import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper }
+import scala.language.implicitConversions
 
 class ParTest extends FlatSpec
     with Matchers
@@ -59,8 +60,7 @@ class ParTest extends FlatSpec
         val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
-              val defaultValueOpt = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
-              //println(property.proName + ":" + defaultValueOpt + "11111111")
+              val defaultValueOpt = mergeDefault(defaultOpt, data)
               new JsonWriterImpl {
                 override type DataType = path.DataType
                 override val key = property.proName
@@ -82,7 +82,7 @@ class ParTest extends FlatSpec
         val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (readerOpt :: writer :: (defaultOpt :: HNil) :: property :: HNil, data) =>
-              val defaultValueOpt = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
+              val defaultValueOpt = mergeDefault(defaultOpt, data)
               new JsonWriterImpl {
                 override type DataType = path.DataType
                 override val key = property.proName
@@ -99,24 +99,12 @@ class ParTest extends FlatSpec
       }.toMap.asJson
     }
 
-    /*resultGen3(jx3Pile :: appendPile :: Nil) match {
-      case Left(e) => throw e
-      case Right((outPile, s)) =>
-        val result = s(jx3Pile.fShape.encodeData(jx3Pile.fShape.zero) ::: appendPile.fShape.encodeData(appendPile.fShape.zero))
-        //println(result)
-        result
-    }*/
-
-    //println("convertPile1:" + convertPile1)
-
     val resultGen4 = Pile.transformTreeList {
       new AtomicQuery(_) {
         val aa = withRep((needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: FANil) :: FANil)
           .mapTo {
             case ((defaultOpt :: property :: HNil) :: HNil, data) =>
-              val defaultValueOpt = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
-              //println(defaultValueOpt)
-              //println(property.proName)
+              val defaultValueOpt = mergeDefault(defaultOpt, data)
               defaultValueOpt: Option[Any]
           }
       }.aa
@@ -130,8 +118,7 @@ class ParTest extends FlatSpec
         val aa = withRep(needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
             case (writer :: (defaultOpt :: HNil) :: property :: HNil, data1) =>
-              //println(data1)
-              val defaultValueOpt = mergeDefault(defaultOpt, data1) //data1.opt.fold(defaultOpt.map(_.value))(Option(_))
+              val defaultValueOpt = mergeDefault(defaultOpt, data1)
               new JsonWriterImpl {
                 override type DataType = path.DataType
                 override val key = property.proName
@@ -175,31 +162,6 @@ class ParTest extends FlatSpec
         case (stringData :: longData1 :: HNil) :: (longData2 :: stringData3 :: HNil) :: HNil =>
           emptyValue[String] :: longData2 :: HNil
       }
-
-    /*val pileList = convertPile2 :: mainPile1 :: Nil
-    println(convertPile1.toString)
-
-    println(resultGen4.flatMap(resultGen5) {
-      case (result, gen) =>
-        gen(result)
-    }.result(pileList))*/
-
-    /*try {
-      resultGen4(pileList) match {
-        case Left(e) => throw e
-        case Right((outPile, s)) =>
-          val result = s(pileList.flatMap(_.deepZero))
-          resultGen5(outPile) match {
-            case Left(e1) => throw e1
-            case Right((outPile1, s1)) =>
-              //println(outPile1)
-              s1(result)
-              println(s1(result))
-          }
-      }
-    } catch {
-      case e: Exception => e.printStackTrace
-    }*/
 
   }
 

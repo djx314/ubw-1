@@ -1,6 +1,7 @@
 package net.scalax.fsn.core
 
 import cats.Monad
+import scala.language.implicitConversions
 
 trait PileSyntax[T] {
 
@@ -156,6 +157,22 @@ object PileSyntax1111 {
             self.pure(b)
         }
       }
+    }
+  }
+
+}
+
+trait PilesGenHelper {
+
+  implicit def pileExtensionMethods[T](pilesGenList: PileSyntax.PileGen[T]): PileSyntax[T] = {
+    new PileSyntax[T] {
+      override val pilesGen = pilesGenList
+    }
+  }
+
+  implicit def pileExtensionMethods1111[T](pilesGenList: PileSyntax1111.PileGen[T]): PileSyntax1111[T] = {
+    new PileSyntax1111[T] {
+      override val pilesGen = pilesGenList
     }
   }
 

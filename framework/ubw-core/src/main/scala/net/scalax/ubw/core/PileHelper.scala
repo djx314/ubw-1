@@ -1,17 +1,6 @@
 package net.scalax.fsn.core
 
 import shapeless._
-import scala.language.implicitConversions
-
-trait PilesGenHelper {
-
-  implicit def pileExtensionMethods[T](pilesGenList: PileSyntax.PileGen[T]): PileSyntax[T] = {
-    new PileSyntax[T] {
-      override val pilesGen = pilesGenList
-    }
-  }
-
-}
 
 trait PilesGenHelper1111 {
 
