@@ -116,4 +116,20 @@ object JsonOperation extends AtomicValueHelper {
     jsonTupleList.collect { case Some(s) => s }.toMap: Map[String, Json]
   }
 
+  def unSafewriteGen1111 = DataPile.transformTreeList {
+    new AtomicQuery(_) {
+      val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
+        .mapTo {
+          case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
+            val exportData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
+            //val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
+            implicit val writerJ = jsonWriter.writer
+            exportData.map(s => property.proName -> s.asJson)
+          }
+        }
+    }.aa
+  } { (jsonTupleList, atomicGen) =>
+    jsonTupleList.collect { case Some(s) => s }.toMap: Map[String, Json]
+  }
+
 }

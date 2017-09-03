@@ -1,7 +1,7 @@
 package net.scalax.fsn.slick.model
 
 import io.circe.Json
-import net.scalax.fsn.core.AtomicValue
+import net.scalax.fsn.core.{ AtomicValue, DataPile }
 import slick.dbio.DBIO
 
 import scala.concurrent.ExecutionContext
@@ -24,3 +24,6 @@ case class ListAnyWrap(resultAction: DBIO[ListAnyCollection], statements: List[S
 
 case class ListAnyCollection1111(data: List[List[AtomicValue]], sum: Option[Int])
 case class ListAnyWrap1111(resultAction: DBIO[ListAnyCollection1111], statements: List[String])
+
+case class ListAnyCollection2222(data: List[List[DataPile]], sum: Option[Int])
+case class ListAnyWrap2222(resultAction: DBIO[ListAnyCollection2222], statements: List[String])

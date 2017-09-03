@@ -9,7 +9,7 @@ import net.scalax.fsn.slick.model._
 import shapeless._
 import slick.ast.{ BaseTypedType, Ordering, TypedType }
 import slick.dbio.DBIO
-import slick.jdbc.{ JdbcActionComponent, JdbcProfile }
+import slick.jdbc.JdbcProfile
 import slick.lifted._
 
 import scala.concurrent.ExecutionContext

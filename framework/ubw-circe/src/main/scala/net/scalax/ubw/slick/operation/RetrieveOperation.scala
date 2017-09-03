@@ -2,7 +2,7 @@ package net.scalax.fsn.slick.operation
 
 import net.scalax.fsn.common.atomic.DefaultValue
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue, ValidatorOperation}
+import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue}
 import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
 import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
 import slick.lifted._
