@@ -18,15 +18,15 @@ trait DataPileList extends DataPile {
 
   val pileEntity: PileType
 
-  def encodePiles(piles: PileType): List[CommonDataPile]
-  def decodePiles(piles: List[CommonDataPile]): PileType
+  def encodePiles /*(piles: PileType)*/ : List[CommonDataPile]
+  //def decodePiles(piles: List[CommonDataPile]): PileType
   def decodePileData(data: List[Any]): DataType
   def encodePileData(data: DataType): List[Any]
 
   override def replaceData(newData: DataType): DataPileList
   override def renderFromList(newData: List[AtomicValue]): (DataPileList, List[AtomicValue])
   override def toAtomicValues(data: DataType): List[AtomicValue] = {
-    encodePileData(data).zip(encodePiles(pileEntity)).flatMap {
+    encodePileData(data).zip(encodePiles).flatMap {
       case (eachData, eachPile) =>
         eachPile.fShape.encodeData(eachData.asInstanceOf[eachPile.DataType])
     }
@@ -36,16 +36,16 @@ trait DataPileList extends DataPile {
 class DataPileListImpl[PT, DT](
     override val pileEntity: PT,
     override val data: DT,
-    encoder: PT => List[CommonDataPile],
-    decoder: List[CommonDataPile] => PT,
+    encoder: List[CommonDataPile],
+    //decoder: List[CommonDataPile] => PT,
     dataDecoder: List[Any] => DT,
     dataEncoder: DT => List[Any]
 ) extends DataPileList {
   override type PileType = PT
   override type DataType = DT
 
-  override def encodePiles(piles: PT): List[CommonDataPile] = encoder(piles)
-  override def decodePiles(piles: List[CommonDataPile]): PileType = decoder(piles)
+  override def encodePiles: List[CommonDataPile] = encoder //encoder(piles)
+  //override def decodePiles(piles: List[CommonDataPile]): PileType = decoder(piles)
   override def decodePileData(data: List[Any]): DT = dataDecoder(data)
   override def encodePileData(data: DataType): List[Any] = dataEncoder(data)
 
@@ -59,17 +59,19 @@ class DataPileListImpl[PT, DT](
     )*/
     ???
   }
-  override def renderFromList(newData: List[AtomicValue]): (DataPileListImpl[PT, DT], List[AtomicValue]) = {
-    val (commonPileList, resultData) = encodePiles(pileEntity).foldLeft(List.empty[CommonDataPile] -> newData) {
+
+  override def renderFromList(newData: List[AtomicValue]): (DataPileListImpl[List[CommonDataPile], DT], List[AtomicValue]) = {
+    val (commonPileList, resultData) = encodePiles.foldLeft(List.empty[CommonDataPile] -> newData) {
       case ((currentPileList, currentData), currentPile) =>
         val (pile, data) = currentPile.renderFromList(currentData)
         (currentPileList ::: pile :: Nil) -> data
     }
     new DataPileListImpl(
-      decodePiles(commonPileList),
+      //decodePiles(commonPileList),
+      commonPileList,
       decodePileData(commonPileList.map(_.data)),
-      encoder,
-      decoder,
+      commonPileList,
+      //decoder,
       dataDecoder,
       dataEncoder
     ) -> resultData
@@ -186,8 +188,8 @@ object DataPile {
         }
 
       case (oldPile: PileList, newPile: PileList) =>
-        val newPiles = newPile.encodePiles(newPile.pileEntity)
-        val oldPiles = oldPile.encodePiles(oldPile.pileEntity)
+        val newPiles = newPile.encodePiles
+        val oldPiles = oldPile.encodePiles
         val listResult = oldPiles.zip(newPiles).map {
           case (oldP, newP) =>
             genTreeTailCall(pathGen, oldP, newP)
@@ -198,10 +200,14 @@ object DataPile {
             case Right(TransPileWrap(root, drops)) => root -> drops
             case _ => throw new IllegalArgumentException("不可识别的输入")
           }.unzip
-          Right(TransPileWrap(new PileListImpl(
-            newPile.decodePiles(newPiles.map(_.asInstanceOf[CommonPile])),
-            newPile.encodePiles _,
+          Right(TransPileWrap(new PileListImpl[List[Any], newPile.DataType](
+            /*newPile.decodePiles(newPiles.map(_.asInstanceOf[CommonPile])),
+            newPile.encodePiles,
             newPile.decodePiles _,
+            newPile.decodePileData _,
+            newPile.encodePileData _*/
+            newPiles.map(_.asInstanceOf[CommonPile]),
+            newPiles.map(_.asInstanceOf[CommonPile]),
             newPile.decodePileData _,
             newPile.encodePileData _
           ), newPileList.flatten))
@@ -221,7 +227,46 @@ object DataPile {
   }
 
   def transformTreeList[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: List[U] => T): PileSyntax1111.PileGen[T] = new PileSyntax1111.PileGen[T] {
-    override def gen(piles: List[Pile]): Either[AtomicException, PileSyntax1111.PilePip[T]] = ???
+    override def gen(piles: List[Pile]): Either[AtomicException, PileSyntax1111.PilePip[T]] = {
+      Right(PileSyntax1111.PilePipImpl(piles = ???, valueFunc = { data: List[DataPile] =>
+        ???
+      }))
+    }
+  }
+
+  def fromPile(pile: Pile, data: List[Any]): (DataPile, List[Any]) = {
+    pile match {
+      case leaf: LeafPile =>
+        val head :: tail = data
+        new LeafDataPileImpl(
+          pathPile = leaf.pathPile,
+          data = head.asInstanceOf[leaf.DataType],
+          fShape = leaf.fShape
+        ) -> tail
+      case branch: BranchPile =>
+        val (subDataPile, tailList) = fromPile(branch.subs, data)
+        new BranchDataPileImpl(
+          pathPile = branch.pathPile,
+          fShape = branch.fShape,
+          subs = subDataPile,
+          data = branch.dataFromSub(subDataPile.data),
+          dataFromSubFunc = branch.dataFromSub _
+        ) -> tailList
+      case listPile: PileList =>
+        val (subDataPileList, remainList) = listPile.encodePiles.foldLeft(List.empty[DataPile] -> data) {
+          case ((dataPiles, listData), eachSubPile) =>
+            val (eachDataPile, tailData) = fromPile(eachSubPile, listData)
+            (dataPiles ::: eachDataPile :: Nil) -> tailData
+        }
+        new DataPileListImpl[List[Any], listPile.DataType](
+          pileEntity = subDataPileList,
+          data = listPile.decodePileData(subDataPileList.map(_.data)),
+          encoder = subDataPileList.map(_.asInstanceOf[CommonDataPile]),
+          //decoder: List[CommonDataPile] => PT,
+          dataDecoder = listPile.decodePileData _,
+          dataEncoder = listPile.encodePileData _
+        ) -> remainList
+    }
   }
 
 }

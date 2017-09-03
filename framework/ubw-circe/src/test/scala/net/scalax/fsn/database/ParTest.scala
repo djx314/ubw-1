@@ -4,7 +4,7 @@ import net.scalax.fsn.core._
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
-import net.scalax.fsn.mix.helpers.{ In, SlickCRUDImplicits }
+import net.scalax.fsn.mix.helpers.SlickCRUDImplicits
 import shapeless._
 import io.circe._
 import io.circe.syntax._

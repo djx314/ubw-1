@@ -37,12 +37,13 @@ trait PilesGenHelper1111 {
           new PileListImpl[LeafPileImpl[LE1, D1] :: LS, D1 :: D](
             pileEntity = LeafPile :: self.toPileList.pileEntity,
             encoder = {
-            case head :: tail =>
-              head :: self.toPileList.encodePiles(tail)
+            LeafPile :: self.toPileList.encodePiles
+            /*case head :: tail =>
+              head :: self.toPileList.encodePiles(tail)*/
           },
-            decoder = { list =>
+            /*decoder = { list =>
             list.head.asInstanceOf[LeafPileImpl[LE1, D1]] :: self.toPileList.decodePiles(list.tail)
-          },
+          },*/
             dataDecoder = { list =>
             list.head.asInstanceOf[D1] :: self.toPileList.decodePileData(list.tail)
           },
@@ -63,17 +64,18 @@ trait PilesGenHelper1111 {
     }
 
     def ::[PE, D1](fPileList: PileListImpl[PE, D1]): PileListImpl[PE :: LS, D1 :: D] = {
-      val headPileLenght = fPileList.encodePiles(fPileList.pileEntity).size
+      val headPileLenght = fPileList.encodePiles /*(fPileList.pileEntity)*/ .size
 
       new PileListImpl[PE :: LS, D1 :: D](
         fPileList.pileEntity :: self.toPileList.pileEntity,
         encoder = {
-          case head :: tail =>
-            fPileList.encodePiles(head) ::: self.toPileList.encodePiles(tail)
+          fPileList.encodePiles ::: self.toPileList.encodePiles
+          /*case head :: tail =>
+            fPileList.encodePiles(head) ::: self.toPileList.encodePiles(tail)*/
         },
-        decoder = { list =>
+        /*decoder = { list =>
           fPileList.decodePiles(list.take(headPileLenght)) :: self.toPileList.decodePiles(list.drop(headPileLenght))
-        },
+        },*/
         dataDecoder = { list =>
           fPileList.decodePileData(list.take(headPileLenght)) :: self.toPileList.decodePileData(list.drop(headPileLenght))
         },
@@ -89,12 +91,13 @@ trait PilesGenHelper1111 {
       new PileListImpl[BranchPileImpl[PE, D1] :: LS, D1 :: D](
         fPileList :: self.toPileList.pileEntity,
         encoder = {
-          case head :: tail =>
-            fPileList :: self.toPileList.encodePiles(tail)
+          fPileList :: self.toPileList.encodePiles
+          /*case head :: tail =>
+            fPileList :: self.toPileList.encodePiles(tail)*/
         },
-        decoder = { list =>
+        /*decoder = { list =>
           list.head.asInstanceOf[BranchPileImpl[PE, D1]] :: self.toPileList.decodePiles(list.tail)
-        },
+        },*/
         dataDecoder = { list =>
           list.head.asInstanceOf[D1] :: self.toPileList.decodePileData(list.tail)
         },
@@ -110,9 +113,9 @@ trait PilesGenHelper1111 {
     val leafPile = new LeafPileImpl(HNil, PileShape.hnilPileShape)
     val emptyPileHlist = new PileListImpl[HNil, HNil](
       HNil,
-      { _ => Nil },
+      Nil,
       { _ => HNil },
-      { _ => HNil },
+      //{ _ => HNil },
       { _ => Nil }
     )
     new LeafPileListPileMerge[HNil, HNil, HNil] {
