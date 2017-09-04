@@ -44,4 +44,4 @@ object SlickCompareOperation extends FilterModelHelper {
     }
   }
 
-}*/
+}*/ 
