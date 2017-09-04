@@ -6,8 +6,7 @@ import net.scalax.fsn.json.operation._
 import net.scalax.fsn.mix.slickbase.InOutQueryWrap
 import net.scalax.fsn.slick.model.SlickParam
 import net.scalax.fsn.slick.operation.{ ExecInfo3, InCreateConvert, InUpdateConvert, StrOutSelectConvert }
-import slick.jdbc.{ JdbcActionComponent, JdbcProfile }
-import slick.lifted.{ Query, Rep }
+import slick.jdbc.JdbcProfile
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
@@ -104,7 +103,7 @@ object InAndOutOperation extends PilesGenHelper with AtomicValueHelper {
             eachFuture().map {
               _.map {
                 t =>
-                  slickWriterGen
+                  //slickWriterGen
                   slickWriterGen(t)._1.apply(binds.crudBinds)
               }
             }

@@ -12,7 +12,9 @@ sealed abstract trait Pile {
 
   def deepZero: List[AtomicValue]
 
-  def subsCommonPile: List[FLeafPile]
+  def leafZero: List[DataPile]
+
+  def subsCommonPile: List[LeafPile]
 
   def selfPaths: List[AtomicPath]
 
@@ -44,24 +46,28 @@ trait PileList extends Pile {
   override type DataType
 
   override def dataLengthSum: Int = {
-    self.encodePiles(self.pileEntity).map(_.dataLengthSum).sum
+    self.encodePiles /*(self.pileEntity)*/ .map(_.dataLengthSum).sum
   }
 
   override def deepZero: List[AtomicValue] = {
-    self.encodePiles(self.pileEntity).flatMap(_.deepZero)
+    self.encodePiles /*(self.pileEntity)*/ .flatMap(_.deepZero)
+  }
+
+  def leafZero: List[DataPile] = {
+    encodePiles.map(_.leafZero).flatten
   }
 
   override def selfPaths: List[AtomicPath] = {
-    self.encodePiles(self.pileEntity).flatMap(_.selfPaths)
+    self.encodePiles /*(self.pileEntity)*/ .flatMap(_.selfPaths)
   }
 
-  override def subsCommonPile: List[FLeafPile] = {
-    self.encodePiles(self.pileEntity).flatMap(_.subsCommonPile)
+  override def subsCommonPile: List[LeafPile] = {
+    self.encodePiles /*(self.pileEntity)*/ .flatMap(_.subsCommonPile)
   }
 
   override def weightDataListFromSubList(atomicDatas: List[WeightData[AtomicValue]]): List[WeightData[AtomicValue]] = {
     //如果是 pileList，直接分组再递归调用
-    val piles = self.encodePiles(self.pileEntity)
+    val piles = self.encodePiles /*(self.pileEntity)*/
     val datas = ListUtils.splitWithWeight(atomicDatas, piles.map(_.dataLengthSum): _*)
     val pileWithData = if (piles.size == datas.size) {
       piles.zip(datas)
@@ -75,7 +81,7 @@ trait PileList extends Pile {
   }
 
   override def dataListFromSubListWithFilter1[U, F[_]](atomicDatas: List[WeightData[AtomicValue]], filter: PileFilter[U, F]): (F[List[WeightData[AtomicValue]]], F[List[U]]) = {
-    val piles = self.encodePiles(self.pileEntity)
+    val piles = self.encodePiles /*(self.pileEntity)*/
 
     val dataWithPiles = ListUtils.splitWithWeight(atomicDatas, piles.map(_.dataLengthSum): _*).zip(piles)
     val pileWithData = dataWithPiles.map {
@@ -87,24 +93,28 @@ trait PileList extends Pile {
 
   val pileEntity: PileType
 
-  def encodePiles(piles: PileType): List[CommonPile]
-  def decodePiles(piles: List[CommonPile]): PileType
+  def encodePiles /*(piles: PileType)*/ : List[CommonPile]
+  //def decodePiles(piles: List[CommonPile]): PileType
+
   def decodePileData(datas: List[Any]): DataType
+  def encodePileData(data: DataType): List[Any]
 
 }
 
 class PileListImpl[PT, DT](
     override val pileEntity: PT,
-    encoder: PT => List[CommonPile],
-    decoder: List[CommonPile] => PT,
-    dataDecoder: List[Any] => DT
+    encoder: List[CommonPile],
+    //decoder: List[CommonPile] => PT,
+    dataDecoder: List[Any] => DT,
+    dataEncoder: DT => List[Any]
 ) extends PileList {
   override type PileType = PT
   override type DataType = DT
 
-  override def encodePiles(piles: PT): List[CommonPile] = encoder(piles)
-  override def decodePiles(piles: List[CommonPile]): PileType = decoder(piles)
-  override def decodePileData(datas: List[Any]): DT = dataDecoder(datas)
+  override def encodePiles /*(piles: PT)*/ : List[CommonPile] = encoder
+  //override def decodePiles(piles: List[CommonPile]): PileType = decoder(piles)
+  override def decodePileData(data: List[Any]): DT = dataDecoder(data)
+  override def encodePileData(data: DataType): List[Any] = dataEncoder(data)
 }
 
 abstract trait CommonPile extends Pile {
@@ -136,7 +146,11 @@ trait BranchPile extends CommonPile {
     self.subs.deepZero
   }
 
-  override def subsCommonPile: List[FLeafPile] = {
+  def leafZero: List[DataPile] = {
+    subs.leafZero
+  }
+
+  override def subsCommonPile: List[LeafPile] = {
     self.subs.subsCommonPile
   }
 
@@ -154,7 +168,7 @@ trait BranchPile extends CommonPile {
           val resultDataList = self.fShape.encodeData(currentPileData)
           Pile.weightDataListFromSubWithFilter(List(WeightData(resultDataList.zip(self.selfPaths), self.dataLengthSum)), filter)
         case sp: PileList =>
-          val piles = sp.encodePiles(sp.pileEntity)
+          val piles = sp.encodePiles /*(sp.pileEntity)*/
           if (subData.size != piles.size) {
             throw new Exception("PileList 的权重数据长度和 pile 数量不一致")
           }
@@ -195,7 +209,7 @@ trait BranchPile extends CommonPile {
         val resultDataList = self.fShape.encodeData(currentPileData)
         List(WeightData(resultDataList, self.dataLengthSum))
       case sp: PileList =>
-        val piles = sp.encodePiles(sp.pileEntity)
+        val piles = sp.encodePiles /*(sp.pileEntity)*/
         if (subData.size != piles.size) {
           throw new Exception("PileList 的权重数据长度和 pile 数量不一致")
         }
@@ -230,7 +244,7 @@ class BranchPileImpl[PT, DT](
 
 }
 
-trait FLeafPile extends CommonPile {
+trait LeafPile extends CommonPile {
   self =>
 
   override def dataLengthSum: Int = {
@@ -241,7 +255,11 @@ trait FLeafPile extends CommonPile {
     self.fShape.encodeData(self.fShape.zero)
   }
 
-  override def subsCommonPile: List[FLeafPile] = {
+  def leafZero: List[DataPile] = {
+    DataPile.fromPile(self, fShape.zero :: Nil)._1 :: Nil
+  }
+
+  override def subsCommonPile: List[LeafPile] = {
     List(self)
   }
 
@@ -266,10 +284,10 @@ trait FLeafPile extends CommonPile {
 
 }
 
-class FLeafPileImpl[PT, DT](
+class LeafPileImpl[PT, DT](
     override val pathPile: PT,
     override val fShape: PileShape[PT, DT]
-) extends FLeafPile {
+) extends LeafPile {
   override type PathType = PT
   override type DataType = DT
 }
@@ -279,9 +297,9 @@ object Pile {
   case class TransPileWrap(root: Pile, drops: List[Pile])
   type TransResult[T] = Either[AtomicException, T]
 
-  def apply[D](paths: AtomicPathImpl[D]): FLeafPileImpl[AtomicPathImpl[D], AtomicValueImpl[D]] = {
+  def apply[D](paths: AtomicPathImpl[D]): LeafPileImpl[AtomicPathImpl[D], AtomicValueImpl[D]] = {
     val shape = PileShape.fpathPileShape[D]
-    new FLeafPileImpl(paths, shape)
+    new LeafPileImpl(paths, shape)
   }
 
   def weightDataListFromSubWithFilter[U, F[_]](atomicDatas: List[WeightData[(AtomicValue, AtomicPath)]], filter: PileFilter[U, F]): (F[List[WeightData[AtomicValue]]], F[List[U]]) = {
@@ -307,7 +325,7 @@ object Pile {
 
   def genTreeTailCall[U](pathGen: AtomicPath => QueryTranform[U], oldPile: Pile, newPile: Pile): TransResult[TransPileWrap] = {
     oldPile -> newPile match {
-      case (commonPile: CommonPile, leafPile: FLeafPile) =>
+      case (commonPile: CommonPile, leafPile: LeafPile) =>
         val transforms = leafPile.fShape.encodeColumn(leafPile.pathPile).map(pathGen)
         if (transforms.forall(_.gen.isRight)) {
           Right(TransPileWrap(newPile, List(commonPile)))
@@ -318,7 +336,7 @@ object Pile {
       case (oldPile: BranchPile, newPile: BranchPile) =>
         genTreeTailCall(pathGen, oldPile.subs, newPile.subs) match {
           case Left(_) =>
-            genTreeTailCall(pathGen, oldPile, new FLeafPileImpl(
+            genTreeTailCall(pathGen, oldPile, new LeafPileImpl(
               newPile.pathPile, newPile.fShape
             ))
           case Right(TransPileWrap(newSubResultPile, pileList)) =>
@@ -331,30 +349,39 @@ object Pile {
         }
 
       case (oldPile: PileList, newPile: PileList) =>
-        val newPiles = newPile.encodePiles(newPile.pileEntity)
-        val oldPiles = oldPile.encodePiles(oldPile.pileEntity)
+        val newPiles = newPile.encodePiles /*(newPile.pileEntity)*/
+        val oldPiles = oldPile.encodePiles /*(oldPile.pileEntity)*/
         val listResult = oldPiles.zip(newPiles).map {
           case (oldP, newP) =>
             genTreeTailCall(pathGen, oldP, newP)
         }
         val isSuccess = listResult.forall(_.isRight)
         if (isSuccess) {
-          val (newPiles, newPileList) = listResult.map { case Right(TransPileWrap(root, drops)) => root -> drops }.unzip
-          Right(TransPileWrap(new PileListImpl(
-            newPile.decodePiles(newPiles.map(_.asInstanceOf[CommonPile])),
-            newPile.encodePiles _,
-            newPile.decodePiles _,
-            newPile.decodePileData _
+          val (newPiles, newPileList) = listResult.map {
+            case Right(TransPileWrap(root, drops)) => root -> drops
+            case _ => throw new IllegalArgumentException("不可识别的输入")
+          }.unzip
+          Right(TransPileWrap(new PileListImpl[List[Any], newPile.DataType](
+            //newPile.decodePiles(newPiles.map(_.asInstanceOf[CommonPile])),
+            newPiles.map(_.asInstanceOf[CommonPile]),
+            newPiles.map(_.asInstanceOf[CommonPile]),
+            newPile.decodePileData _,
+            newPile.encodePileData _
+          //newPile.encodePiles,
+          //newPile.decodePiles _,
+          //newPile.decodePileData _,
+          //newPile.encodePileData _
           ), newPileList.flatten))
         } else {
           Left(listResult.collect { case Left(ex) => ex }.reduce((a1, a2) =>
             AtomicException(a1.typeTags ::: a2.typeTags)))
         }
+      case _ => throw new IllegalArgumentException("不可识别的输入")
     }
   }
 
   def genTree[U](pathGen: AtomicPath => QueryTranform[U], pile: Pile): TransResult[TransPileWrap] = {
-    genTreeTailCall(pathGen, pile, pile) //.right.map { case (newPile, piles) => newPile -> piles }
+    genTreeTailCall(pathGen, pile, pile)
   }
 
   def transformTreeList[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: List[U] => T): PileSyntax.PileGen[T] = new PileSyntax.PileGen[T] {
@@ -465,9 +492,8 @@ object Pile {
                   queryTranform.apply(t, list(index).asInstanceOf[AtomicValueImpl[queryTranform.path.DataType]]) :: s(list)
                 }
             }
-        }.right.map { s => (t: List[AtomicValue]) => {
+        }.right.map { s => (t: List[AtomicValue]) =>
           columnGen(s(t))
-        }
         }
       }
   }

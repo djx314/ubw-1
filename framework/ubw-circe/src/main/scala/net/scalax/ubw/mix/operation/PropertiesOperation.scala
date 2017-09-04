@@ -1,23 +1,15 @@
 package net.scalax.fsn.mix.operation
 
-import net.scalax.fsn.common.atomic.{ DefaultValue, FDescribe, FProperty }
 import net.scalax.fsn.core._
-import net.scalax.fsn.json.atomic.JsonWriter
-import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.slick.model._
-import net.scalax.fsn.slick.helpers.{ SlickQueryBindImpl, TypeHelpers }
+import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import net.scalax.fsn.slick.operation._
 import net.scalax.fsn.json.operation.{ ExcelOperation, JsonOperation }
-import net.scalax.fsn.excel.atomic.PoiWriter
-import slick.jdbc.{ JdbcActionComponent, JdbcProfile }
-import shapeless._
+import slick.jdbc.JdbcProfile
 import io.circe.Json
 import net.scalax.ubw.validate.atomic.ErrorMessage
-import slick.ast.BaseTypedType
 import slick.basic.BasicBackend
 import slick.dbio._
-import slick.lifted.{ Query, Rep }
-import slick.relational.RelationalProfile
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
@@ -108,7 +100,7 @@ object PropertiesOperation extends PilesGenHelper {
     }
   }
 
-  def strSlick2jsonOperation(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
+  def strSlick2jsonOperation1111(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
@@ -125,7 +117,33 @@ object PropertiesOperation extends PilesGenHelper {
       }
     }
 
-    /*strJsonPropertiesGen.result(optPiles)*/ (Right(Nil): Either[Exception, List[SelectProperty]]) -> jsonGen.result(optPiles) match {
+    (Right(Nil): Either[Exception, List[SelectProperty]]) -> jsonGen.result(optPiles) match {
+      case (Left(e1), Left(e2)) => throw e1
+      case (Left(e), Right(_)) => throw e
+      case (Right(_), Left(e)) => throw e
+      case (Right(properties), Right(data)) =>
+        JsonOut(properties, data)
+    }
+  }
+
+  def strSlick2jsonOperation(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
+    implicit
+    slickProfile: JdbcProfile,
+    ec: ExecutionContext
+  ): List[Pile] => JsonOut = { optPiles: List[Pile] =>
+    val jsonGen: PileSyntax1111.PileGen[SlickParam => ResultWrap] = StrOutSelectConvert1111.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen1111) { (slickQuery, jsonGen) =>
+      { slickParam: SlickParam =>
+        val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
+        val result = slickQuery.slickResult.apply(addedParam)
+        val collection = result.resultAction.map {
+          case ListAnyCollection2222(dataList, sum) =>
+            ResultCollection(dataList.map(s => jsonGen(s)), sum)
+        }
+        ResultWrap(collection, result.statements)
+      }
+    }
+
+    (Right(Nil): Either[Exception, List[SelectProperty]]) -> jsonGen.result(optPiles) match {
       case (Left(e1), Left(e2)) => throw e1
       case (Left(e), Right(_)) => throw e
       case (Right(_), Left(e)) => throw e
@@ -249,10 +267,10 @@ object PropertiesOperation extends PilesGenHelper {
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[Pile] => PoiOut = { optPiles: List[Pile] =>
-    val poiGen /*: PileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]]*/ = StrOutSelectConvert.ubwGen(wQuery).flatMap(ExcelOperation.writeGen) { (slickQuery, poiGen) =>
+    val poiGen /*: PileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]]*/ = StrOutSelectConvert1111.ubwGen(wQuery).flatMap(ExcelOperation.writeGen) { (slickQuery, poiGen) =>
       { slickParam: SlickParam =>
         slickQuery.slickResult.apply(slickParam).resultAction.map {
-          case ListAnyCollection1111(dataList, sum) =>
+          case ListAnyCollection2222(dataList, sum) =>
             //TODO Remove None.get
             dataList.map(s => poiGen(s)) -> sum.get
         }

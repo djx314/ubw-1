@@ -6,8 +6,8 @@ import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import net.scalax.fsn.slick.model.SlickParam
 import net.scalax.fsn.slick.operation.ExecInfo3
 import slick.ast.{ AnonSymbol, Ref }
-import slick.dbio.{ DBIO, NoStream }
-import slick.jdbc.{ JdbcActionComponent, JdbcBackend, JdbcProfile }
+import slick.dbio.DBIO
+import slick.jdbc.{ JdbcBackend, JdbcProfile }
 import slick.lifted._
 
 import scala.concurrent.{ ExecutionContext, Future }
