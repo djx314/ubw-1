@@ -18,8 +18,6 @@ sealed abstract trait Pile {
 
   def selfPaths: List[AtomicPath]
 
-  def length: Int
-
   def dataListFromSubList(atomicDatas: List[AtomicValue]): List[AtomicValue] = {
     val leave = subsCommonPile
     val atomicValueList = ListUtils.splitList(atomicDatas, leave.map(_.dataLengthSum): _*)
@@ -46,10 +44,6 @@ trait PileList extends Pile {
 
   type PileType
   override type DataType
-
-  override def length: Int = {
-    encodePiles.map(_.length).sum
-  }
 
   override def dataLengthSum: Int = {
     self.encodePiles /*(self.pileEntity)*/ .map(_.dataLengthSum).sum
@@ -140,10 +134,6 @@ abstract trait CommonPile extends Pile {
 
 trait BranchPile extends CommonPile {
   self =>
-
-  override def length: Int = {
-    subs.length
-  }
 
   val subs: Pile
   def dataFromSub(subDatas: Any): DataType
@@ -256,10 +246,6 @@ class BranchPileImpl[PT, DT](
 
 trait LeafPile extends CommonPile {
   self =>
-
-  override val length: Int = {
-    1
-  }
 
   override def dataLengthSum: Int = {
     self.fShape.dataLength

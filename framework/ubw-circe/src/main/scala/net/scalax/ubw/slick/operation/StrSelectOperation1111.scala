@@ -16,7 +16,7 @@ import scala.concurrent.ExecutionContext
 object StrOutSelectConvert1111 {
 
   def ubwGen(wQuery: SlickQueryBindImpl): PileSyntax1111.PileGen[StrSlickQuery1111] = {
-    DataPile.transformTreeList {
+    DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrNeededFetch] :: needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: FANil)
           .mapTo {

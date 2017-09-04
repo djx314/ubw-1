@@ -116,7 +116,7 @@ object JsonOperation extends AtomicValueHelper {
     jsonTupleList.collect { case Some(s) => s }.toMap: Map[String, Json]
   }
 
-  def unSafewriteGen1111 = DataPile.transformTreeList {
+  def unSafewriteGen1111 = DataPile.transformTree {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {

@@ -19,8 +19,7 @@ trait DataPileList extends DataPile {
 
   val pileEntity: PileType
 
-  def encodePiles /*(piles: PileType)*/ : List[CommonDataPile]
-  //def decodePiles(piles: List[CommonDataPile]): PileType
+  def encodePiles: List[CommonDataPile]
   def decodePileData(data: List[Any]): DataType
   def encodePileData(data: DataType): List[Any]
 
@@ -41,15 +40,13 @@ class DataPileListImpl[PT, DT](
     override val pileEntity: PT,
     override val data: DT,
     encoder: List[CommonDataPile],
-    //decoder: List[CommonDataPile] => PT,
     dataDecoder: List[Any] => DT,
     dataEncoder: DT => List[Any]
 ) extends DataPileList {
   override type PileType = PT
   override type DataType = DT
 
-  override def encodePiles: List[CommonDataPile] = encoder //encoder(piles)
-  //override def decodePiles(piles: List[CommonDataPile]): PileType = decoder(piles)
+  override def encodePiles: List[CommonDataPile] = encoder
   override def decodePileData(data: List[Any]): DT = dataDecoder(data)
   override def encodePileData(data: DataType): List[Any] = dataEncoder(data)
 
@@ -208,11 +205,6 @@ object DataPile {
             case _ => throw new IllegalArgumentException("不可识别的输入")
           }.unzip
           Right(TransPileWrap(new PileListImpl[List[Any], newPile.DataType](
-            /*newPile.decodePiles(newPiles.map(_.asInstanceOf[CommonPile])),
-            newPile.encodePiles,
-            newPile.decodePiles _,
-            newPile.decodePileData _,
-            newPile.encodePileData _*/
             newPiles.map(_.asInstanceOf[CommonPile]),
             newPiles.map(_.asInstanceOf[CommonPile]),
             newPile.decodePileData _,
@@ -233,7 +225,7 @@ object DataPile {
     genTreeTailCall(pathGen, pile, pile)
   }
 
-  def transformTreeList[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: (List[U], List[AtomicValue] => List[DataPile]) => T): PileSyntax1111.PileGen[T] = new PileSyntax1111.PileGen[T] {
+  def transformTree[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: (List[U], List[AtomicValue] => List[DataPile]) => T): PileSyntax1111.PileGen[T] = new PileSyntax1111.PileGen[T] {
     override def gen(prePiles: Pile): Either[AtomicException, PileSyntax1111.PilePip[T]] = {
       val piles = prePiles
 
@@ -267,22 +259,6 @@ object DataPile {
             }
 
             columnGen(result, atomicValueGen)
-            /*val (valueGens, filterResult) = ListUtils.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*)
-            .zip(summaryPiles)
-            .flatMap {
-              case (subList, subPiles) =>
-                ListUtils.splitList(subList, subPiles.map(_.dataLengthSum): _*).zip(subPiles).map {
-                  case (eachList, eachPiles) =>
-                    val (newDataList, filterResults) = eachPiles.dataListFromSubListWithFilter(eachList, filter)
-                    filter.monad.map(newDataList) { dataList =>
-                      eachPiles.selfPaths.map(s => pathGen(s)).zip(dataList /*eachPiles.dataListFromSubList(eachList)*/ ).map {
-                        case (tranform, data) =>
-                          tranform.apply(tranform.gen.right.get, data.asInstanceOf[AtomicValueImpl[tranform.path.DataType]])
-                      }
-                    } -> filterResults
-                }
-            }.unzip
-          columnGen(filter.monad.map(filter.listTraverse(valueGens))(_.flatten)) -> filterGen(filter.monad.map(filter.listTraverse(filterResult)) { _.flatten })*/
           })
       }
 

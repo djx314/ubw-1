@@ -267,10 +267,10 @@ object PropertiesOperation extends PilesGenHelper {
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[Pile] => PoiOut = { optPiles: List[Pile] =>
-    val poiGen /*: PileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]]*/ = StrOutSelectConvert.ubwGen(wQuery).flatMap(ExcelOperation.writeGen) { (slickQuery, poiGen) =>
+    val poiGen /*: PileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]]*/ = StrOutSelectConvert1111.ubwGen(wQuery).flatMap(ExcelOperation.writeGen) { (slickQuery, poiGen) =>
       { slickParam: SlickParam =>
         slickQuery.slickResult.apply(slickParam).resultAction.map {
-          case ListAnyCollection1111(dataList, sum) =>
+          case ListAnyCollection2222(dataList, sum) =>
             //TODO Remove None.get
             dataList.map(s => poiGen(s)) -> sum.get
         }
