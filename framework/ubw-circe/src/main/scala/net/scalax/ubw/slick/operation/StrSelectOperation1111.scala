@@ -217,3 +217,25 @@ trait StrSlickQuery1111 extends AtomicValueHelper {
       ListAnyWrap2222(rs, sortbyQuery2.result.statements.toList)
   }
 }
+
+object test {
+
+  type ParamDBIO[T] = SlickParam => slick.dbio.DBIO[List[T]]
+
+  def syntaxTest()(
+    implicit
+    slickProfile1: JdbcProfile,
+    ec: ExecutionContext
+  ) = new SyntaxTest[StrSlickQuery1111, ParamDBIO] {
+    override def bb[U](a: StrSlickQuery1111, pervious: List[DataPile] => U): ParamDBIO[U] = {
+      val profile = slickProfile1
+      import profile.api._
+
+      { param: SlickParam =>
+        a.slickResult.apply(param).resultAction.map { s =>
+          s.data.map(pervious)
+        }
+      }
+    }
+  }
+}

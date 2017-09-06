@@ -177,3 +177,9 @@ trait PilesGenHelper {
   }
 
 }
+
+trait SyntaxTest[T, R[_]] {
+
+  def bb[U](a: T, pervious: List[DataPile] => U): R[U]
+
+}
