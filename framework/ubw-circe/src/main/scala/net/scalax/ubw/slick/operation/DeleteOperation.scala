@@ -1,5 +1,6 @@
 package net.scalax.fsn.slick.operation
 
+import cats.Functor
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
 import net.scalax.fsn.slick.atomic.{ OneToOneRetrieve, SlickDelete }
@@ -69,13 +70,23 @@ trait ISlickDeleteWithData {
 }
 
 object InDeleteConvert extends AtomicValueHelper {
+
+  type DeleteType[T] = List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]
+
+  def functor(implicit ec: ExecutionContext): Functor[DeleteType] = new Functor[DeleteType] {
+    override def map[A, B](fa: DeleteType[A])(f: (A) => B): DeleteType[B] = {
+      { binds: List[(Any, SlickQueryBindImpl)] =>
+        fa(binds).map(s => ExecInfo3(s.effectRows, f(s.columns)))
+      }
+    }
+  }
+
   def convert(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  //deleteConV: Query[RelationalProfile#Table[_], _, Seq] => JdbcActionComponent#DeleteActionExtensionMethods
-  ) = {
-    Pile.transformTreeList {
+  ): FoldableChannel[DeleteType[List[DataPile]], DeleteType] = {
+    DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickDelete] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
           .mapTo {
@@ -131,7 +142,7 @@ object InDeleteConvert extends AtomicValueHelper {
               ): DSlickWriter2
           }
       }.aa
-    } { genList =>
+    } { (genList, atomicValueGen) =>
       { binds: List[(Any, SlickQueryBindImpl)] =>
         val genListWithData = genList.zipWithIndex.map {
           case (gen, index) =>
@@ -140,9 +151,19 @@ object InDeleteConvert extends AtomicValueHelper {
               override val data = DataWithIndex(set(writer.data), index)
             }
         }
-        DeleteOperation.parseInsert(binds, genListWithData)
+        DeleteOperation.parseInsert(binds, genListWithData).map { s =>
+          ExecInfo3(s.effectRows, atomicValueGen(s.columns.sortBy(_.index).map(_.data)))
+        }
       }
-    }
+    }.withSyntax(new PileSyntaxFunctor[DeleteType[List[DataPile]], DeleteType] {
+      override def pileMap[U](a: DeleteType[List[DataPile]], pervious: List[DataPile] => U): DeleteType[U] = {
+        { binds: List[(Any, SlickQueryBindImpl)] =>
+          a(binds).map { execInfo =>
+            ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))
+          }
+        }
+      }
+    }).withFunctor(functor)
   }
 }
 
@@ -156,7 +177,7 @@ object DeleteOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): slickProfile.api.DBIO[ExecInfo3] = {
+  ): slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]] = {
     val profile = slickProfile
     import profile.api._
     try {
@@ -200,15 +221,15 @@ object DeleteOperation {
               parseInsertGen(binds, updateList, subs)
             }
           } yield {
-            ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
+            ExecInfo3[List[DataWithIndex]](effectRows + subResult.effectRows, data ::: subResult.columns)
           }
       }
-      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+      results.foldLeft(DBIO.successful(ExecInfo3[List[DataWithIndex]](0, Nil)): DBIO[ExecInfo3[List[DataWithIndex]]]) { (s, t) =>
         (for {
           s1 <- s
           t1 <- t
         } yield {
-          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+          ExecInfo3[List[DataWithIndex]](s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
         })
       }
     } catch {
@@ -223,7 +244,7 @@ object DeleteOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): slickProfile.api.DBIO[ExecInfo3] = {
+  ): slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]] = {
 
     val profile = slickProfile
     import profile.api._
@@ -269,15 +290,15 @@ object DeleteOperation {
               parseInsertGen(binds, updateList, subs)
             }
           } yield {
-            ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
+            ExecInfo3[List[DataWithIndex]](effectRows + subResult.effectRows, data ::: subResult.columns)
           }
       }
-      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+      results.foldLeft(DBIO.successful(ExecInfo3[List[DataWithIndex]](0, Nil)): DBIO[ExecInfo3[List[DataWithIndex]]]) { (s, t) =>
         (for {
           s1 <- s
           t1 <- t
         } yield {
-          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+          ExecInfo3[List[DataWithIndex]](s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
         })
       }
     } catch {

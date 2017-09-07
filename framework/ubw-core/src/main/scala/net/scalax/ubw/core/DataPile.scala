@@ -19,8 +19,7 @@ trait DataPileList extends DataPile {
 
   val pileEntity: PileType
 
-  def encodePiles /*(piles: PileType)*/ : List[CommonDataPile]
-  //def decodePiles(piles: List[CommonDataPile]): PileType
+  def encodePiles: List[CommonDataPile]
   def decodePileData(data: List[Any]): DataType
   def encodePileData(data: DataType): List[Any]
 
@@ -41,15 +40,13 @@ class DataPileListImpl[PT, DT](
     override val pileEntity: PT,
     override val data: DT,
     encoder: List[CommonDataPile],
-    //decoder: List[CommonDataPile] => PT,
     dataDecoder: List[Any] => DT,
     dataEncoder: DT => List[Any]
 ) extends DataPileList {
   override type PileType = PT
   override type DataType = DT
 
-  override def encodePiles: List[CommonDataPile] = encoder //encoder(piles)
-  //override def decodePiles(piles: List[CommonDataPile]): PileType = decoder(piles)
+  override def encodePiles: List[CommonDataPile] = encoder
   override def decodePileData(data: List[Any]): DT = dataDecoder(data)
   override def encodePileData(data: DataType): List[Any] = dataEncoder(data)
 
@@ -208,11 +205,6 @@ object DataPile {
             case _ => throw new IllegalArgumentException("不可识别的输入")
           }.unzip
           Right(TransPileWrap(new PileListImpl[List[Any], newPile.DataType](
-            /*newPile.decodePiles(newPiles.map(_.asInstanceOf[CommonPile])),
-            newPile.encodePiles,
-            newPile.decodePiles _,
-            newPile.decodePileData _,
-            newPile.encodePileData _*/
             newPiles.map(_.asInstanceOf[CommonPile]),
             newPiles.map(_.asInstanceOf[CommonPile]),
             newPile.decodePileData _,
@@ -233,59 +225,48 @@ object DataPile {
     genTreeTailCall(pathGen, pile, pile)
   }
 
-  def transformTreeList[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: (List[U], List[AtomicValue] => List[DataPile]) => T): PileSyntax1111.PileGen[T] = new PileSyntax1111.PileGen[T] {
-    override def gen(prePiles: Pile): Either[AtomicException, PileSyntax1111.PilePip[T]] = {
-      val piles = prePiles
+  def transformTree[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: (List[U], List[AtomicValue] => List[DataPile]) => T): InputChannel[T] = {
+    val pileGen1 = new Channel.PileGen[T] {
+      override def gen(prePiles: Pile): Either[AtomicException, Channel.PilePip[T]] = {
+        val piles = prePiles
 
-      val calculatePiles =
-        genTree(pathGen, piles)
+        val calculatePiles =
+          genTree(pathGen, piles)
 
-      calculatePiles.right.map {
-        case TransPileWrap(newPiles, summaryPiles) =>
-          PileSyntax1111.PilePipImpl(piles = newPiles, valueFunc = { dataPiles: List[DataPile] =>
-            val (oldDataPile, _) = summaryPiles.foldLeft(List.empty[DataPile], dataPiles.map(_.data.asInstanceOf[Any])) {
-              case ((dataPileList, data), pile) =>
-                val (currentDataPile, remainData) = fromPile(pile, data)
-                (dataPileList ::: currentDataPile :: Nil) -> remainData
-            }
-
-            val result = oldDataPile.map { pile =>
-              val pathWithValue = pile.selfPaths.zip(pile.toAtomicValues(pile.data))
-              pathWithValue.map {
-                case (path, value) =>
-                  val transform = pathGen(path)
-                  transform.apply(transform.gen.right.get, value.asInstanceOf[AtomicValueImpl[transform.path.DataType]])
+        calculatePiles.right.map {
+          case TransPileWrap(newPiles, summaryPiles) =>
+            Channel.PilePipImpl(piles = newPiles, valueFunc = { dataPiles: List[DataPile] =>
+              val (oldDataPile, _) = summaryPiles.foldLeft(List.empty[DataPile], dataPiles.map(_.data.asInstanceOf[Any])) {
+                case ((dataPileList, data), pile) =>
+                  val (currentDataPile, remainData) = fromPile(pile, data)
+                  (dataPileList ::: currentDataPile :: Nil) -> remainData
               }
-            }.flatten
 
-            val atomicValueGen = { newAtomicValues: List[AtomicValue] =>
-              oldDataPile.foldLeft(List.empty[DataPile] -> newAtomicValues) {
-                case ((newDataPiles, currentValues), oldDataPile) =>
-                  val (newDataPile, remainData) = oldDataPile.renderFromList(currentValues)
-                  (newDataPiles ::: newDataPile :: Nil) -> remainData
-              }._1
-            }
-
-            columnGen(result, atomicValueGen)
-            /*val (valueGens, filterResult) = ListUtils.splitList(anyList, summaryPiles.map(_.map(_.dataLengthSum).sum): _*)
-            .zip(summaryPiles)
-            .flatMap {
-              case (subList, subPiles) =>
-                ListUtils.splitList(subList, subPiles.map(_.dataLengthSum): _*).zip(subPiles).map {
-                  case (eachList, eachPiles) =>
-                    val (newDataList, filterResults) = eachPiles.dataListFromSubListWithFilter(eachList, filter)
-                    filter.monad.map(newDataList) { dataList =>
-                      eachPiles.selfPaths.map(s => pathGen(s)).zip(dataList /*eachPiles.dataListFromSubList(eachList)*/ ).map {
-                        case (tranform, data) =>
-                          tranform.apply(tranform.gen.right.get, data.asInstanceOf[AtomicValueImpl[tranform.path.DataType]])
-                      }
-                    } -> filterResults
+              val result = oldDataPile.map { pile =>
+                val pathWithValue = pile.selfPaths.zip(pile.toAtomicValues(pile.data))
+                pathWithValue.map {
+                  case (path, value) =>
+                    val transform = pathGen(path)
+                    transform.apply(transform.gen.right.get, value.asInstanceOf[AtomicValueImpl[transform.path.DataType]])
                 }
-            }.unzip
-          columnGen(filter.monad.map(filter.listTraverse(valueGens))(_.flatten)) -> filterGen(filter.monad.map(filter.listTraverse(filterResult)) { _.flatten })*/
-          })
-      }
+              }.flatten
 
+              val atomicValueGen = { newAtomicValues: List[AtomicValue] =>
+                oldDataPile.foldLeft(List.empty[DataPile] -> newAtomicValues) {
+                  case ((newDataPiles, currentValues), oldDataPile) =>
+                    val (newDataPile, remainData) = oldDataPile.renderFromList(currentValues)
+                    (newDataPiles ::: newDataPile :: Nil) -> remainData
+                }._1
+              }
+
+              columnGen(result, atomicValueGen)
+            })
+        }
+
+      }
+    }
+    new InputChannel[T] {
+      override val pilesGen = pileGen1
     }
   }
 
@@ -317,7 +298,6 @@ object DataPile {
           pileEntity = subDataPileList,
           data = listPile.decodePileData(subDataPileList.map(_.data)),
           encoder = subDataPileList.map(_.asInstanceOf[CommonDataPile]),
-          //decoder: List[CommonDataPile] => PT,
           dataDecoder = listPile.decodePileData _,
           dataEncoder = listPile.encodePileData _
         ) -> remainList

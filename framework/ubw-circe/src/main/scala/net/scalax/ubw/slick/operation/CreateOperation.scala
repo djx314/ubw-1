@@ -1,5 +1,6 @@
 package net.scalax.fsn.slick.operation
 
+import cats.Functor
 import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
@@ -73,14 +74,24 @@ case class ISWriter[A, B, C, D, E, F](
 
 object InCreateConvert extends AtomicValueHelper {
 
+  type CreateType[T] = List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]
+
+  def functor(implicit ec: ExecutionContext): Functor[CreateType] = new Functor[CreateType] {
+    override def map[A, B](fa: CreateType[A])(f: (A) => B): CreateType[B] = {
+      { binds: List[(Any, SlickQueryBindImpl)] =>
+        fa(binds).map(s => ExecInfo3(s.effectRows, f(s.columns)))
+      }
+    }
+  }
+
   def createGen(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): PileSyntax.PileGen[List[(Any, SlickQueryBindImpl)] => slickProfile.api.DBIO[ExecInfo3]] = {
+  ): FoldableChannel[CreateType[List[DataPile]], CreateType] = {
     val profile = slickProfile
-    import profile.api._
-    Pile.transformTreeList {
+    DataPile.transformTree {
+      import profile.api._
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickCreate] :: needAtomicOpt[AutoInc] :: needAtomicOpt[OneToOneCrate] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
           .mapTo {
@@ -166,7 +177,7 @@ object InCreateConvert extends AtomicValueHelper {
               writer: ISlickWriter
           }
       }.aa
-    } { genList =>
+    } { (genList, atomicValueGen) =>
       { binds: List[(Any, SlickQueryBindImpl)] =>
         val genListWithIndex = genList.zipWithIndex.map {
           case (gen, index) =>
@@ -177,10 +188,19 @@ object InCreateConvert extends AtomicValueHelper {
               }
             }
         }
-        implicit val _ = profile
-        CreateOperation.parseInsert(binds, genListWithIndex)
+        CreateOperation.parseInsert(binds, genListWithIndex).map { s =>
+          ExecInfo3(s.effectRows, atomicValueGen(s.columns.sortBy(_.index).map(_.data)))
+        }
       }
-    }
+    }.withSyntax(new PileSyntaxFunctor[CreateType[List[DataPile]], CreateType] {
+      override def pileMap[U](a: CreateType[List[DataPile]], pervious: List[DataPile] => U): CreateType[U] = {
+        { binds: List[(Any, SlickQueryBindImpl)] =>
+          a(binds).map { execInfo =>
+            ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))
+          }
+        }
+      }
+    }).withFunctor(functor)
   }
 
 }
@@ -200,7 +220,7 @@ object CreateOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): slickProfile.api.DBIO[ExecInfo3] = {
+  ): slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]] = {
     val profile = slickProfile
     import profile.api._
     try {
@@ -261,17 +281,17 @@ object CreateOperation {
               parseInsertGen(binds, insertList, fillSubGens.flatten)
             }
           } yield {
-            ExecInfo3(subResult.effectRows + 1, convertRetrieveQuery.dataGen(autoIncData.toList) ::: subResult.columns)
+            ExecInfo3[List[DataWithIndex]](subResult.effectRows + 1, convertRetrieveQuery.dataGen(autoIncData.toList) ::: subResult.columns)
           }
 
       }
 
-      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+      results.foldLeft(DBIO.successful(ExecInfo3[List[DataWithIndex]](0, Nil)): DBIO[ExecInfo3[List[DataWithIndex]]]) { (s, t) =>
         (for {
           s1 <- s
           t1 <- t
         } yield {
-          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+          ExecInfo3[List[DataWithIndex]](s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
         })
       }
     } catch {
@@ -287,7 +307,7 @@ object CreateOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): slickProfile.api.DBIO[ExecInfo3] = {
+  ): slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]] = {
     val profile = slickProfile
     import profile.api._
     try {
@@ -346,17 +366,17 @@ object CreateOperation {
               parseInsertGen(binds, insertList, fillSubGens.flatten)
             }
           } yield {
-            ExecInfo3(subResult.effectRows + 1, convertRetrieveQuery.dataGen(autoIncData.toList) ::: subResult.columns)
+            ExecInfo3[List[DataWithIndex]](subResult.effectRows + 1, convertRetrieveQuery.dataGen(autoIncData.toList) ::: subResult.columns)
           }
 
       }
 
-      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+      results.foldLeft(DBIO.successful(ExecInfo3[List[DataWithIndex]](0, Nil)): DBIO[ExecInfo3[List[DataWithIndex]]]) { (s, t) =>
         (for {
           s1 <- s
           t1 <- t
         } yield {
-          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+          ExecInfo3[List[DataWithIndex]](s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
         })
       }
     } catch {

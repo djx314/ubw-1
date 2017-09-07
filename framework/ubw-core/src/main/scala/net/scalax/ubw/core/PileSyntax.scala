@@ -1,95 +1,22 @@
 package net.scalax.fsn.core
 
-import cats.Monad
-import scala.language.implicitConversions
+import cats.{ Functor, Monad }
 
-trait PileSyntax[T] {
+import scala.language.higherKinds
 
-  val pilesGen: PileSyntax.PileGenImpl[List[AtomicValue] => T]
-  /*def flatMap1111[S, U](mapPiles: PileSyntax.PileGen[S])(cv: (T, List[AtomicValue] => S) => U): PileSyntax.PileGen[U] =
-    new PileSyntax.PileGen[U] {
-      def gen(piles: List[Pile]): Either[AtomicException, PileSyntax.PilePipImpl[List[AtomicValue] => U]] = {
-        pilesGen.gen(piles).right.flatMap {
-          case PileSyntax.PilePip(newPiles, gen) =>
-            mapPiles.gen(newPiles).right.map {
-              case PileSyntax.PilePip(anOtherNewPiles, anOtherGen) =>
-                PileSyntax.PilePip(anOtherNewPiles, { list: List[AtomicValue] =>
-                  cv(gen(list), anOtherGen)
-                })
-            }
-        }
-      }
-    }*/
-  def flatMap[S, U](mapPiles: PileSyntax.PileGenImpl[List[AtomicValue] => S])(cv: (T, List[AtomicValue] => S) => U): PileSyntax.PileGenImpl[List[AtomicValue] => U] = {
-    val monad = implicitly[Monad[PileSyntax.PileGenImpl]]
-    monad.flatMap(pilesGen) { tGen =>
-      monad.map(mapPiles) { sGen =>
-        { values: List[AtomicValue] =>
-          cv(tGen(values), sGen)
-        }
-      }
+trait InputChannel[T] {
+  self =>
+
+  val pilesGen: Channel.PileGenImpl[List[DataPile] => T]
+
+  def withSyntax[R[_]](syntax1: PileSyntaxFunctor[T, R]): IOChannel[T, R] = {
+    new IOChannel[T, R] {
+      override val pilesGen = self.pilesGen
+      override val PileSyntaxFunctor = syntax1
     }
   }
-
-  def result(piles: List[Pile]): Either[AtomicException, T] = {
-    pilesGen.gen(piles).right.map { s =>
-      s.atomicValues.apply(piles.flatMap(_.deepZero))
-    }
-  }
-
-}
-
-object PileSyntax {
-
-  type PilePip[T] = PilePipImpl[List[AtomicValue] => T]
-  type PileGen[T] = PileGenImpl[List[AtomicValue] => T]
-  val PilePip = PilePipImpl
-
-  case class PilePipImpl[T](piles: List[Pile], atomicValues: T)
-
-  trait PileGenImpl[T] {
-    def gen(piles: List[Pile]): Either[AtomicException, PilePipImpl[T]]
-  }
-
-  object PileGenImpl {
-    implicit val pileGenMonadImplicit: Monad[PileGenImpl] = new Monad[PileGenImpl] {
-      self =>
-      override def pure[A](x: A): PileGenImpl[A] = new PileGenImpl[A] {
-        def gen(piles: List[Pile]) = Right(PilePipImpl(piles, x))
-      }
-      override def flatMap[A, B](fa: PileGenImpl[A])(f: A => PileGenImpl[B]): PileGenImpl[B] = {
-        new PileGenImpl[B] {
-          def gen(piles: List[Pile]) = {
-            fa.gen(piles) match {
-              case Left(e) =>
-                Left(e)
-              case Right(PilePipImpl(newPiles, newValuesGen)) =>
-                val pileB = f(newValuesGen)
-                pileB.gen(newPiles)
-            }
-          }
-        }
-      }
-      override def tailRecM[A, B](a: A)(f: A => PileGenImpl[Either[A, B]]): PileGenImpl[B] = {
-        val eitherPile = f(a)
-        self.flatMap(eitherPile) {
-          case Left(a) =>
-            tailRecM(a)(f)
-          case Right(b) =>
-            self.pure(b)
-        }
-      }
-    }
-  }
-
-}
-
-trait PileSyntax1111[T] {
-
-  val pilesGen: PileSyntax1111.PileGenImpl[List[DataPile] => T]
-
-  def flatMap[S, U](mapPiles: PileSyntax1111.PileGenImpl[List[DataPile] => S])(cv: (T, List[DataPile] => S) => U): PileSyntax1111.PileGenImpl[List[DataPile] => U] = {
-    val monad = implicitly[Monad[PileSyntax1111.PileGenImpl]]
+  /*def flatMap[S, U](mapPiles: Channel.PileGenImpl[List[DataPile] => S])(cv: (T, List[DataPile] => S) => U): Channel.PileGenImpl[List[DataPile] => U] = {
+    val monad = implicitly[Monad[Channel.PileGenImpl]]
     monad.flatMap(pilesGen) { tGen =>
       monad.map(mapPiles) { sGen =>
         { values: List[DataPile] =>
@@ -97,8 +24,7 @@ trait PileSyntax1111[T] {
         }
       }
     }
-  }
-
+  }*/
   def result(piles: List[Pile]): Either[AtomicException, T] = {
     val listPile = new PileListImpl(
       piles,
@@ -106,10 +32,10 @@ trait PileSyntax1111[T] {
       { list: List[Any] => list },
       { list: List[Any] => list }
     )
-    result1111(listPile)
+    commonResult(listPile)
   }
 
-  def result1111(piles: Pile): Either[AtomicException, T] = {
+  def commonResult(piles: Pile): Either[AtomicException, T] = {
     pilesGen.gen(piles).right.map { s =>
       s.valueFunc(piles.leafZero)
     }
@@ -117,7 +43,7 @@ trait PileSyntax1111[T] {
 
 }
 
-object PileSyntax1111 {
+object Channel {
 
   type PilePip[T] = PilePipImpl[List[DataPile] => T]
   type PileGen[T] = PileGenImpl[List[DataPile] => T]
@@ -160,20 +86,102 @@ object PileSyntax1111 {
     }
   }
 
+  def compose[T, S, U](pilesGen: Channel.PileGenImpl[List[DataPile] => T])(mapPiles: Channel.PileGenImpl[List[DataPile] => S])(cv: (T, List[DataPile] => S) => U): Channel.PileGenImpl[List[DataPile] => U] = {
+    val monad = implicitly[Monad[Channel.PileGenImpl]]
+    monad.flatMap(pilesGen) { tGen =>
+      monad.map(mapPiles) { sGen =>
+        { values: List[DataPile] =>
+          cv(tGen(values), sGen)
+        }
+      }
+    }
+  }
+
+}
+
+trait IOChannel[T, R[_]] extends InputChannel[T] {
+  self =>
+
+  override val pilesGen: Channel.PileGenImpl[List[DataPile] => T]
+
+  val PileSyntaxFunctor: PileSyntaxFunctor[T, R]
+
+  def withFunctor(functor: cats.Functor[R]): FoldableChannel[T, R] = {
+    val functor1 = functor
+    new FoldableChannel[T, R] {
+      override val pilesGen = self.pilesGen
+      override val PileSyntaxFunctor = self.PileSyntaxFunctor
+      override val functor = functor1
+    }
+  }
+
+  def next[U](other: InputChannel[U]): InputChannel[R[U]] = {
+    new InputChannel[R[U]] {
+      override val pilesGen: Channel.PileGenImpl[List[DataPile] => R[U]] = {
+        PileSyntaxFunctor.reduce(self.pilesGen, other.pilesGen)
+      }
+    }
+  }
+
+}
+
+trait FoldableChannel[T, R[_]] extends IOChannel[T, R] {
+  self =>
+
+  override val pilesGen: Channel.PileGenImpl[List[DataPile] => T]
+
+  override val PileSyntaxFunctor: PileSyntaxFunctor[T, R]
+
+  val functor: cats.Functor[R]
+
+  def next2222[U, H[_]](other: IOChannel[U, H]): IOChannel[R[U], ({ type V[W] = R[H[W]] })#V] = {
+    new IOChannel[R[U], ({ type V[W] = R[H[W]] })#V] {
+      override val pilesGen: Channel.PileGenImpl[List[DataPile] => R[U]] = {
+        self.PileSyntaxFunctor.reduce(self.pilesGen, other.pilesGen)
+      }
+      override val PileSyntaxFunctor = new PileSyntaxFunctor[R[U], ({ type V[W] = R[H[W]] })#V] {
+        def pileMap[M](a: R[U], pervious: List[DataPile] => M): R[H[M]] = {
+          self.functor.map(a) { u =>
+            other.PileSyntaxFunctor.pileMap(u, pervious)
+          }
+        }
+      }
+    }
+  }
+
+  def next3333[U, H[_]](other: FoldableChannel[U, H]): FoldableChannel[R[U], ({ type V[W] = R[H[W]] })#V] = {
+    new FoldableChannel[R[U], ({ type V[W] = R[H[W]] })#V] {
+      override val pilesGen: Channel.PileGenImpl[List[DataPile] => R[U]] = {
+        self.PileSyntaxFunctor.reduce(self.pilesGen, other.pilesGen)
+      }
+      override val PileSyntaxFunctor = new PileSyntaxFunctor[R[U], ({ type V[W] = R[H[W]] })#V] {
+        def pileMap[M](a: R[U], pervious: List[DataPile] => M): R[H[M]] = {
+          self.functor.map(a) { u =>
+            other.PileSyntaxFunctor.pileMap(u, pervious)
+          }
+        }
+      }
+      override val functor: cats.Functor[({ type V[W] = R[H[W]] })#V] = {
+        new Functor[({ type V[W] = R[H[W]] })#V] {
+          override def map[A, B](fa: R[H[A]])(f: (A) => B): R[H[B]] = self.functor.map(fa) { s => other.functor.map(s)(f) }
+        }
+      }
+
+    }
+  }
+
 }
 
 trait PilesGenHelper {
+}
 
-  implicit def pileExtensionMethods[T](pilesGenList: PileSyntax.PileGen[T]): PileSyntax[T] = {
-    new PileSyntax[T] {
-      override val pilesGen = pilesGenList
+trait PileSyntaxFunctor[T, R[_]] extends PilesGenHelper {
+
+  def pileMap[U](a: T, pervious: List[DataPile] => U): R[U]
+
+  def reduce[S](pervious: Channel.PileGenImpl[List[DataPile] => T], next: Channel.PileGenImpl[List[DataPile] => S]): Channel.PileGenImpl[List[DataPile] => R[S]] = {
+    Channel.compose(pervious)(next) { (t, gen) =>
+      pileMap(t, gen)
     }
   }
-
-  implicit def pileExtensionMethods1111[T](pilesGenList: PileSyntax1111.PileGen[T]): PileSyntax1111[T] = {
-    new PileSyntax1111[T] {
-      override val pilesGen = pilesGenList
-    }
-  }
-
 }

@@ -1,10 +1,12 @@
 package net.scalax.fsn.slick.operation
 
+import cats.Functor
 import net.scalax.fsn.common.atomic.DefaultValue
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue, ValidatorOperation}
 import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate}
 import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
+import net.scalax.fsn.slick.operation.InCreateConvert.CreateType
 import net.scalax.ubw.validate.atomic.ErrorMessage
 import slick.jdbc.JdbcProfile
 
@@ -13,7 +15,7 @@ import shapeless._
 import slick.lifted._
 
 case class DataWithIndex(data: AtomicValue, index: Int)
-case class ExecInfo3(effectRows: Int, columns: List[DataWithIndex])
+case class ExecInfo3[T](effectRows: Int, columns: T)
 
 trait UpdateTran {
   val table: Any
@@ -75,12 +77,22 @@ trait ISlickUpdaterWithData {
 
 object InUpdateConvert extends AtomicValueHelper {
 
+  type UpdateType[T] = List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]
+
+  def functor(implicit ec: ExecutionContext): Functor[UpdateType] = new Functor[UpdateType] {
+    override def map[A, B](fa: UpdateType[A])(f: (A) => B): UpdateType[B] = {
+      { binds: List[(Any, SlickQueryBindImpl)] =>
+        fa(binds).map(s => ExecInfo3(s.effectRows, f(s.columns)))
+      }
+    }
+  }
+
   def updateGen(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): PileSyntax.PileGen[(List[(Any, SlickQueryBindImpl)] => Future[slickProfile.api.DBIO[ExecInfo3]], Future[List[ErrorMessage]])] = {
-    Pile.transformTreeListWithFilter({
+  ): FoldableChannel[CreateType[List[DataPile]], CreateType] = {
+    DataPile.transformTree(
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: needAtomicOpt[DefaultValue] :: FANil)
           .mapTo {
@@ -143,23 +155,28 @@ object InUpdateConvert extends AtomicValueHelper {
               uSlickWriter: USlickWriter
             }
           }
-      }.aa
-    }, ValidatorOperation.readValidator)({ genListF =>
+      }.aa/*, ValidatorOperation.readValidator*/) { (genList, atomicValueGen) =>
       { binds: List[(Any, SlickQueryBindImpl)] =>
-        genListF.map { genList =>
-          val genListWithData = genList.zipWithIndex.map {
-            case (s, index) =>
-              new ISlickUpdaterWithData {
-                override val writer = s
-                override val data = DataWithIndex(set(writer.data), index)
-              }
-          }
-          UpdateOperation.parseInsert(binds, genListWithData)
+        val genListWithData = genList.zipWithIndex.map {
+          case (s, index) =>
+            new ISlickUpdaterWithData {
+              override val writer = s
+              override val data = DataWithIndex(set(writer.data), index)
+            }
+        }
+        UpdateOperation.parseInsert(binds, genListWithData).map { s =>
+          ExecInfo3(s.effectRows, atomicValueGen(s.columns.sortBy(_.index).map(_.data)))
         }
       }
-    }, { validateIfos =>
-      validateIfos.map(_.flatten)
-    })
+    }.withSyntax(new PileSyntaxFunctor[UpdateType[List[DataPile]], UpdateType] {
+      override def pileMap[U](a: UpdateType[List[DataPile]], pervious: List[DataPile] => U): UpdateType[U] = {
+        { binds: List[(Any, SlickQueryBindImpl)] =>
+          a(binds).map { execInfo =>
+            ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))
+          }
+        }
+      }
+    }).withFunctor(functor)
   }
 }
 
@@ -173,7 +190,7 @@ object UpdateOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): slickProfile.api.DBIO[ExecInfo3] = {
+  ): slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]] = {
     val profile = slickProfile
     import profile.api._
     try {
@@ -220,15 +237,15 @@ object UpdateOperation {
               parseInsertGen(binds, wrapList, subs)
             }
           } yield {
-            ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
+            ExecInfo3[List[DataWithIndex]](effectRows + subResult.effectRows, data ::: subResult.columns)
           }
       }
-      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+      results.foldLeft(DBIO.successful(ExecInfo3[List[DataWithIndex]](0, Nil)): DBIO[ExecInfo3[List[DataWithIndex]]]) { (s, t) =>
         (for {
           s1 <- s
           t1 <- t
         } yield {
-          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+          ExecInfo3[List[DataWithIndex]](s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
         })
       }
     } catch {
@@ -244,7 +261,7 @@ object UpdateOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext,
-  ): slickProfile.api.DBIO[ExecInfo3] = {
+  ): slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]] = {
     val profile = slickProfile
     import profile.api._
     try {
@@ -290,15 +307,15 @@ object UpdateOperation {
               parseInsertGen(binds, wrapList, subs)
             }
           } yield {
-            ExecInfo3(effectRows + subResult.effectRows, subResult.columns ::: data)
+            ExecInfo3[List[DataWithIndex]](effectRows + subResult.effectRows, subResult.columns ::: data)
           }
       }
-      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+      results.foldLeft(DBIO.successful(ExecInfo3[List[DataWithIndex]](0, Nil)): DBIO[ExecInfo3[List[DataWithIndex]]]) { (s, t) =>
         (for {
           s1 <- s
           t1 <- t
         } yield {
-          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+          ExecInfo3[List[DataWithIndex]](s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
         })
       }
     } catch {
