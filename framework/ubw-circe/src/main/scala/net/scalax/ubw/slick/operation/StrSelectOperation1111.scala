@@ -1,5 +1,6 @@
 package net.scalax.fsn.slick.operation
 
+import cats.Functor
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
 import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
@@ -19,7 +20,7 @@ object StrOutSelectConvert1111 extends PilesGenHelper {
     implicit
     slickProfile1: JdbcProfile,
     ec: ExecutionContext
-  ): PileSyntax2222[StrSlickQuery1111, test.ParamDBIO] = {
+  ): PileSyntax3333[StrSlickQuery1111, ListAnyWrap3333] = {
     DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrNeededFetch] :: needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: FANil)
@@ -152,6 +153,7 @@ object StrOutSelectConvert1111 extends PilesGenHelper {
         override val slickParam = slickParamObj
       }: StrSlickQuery1111
     }.withSyntax(test.syntaxTest)
+      .withFunctor(test.functor1Test)
   }
 }
 
@@ -215,18 +217,27 @@ trait StrSlickQuery1111 extends AtomicValueHelper {
 
 object test {
 
-  type ParamDBIO[T] = ListAnyWrap3333[T]
-
   def syntaxTest(
     implicit
     _slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ) = new SyntaxTest[StrSlickQuery1111, ParamDBIO] {
-    override def bb[U](a: StrSlickQuery1111, pervious: List[DataPile] => U): ParamDBIO[U] = {
+  ): SyntaxTest[StrSlickQuery1111, ListAnyWrap3333] = new SyntaxTest[StrSlickQuery1111, ListAnyWrap3333] {
+    override def bb[U](a: StrSlickQuery1111, pervious: List[DataPile] => U): ListAnyWrap3333[U] = {
       val result = a.slickResult
       val action = result.resultAction
       val newAction = action.map(s => ListAnyCollection3333(data = s.data.map(pervious), sum = s.sum))
       ListAnyWrap3333(newAction, result.statements)
     }
   }
+
+  def functor1Test(
+    implicit
+    ec: ExecutionContext
+  ): Functor[ListAnyWrap3333] = new Functor[ListAnyWrap3333] {
+    override def map[A, B](fa: ListAnyWrap3333[A])(f: A => B): ListAnyWrap3333[B] = {
+      val newData = fa.resultAction.map(s => ListAnyCollection3333(s.data.map(f), s.sum))
+      ListAnyWrap3333(newData, fa.statements)
+    }
+  }
+
 }

@@ -17,8 +17,7 @@ case class InOutQueryWrap(
     crudBinds: List[(Any, SlickQueryBindImpl)],
     listQueryBind: SlickQueryBindImpl
 ) { self =>
-
-  def result(
+  /*def result(
     slickParam: SlickParam,
     sourceDB: JdbcBackend#Database,
     targetDB: JdbcBackend#Database,
@@ -27,10 +26,6 @@ case class InOutQueryWrap(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-  //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-  //cv: Query[_, Seq[Any], Seq] => JdbcActionComponent#InsertActionExtensionMethods[Seq[Any]],
-  //retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]]
   ): Future[List[ExecInfo3]] = {
     val execPlan = InAndOutOperation.json2SlickCreateOperation(self)
     val resultAction = execPlan(slickParam)
@@ -58,10 +53,6 @@ case class InOutQueryWrap(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  //jsonEv: Query[_, List[Any], List] => JdbcActionComponent#StreamingQueryActionExtensionMethods[List[List[Any]], List[Any]],
-  //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
-  //retrieveCv: Query[_, Seq[Any], Seq] => JdbcActionComponent#StreamingQueryActionExtensionMethods[Seq[Seq[Any]], Seq[Any]],
-  //updateConV: Query[_, Seq[Any], Seq] => JdbcActionComponent#UpdateActionExtensionMethods[Seq[Any]]
   ): Future[List[ExecInfo3]] = {
     val execPlan = InAndOutOperation.json2SlickUpdateOperation(self)
     val resultAction = execPlan(slickParam)
@@ -80,8 +71,7 @@ case class InOutQueryWrap(
         }
       }
     }
-  }
-
+  }*/
 }
 
 class InOutQueryExtensionMethods[E, U](val queryToExt: Query[E, U, Seq]) {

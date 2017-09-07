@@ -1,17 +1,7 @@
 package net.scalax.fsn.slick.operation
 
-import net.scalax.fsn.core._
-import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
-import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
-import net.scalax.fsn.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
 import net.scalax.fsn.slick.helpers._
-import net.scalax.fsn.slick.model._
-import shapeless._
-import slick.jdbc.JdbcProfile
-import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Query, Shape }
-
-import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext
+import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Shape }
 
 trait StrSlickReader {
 
@@ -46,8 +36,7 @@ case class StrSReader[S, T, D](
 }
 
 case class StrReaderWithIndex(reader: StrSlickReader, index: Int)
-
-object StrOutSelectConvert {
+/*object StrOutSelectConvert {
 
   def ubwGen(wQuery: SlickQueryBindImpl): PileSyntax.PileGen[StrSlickQuery] = {
     Pile.transformTreeList {
@@ -247,4 +236,4 @@ trait StrSlickQuery extends AtomicValueHelper {
       import profile.api._
       ListAnyWrap3333(rs, sortbyQuery2.result.statements.toList)
   }
-}
+}*/ 

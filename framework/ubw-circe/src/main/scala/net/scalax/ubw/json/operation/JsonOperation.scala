@@ -143,7 +143,7 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     }
   }
 
-  val unfullreadGen1111: PileSyntax2222[Map[String, Json] => List[DataPile], V] = DataPile.transformTree {
+  val unfullreadGen1111: PileSyntax3333[Map[String, Json] => List[DataPile], V] = DataPile.transformTree {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -185,6 +185,6 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
         pervious(a(sourceData))
       }
     }
-  })
+  }).withFunctor(vFunctor)
 
 }

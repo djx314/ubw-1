@@ -1,6 +1,7 @@
 package net.scalax.fsn.core
 
-import cats.Monad
+import cats.{ Functor, Monad }
+
 import scala.language.implicitConversions
 import scala.language.higherKinds
 
@@ -178,6 +179,15 @@ trait PileSyntax2222[T, R[_]] extends PileSyntax1111[T] {
 
   val syntaxTest: SyntaxTest[T, R]
 
+  def withFunctor(functor: cats.Functor[R]): PileSyntax3333[T, R] = {
+    val functor1 = functor
+    new PileSyntax3333[T, R] {
+      override val pilesGen = self.pilesGen
+      override val syntaxTest = self.syntaxTest
+      override val functor = functor1
+    }
+  }
+
   def next[U](other: PileSyntax1111[U]): PileSyntax1111[R[U]] = {
     new PileSyntax1111[R[U]] {
       override val pilesGen: PileSyntax1111.PileGenImpl[List[DataPile] => R[U]] = {
@@ -198,6 +208,57 @@ trait PileSyntax2222[T, R[_]] extends PileSyntax1111[T] {
           }
         }
       }
+    }
+  }
+
+}
+
+trait PileSyntax3333[T, R[_]] extends PileSyntax2222[T, R] {
+  self =>
+
+  override val pilesGen: PileSyntax1111.PileGenImpl[List[DataPile] => T]
+
+  val syntaxTest: SyntaxTest[T, R]
+
+  val functor: cats.Functor[R]
+
+  override def next[U](other: PileSyntax1111[U]): PileSyntax1111[R[U]] = {
+    super.next(other)
+  }
+
+  def next2222[U, H[_]](other: PileSyntax2222[U, H]): PileSyntax2222[R[U], ({ type V[W] = R[H[W]] })#V] = {
+    new PileSyntax2222[R[U], ({ type V[W] = R[H[W]] })#V] {
+      override val pilesGen: PileSyntax1111.PileGenImpl[List[DataPile] => R[U]] = {
+        self.syntaxTest.flatMap(self.pilesGen, other.pilesGen)
+      }
+      override val syntaxTest = new SyntaxTest[R[U], ({ type V[W] = R[H[W]] })#V] {
+        def bb[M](a: R[U], pervious: List[DataPile] => M): R[H[M]] = {
+          self.functor.map(a) { u =>
+            other.syntaxTest.bb(u, pervious)
+          }
+        }
+      }
+    }
+  }
+
+  def next3333[U, H[_]](other: PileSyntax3333[U, H]): PileSyntax3333[R[U], ({ type V[W] = R[H[W]] })#V] = {
+    new PileSyntax3333[R[U], ({ type V[W] = R[H[W]] })#V] {
+      override val pilesGen: PileSyntax1111.PileGenImpl[List[DataPile] => R[U]] = {
+        self.syntaxTest.flatMap(self.pilesGen, other.pilesGen)
+      }
+      override val syntaxTest = new SyntaxTest[R[U], ({ type V[W] = R[H[W]] })#V] {
+        def bb[M](a: R[U], pervious: List[DataPile] => M): R[H[M]] = {
+          self.functor.map(a) { u =>
+            other.syntaxTest.bb(u, pervious)
+          }
+        }
+      }
+      override val functor: cats.Functor[({ type V[W] = R[H[W]] })#V] = {
+        new Functor[({ type V[W] = R[H[W]] })#V] {
+          override def map[A, B](fa: R[H[A]])(f: (A) => B): R[H[B]] = self.functor.map(fa) { s => other.functor.map(s)(f) }
+        }
+      }
+
     }
   }
 
