@@ -2,6 +2,7 @@ package net.scalax.fsn.core
 
 import cats.Monad
 import scala.language.implicitConversions
+import scala.language.higherKinds
 
 trait PileSyntax[T] {
 
@@ -183,7 +184,21 @@ trait PileSyntax2222[T, R[_]] extends PileSyntax1111[T] {
         syntaxTest.flatMap(self.pilesGen, other.pilesGen)
       }
     }
+  }
 
+  def next[U, H[_]](other: PileSyntax2222[U, H])(implicit fun: cats.Functor[R]): PileSyntax2222[R[U], ({ type V[W] = R[H[W]] })#V] = {
+    new PileSyntax2222[R[U], ({ type V[W] = R[H[W]] })#V] {
+      override val pilesGen: PileSyntax1111.PileGenImpl[List[DataPile] => R[U]] = {
+        self.syntaxTest.flatMap(self.pilesGen, other.pilesGen)
+      }
+      override val syntaxTest = new SyntaxTest[R[U], ({ type V[W] = R[H[W]] })#V] {
+        def bb[M](a: R[U], pervious: List[DataPile] => M): R[H[M]] = {
+          fun.map(a) { u =>
+            other.syntaxTest.bb(u, pervious)
+          }
+        }
+      }
+    }
   }
 
 }

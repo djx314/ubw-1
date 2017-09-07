@@ -48,12 +48,12 @@ trait Slick2JsonFsnImplicit extends PilesGenHelper {
       strResult(Nil)
     }*/
 
-    def filterResult(
+    def filterResult(filter: Map[String, Json])(
       implicit
       slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): JsonOut = {
-      PropertiesOperation.filterStrSlick2jsonOperation(listQueryWrap.listQueryBind, Nil).apply(listQueryWrap.columns)
+      PropertiesOperation.filterStrSlick2jsonOperation(listQueryWrap.listQueryBind, listQueryWrap.slickParam).apply(listQueryWrap.columns).apply(filter)
     }
 
     /*def result(
@@ -85,11 +85,11 @@ trait Slick2JsonFsnImplicit extends PilesGenHelper {
       slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): (() => JsonOut, () => PoiOut) = {
-      lazy val outJsonGen = PropertiesOperation.strSlick2jsonOperation(listQueryWrap.listQueryBind, defaultOrders).apply(listQueryWrap.columns)
+      lazy val outJsonGen = PropertiesOperation.strSlick2jsonOperation(listQueryWrap.listQueryBind, listQueryWrap.slickParam).apply(listQueryWrap.columns)
 
-      lazy val outPoiGen = PropertiesOperation.slick2PoiOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
+      //lazy val outPoiGen = PropertiesOperation.slick2PoiOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns)
 
-      (() => outJsonGen) -> (() => outPoiGen)
+      (() => outJsonGen) -> (() => ???)
     }
     /*def jpResult(orderColumn: String, isDesc: Boolean = true)(
       implicit

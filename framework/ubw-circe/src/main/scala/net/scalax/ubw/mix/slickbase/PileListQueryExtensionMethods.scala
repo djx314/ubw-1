@@ -2,16 +2,16 @@ package net.scalax.fsn.mix.slickbase
 
 import net.scalax.fsn.core.Pile
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
-import net.scalax.fsn.slick.model.{ColumnOrder, SlickPage, SlickParam, SlickRange}
-import slick.ast.{AnonSymbol, Ref}
+import net.scalax.fsn.slick.model.{ ColumnOrder, SlickPage, SlickParam, SlickRange }
+import slick.ast.{ AnonSymbol, Ref }
 import slick.lifted._
 
 import scala.concurrent.ExecutionContext
 
 case class PileListQueryWrap(
-  columns: List[Pile],
-  listQueryBind: SlickQueryBindImpl,
-  slickParam: SlickParam = SlickParam()
+    columns: List[Pile],
+    listQueryBind: SlickQueryBindImpl,
+    slickParam: SlickParam = SlickParam()
 )(implicit val ec: ExecutionContext) {
 
   def page(page: SlickPage) = {

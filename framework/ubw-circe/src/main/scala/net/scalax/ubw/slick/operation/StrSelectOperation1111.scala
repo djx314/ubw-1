@@ -15,7 +15,7 @@ import scala.concurrent.ExecutionContext
 
 object StrOutSelectConvert1111 extends PilesGenHelper {
 
-  def ubwGen(wQuery: SlickQueryBindImpl)(
+  def ubwGen(wQuery: SlickQueryBindImpl, slickParam: SlickParam)(
     implicit
     slickProfile1: JdbcProfile,
     ec: ExecutionContext
@@ -140,6 +140,7 @@ object StrOutSelectConvert1111 extends PilesGenHelper {
       val atomicGen1 = atomicGen
       val slickProfile2 = slickProfile1
       val ec1 = ec
+      val slickParamObj = slickParam
       new StrSlickQuery1111 {
         override val readers = gensWithIndex
         override val sortMaps = finalOrderGen
@@ -148,6 +149,7 @@ object StrOutSelectConvert1111 extends PilesGenHelper {
         override val atomicGen = atomicGen1
         override val _slickProfile = slickProfile2
         override val ec = ec1
+        override val slickParam = slickParamObj
       }: StrSlickQuery1111
     }.withSyntax(test.syntaxTest)
   }
@@ -161,69 +163,59 @@ trait StrSlickQuery1111 extends AtomicValueHelper {
   val atomicGen: List[AtomicValue] => List[DataPile]
   val _slickProfile: JdbcProfile
   val ec: ExecutionContext
+  val slickParam: SlickParam
 
-  def slickResult: SlickParam => ListAnyWrap3333[List[DataPile]] = {
-    slickResult(Nil)
-  }
-
-  def slickResult(orderColumn: String, isDesc: Boolean = true): SlickParam => ListAnyWrap3333[List[DataPile]] = {
-    slickResult(List(ColumnOrder(orderColumn, isDesc)))
-  }
-
-  def slickResult(defaultOrders: List[ColumnOrder]): SlickParam => ListAnyWrap3333[List[DataPile]] = {
+  def slickResult: ListAnyWrap3333[List[DataPile]] = {
     implicit val ec1 = ec
 
-    {
-      (slickParam: SlickParam) =>
-        val cols: List[Any] = readers.map(_.reader.sourceCol)
-        val shape: Shape[FlatShapeLevel, List[Any], List[Any], List[Any]] = new ListColumnShape[FlatShapeLevel](readers.map(_.reader.mainShape))
-        val selectQuery = wrapQuery.bind(Query(cols)(shape))
-        val filterQuery = filterGen.foldLeft(selectQuery) { (query, filterGen) =>
-          query.filter(filterGen.dataToCondition)(filterGen.wt)
-        }
-
-        val sortedQuery = (slickParam.orders ::: defaultOrders)
-          .filter(s => sortMaps.keySet.contains(s.columnName))
-          .map { order =>
-            sortMaps(order.columnName) -> order.isDesc
-          }.foldLeft(filterQuery) {
-            case (query, (orderIndex, isDesc)) =>
-              query.sortBy { cols =>
-                val reader = readers(orderIndex).reader
-                val orderInstance = reader.orderGen.get._2.apply(cols(orderIndex).asInstanceOf[reader.TargetColumn])
-                if (isDesc) orderInstance.desc else orderInstance.asc
-              }(identity)
-          }
-
-        val sortbyQuery2 = sortedQuery.to[List]
-
-        val inViewReaders = readers.filter(_.reader.inView == true)
-        val inViewReadersWithIndex = inViewReaders.zipWithIndex
-        val mapQuery = sortbyQuery2.map(values => inViewReaders.map(s => values(s.index)))(new ListColumnShape[FlatShapeLevel](inViewReaders.map(_.reader.mainShape)))
-
-        val profile = _slickProfile
-        import profile.api._
-
-        val rs = CommonResult.commonResult(filterQuery.to[List], /*sortbyQuery2*/ mapQuery).apply(slickParam)
-          .map { s =>
-            val resultSet = s._1.map { eachRow =>
-              val resultArray = Array.fill[AtomicValue](readers.size)(AtomicValueImpl.empty)
-              inViewReadersWithIndex.foreach {
-                case (reader, index) =>
-                  resultArray(reader.index) = set(eachRow(index).asInstanceOf[reader.reader.DataType])
-              }
-              resultArray.toList
-            }
-            ListAnyCollection3333(resultSet.map(s => atomicGen(s)), Option(s._2))
-          }
-        ListAnyWrap3333(rs, sortbyQuery2.result.statements.toList)
+    val cols: List[Any] = readers.map(_.reader.sourceCol)
+    val shape: Shape[FlatShapeLevel, List[Any], List[Any], List[Any]] = new ListColumnShape[FlatShapeLevel](readers.map(_.reader.mainShape))
+    val selectQuery = wrapQuery.bind(Query(cols)(shape))
+    val filterQuery = filterGen.foldLeft(selectQuery) { (query, filterGen) =>
+      query.filter(filterGen.dataToCondition)(filterGen.wt)
     }
+
+    val sortedQuery = slickParam.orders
+      .filter(s => sortMaps.keySet.contains(s.columnName))
+      .map { order =>
+        sortMaps(order.columnName) -> order.isDesc
+      }.foldLeft(filterQuery) {
+        case (query, (orderIndex, isDesc)) =>
+          query.sortBy { cols =>
+            val reader = readers(orderIndex).reader
+            val orderInstance = reader.orderGen.get._2.apply(cols(orderIndex).asInstanceOf[reader.TargetColumn])
+            if (isDesc) orderInstance.desc else orderInstance.asc
+          }(identity)
+      }
+
+    val sortbyQuery2 = sortedQuery.to[List]
+
+    val inViewReaders = readers.filter(_.reader.inView == true)
+    val inViewReadersWithIndex = inViewReaders.zipWithIndex
+    val mapQuery = sortbyQuery2.map(values => inViewReaders.map(s => values(s.index)))(new ListColumnShape[FlatShapeLevel](inViewReaders.map(_.reader.mainShape)))
+
+    val profile = _slickProfile
+    import profile.api._
+
+    val rs = CommonResult.commonResult(filterQuery.to[List], /*sortbyQuery2*/ mapQuery).apply(slickParam)
+      .map { s =>
+        val resultSet = s._1.map { eachRow =>
+          val resultArray = Array.fill[AtomicValue](readers.size)(AtomicValueImpl.empty)
+          inViewReadersWithIndex.foreach {
+            case (reader, index) =>
+              resultArray(reader.index) = set(eachRow(index).asInstanceOf[reader.reader.DataType])
+          }
+          resultArray.toList
+        }
+        ListAnyCollection3333(resultSet.map(s => atomicGen(s)), Option(s._2))
+      }
+    ListAnyWrap3333(rs, sortbyQuery2.result.statements.toList)
   }
 }
 
 object test {
 
-  type ParamDBIO[T] = SlickParam => ListAnyWrap3333[T]
+  type ParamDBIO[T] = ListAnyWrap3333[T]
 
   def syntaxTest(
     implicit
@@ -231,12 +223,10 @@ object test {
     ec: ExecutionContext
   ) = new SyntaxTest[StrSlickQuery1111, ParamDBIO] {
     override def bb[U](a: StrSlickQuery1111, pervious: List[DataPile] => U): ParamDBIO[U] = {
-      { param: SlickParam =>
-        val result = a.slickResult.apply(param)
-        val action = result.resultAction
-        val newAction = action.map(s => ListAnyCollection3333(data = s.data.map(pervious), sum = s.sum))
-        ListAnyWrap3333(newAction, result.statements)
-      }
+      val result = a.slickResult
+      val action = result.resultAction
+      val newAction = action.map(s => ListAnyCollection3333(data = s.data.map(pervious), sum = s.sum))
+      ListAnyWrap3333(newAction, result.statements)
     }
   }
 }

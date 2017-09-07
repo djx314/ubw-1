@@ -1,5 +1,6 @@
 package net.scalax.fsn.json.operation
 
+import cats.Functor
 import io.circe.Json
 import io.circe.syntax._
 import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
@@ -131,5 +132,59 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
   } { (jsonTupleList, atomicGen) =>
     jsonTupleList.collect { case Some(s) => s }.toMap: Map[String, Json]
   }
+
+  type V[A] = Map[String, Json] => A
+
+  implicit val vFunctor: Functor[V] = new Functor[V] {
+    override def map[A, B](fa: Map[String, Json] => A)(f: A => B): Map[String, Json] => B = {
+      { data: Map[String, Json] =>
+        f(fa(data))
+      }
+    }
+  }
+
+  val unfullreadGen1111: PileSyntax2222[Map[String, Json] => List[DataPile], V] = DataPile.transformTree {
+    new AtomicQuery(_) {
+      val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
+        .mapTo {
+          case (jsonReader :: property :: defaultOpt :: HNil, data) =>
+            val tran: Map[String, Json] => AtomicValueImpl[path.DataType] = { sourceData: Map[String, Json] =>
+              sourceData.get(property.proName) match {
+                case Some(json) =>
+                  json.as[jsonReader.DataType](jsonReader.reader) match {
+                    case Right(data) =>
+                      set(data)
+                    case Left(_) =>
+                      val ifEmptyData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
+                      //ifEmptyData
+                      //ifEmptyData.map(set).getOrElse(AtomicValueImpl.empty)
+                      setOpt(ifEmptyData)
+                  }
+                case None =>
+                  //防止前端因为值为 null 或 undefined 而删除了该属性
+                  Json.Null.as[jsonReader.DataType](jsonReader.reader) match {
+                    case Right(data) =>
+                      set(data)
+                    case Left(_) =>
+                      val ifEmptyData = mergeDefault(defaultOpt, data)
+                      setOpt(ifEmptyData)
+                  }
+              }
+            }
+
+            tran: (Map[String, Json] => AtomicValue)
+        }
+    }.aa
+  } { (readlerList, atomicGen) =>
+    { sourceData: Map[String, Json] =>
+      atomicGen(readlerList.map(_.apply(sourceData)))
+    }
+  }.withSyntax(new SyntaxTest[Map[String, Json] => List[DataPile], V] {
+    override def bb[U](a: Map[String, Json] => List[DataPile], pervious: List[DataPile] => U): Map[String, Json] => U = {
+      { sourceData: Map[String, Json] =>
+        pervious(a(sourceData))
+      }
+    }
+  })
 
 }

@@ -4,7 +4,7 @@ import net.scalax.fsn.core._
 import net.scalax.fsn.slick.model._
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import net.scalax.fsn.slick.operation._
-import net.scalax.fsn.json.operation.{ ExcelOperation, JsonOperation }
+import net.scalax.fsn.json.operation.JsonOperation
 import slick.jdbc.JdbcProfile
 import io.circe.Json
 import net.scalax.ubw.validate.atomic.ErrorMessage
@@ -68,53 +68,36 @@ object PropertiesOperation extends PilesGenHelper {
     }
   }*/
 
-  def filterStrSlick2jsonOperation(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
+  def filterStrSlick2jsonOperation(wQuery: SlickQueryBindImpl, slickParam: SlickParam)(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => JsonOut = { optPiles: List[Pile] =>
-    val jsonFilter: PileSyntax.PileGen[SlickParam => StrSlickQuery] =
-      JsonOperation.unfullreadGen.flatMap(StrOutSelectConvert.ubwGen(wQuery)) { (jsonGen, slickQuery) =>
-        { slickParam: SlickParam =>
-          slickQuery(jsonGen(slickParam.filter))
-        }
-      }
-    val jsonGen: PileSyntax.PileGen[SlickParam => ListAnyWrap3333[Map[String, Json]]] = jsonFilter.flatMap(JsonOperation.unSafewriteGen) { (slickQuery, jsonGen) =>
-      { slickParam: SlickParam =>
-        val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
-        val result = slickQuery(slickParam).slickResult.apply(addedParam)
-        val collection = result.resultAction.map {
-          case ListAnyCollection3333(dataList, sum) =>
-            ListAnyCollection3333(dataList.map(s => jsonGen(s)), sum)
-        }
-        ListAnyWrap3333(collection, result.statements)
-      }
-    }
+  ): List[Pile] => Map[String, Json] => JsonOut = { optPiles: List[Pile] =>
+    { data: Map[String, Json] =>
 
-    /*strJsonPropertiesGen.result(optPiles)*/ (Right(Nil): Either[Exception, List[SelectProperty]]) -> jsonGen.result(optPiles) match {
-      case (Left(e1), Left(e2)) => throw e1
-      case (Left(e), Right(_)) => throw e
-      case (Right(_), Left(e)) => throw e
-      case (Right(properties), Right(data)) =>
-        JsonOut(properties, data)
+      val jsonFilter = JsonOperation.unfullreadGen1111.next(StrOutSelectConvert1111.ubwGen(wQuery, slickParam.copy(filter = slickParam.filter ++ data)))(JsonOperation.vFunctor).next(JsonOperation.unSafewriteGen1111)
+
+      jsonFilter.result(optPiles) match {
+        case Right(slickOperation) =>
+          JsonOut(slickOperation(data))
+        case Left(e) => throw e
+      }
     }
   }
 
-  def strSlick2jsonOperation1111(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
+  /*def strSlick2jsonOperation1111(wQuery: SlickQueryBindImpl, slickParam: SlickParam)(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[Pile] => JsonOut = { optPiles: List[Pile] =>
     val jsonGen: PileSyntax.PileGen[SlickParam => ListAnyWrap3333[Map[String, Json]]] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen) { (slickQuery, jsonGen) =>
-      { slickParam: SlickParam =>
-        val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
-        val result = slickQuery.slickResult.apply(addedParam)
-        val collection = result.resultAction.map {
-          case ListAnyCollection3333(dataList, sum) =>
-            ListAnyCollection3333(dataList.map(s => jsonGen(s)), sum)
-        }
-        ListAnyWrap3333(collection, result.statements)
+      val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
+      val result = slickQuery.slickResult.apply(addedParam)
+      val collection = result.resultAction.map {
+        case ListAnyCollection3333(dataList, sum) =>
+          ListAnyCollection3333(dataList.map(s => jsonGen(s)), sum)
       }
+      ListAnyWrap3333(collection, result.statements)
     }
 
     (Right(Nil): Either[Exception, List[SelectProperty]]) -> jsonGen.result(optPiles) match {
@@ -122,16 +105,16 @@ object PropertiesOperation extends PilesGenHelper {
       case (Left(e), Right(_)) => throw e
       case (Right(_), Left(e)) => throw e
       case (Right(properties), Right(data)) =>
-        JsonOut(properties, data)
+        JsonOut(data)
     }
-  }
+  }*/
 
-  def strSlick2jsonOperation(wQuery: SlickQueryBindImpl, defaultOrders: List[ColumnOrder])(
+  def strSlick2jsonOperation(wQuery: SlickQueryBindImpl, slickParam: SlickParam)(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[Pile] => JsonOut = { optPiles: List[Pile] =>
-    val jsonGen = StrOutSelectConvert1111.ubwGen(wQuery).next(JsonOperation.unSafewriteGen1111)
+    val jsonGen = StrOutSelectConvert1111.ubwGen(wQuery, slickParam).next(JsonOperation.unSafewriteGen1111)
     /*{ (slickQuery, jsonGen) =>
       { slickParam: SlickParam =>
         val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
@@ -144,12 +127,11 @@ object PropertiesOperation extends PilesGenHelper {
       }
     }*/
 
-    (Right(Nil): Either[Exception, List[SelectProperty]]) -> jsonGen.result(optPiles) match {
-      case (Left(e1), Left(e2)) => throw e1
-      case (Left(e), Right(_)) => throw e
-      case (Right(_), Left(e)) => throw e
-      case (Right(properties), Right(data)) =>
-        JsonOut(properties, data)
+    jsonGen.result(optPiles) match {
+      case Right(data) =>
+        JsonOut(data)
+      case Left(e1) => throw e1
+
     }
   }
 
@@ -263,7 +245,7 @@ object PropertiesOperation extends PilesGenHelper {
     }
   }*/
 
-  def slick2PoiOperation(wQuery: SlickQueryBindImpl)(
+  /*def slick2PoiOperation(wQuery: SlickQueryBindImpl)(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
@@ -285,7 +267,7 @@ object PropertiesOperation extends PilesGenHelper {
       case (Right(properties), Right(data)) =>
         PoiOut(properties, data)
     }
-  }
+  }*/
 
   def json2SlickUpdateOperation(binds: List[(Any, SlickQueryBindImpl)])(
     implicit
@@ -336,7 +318,7 @@ object PropertiesOperation extends PilesGenHelper {
           execInfoDBIO.apply(binds).flatMap { execInfo =>
             val data = execInfo.columns.sortBy(_.index).map(s => s.data)
             DBIO.from(staticManyReader(data)).flatMap { staticMany =>
-              DBIO.sequence(staticMany.map { case (key, query) => query.jsonGen.toView(SlickParam()).flatMap { s => DBIO.sequence(s.data.map { eachData => query.deleteGen(eachData) }) } })
+              DBIO.sequence(staticMany.map { case (key, query) => query.jsonGen.toView.flatMap { s => DBIO.sequence(s.data.map { eachData => query.deleteGen(eachData) }) } })
             }.map { s =>
               (s, data)
             }
