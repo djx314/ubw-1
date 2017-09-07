@@ -48,7 +48,7 @@ object InAndOutOperation extends PilesGenHelper with AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): SlickParam => slickProfile.api.DBIO[List[() => Future[Option[slickProfile.api.DBIO[ExecInfo3]]]]] = {
+  ): SlickParam => slickProfile.api.DBIO[List[() => Future[Option[slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]]]]]] = {
     { param: SlickParam =>
       val gen = StrOutSelectConvert.ubwGen(binds.listQueryBind).flatMap(futureGen) { (slickReader, futureConvert) =>
         slickReader.slickResult.apply(param).resultAction.map { action =>
@@ -82,7 +82,7 @@ object InAndOutOperation extends PilesGenHelper with AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): SlickParam => slickProfile.api.DBIO[List[() => Future[Option[Future[slickProfile.api.DBIO[ExecInfo3]]]]]] = {
+  ): SlickParam => slickProfile.api.DBIO[List[() => Future[Option[Future[slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]]]]]]] = {
     { param: SlickParam =>
       val gen = StrOutSelectConvert.ubwGen(binds.listQueryBind).flatMap(futureGen) { (slickReader, futureConvert) =>
         slickReader.slickResult.apply(param).resultAction.map { action =>

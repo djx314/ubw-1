@@ -225,43 +225,48 @@ object DataPile {
     genTreeTailCall(pathGen, pile, pile)
   }
 
-  def transformTree[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: (List[U], List[AtomicValue] => List[DataPile]) => T): PileSyntax1111.PileGen[T] = new PileSyntax1111.PileGen[T] {
-    override def gen(prePiles: Pile): Either[AtomicException, PileSyntax1111.PilePip[T]] = {
-      val piles = prePiles
+  def transformTree[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: (List[U], List[AtomicValue] => List[DataPile]) => T): InputChannel[T] = {
+    val pileGen1 = new Channel.PileGen[T] {
+      override def gen(prePiles: Pile): Either[AtomicException, Channel.PilePip[T]] = {
+        val piles = prePiles
 
-      val calculatePiles =
-        genTree(pathGen, piles)
+        val calculatePiles =
+          genTree(pathGen, piles)
 
-      calculatePiles.right.map {
-        case TransPileWrap(newPiles, summaryPiles) =>
-          PileSyntax1111.PilePipImpl(piles = newPiles, valueFunc = { dataPiles: List[DataPile] =>
-            val (oldDataPile, _) = summaryPiles.foldLeft(List.empty[DataPile], dataPiles.map(_.data.asInstanceOf[Any])) {
-              case ((dataPileList, data), pile) =>
-                val (currentDataPile, remainData) = fromPile(pile, data)
-                (dataPileList ::: currentDataPile :: Nil) -> remainData
-            }
-
-            val result = oldDataPile.map { pile =>
-              val pathWithValue = pile.selfPaths.zip(pile.toAtomicValues(pile.data))
-              pathWithValue.map {
-                case (path, value) =>
-                  val transform = pathGen(path)
-                  transform.apply(transform.gen.right.get, value.asInstanceOf[AtomicValueImpl[transform.path.DataType]])
+        calculatePiles.right.map {
+          case TransPileWrap(newPiles, summaryPiles) =>
+            Channel.PilePipImpl(piles = newPiles, valueFunc = { dataPiles: List[DataPile] =>
+              val (oldDataPile, _) = summaryPiles.foldLeft(List.empty[DataPile], dataPiles.map(_.data.asInstanceOf[Any])) {
+                case ((dataPileList, data), pile) =>
+                  val (currentDataPile, remainData) = fromPile(pile, data)
+                  (dataPileList ::: currentDataPile :: Nil) -> remainData
               }
-            }.flatten
 
-            val atomicValueGen = { newAtomicValues: List[AtomicValue] =>
-              oldDataPile.foldLeft(List.empty[DataPile] -> newAtomicValues) {
-                case ((newDataPiles, currentValues), oldDataPile) =>
-                  val (newDataPile, remainData) = oldDataPile.renderFromList(currentValues)
-                  (newDataPiles ::: newDataPile :: Nil) -> remainData
-              }._1
-            }
+              val result = oldDataPile.map { pile =>
+                val pathWithValue = pile.selfPaths.zip(pile.toAtomicValues(pile.data))
+                pathWithValue.map {
+                  case (path, value) =>
+                    val transform = pathGen(path)
+                    transform.apply(transform.gen.right.get, value.asInstanceOf[AtomicValueImpl[transform.path.DataType]])
+                }
+              }.flatten
 
-            columnGen(result, atomicValueGen)
-          })
+              val atomicValueGen = { newAtomicValues: List[AtomicValue] =>
+                oldDataPile.foldLeft(List.empty[DataPile] -> newAtomicValues) {
+                  case ((newDataPiles, currentValues), oldDataPile) =>
+                    val (newDataPile, remainData) = oldDataPile.renderFromList(currentValues)
+                    (newDataPiles ::: newDataPile :: Nil) -> remainData
+                }._1
+              }
+
+              columnGen(result, atomicValueGen)
+            })
+        }
+
       }
-
+    }
+    new InputChannel[T] {
+      override val pilesGen = pileGen1
     }
   }
 
@@ -293,7 +298,6 @@ object DataPile {
           pileEntity = subDataPileList,
           data = listPile.decodePileData(subDataPileList.map(_.data)),
           encoder = subDataPileList.map(_.asInstanceOf[CommonDataPile]),
-          //decoder: List[CommonDataPile] => PT,
           dataDecoder = listPile.decodePileData _,
           dataEncoder = listPile.encodePileData _
         ) -> remainList

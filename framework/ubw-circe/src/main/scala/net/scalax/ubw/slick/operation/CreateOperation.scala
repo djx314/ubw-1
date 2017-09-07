@@ -77,7 +77,7 @@ object InCreateConvert extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): PileSyntax.PileGen[List[(Any, SlickQueryBindImpl)] => slickProfile.api.DBIO[ExecInfo3]] = {
+  ): PileSyntax.PileGen[List[(Any, SlickQueryBindImpl)] => slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]]] = {
     val profile = slickProfile
     import profile.api._
     Pile.transformTreeList {
@@ -200,7 +200,7 @@ object CreateOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): slickProfile.api.DBIO[ExecInfo3] = {
+  ): slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]] = {
     val profile = slickProfile
     import profile.api._
     try {
@@ -261,17 +261,17 @@ object CreateOperation {
               parseInsertGen(binds, insertList, fillSubGens.flatten)
             }
           } yield {
-            ExecInfo3(subResult.effectRows + 1, convertRetrieveQuery.dataGen(autoIncData.toList) ::: subResult.columns)
+            ExecInfo3[List[DataWithIndex]](subResult.effectRows + 1, convertRetrieveQuery.dataGen(autoIncData.toList) ::: subResult.columns)
           }
 
       }
 
-      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+      results.foldLeft(DBIO.successful(ExecInfo3[List[DataWithIndex]](0, Nil)): DBIO[ExecInfo3[List[DataWithIndex]]]) { (s, t) =>
         (for {
           s1 <- s
           t1 <- t
         } yield {
-          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+          ExecInfo3[List[DataWithIndex]](s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
         })
       }
     } catch {
@@ -287,7 +287,7 @@ object CreateOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): slickProfile.api.DBIO[ExecInfo3] = {
+  ): slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]] = {
     val profile = slickProfile
     import profile.api._
     try {
@@ -346,17 +346,17 @@ object CreateOperation {
               parseInsertGen(binds, insertList, fillSubGens.flatten)
             }
           } yield {
-            ExecInfo3(subResult.effectRows + 1, convertRetrieveQuery.dataGen(autoIncData.toList) ::: subResult.columns)
+            ExecInfo3[List[DataWithIndex]](subResult.effectRows + 1, convertRetrieveQuery.dataGen(autoIncData.toList) ::: subResult.columns)
           }
 
       }
 
-      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+      results.foldLeft(DBIO.successful(ExecInfo3[List[DataWithIndex]](0, Nil)): DBIO[ExecInfo3[List[DataWithIndex]]]) { (s, t) =>
         (for {
           s1 <- s
           t1 <- t
         } yield {
-          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+          ExecInfo3[List[DataWithIndex]](s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
         })
       }
     } catch {

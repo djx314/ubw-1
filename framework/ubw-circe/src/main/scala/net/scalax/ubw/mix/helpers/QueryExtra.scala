@@ -121,15 +121,14 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
       ec: ExecutionContext
     ): RWInfo = {
       RWInfo(
-        properties = Nil, //properties,
         retrieveGen = { v: Map[String, Json] =>
         val retrieveDBIO = PropertiesOperation.json2SlickRetrieveOperation(crudQueryWrap.binds).apply(columns).apply(v)
-
-        for {
+        /*for {
           (statcMany, jsonData) <- retrieveDBIO
         } yield {
           StaticManyInfo(Nil /*properties*/ , jsonData, statcMany)
-        }
+        }*/
+        retrieveDBIO
       },
         insertGen = { v: Map[String, Json] =>
         val createInfoDBIO = PropertiesOperation.json2SlickCreateOperation(crudQueryWrap.binds).apply(columns).apply(v)

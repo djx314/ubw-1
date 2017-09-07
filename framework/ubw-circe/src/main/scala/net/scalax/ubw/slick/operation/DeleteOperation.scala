@@ -156,7 +156,7 @@ object DeleteOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): slickProfile.api.DBIO[ExecInfo3] = {
+  ): slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]] = {
     val profile = slickProfile
     import profile.api._
     try {
@@ -200,15 +200,15 @@ object DeleteOperation {
               parseInsertGen(binds, updateList, subs)
             }
           } yield {
-            ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
+            ExecInfo3[List[DataWithIndex]](effectRows + subResult.effectRows, data ::: subResult.columns)
           }
       }
-      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+      results.foldLeft(DBIO.successful(ExecInfo3[List[DataWithIndex]](0, Nil)): DBIO[ExecInfo3[List[DataWithIndex]]]) { (s, t) =>
         (for {
           s1 <- s
           t1 <- t
         } yield {
-          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+          ExecInfo3[List[DataWithIndex]](s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
         })
       }
     } catch {
@@ -223,7 +223,7 @@ object DeleteOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): slickProfile.api.DBIO[ExecInfo3] = {
+  ): slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]] = {
 
     val profile = slickProfile
     import profile.api._
@@ -269,15 +269,15 @@ object DeleteOperation {
               parseInsertGen(binds, updateList, subs)
             }
           } yield {
-            ExecInfo3(effectRows + subResult.effectRows, data ::: subResult.columns)
+            ExecInfo3[List[DataWithIndex]](effectRows + subResult.effectRows, data ::: subResult.columns)
           }
       }
-      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+      results.foldLeft(DBIO.successful(ExecInfo3[List[DataWithIndex]](0, Nil)): DBIO[ExecInfo3[List[DataWithIndex]]]) { (s, t) =>
         (for {
           s1 <- s
           t1 <- t
         } yield {
-          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+          ExecInfo3[List[DataWithIndex]](s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
         })
       }
     } catch {

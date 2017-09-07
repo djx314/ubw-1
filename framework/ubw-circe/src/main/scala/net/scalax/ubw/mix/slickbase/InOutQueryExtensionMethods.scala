@@ -26,11 +26,11 @@ case class InOutQueryWrap(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): Future[List[ExecInfo3]] = {
+  ): Future[List[ExecInfo3[List[DataWithIndex]]]] = {
     val execPlan = InAndOutOperation.json2SlickCreateOperation(self)
     val resultAction = execPlan(slickParam)
     sourceDB.run(resultAction).flatMap { futures =>
-      futures.grouped(groupedSize).foldLeft(Future successful List.empty[ExecInfo3]) { (effectRow, futureList) =>
+      futures.grouped(groupedSize).foldLeft(Future successful List.empty[ExecInfo3[List[DataWithIndex]]]) { (effectRow, futureList) =>
         lazy val insertActions = Future.sequence(futureList.map(_.apply))
         lazy val insertFuture = insertActions.flatMap(actions => targetDB.run(
           DBIO.sequence(actions.collect { case Some(s) => s })
@@ -53,11 +53,11 @@ case class InOutQueryWrap(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): Future[List[ExecInfo3]] = {
+  ): Future[List[ExecInfo3[List[DataWithIndex]]]] = {
     val execPlan = InAndOutOperation.json2SlickUpdateOperation(self)
     val resultAction = execPlan(slickParam)
     sourceDB.run(resultAction).flatMap { futures =>
-      futures.grouped(groupedSize).foldLeft(Future successful List.empty[ExecInfo3]) { (effectRow, futureList) =>
+      futures.grouped(groupedSize).foldLeft(Future successful List.empty[ExecInfo3[List[DataWithIndex]]]) { (effectRow, futureList) =>
         lazy val insertActions = Future.sequence(futureList.map(_.apply))
         lazy val insertFuture = insertActions.flatMap { actions =>
           Future.sequence(actions.collect { case Some(s) => s }).map { s =>

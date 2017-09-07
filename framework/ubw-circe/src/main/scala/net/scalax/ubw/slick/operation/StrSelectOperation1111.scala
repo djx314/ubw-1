@@ -20,7 +20,7 @@ object StrOutSelectConvert1111 extends PilesGenHelper {
     implicit
     slickProfile1: JdbcProfile,
     ec: ExecutionContext
-  ): PileSyntax3333[StrSlickQuery1111, ListAnyWrap3333] = {
+  ): FoldableChannel[StrSlickQuery1111, ListAnyWrap3333] = {
     DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrNeededFetch] :: needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: FANil)
@@ -152,7 +152,7 @@ object StrOutSelectConvert1111 extends PilesGenHelper {
         override val ec = ec1
         override val slickParam = slickParamObj
       }: StrSlickQuery1111
-    }.withSyntax(test.syntaxTest)
+    }.withSyntax(test.PileSyntaxFunctor)
       .withFunctor(test.functor1Test)
   }
 }
@@ -217,12 +217,12 @@ trait StrSlickQuery1111 extends AtomicValueHelper {
 
 object test {
 
-  def syntaxTest(
+  def PileSyntaxFunctor(
     implicit
     _slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): SyntaxTest[StrSlickQuery1111, ListAnyWrap3333] = new SyntaxTest[StrSlickQuery1111, ListAnyWrap3333] {
-    override def bb[U](a: StrSlickQuery1111, pervious: List[DataPile] => U): ListAnyWrap3333[U] = {
+  ): PileSyntaxFunctor[StrSlickQuery1111, ListAnyWrap3333] = new PileSyntaxFunctor[StrSlickQuery1111, ListAnyWrap3333] {
+    override def pileMap[U](a: StrSlickQuery1111, pervious: List[DataPile] => U): ListAnyWrap3333[U] = {
       val result = a.slickResult
       val action = result.resultAction
       val newAction = action.map(s => ListAnyCollection3333(data = s.data.map(pervious), sum = s.sum))

@@ -95,10 +95,20 @@ object PropertiesOperation extends PilesGenHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[UpdateStaticManyInfo]]] =
+  ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[List[DataWithIndex]]]]] =
     { optPiles: List[Pile] =>
-      { data: Map[String, Json] =>
-        JsonOperation.unfullreadGen.flatMap(InUpdateConvert.updateGen) { (jsonReader, slickWriterGen) =>
+      val updateAction = JsonOperation.unfullreadGen1111.next(InUpdateConvert.updateGen)
+
+      {
+        data: Map[String, Json] =>
+          updateAction.result(optPiles) match {
+            case Right(result) =>
+              Future.successful(Right(result(data)(binds)))
+          }
+      }
+
+      /*{ data: Map[String, Json] =>
+        JsonOperation.unfullreadGen1111.flatMap(InUpdateConvert.updateGen) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) {
           case ((execInfoDBIOF, validateInfoF), staticManyReader) =>
@@ -124,7 +134,7 @@ object PropertiesOperation extends PilesGenHelper {
             case Right(t) => t.map(r => Right(r))
           }
         }
-      }
+      }*/
     }
 
   def json2SlickDeleteOperation(binds: List[(Any, SlickQueryBindImpl)])(
@@ -134,7 +144,9 @@ object PropertiesOperation extends PilesGenHelper {
   ): List[Pile] => Map[String, Json] => DBIO[Int] =
     { optPiles: List[Pile] =>
       { data: Map[String, Json] =>
-        JsonOperation.unfullreadGen.flatMap(InRetrieveConvert.convert) { (jsonReader, slickWriterGen) =>
+        ???
+        //TODO
+        /*JsonOperation.unfullreadGen.flatMap(InRetrieveConvert.convert) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
           execInfoDBIO.apply(binds).flatMap { execInfo =>
@@ -156,7 +168,7 @@ object PropertiesOperation extends PilesGenHelper {
             e.printStackTrace()
             throw e
           case Right(s) => s
-        }
+        }*/
       }
     }
 
@@ -188,8 +200,10 @@ object PropertiesOperation extends PilesGenHelper {
     implicit
     ec: ExecutionContext,
     slickProfile: JdbcProfile
-  ): List[Pile] => Future[ExecInfo3] = { optPiles: List[Pile] =>
-    InRetrieveConvert.convert.result(optPiles) match {
+  ): List[Pile] => Future[ExecInfo3[List[DataWithIndex]]] = { optPiles: List[Pile] =>
+    //TODO
+    ???
+    /*InRetrieveConvert.convert.result(optPiles) match {
       case Left(e) =>
         e.printStackTrace()
         throw e
@@ -216,17 +230,25 @@ object PropertiesOperation extends PilesGenHelper {
             }
           }
         }
-    }
+    }*/
   }
 
   def json2SlickRetrieveOperation(binds: List[(Any, SlickQueryBindImpl)])(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => Map[String, Json] => DBIO[(Map[String, QueryJsonInfo], Map[String, Json])] =
+  ): List[Pile] => Map[String, Json] => DBIO[Map[String, Json]] =
     { optPiles: List[Pile] =>
-      { data: Map[String, Json] =>
-        JsonOperation.unfullreadGen.flatMap(InRetrieveConvert.convert) { (jsonReader, slickWriterGen) =>
+      val retrieveAction = JsonOperation.unfullreadGen1111.next2222(InRetrieveConvert.convert).next(JsonOperation.unSafewriteGen1111)
+      retrieveAction.result(optPiles) match {
+        case Left(e: Exception) =>
+          e.printStackTrace()
+          throw e
+        case Right(s) =>
+          { data: Map[String, Json] =>
+            s(data)(binds).map(_.columns)
+          }
+        /*JsonOperation.unfullreadGen1111.next(InRetrieveConvert.convert) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
           execInfoDBIO.apply(binds).flatMap { execInfo =>
@@ -245,7 +267,7 @@ object PropertiesOperation extends PilesGenHelper {
             e.printStackTrace()
             throw e
           case Right(s) => s
-        }
+        }*/
       }
     }
 

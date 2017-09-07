@@ -1,5 +1,6 @@
 package net.scalax.fsn.slick.operation
 
+import cats.Functor
 import net.scalax.fsn.common.atomic.DefaultValue
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue}
@@ -68,12 +69,22 @@ trait ISlickReaderWithData {
 }
 
 object InRetrieveConvert extends AtomicValueHelper {
+  type RetrieveType[T] = List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]
+
+  def functor(implicit ec: ExecutionContext): Functor[RetrieveType] = new Functor[RetrieveType] {
+    override def map[A, B](fa: RetrieveType[A])(f: (A) => B): RetrieveType[B] = {
+      { binds: List[(Any, SlickQueryBindImpl)] =>
+        fa(binds).map(s => ExecInfo3(s.effectRows, f(s.columns)))
+      }
+    }
+  }
+
   def convert(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ) = {
-    Pile.transformTreeList({
+  ): FoldableChannel[RetrieveType[List[DataPile]], RetrieveType] = {
+    DataPile.transformTree({
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: needAtomicOpt[DefaultValue] :: FANil)
           .mapTo {
@@ -128,7 +139,7 @@ object InRetrieveConvert extends AtomicValueHelper {
             }
           }
       }.aa
-    })({ genList =>
+    })({ (genList, atomicValueGen) =>
       { binds: List[(Any, SlickQueryBindImpl)] =>
         //genListF.map { genList =>
         val readersWithData = genList.zipWithIndex.map {
@@ -140,9 +151,19 @@ object InRetrieveConvert extends AtomicValueHelper {
               }
             }
         }
-        RetrieveOperation.parseInsertWithIndex(binds, readersWithData)
+        RetrieveOperation.parseInsertWithIndex(binds, readersWithData).map { s =>
+          ExecInfo3(s.effectRows, atomicValueGen(s.columns.sortBy(_.index).map(_.data)))
+        }
       }
-    })
+    }).withSyntax(new PileSyntaxFunctor[RetrieveType[List[DataPile]], RetrieveType] {
+      override def pileMap[U](a: RetrieveType[List[DataPile]], pervious: List[DataPile] => U): RetrieveType[U] = {
+        { binds: List[(Any, SlickQueryBindImpl)] =>
+          a(binds).map { execInfo =>
+            ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))
+          }
+        }
+      }
+    }).withFunctor(functor)
   }
 }
 
@@ -161,7 +182,7 @@ object RetrieveOperation {
     implicit
     ec: ExecutionContext,
     slickProfile: JdbcProfile,
-  ): slickProfile.api.DBIO[ExecInfo3] = {
+  ): slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]] = {
     val profile = slickProfile
     import profile.api._
     try {
@@ -217,17 +238,17 @@ object RetrieveOperation {
               parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
             }
           } yield {
-            ExecInfo3(subResult.effectRows + 1, subResult.columns ::: fillCols)
+            ExecInfo3[List[DataWithIndex]](subResult.effectRows + 1, subResult.columns ::: fillCols)
           }
 
       }
 
-      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+      results.foldLeft(DBIO.successful(ExecInfo3[List[DataWithIndex]](0, Nil)): DBIO[ExecInfo3[List[DataWithIndex]]]) { (s, t) =>
         (for {
           s1 <- s
           t1 <- t
         } yield {
-          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+          ExecInfo3[List[DataWithIndex]](s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
         })
       }
     } catch {
@@ -243,7 +264,7 @@ object RetrieveOperation {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext,
-  ): slickProfile.api.DBIO[ExecInfo3] = {
+  ): slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]] = {
     val profile = slickProfile
     import profile.api._
     try {
@@ -297,17 +318,17 @@ object RetrieveOperation {
               parseInsertGen(binds, retrieveList, fillSubGens.map(_.toList).flatten)
             }
           } yield {
-            ExecInfo3(subResult.effectRows + 1, subResult.columns ::: fillCols) //UpdateStaticManyInfo(subResult.effectRows + 1, subResult.many ++ Map())
+            ExecInfo3[List[DataWithIndex]](subResult.effectRows + 1, subResult.columns ::: fillCols) //UpdateStaticManyInfo(subResult.effectRows + 1, subResult.many ++ Map())
           }
 
       }
 
-      results.foldLeft(DBIO.successful(ExecInfo3(0, Nil)): DBIO[ExecInfo3]) { (s, t) =>
+      results.foldLeft(DBIO.successful(ExecInfo3[List[DataWithIndex]](0, Nil)): DBIO[ExecInfo3[List[DataWithIndex]]]) { (s, t) =>
         (for {
           s1 <- s
           t1 <- t
         } yield {
-          ExecInfo3(s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
+          ExecInfo3[List[DataWithIndex]](s1.effectRows + t1.effectRows, s1.columns ::: t1.columns)
         })
       }
     } catch {

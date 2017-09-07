@@ -117,7 +117,7 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     jsonTupleList.collect { case Some(s) => s }.toMap: Map[String, Json]
   }
 
-  def unSafewriteGen1111: PileSyntax1111[Map[String, Json]] = DataPile.transformTree {
+  def unSafewriteGen1111: InputChannel[Map[String, Json]] = DataPile.transformTree {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -143,7 +143,7 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     }
   }
 
-  val unfullreadGen1111: PileSyntax3333[Map[String, Json] => List[DataPile], V] = DataPile.transformTree {
+  val unfullreadGen1111: FoldableChannel[Map[String, Json] => List[DataPile], V] = DataPile.transformTree {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -179,8 +179,8 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     { sourceData: Map[String, Json] =>
       atomicGen(readlerList.map(_.apply(sourceData)))
     }
-  }.withSyntax(new SyntaxTest[Map[String, Json] => List[DataPile], V] {
-    override def bb[U](a: Map[String, Json] => List[DataPile], pervious: List[DataPile] => U): Map[String, Json] => U = {
+  }.withSyntax(new PileSyntaxFunctor[Map[String, Json] => List[DataPile], V] {
+    override def pileMap[U](a: Map[String, Json] => List[DataPile], pervious: List[DataPile] => U): Map[String, Json] => U = {
       { sourceData: Map[String, Json] =>
         pervious(a(sourceData))
       }
