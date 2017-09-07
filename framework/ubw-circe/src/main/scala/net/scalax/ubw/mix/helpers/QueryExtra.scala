@@ -1,13 +1,13 @@
 package net.scalax.fsn.mix.helpers
 
 import io.circe.Json
-
 import net.scalax.fsn.core._
 import net.scalax.fsn.mix.operation.PropertiesOperation
 import net.scalax.fsn.mix.slickbase.{ FQueryWrap, PileListQueryWrap }
 import net.scalax.fsn.slick.model._
-
+import net.scalax.fsn.slick.operation.GroupResult
 import slick.jdbc.JdbcProfile
+
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait Slick2JsonFsnImplicit extends PilesGenHelper {
@@ -18,7 +18,7 @@ trait Slick2JsonFsnImplicit extends PilesGenHelper {
       implicit
       slickProfile: JdbcProfile,
       ec: ExecutionContext
-    ): ListAnyWrap3333[Map[String, Json]] = {
+    ): GroupResult[Map[String, Json]] = {
       lazy val outJsonGen = PropertiesOperation.slick2jsonGroupOperation(listQueryWrap.listQueryBind).apply(listQueryWrap.columns).apply(defaultOrders)
       outJsonGen
     }
@@ -133,20 +133,20 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
         insertGen = { v: Map[String, Json] =>
         val createInfoDBIO = PropertiesOperation.json2SlickCreateOperation(crudQueryWrap.binds).apply(columns).apply(v)
 
-        val createAction = for {
+        /*val createAction = for {
           updateStaticManyInfo <- createInfoDBIO
         } yield {
           updateStaticManyInfo
-        }
-        Future.successful(Right(createAction))
+        }*/
+        Future.successful(Right(createInfoDBIO))
       },
         deleteGen = (v: Map[String, Json]) => {
         PropertiesOperation.json2SlickDeleteOperation(crudQueryWrap.binds).apply(columns).apply(v)
       },
         updateGen = (v: Map[String, Json]) => {
         PropertiesOperation.json2SlickUpdateOperation(crudQueryWrap.binds).apply(columns).apply(v)
-      },
-        staticMany = Future successful Nil //TODO StaticManyOperation.ubwStaticManyGen.result(columns).right.get
+      } //,
+      //staticMany = Future successful Nil //TODO StaticManyOperation.ubwStaticManyGen.result(columns).right.get
       )
     }
 

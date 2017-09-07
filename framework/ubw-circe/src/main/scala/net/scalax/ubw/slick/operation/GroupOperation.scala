@@ -1,5 +1,6 @@
 package net.scalax.fsn.slick.operation
 
+import cats.Functor
 import net.scalax.fsn.core._
 import net.scalax.fsn.common.atomic.FProperty
 import net.scalax.fsn.json.operation.AtomicValueHelper
@@ -42,8 +43,8 @@ trait GroupSlickReader {
 
 object GroupSelectConvert {
 
-  def ubwGen(wQuery1: SlickQueryBindImpl): PileSyntax.PileGen[FGroupQuery] = {
-    Pile.transformTreeList {
+  def ubwGen(wQuery1: SlickQueryBindImpl)(implicit _slickProfile: JdbcProfile, ec: ExecutionContext): FoldableChannel[FGroupQuery, test1.TestType] = {
+    DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[GroupSlickSelect] :: needAtomicOpt[GroupableColumnBase] :: needAtomicOpt[CountableGroupColumn] :: needAtomic[FProperty] :: FANil)
           .mapTo {
@@ -108,28 +109,65 @@ object GroupSelectConvert {
             }
           }
       }.aa
-    } { genList =>
+    } { (genList, atomicGen) =>
+
+      val atomicGen1 = atomicGen
+      val slickProfile2 = _slickProfile
+      val ec1 = ec
       new FGroupQuery {
         override val wQuery = wQuery1
         override val readers = genList.zipWithIndex
+        override val atomicGen = atomicGen1
+        override val _slickProfile = slickProfile2
+        override val ec = ec1
       }
+    }.withSyntax(test1.PileSyntaxFunctor)
+      .withFunctor(test1.functor1Test)
+  }
+
+}
+
+object test1 {
+
+  type TestType[T] = GroupParam => GroupResult[T]
+
+  def PileSyntaxFunctor(
+    implicit
+    _slickProfile: JdbcProfile,
+    ec: ExecutionContext
+  ): PileSyntaxFunctor[FGroupQuery, TestType] = new PileSyntaxFunctor[FGroupQuery, TestType] {
+    override def pileMap[U](a: FGroupQuery, pervious: List[DataPile] => U): TestType[U] = { param: GroupParam =>
+      val result = a.result(param)
+      val action = result.action
+      val newAction = action.map { s => s.map(pervious) }
+      GroupResult(newAction, result.statements)
+    }
+  }
+
+  def functor1Test(
+    implicit
+    ec: ExecutionContext
+  ): Functor[TestType] = new Functor[TestType] {
+    override def map[A, B](fa: TestType[A])(f: A => B): TestType[B] = { param: GroupParam =>
+      val newData = fa(param)
+      GroupResult(newData.action.map(s => s.map(f)), newData.statements)
     }
   }
 
 }
 
-case class GroupResult(action: DBIO[List[List[AtomicValue]]], statements: List[String])
+case class GroupResult[T](action: DBIO[List[T]], statements: List[String])
 
 trait FGroupQuery extends AtomicValueHelper {
   val wQuery: SlickQueryBindImpl
   val readers: List[(GroupSlickReader, Int)]
+  val atomicGen: List[AtomicValue] => List[DataPile]
+  val _slickProfile: JdbcProfile
+  val ec: ExecutionContext
 
-  def result(param: GroupParam)(
-    implicit
-    slickProfile: JdbcProfile,
-    ec: ExecutionContext
-  ): GroupResult = {
-    import slickProfile.api._
+  def result(param: GroupParam): GroupResult[List[DataPile]] = {
+    implicit val ec1 = ec
+    import _slickProfile.api._
 
     val baseQuery = wQuery.bind(Query(readers.map(_._1.selectModel.outCol))(new ListColumnShape[FlatShapeLevel](readers.map(_._1.selectModel.shape))))
     val keySize = param.keys.size
@@ -249,6 +287,6 @@ trait FGroupQuery extends AtomicValueHelper {
       }
       result
     }
-    GroupResult(action, streamableQueryActionExtensionMethods(orderedQuery.to[List]).result.statements.toList)
+    GroupResult(action.map(t => t.map(atomicGen)), streamableQueryActionExtensionMethods(orderedQuery.to[List]).result.statements.toList)
   }
 }

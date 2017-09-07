@@ -13,8 +13,8 @@ import scala.concurrent.ExecutionContext
 
 object InAndOutOperation extends PilesGenHelper with AtomicValueHelper {
 
-  def futureGen(implicit ec: ExecutionContext): PileSyntax.PileGen[Future[Option[List[AtomicValue]]]] = {
-    Pile.transformTreeList {
+  def futureGen(implicit ec: ExecutionContext): InputChannel[Future[Option[List[DataPile]]]] = {
+    DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickCreate])
           .mapTo {
@@ -31,8 +31,8 @@ object InAndOutOperation extends PilesGenHelper with AtomicValueHelper {
               }): Future[AtomicValue]
           }
       }.aa
-    } { genList =>
-      Future.sequence(genList).map(Option(_)).recover {
+    } { (genList, atomicValueGen) =>
+      Future.sequence(genList).map(s => Option(atomicValueGen(s))).recover {
         case _: NoSuchElementException =>
           //忽略因错误在数据库取不到数据的行
           None

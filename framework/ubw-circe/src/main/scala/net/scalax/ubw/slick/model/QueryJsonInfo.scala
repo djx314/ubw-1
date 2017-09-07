@@ -1,6 +1,7 @@
 package net.scalax.fsn.slick.model
 
 import io.circe.Json
+import net.scalax.fsn.core.DataPile
 import net.scalax.fsn.slick.operation.{ DataWithIndex, ExecInfo3 }
 import net.scalax.ubw.validate.atomic.ErrorMessage
 import slick.dbio.DBIO
@@ -42,18 +43,18 @@ case class StaticManyUbw(
 case class QueryJsonInfo(
   jsonGen: JsonOut,
   retrieveGen: Map[String, Json] => DBIO[Map[String, Json]],
-  insertGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[UpdateStaticManyInfo]]],
+  insertGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[List[DataPile]]]]],
   deleteGen: Map[String, Json] => DBIO[Int],
-  updateGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[List[DataWithIndex]]]]],
-  staticMany: Future[List[StaticManyUbw]]
+  updateGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[List[DataPile]]]]],
+  //staticMany: Future[List[StaticManyUbw]]
 )
 
 case class RWInfo(
     retrieveGen: Map[String, Json] => DBIO[Map[String, Json]],
-    insertGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[UpdateStaticManyInfo]]],
+    insertGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[List[DataPile]]]]],
     deleteGen: Map[String, Json] => DBIO[Int],
-    updateGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[List[DataWithIndex]]]]],
-    staticMany: Future[List[StaticManyUbw]]
+    updateGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[List[DataPile]]]]],
+    //staticMany: Future[List[StaticManyUbw]]
 ) {
 
   def withJsonOut(jOut: JsonOut): QueryJsonInfo = {
@@ -63,7 +64,7 @@ case class RWInfo(
       insertGen,
       deleteGen,
       updateGen,
-      staticMany
+      //staticMany
     )
   }
 

@@ -10,7 +10,7 @@ import shapeless._
 
 object JsonOperation extends AtomicValueHelper with PilesGenHelper {
 
-  val readGen = Pile.transformTreeList {
+  /*val readGen = Pile.transformTreeList {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -44,11 +44,11 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     { sourceData: Map[String, Json] =>
       readlerList.map(_.apply(sourceData))
     }
-  }
+  }*/
 
   //val unfullReadGen = unfullreadGen
 
-  val unfullreadGen = Pile.transformTreeList {
+  /*val unfullreadGen = Pile.transformTreeList {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -84,9 +84,9 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     { sourceData: Map[String, Json] =>
       readlerList.map(_.apply(sourceData))
     }
-  }
+  }*/
 
-  def writeGen = Pile.transformTreeList {
+  /*def writeGen = Pile.transformTreeList {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -99,9 +99,9 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     }.aa
   } { jsonTupleList =>
     jsonTupleList.toMap: Map[String, Json]
-  }
+  }*/
 
-  def unSafewriteGen = Pile.transformTreeList {
+  /*def unSafewriteGen = Pile.transformTreeList {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -115,14 +115,14 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     }.aa
   } { jsonTupleList =>
     jsonTupleList.collect { case Some(s) => s }.toMap: Map[String, Json]
-  }
+  }*/
 
-  def unSafewriteGen1111: InputChannel[Map[String, Json]] = DataPile.transformTree {
+  def unSafewriteGen: InputChannel[Map[String, Json]] = DataPile.transformTree {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
           case (jsonWriter :: property :: defaultOpt :: HNil, data) => {
-            val exportData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
+            val exportData = mergeDefault(defaultOpt, data)
             //val eachColumnData: path.DataType = exportData.getOrElse(throw new Exception(s"字段 ${property.proName} 未被定义"))
             implicit val writerJ = jsonWriter.writer
             exportData.map(s => property.proName -> s.asJson)
@@ -143,7 +143,7 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     }
   }
 
-  val unfullreadGen1111: FoldableChannel[Map[String, Json] => List[DataPile], V] = DataPile.transformTree {
+  val unfullreadGen: FoldableChannel[Map[String, Json] => List[DataPile], V] = DataPile.transformTree {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -155,7 +155,7 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
                     case Right(data) =>
                       set(data)
                     case Left(_) =>
-                      val ifEmptyData = mergeDefault(defaultOpt, data) //data.opt.fold(defaultOpt.map(_.value))(Option(_))
+                      val ifEmptyData = mergeDefault(defaultOpt, data)
                       //ifEmptyData
                       //ifEmptyData.map(set).getOrElse(AtomicValueImpl.empty)
                       setOpt(ifEmptyData)

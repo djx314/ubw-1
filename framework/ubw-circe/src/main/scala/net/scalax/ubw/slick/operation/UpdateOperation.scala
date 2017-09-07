@@ -1,10 +1,12 @@
 package net.scalax.fsn.slick.operation
 
+import cats.Functor
 import net.scalax.fsn.common.atomic.DefaultValue
 import net.scalax.fsn.core._
 import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue, ValidatorOperation}
 import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate}
 import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
+import net.scalax.fsn.slick.operation.InCreateConvert.CreateType
 import net.scalax.ubw.validate.atomic.ErrorMessage
 import slick.jdbc.JdbcProfile
 
@@ -75,11 +77,21 @@ trait ISlickUpdaterWithData {
 
 object InUpdateConvert extends AtomicValueHelper {
 
+  type UpdateType[T] = List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]
+
+  def functor(implicit ec: ExecutionContext): Functor[UpdateType] = new Functor[UpdateType] {
+    override def map[A, B](fa: UpdateType[A])(f: (A) => B): UpdateType[B] = {
+      { binds: List[(Any, SlickQueryBindImpl)] =>
+        fa(binds).map(s => ExecInfo3(s.effectRows, f(s.columns)))
+      }
+    }
+  }
+
   def updateGen(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): InputChannel[List[(Any, SlickQueryBindImpl)] => slickProfile.api.DBIO[ExecInfo3[List[DataWithIndex]]]] = {
+  ): FoldableChannel[CreateType[List[DataPile]], CreateType] = {
     DataPile.transformTree(
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: needAtomicOpt[DefaultValue] :: FANil)
@@ -152,9 +164,19 @@ object InUpdateConvert extends AtomicValueHelper {
               override val data = DataWithIndex(set(writer.data), index)
             }
         }
-        UpdateOperation.parseInsert(binds, genListWithData)
+        UpdateOperation.parseInsert(binds, genListWithData).map { s =>
+          ExecInfo3(s.effectRows, atomicValueGen(s.columns.sortBy(_.index).map(_.data)))
+        }
       }
-    }
+    }.withSyntax(new PileSyntaxFunctor[UpdateType[List[DataPile]], UpdateType] {
+      override def pileMap[U](a: UpdateType[List[DataPile]], pervious: List[DataPile] => U): UpdateType[U] = {
+        { binds: List[(Any, SlickQueryBindImpl)] =>
+          a(binds).map { execInfo =>
+            ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))
+          }
+        }
+      }
+    }).withFunctor(functor)
   }
 }
 

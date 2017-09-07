@@ -10,7 +10,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 object StaticManyOperation extends AtomicValueHelper {
 
   //TODO change option selector to list selector
-  def updateGen(implicit ec: ExecutionContext): PileSyntax.PileGen[Future[Map[String, QueryJsonInfo]]] = {
+  /*def updateGen(implicit ec: ExecutionContext): PileSyntax.PileGen[Future[Map[String, QueryJsonInfo]]] = {
     Pile.transformTreeList {
       new AtomicQuery(_) {
         val aa = withRep(needAtomicOpt[StaticMany])
@@ -31,7 +31,7 @@ object StaticManyOperation extends AtomicValueHelper {
         font ++ back
       })
     }
-  }
+  }*/
 
   /*def convert2Query(columns: FColumn)(implicit ec: ExecutionContext): Future[Map[String, QueryJsonInfo]] = {
     val staticManyCol = FColumn.filter(columns)({ case s: StaticMany[columns.DataType] => s })

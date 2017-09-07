@@ -21,7 +21,7 @@ object PropertiesOperation extends PilesGenHelper {
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[Pile] => Map[String, Json] => JsonOut = { optPiles: List[Pile] =>
-    val jsonFilter = JsonOperation.unfullreadGen1111.next3333(StrOutSelectConvert1111.ubwGen(wQuery, slickParam)).next(JsonOperation.unSafewriteGen1111)
+    val jsonFilter = JsonOperation.unfullreadGen.next3333(StrOutSelectConvert.ubwGen(wQuery, slickParam)).next(JsonOperation.unSafewriteGen)
     jsonFilter.result(optPiles) match {
       case Right(slickOperation) =>
         { data: Map[String, Json] =>
@@ -36,7 +36,7 @@ object PropertiesOperation extends PilesGenHelper {
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[Pile] => JsonOut = { optPiles: List[Pile] =>
-    val jsonGen = StrOutSelectConvert1111.ubwGen(wQuery, slickParam).next(JsonOperation.unSafewriteGen1111)
+    val jsonGen = StrOutSelectConvert.ubwGen(wQuery, slickParam).next(JsonOperation.unSafewriteGen)
 
     jsonGen.result(optPiles) match {
       case Right(data) =>
@@ -50,8 +50,8 @@ object PropertiesOperation extends PilesGenHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => GroupParam => ListAnyWrap3333[Map[String, Json]] = { optPiles: List[Pile] =>
-    val jsonGen: PileSyntax.PileGen[GroupParam => ListAnyWrap3333[Map[String, Json]]] = GroupSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen) { (slickQuery, jsonGen) =>
+  ): List[Pile] => GroupParam => GroupResult[Map[String, Json]] = { optPiles: List[Pile] =>
+    /*val jsonGen: PileSyntax.PileGen[GroupParam => ListAnyWrap3333[Map[String, Json]]] = GroupSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen) { (slickQuery, jsonGen) =>
       { slickParam: GroupParam =>
         val result = slickQuery.result(slickParam)
         ListAnyWrap3333(result.action.map {
@@ -59,9 +59,9 @@ object PropertiesOperation extends PilesGenHelper {
             ListAnyCollection3333(dataList.map(s => jsonGen(s)), None)
         }, result.statements)
       }
-    }
+    }*/
 
-    jsonGen.result(optPiles) match {
+    GroupSelectConvert.ubwGen(wQuery).next(JsonOperation.unSafewriteGen).result(optPiles) match {
       case Left(e) => throw e
       case Right(s) => s
     }
@@ -72,7 +72,7 @@ object PropertiesOperation extends PilesGenHelper {
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[Pile] => PoiOut = { optPiles: List[Pile] =>
-    val poiGen /*: PileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]]*/ = StrOutSelectConvert1111.ubwGen(wQuery).flatMap(ExcelOperation.writeGen) { (slickQuery, poiGen) =>
+    val poiGen /*: PileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]]*/ = StrOutSelectConvert.ubwGen(wQuery).flatMap(ExcelOperation.writeGen) { (slickQuery, poiGen) =>
       { slickParam: SlickParam =>
         slickQuery.slickResult.apply(slickParam).resultAction.map {
           case ListAnyCollection3333(dataList, sum) =>
@@ -95,9 +95,9 @@ object PropertiesOperation extends PilesGenHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[List[DataWithIndex]]]]] =
+  ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[List[DataPile]]]]] =
     { optPiles: List[Pile] =>
-      val updateAction = JsonOperation.unfullreadGen1111.next(InUpdateConvert.updateGen)
+      val updateAction = JsonOperation.unfullreadGen.next(InUpdateConvert.updateGen)
 
       {
         data: Map[String, Json] =>
@@ -108,7 +108,7 @@ object PropertiesOperation extends PilesGenHelper {
       }
 
       /*{ data: Map[String, Json] =>
-        JsonOperation.unfullreadGen1111.flatMap(InUpdateConvert.updateGen) { (jsonReader, slickWriterGen) =>
+        JsonOperation.unfullreadGen.flatMap(InUpdateConvert.updateGen) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) {
           case ((execInfoDBIOF, validateInfoF), staticManyReader) =>
@@ -143,8 +143,14 @@ object PropertiesOperation extends PilesGenHelper {
     ec: ExecutionContext
   ): List[Pile] => Map[String, Json] => DBIO[Int] =
     { optPiles: List[Pile] =>
-      { data: Map[String, Json] =>
-        ???
+      JsonOperation.unfullreadGen.next3333(InRetrieveConvert.convert).next3333(InDeleteConvert.convert).result(optPiles) match {
+        case Left(e: Exception) =>
+          e.printStackTrace()
+          throw e
+        case Right(result) =>
+          { data: Map[String, Json] =>
+            result(data)(binds).flatMap(action => action.columns(binds).map(_.effectRows))
+          }
         //TODO
         /*JsonOperation.unfullreadGen.flatMap(InRetrieveConvert.convert) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
@@ -176,24 +182,33 @@ object PropertiesOperation extends PilesGenHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => Map[String, Json] => DBIO[UpdateStaticManyInfo] =
+  ): List[Pile] => Map[String, Json] => DBIO[ExecInfo3[List[DataPile]]] =
     { optPiles: List[Pile] =>
-      { data: Map[String, Json] =>
-        JsonOperation.unfullreadGen.flatMap(InCreateConvert.createGen) { (jsonReader, slickWriterGen) =>
-          slickWriterGen(jsonReader.apply(data))
-        }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
-          execInfoDBIO.apply(binds).flatMap { execInfo =>
-            for {
-              staticMany <- DBIO.from(staticManyReader(execInfo.columns.sortBy(_.index).map(s => s.data)))
-            } yield UpdateStaticManyInfo(execInfo.effectRows, staticMany)
+      JsonOperation.unfullreadGen.next3333(InCreateConvert.createGen).result(optPiles) match {
+        case Right(result) =>
+          { data: Map[String, Json] =>
+            result(data)(binds)
           }
-        }.result(optPiles) match {
-          case Left(e: Exception) =>
-            e.printStackTrace()
-            throw e
-          case Right(s) => s
-        }
+        case Left(e: Exception) =>
+          e.printStackTrace()
+          throw e
       }
+      /*{ data: Map[String, Json] =>
+          JsonOperation.unfullreadGen.flatMap(InCreateConvert.createGen) { (jsonReader, slickWriterGen) =>
+            slickWriterGen(jsonReader.apply(data))
+          }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
+            execInfoDBIO.apply(binds).flatMap { execInfo =>
+              for {
+                staticMany <- DBIO.from(staticManyReader(execInfo.columns.sortBy(_.index).map(s => s.data)))
+              } yield UpdateStaticManyInfo(execInfo.effectRows, staticMany)
+            }
+          }.result(optPiles) match {
+            case Left(e: Exception) =>
+              e.printStackTrace()
+              throw e
+            case Right(s) => s
+          }
+        }*/
     }
 
   def slick_retrieve_i_slick_update_or_insert_o(binds: List[(Any, SlickQueryBindImpl)], db: BasicBackend#Database)(
@@ -239,7 +254,7 @@ object PropertiesOperation extends PilesGenHelper {
     ec: ExecutionContext
   ): List[Pile] => Map[String, Json] => DBIO[Map[String, Json]] =
     { optPiles: List[Pile] =>
-      val retrieveAction = JsonOperation.unfullreadGen1111.next2222(InRetrieveConvert.convert).next(JsonOperation.unSafewriteGen1111)
+      val retrieveAction = JsonOperation.unfullreadGen.next2222(InRetrieveConvert.convert).next(JsonOperation.unSafewriteGen)
       retrieveAction.result(optPiles) match {
         case Left(e: Exception) =>
           e.printStackTrace()
@@ -248,7 +263,7 @@ object PropertiesOperation extends PilesGenHelper {
           { data: Map[String, Json] =>
             s(data)(binds).map(_.columns)
           }
-        /*JsonOperation.unfullreadGen1111.next(InRetrieveConvert.convert) { (jsonReader, slickWriterGen) =>
+        /*JsonOperation.unfullreadGen.next(InRetrieveConvert.convert) { (jsonReader, slickWriterGen) =>
           slickWriterGen(jsonReader.apply(data))
         }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
           execInfoDBIO.apply(binds).flatMap { execInfo =>
@@ -271,7 +286,7 @@ object PropertiesOperation extends PilesGenHelper {
       }
     }
 
-  def staticManyOperation(
+  /*def staticManyOperation(
     implicit
     ec: ExecutionContext
   ): List[Pile] => Map[String, Json] => Future[Map[String, QueryJsonInfo]] =
@@ -286,6 +301,6 @@ object PropertiesOperation extends PilesGenHelper {
           case Right(s) => s
         }
       }
-    }
+    }*/
 
 }
