@@ -104,7 +104,7 @@ class GroupTest extends FlatSpec
       )
     )
     try {
-      println(db.run(groupResult.resultAction).futureValue)
+      println(db.run(groupResult.action).futureValue)
     } catch {
       case e: Exception =>
         e.printStackTrace

@@ -55,7 +55,7 @@ class ParTest extends FlatSpec
       val data: Option[DataType]
     }
 
-    val resultGen1 = Pile.transformOf {
+    val resultGen1 = DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
@@ -70,14 +70,14 @@ class ParTest extends FlatSpec
               }: JsonWriterImpl
           }
       }.aa
-    } { results =>
+    } { (results, _) =>
       results.map { s =>
         implicit val encoderForOpt = s.encoder
         s.key -> s.data.asJson
       }.toMap.asJson
     }
 
-    val resultGen3 = Pile.transformTreeList {
+    val resultGen3 = DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomicOpt[JsonReader] :: needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
@@ -92,14 +92,14 @@ class ParTest extends FlatSpec
               }: JsonWriterImpl
           }
       }.aa
-    } { results =>
+    } { (results, _) =>
       results.map { s =>
         implicit val encoderForOpt = s.encoder
         s.key -> s.data.asJson
       }.toMap.asJson
     }
 
-    val resultGen4 = Pile.transformTreeList {
+    val resultGen4 = DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep((needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: FANil) :: FANil)
           .mapTo {
@@ -108,12 +108,12 @@ class ParTest extends FlatSpec
               defaultValueOpt: Option[Any]
           }
       }.aa
-    } { result =>
+    } { (result, _) =>
       //println(result)
       result
     }
 
-    val resultGen5 = Pile.transformTreeList {
+    val resultGen5 = DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[JsonWriter] :: (needAtomicOpt[DefaultValue] :: FANil) :: needAtomic[FProperty] :: FANil)
           .mapTo {
@@ -128,8 +128,8 @@ class ParTest extends FlatSpec
               }: JsonWriterImpl
           }
       }.aa
-    } { results =>
-      results.map { s =>
+    } { (result, _) =>
+      result.map { s =>
         implicit val encoderForOpt = s.encoder
         s.key -> s.data.asJson
       }.toMap.asJson
