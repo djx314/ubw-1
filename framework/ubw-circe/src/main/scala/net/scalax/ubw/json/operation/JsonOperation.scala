@@ -7,7 +7,7 @@ import net.scalax.fsn.core._
 import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
 import shapeless._
 
-object JsonOperation extends AtomicValueHelper {
+object JsonOperation extends AtomicValueHelper with PilesGenHelper {
 
   val readGen = Pile.transformTreeList {
     new AtomicQuery(_) {
@@ -116,7 +116,7 @@ object JsonOperation extends AtomicValueHelper {
     jsonTupleList.collect { case Some(s) => s }.toMap: Map[String, Json]
   }
 
-  def unSafewriteGen1111 = DataPile.transformTree {
+  def unSafewriteGen1111: PileSyntax1111[Map[String, Json]] = DataPile.transformTree {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {

@@ -85,8 +85,16 @@ object PileSyntax {
 }
 
 trait PileSyntax1111[T] {
+  self =>
 
   val pilesGen: PileSyntax1111.PileGenImpl[List[DataPile] => T]
+
+  def withSyntax[R[_]](syntax1: SyntaxTest[T, R]): PileSyntax2222[T, R] = {
+    new PileSyntax2222[T, R] {
+      override val pilesGen = self.pilesGen
+      override val syntaxTest = syntax1
+    }
+  }
 
   def flatMap[S, U](mapPiles: PileSyntax1111.PileGenImpl[List[DataPile] => S])(cv: (T, List[DataPile] => S) => U): PileSyntax1111.PileGenImpl[List[DataPile] => U] = {
     val monad = implicitly[Monad[PileSyntax1111.PileGenImpl]]
@@ -162,6 +170,24 @@ object PileSyntax1111 {
 
 }
 
+trait PileSyntax2222[T, R[_]] extends PileSyntax1111[T] {
+  self =>
+
+  override val pilesGen: PileSyntax1111.PileGenImpl[List[DataPile] => T]
+
+  val syntaxTest: SyntaxTest[T, R]
+
+  def next[U](other: PileSyntax1111[U]): PileSyntax1111[R[U]] = {
+    new PileSyntax1111[R[U]] {
+      override val pilesGen: PileSyntax1111.PileGenImpl[List[DataPile] => R[U]] = {
+        syntaxTest.flatMap(self.pilesGen, other.pilesGen)
+      }
+    }
+
+  }
+
+}
+
 trait PilesGenHelper {
 
   implicit def pileExtensionMethods[T](pilesGenList: PileSyntax.PileGen[T]): PileSyntax[T] = {
@@ -178,8 +204,14 @@ trait PilesGenHelper {
 
 }
 
-trait SyntaxTest[T, R[_]] {
+trait SyntaxTest[T, R[_]] extends PilesGenHelper {
 
   def bb[U](a: T, pervious: List[DataPile] => U): R[U]
+
+  def flatMap[S](pervious: PileSyntax1111.PileGenImpl[List[DataPile] => T], next: PileSyntax1111.PileGenImpl[List[DataPile] => S]): PileSyntax1111.PileGenImpl[List[DataPile] => R[S]] = {
+    pervious.flatMap(next) { (t, gen) =>
+      bb(t, gen)
+    }
+  }
 
 }

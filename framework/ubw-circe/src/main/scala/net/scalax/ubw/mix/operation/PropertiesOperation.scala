@@ -79,15 +79,15 @@ object PropertiesOperation extends PilesGenHelper {
           slickQuery(jsonGen(slickParam.filter))
         }
       }
-    val jsonGen: PileSyntax.PileGen[SlickParam => ResultWrap] = jsonFilter.flatMap(JsonOperation.unSafewriteGen) { (slickQuery, jsonGen) =>
+    val jsonGen: PileSyntax.PileGen[SlickParam => ListAnyWrap3333[Map[String, Json]]] = jsonFilter.flatMap(JsonOperation.unSafewriteGen) { (slickQuery, jsonGen) =>
       { slickParam: SlickParam =>
         val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
         val result = slickQuery(slickParam).slickResult.apply(addedParam)
         val collection = result.resultAction.map {
-          case ListAnyCollection1111(dataList, sum) =>
-            ResultCollection(dataList.map(s => jsonGen(s)), sum)
+          case ListAnyCollection3333(dataList, sum) =>
+            ListAnyCollection3333(dataList.map(s => jsonGen(s)), sum)
         }
-        ResultWrap(collection, result.statements)
+        ListAnyWrap3333(collection, result.statements)
       }
     }
 
@@ -105,15 +105,15 @@ object PropertiesOperation extends PilesGenHelper {
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[Pile] => JsonOut = { optPiles: List[Pile] =>
-    val jsonGen: PileSyntax.PileGen[SlickParam => ResultWrap] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen) { (slickQuery, jsonGen) =>
+    val jsonGen: PileSyntax.PileGen[SlickParam => ListAnyWrap3333[Map[String, Json]]] = StrOutSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen) { (slickQuery, jsonGen) =>
       { slickParam: SlickParam =>
         val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
         val result = slickQuery.slickResult.apply(addedParam)
         val collection = result.resultAction.map {
-          case ListAnyCollection1111(dataList, sum) =>
-            ResultCollection(dataList.map(s => jsonGen(s)), sum)
+          case ListAnyCollection3333(dataList, sum) =>
+            ListAnyCollection3333(dataList.map(s => jsonGen(s)), sum)
         }
-        ResultWrap(collection, result.statements)
+        ListAnyWrap3333(collection, result.statements)
       }
     }
 
@@ -131,7 +131,8 @@ object PropertiesOperation extends PilesGenHelper {
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[Pile] => JsonOut = { optPiles: List[Pile] =>
-    val jsonGen: PileSyntax1111.PileGen[SlickParam => ResultWrap] = StrOutSelectConvert1111.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen1111) { (slickQuery, jsonGen) =>
+    val jsonGen = StrOutSelectConvert1111.ubwGen(wQuery).next(JsonOperation.unSafewriteGen1111)
+    /*{ (slickQuery, jsonGen) =>
       { slickParam: SlickParam =>
         val addedParam = slickParam.copy(orders = slickParam.orders ::: defaultOrders)
         val result = slickQuery.slickResult.apply(addedParam)
@@ -141,7 +142,7 @@ object PropertiesOperation extends PilesGenHelper {
         }
         ResultWrap(collection, result.statements)
       }
-    }
+    }*/
 
     (Right(Nil): Either[Exception, List[SelectProperty]]) -> jsonGen.result(optPiles) match {
       case (Left(e1), Left(e2)) => throw e1
@@ -214,13 +215,13 @@ object PropertiesOperation extends PilesGenHelper {
     //repToDBIO: Rep[Int] => JdbcActionComponent#QueryActionExtensionMethods[Int, NoStream],
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => GroupParam => ResultWrap = { optPiles: List[Pile] =>
-    val jsonGen: PileSyntax.PileGen[GroupParam => ResultWrap] = GroupSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen) { (slickQuery, jsonGen) =>
+  ): List[Pile] => GroupParam => ListAnyWrap3333[Map[String, Json]] = { optPiles: List[Pile] =>
+    val jsonGen: PileSyntax.PileGen[GroupParam => ListAnyWrap3333[Map[String, Json]]] = GroupSelectConvert.ubwGen(wQuery).flatMap(JsonOperation.unSafewriteGen) { (slickQuery, jsonGen) =>
       { slickParam: GroupParam =>
         val result = slickQuery.result(slickParam)
-        ResultWrap(result.action.map {
+        ListAnyWrap3333(result.action.map {
           case dataList =>
-            ResultCollection(dataList.map(s => jsonGen(s)), None)
+            ListAnyCollection3333(dataList.map(s => jsonGen(s)), None)
         }, result.statements)
       }
     }
@@ -270,7 +271,7 @@ object PropertiesOperation extends PilesGenHelper {
     val poiGen /*: PileSyntax.PileGen[Option, SlickParam => DBIO[(List[Map[String, Json]], Int)]]*/ = StrOutSelectConvert1111.ubwGen(wQuery).flatMap(ExcelOperation.writeGen) { (slickQuery, poiGen) =>
       { slickParam: SlickParam =>
         slickQuery.slickResult.apply(slickParam).resultAction.map {
-          case ListAnyCollection2222(dataList, sum) =>
+          case ListAnyCollection3333(dataList, sum) =>
             //TODO Remove None.get
             dataList.map(s => poiGen(s)) -> sum.get
         }

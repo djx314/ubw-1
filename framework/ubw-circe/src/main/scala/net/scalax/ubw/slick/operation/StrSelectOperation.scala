@@ -187,7 +187,7 @@ trait StrSlickQuery extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): SlickParam => ListAnyWrap1111 = {
+  ): SlickParam => ListAnyWrap3333[List[AtomicValue]] = {
     slickResult(Nil)
   }
 
@@ -195,7 +195,7 @@ trait StrSlickQuery extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): SlickParam => ListAnyWrap1111 = {
+  ): SlickParam => ListAnyWrap3333[List[AtomicValue]] = {
     slickResult(List(ColumnOrder(orderColumn, isDesc)))
   }
 
@@ -203,7 +203,7 @@ trait StrSlickQuery extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): SlickParam => ListAnyWrap1111 = {
+  ): SlickParam => ListAnyWrap3333[List[AtomicValue]] = {
     (slickParam: SlickParam) =>
       val cols: List[Any] = readers.map(_.reader.sourceCol)
       val shape: Shape[FlatShapeLevel, List[Any], List[Any], List[Any]] = new ListColumnShape[FlatShapeLevel](readers.map(_.reader.mainShape))
@@ -241,10 +241,10 @@ trait StrSlickQuery extends AtomicValueHelper {
             }
             resultArray.toList
           }
-          ListAnyCollection1111(resultSet, Option(s._2))
+          ListAnyCollection3333(resultSet, Option(s._2))
         }
       val profile = slickProfile
       import profile.api._
-      ListAnyWrap1111(rs, sortbyQuery2.result.statements.toList)
+      ListAnyWrap3333(rs, sortbyQuery2.result.statements.toList)
   }
 }
