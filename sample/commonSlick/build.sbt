@@ -7,13 +7,13 @@ resolvers ++= Seq(
 
 externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false)
 
-lazy val fsnProject = RootProject(file("../../../fsn"))
+lazy val ubwProject = RootProject(file("../../"))
 
-scalaVersion := "2.11.11"
+scalaVersion := "2.12.3"
 
 scalacOptions ++= Seq("-feature", "-deprecation", "-Ywarn-unused-import")
 
-val circeVersion = "0.7.0"
+val circeVersion = "0.8.0"
 
 libraryDependencies ++= Seq(
   "com.h2database" % "h2" % "1.4.192",
@@ -23,4 +23,4 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-simple" % "1.7.25"
 )
 
-val commonSlick = (project in file(".")).dependsOn(fsnProject)
+val commonSlick = (project in file(".")).dependsOn(ubwProject)

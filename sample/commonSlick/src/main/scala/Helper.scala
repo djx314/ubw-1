@@ -6,7 +6,7 @@ import net.scalax.fsn.slick.model.JsonView
 import org.h2.jdbcx.JdbcDataSource
 import slick.jdbc.H2Profile.api._
 import io.circe.syntax._
-import io.circe.generic.auto._
+//import io.circe.generic.auto._
 
 object Helper {
 
@@ -37,7 +37,7 @@ object Helper {
 
   def prettyPrint(view: JsonView): Unit = {
     println("json data:\n" + view.data.asJson.pretty(printer) + "\n")
-    println("properties:\n" + view.properties.asJson.pretty(printer) + "\n")
+    //println("properties:\n" + view.properties.asJson.pretty(printer) + "\n")
   }
 
 }

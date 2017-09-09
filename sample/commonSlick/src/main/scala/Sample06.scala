@@ -34,7 +34,7 @@ object Sample06 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
 
   val result1: JsonOut = fQuery.strResult
 
-  val view1: DBIO[JsonView] = result1.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))))
+  val view1: DBIO[JsonView] = fQuery.addOrders(List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))).strResult.toView
 
   Await.result(Helper.db.run {
     Helper.initData
