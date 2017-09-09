@@ -143,7 +143,7 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     }
   }
 
-  val unfullreadGen: FoldableChannel[Map[String, Json] => List[DataPile], V] = DataPile.transformTree {
+  val unfullreadGen: FoldableChannel[Map[String, Json] => DataPileContent, V] = DataPile.transformTree {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -177,10 +177,10 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     }.aa
   } { (readlerList, atomicGen) =>
     { sourceData: Map[String, Json] =>
-      atomicGen(readlerList.map(_.apply(sourceData)))
+      atomicGen.toContent(readlerList.map(_.apply(sourceData)))
     }
-  }.withSyntax(new PileSyntaxFunctor[Map[String, Json] => List[DataPile], V] {
-    override def pileMap[U](a: Map[String, Json] => List[DataPile], pervious: List[DataPile] => U): Map[String, Json] => U = {
+  }.withSyntax(new PileSyntaxFunctor[Map[String, Json] => DataPileContent, V] {
+    override def pileMap[U](a: Map[String, Json] => DataPileContent, pervious: DataPileContent => U): Map[String, Json] => U = {
       { sourceData: Map[String, Json] =>
         pervious(a(sourceData))
       }

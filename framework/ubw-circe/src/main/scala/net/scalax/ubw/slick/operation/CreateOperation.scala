@@ -88,7 +88,7 @@ object InCreateConvert extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): FoldableChannel[CreateType[List[DataPile]], CreateType] = {
+  ): FoldableChannel[CreateType[DataPileContent], CreateType] = {
     val profile = slickProfile
     DataPile.transformTree {
       import profile.api._
@@ -189,11 +189,11 @@ object InCreateConvert extends AtomicValueHelper {
             }
         }
         CreateOperation.parseInsert(binds, genListWithIndex).map { s =>
-          ExecInfo3(s.effectRows, atomicValueGen(s.columns.sortBy(_.index).map(_.data)))
+          ExecInfo3(s.effectRows, atomicValueGen.toContent(s.columns.sortBy(_.index).map(_.data)))
         }
       }
-    }.withSyntax(new PileSyntaxFunctor[CreateType[List[DataPile]], CreateType] {
-      override def pileMap[U](a: CreateType[List[DataPile]], pervious: List[DataPile] => U): CreateType[U] = {
+    }.withSyntax(new PileSyntaxFunctor[CreateType[DataPileContent], CreateType] {
+      override def pileMap[U](a: CreateType[DataPileContent], pervious: DataPileContent => U): CreateType[U] = {
         { binds: List[(Any, SlickQueryBindImpl)] =>
           a(binds).map { execInfo =>
             ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))

@@ -3,17 +3,17 @@ package net.scalax.fsn.mix.operation
 import net.scalax.fsn.core._
 import net.scalax.fsn.slick.atomic._
 import net.scalax.fsn.json.operation._
-import net.scalax.fsn.mix.slickbase.InOutQueryWrap
-import net.scalax.fsn.slick.model.SlickParam
-import net.scalax.fsn.slick.operation.{ ExecInfo3, InCreateConvert, InUpdateConvert }
-import slick.jdbc.JdbcProfile
+//import net.scalax.fsn.mix.slickbase.InOutQueryWrap
+//import net.scalax.fsn.slick.model.SlickParam
+//import net.scalax.fsn.slick.operation.{ ExecInfo3, InCreateConvert, InUpdateConvert }
+//import slick.jdbc.JdbcProfile
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 
 object InAndOutOperation extends PilesGenHelper with AtomicValueHelper {
 
-  def futureGen(implicit ec: ExecutionContext): InputChannel[Future[Option[List[DataPile]]]] = {
+  def futureGen(implicit ec: ExecutionContext): InputChannel[Future[Option[DataPileContent]]] = {
     DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickCreate])
@@ -32,7 +32,7 @@ object InAndOutOperation extends PilesGenHelper with AtomicValueHelper {
           }
       }.aa
     } { (genList, atomicValueGen) =>
-      Future.sequence(genList).map(s => Option(atomicValueGen(s))).recover {
+      Future.sequence(genList).map(s => Option(atomicValueGen.toContent(s))).recover {
         case _: NoSuchElementException =>
           //忽略因错误在数据库取不到数据的行
           None

@@ -95,7 +95,7 @@ object PropertiesOperation extends PilesGenHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[List[DataPile]]]]] =
+  ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[DataPileContent]]]] =
     { optPiles: List[Pile] =>
       val updateAction = JsonOperation.unfullreadGen.next(InUpdateConvert.updateGen)
 
@@ -182,7 +182,7 @@ object PropertiesOperation extends PilesGenHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => Map[String, Json] => DBIO[ExecInfo3[List[DataPile]]] =
+  ): List[Pile] => Map[String, Json] => DBIO[ExecInfo3[DataPileContent]] =
     { optPiles: List[Pile] =>
       JsonOperation.unfullreadGen.next3333(InCreateConvert.createGen).result(optPiles) match {
         case Right(result) =>

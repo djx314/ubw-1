@@ -54,7 +54,7 @@ object StrOutSelectConvert {
     implicit
     slickProfile1: JdbcProfile,
     ec: ExecutionContext
-  ): FoldableChannel[StrSlickQuery1111, ListAnyWrap3333] = {
+  ): FoldableChannel[StrSlickQuery, ListAnyWrap3333] = {
     DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrNeededFetch] :: needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: FANil)
@@ -176,7 +176,7 @@ object StrOutSelectConvert {
       val slickProfile2 = slickProfile1
       val ec1 = ec
       val slickParamObj = slickParam
-      new StrSlickQuery1111 {
+      new StrSlickQuery {
         override val readers = gensWithIndex
         override val sortMaps = finalOrderGen
         override val wrapQuery = wQuery
@@ -185,23 +185,23 @@ object StrOutSelectConvert {
         override val _slickProfile = slickProfile2
         override val ec = ec1
         override val slickParam = slickParamObj
-      }: StrSlickQuery1111
+      }: StrSlickQuery
     }.withSyntax(test.PileSyntaxFunctor)
       .withFunctor(test.functor1Test)
   }
 }
 
-trait StrSlickQuery1111 extends AtomicValueHelper {
+trait StrSlickQuery extends AtomicValueHelper {
   val readers: List[StrReaderWithIndex]
   val sortMaps: Map[String, Int]
   val wrapQuery: SlickQueryBindImpl
   val filterGen: List[FilterColumnGen[List[Any]]]
-  val atomicGen: List[AtomicValue] => List[DataPile]
+  val atomicGen: DataPileContentGen
   val _slickProfile: JdbcProfile
   val ec: ExecutionContext
   val slickParam: SlickParam
 
-  def slickResult: ListAnyWrap3333[List[DataPile]] = {
+  def slickResult: ListAnyWrap3333[DataPileContent] = {
     implicit val ec1 = ec
 
     val cols: List[Any] = readers.map(_.reader.sourceCol)
@@ -243,7 +243,7 @@ trait StrSlickQuery1111 extends AtomicValueHelper {
           }
           resultArray.toList
         }
-        ListAnyCollection3333(resultSet.map(s => atomicGen(s)), Option(s._2))
+        ListAnyCollection3333(resultSet.map(s => atomicGen.toContent(s)), Option(s._2))
       }
     ListAnyWrap3333(rs, sortbyQuery2.result.statements.toList)
   }
@@ -255,8 +255,8 @@ object test {
     implicit
     _slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): PileSyntaxFunctor[StrSlickQuery1111, ListAnyWrap3333] = new PileSyntaxFunctor[StrSlickQuery1111, ListAnyWrap3333] {
-    override def pileMap[U](a: StrSlickQuery1111, pervious: List[DataPile] => U): ListAnyWrap3333[U] = {
+  ): PileSyntaxFunctor[StrSlickQuery, ListAnyWrap3333] = new PileSyntaxFunctor[StrSlickQuery, ListAnyWrap3333] {
+    override def pileMap[U](a: StrSlickQuery, pervious: DataPileContent => U): ListAnyWrap3333[U] = {
       val result = a.slickResult
       val action = result.resultAction
       val newAction = action.map(s => ListAnyCollection3333(data = s.data.map(pervious), sum = s.sum))

@@ -1,12 +1,11 @@
 package net.scalax.fsn.slick.operation
 
-import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
-import net.scalax.fsn.slick.atomic.StaticMany
-import net.scalax.fsn.slick.model.QueryJsonInfo
-
-import scala.concurrent.{ ExecutionContext, Future }
-
+import net.scalax.fsn.json.operation.AtomicValueHelper
+//import net.scalax.fsn.core._
+//import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
+//import net.scalax.fsn.slick.atomic.StaticMany
+//import net.scalax.fsn.slick.model.QueryJsonInfo
+//import scala.concurrent.{ ExecutionContext, Future }
 object StaticManyOperation extends AtomicValueHelper {
 
   //TODO change option selector to list selector

@@ -83,7 +83,7 @@ object InRetrieveConvert extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): FoldableChannel[RetrieveType[List[DataPile]], RetrieveType] = {
+  ): FoldableChannel[RetrieveType[DataPileContent], RetrieveType] = {
     DataPile.transformTree({
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: needAtomicOpt[DefaultValue] :: FANil)
@@ -152,11 +152,11 @@ object InRetrieveConvert extends AtomicValueHelper {
             }
         }
         RetrieveOperation.parseInsertWithIndex(binds, readersWithData).map { s =>
-          ExecInfo3(s.effectRows, atomicValueGen(s.columns.sortBy(_.index).map(_.data)))
+          ExecInfo3(s.effectRows, atomicValueGen.toContent(s.columns.sortBy(_.index).map(_.data)))
         }
       }
-    }).withSyntax(new PileSyntaxFunctor[RetrieveType[List[DataPile]], RetrieveType] {
-      override def pileMap[U](a: RetrieveType[List[DataPile]], pervious: List[DataPile] => U): RetrieveType[U] = {
+    }).withSyntax(new PileSyntaxFunctor[RetrieveType[DataPileContent], RetrieveType] {
+      override def pileMap[U](a: RetrieveType[DataPileContent], pervious: DataPileContent => U): RetrieveType[U] = {
         { binds: List[(Any, SlickQueryBindImpl)] =>
           a(binds).map { execInfo =>
             ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))

@@ -1,12 +1,11 @@
 package net.scalax.fsn.core
 
-import scala.language.higherKinds
-
 sealed abstract trait Pile {
   self =>
   type DataType
 
-  def leafZero: List[DataPile]
+  def leafZero: List[AtomicValue]
+  def leafZeroDataPiles: List[DataPile]
 
 }
 
@@ -16,8 +15,11 @@ trait PileList extends Pile {
   type PileType
   override type DataType
 
-  def leafZero: List[DataPile] = {
+  def leafZero: List[AtomicValue] = {
     encodePiles.map(_.leafZero).flatten
+  }
+  def leafZeroDataPiles: List[DataPile] = {
+    encodePiles.map(_.leafZeroDataPiles).flatten
   }
 
   val pileEntity: PileType
@@ -60,8 +62,11 @@ trait BranchPile extends CommonPile {
   val subs: Pile
   def dataFromSub(subDatas: Any): DataType
 
-  def leafZero: List[DataPile] = {
+  def leafZero: List[AtomicValue] = {
     subs.leafZero
+  }
+  def leafZeroDataPiles: List[DataPile] = {
+    subs.leafZeroDataPiles
   }
 
 }
@@ -82,8 +87,18 @@ class BranchPileImpl[PT, DT](
 trait LeafPile extends CommonPile {
   self =>
 
-  def leafZero: List[DataPile] = {
-    DataPile.fromPile(self, fShape.zero :: Nil)._1 :: Nil
+  def leafZero: List[AtomicValue] = {
+    //DataPile.fromPile(self, fShape.zero :: Nil)._1 :: Nil
+    fShape.encodeData(fShape.zero)
+  }
+  def leafZeroDataPiles: List[DataPile] = {
+    List(
+      new LeafDataPileImpl(
+        pathPile = self.pathPile,
+        data = self.fShape.zero,
+        fShape = self.fShape
+      )
+    )
   }
 
 }

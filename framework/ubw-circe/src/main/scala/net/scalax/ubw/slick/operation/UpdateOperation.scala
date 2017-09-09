@@ -91,7 +91,7 @@ object InUpdateConvert extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): FoldableChannel[CreateType[List[DataPile]], CreateType] = {
+  ): FoldableChannel[CreateType[DataPileContent], CreateType] = {
     DataPile.transformTree(
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: needAtomicOpt[DefaultValue] :: FANil)
@@ -165,11 +165,11 @@ object InUpdateConvert extends AtomicValueHelper {
             }
         }
         UpdateOperation.parseInsert(binds, genListWithData).map { s =>
-          ExecInfo3(s.effectRows, atomicValueGen(s.columns.sortBy(_.index).map(_.data)))
+          ExecInfo3(s.effectRows, atomicValueGen.toContent(s.columns.sortBy(_.index).map(_.data)))
         }
       }
-    }.withSyntax(new PileSyntaxFunctor[UpdateType[List[DataPile]], UpdateType] {
-      override def pileMap[U](a: UpdateType[List[DataPile]], pervious: List[DataPile] => U): UpdateType[U] = {
+    }.withSyntax(new PileSyntaxFunctor[UpdateType[DataPileContent], UpdateType] {
+      override def pileMap[U](a: UpdateType[DataPileContent], pervious: DataPileContent => U): UpdateType[U] = {
         { binds: List[(Any, SlickQueryBindImpl)] =>
           a(binds).map { execInfo =>
             ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))

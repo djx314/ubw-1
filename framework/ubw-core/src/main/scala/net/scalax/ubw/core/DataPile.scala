@@ -225,23 +225,24 @@ object DataPile {
     genTreeTailCall(pathGen, pile, pile)
   }
 
-  def transformTree[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: (List[U], List[AtomicValue] => List[DataPile]) => T): InputChannel[T] = {
+  def transformTree[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: (List[U], DataPileContentGen) => T): InputChannel[T] = {
     val pileGen1 = new Channel.PileGen[T] {
       override def gen(prePiles: Pile): Either[AtomicException, Channel.PilePip[T]] = {
         val piles = prePiles
 
-        val calculatePiles =
-          genTree(pathGen, piles)
+        val calculatePiles = genTree(pathGen, piles)
 
         calculatePiles.right.map {
           case TransPileWrap(newPiles, summaryPiles) =>
-            Channel.PilePipImpl(piles = newPiles, valueFunc = { dataPiles: List[DataPile] =>
-              val (oldDataPile, _) = summaryPiles.foldLeft(List.empty[DataPile], dataPiles.map(_.data.asInstanceOf[Any])) {
+            Channel.PilePipImpl(piles = newPiles, valueFunc = { oldContent: DataPileContent =>
+              //数值在管道流动形成新的管道，但未加上本阶段数值的变化
+              val (oldDataPile, _) = summaryPiles.foldLeft(List.empty[DataPile], oldContent.newDataPiles.map(_.data.asInstanceOf[Any])) {
                 case ((dataPileList, data), pile) =>
                   val (currentDataPile, remainData) = fromPile(pile, data)
                   (dataPileList ::: currentDataPile :: Nil) -> remainData
               }
 
+              //求出当前 InputChannel 的值
               val result = oldDataPile.map { pile =>
                 val pathWithValue = pile.selfPaths.zip(pile.toAtomicValues(pile.data))
                 pathWithValue.map {
@@ -251,7 +252,8 @@ object DataPile {
                 }
               }.flatten
 
-              val atomicValueGen = { newAtomicValues: List[AtomicValue] =>
+              //本阶段 List[AtomicValue] => List[DataPile] 的转化器
+              val atomicValueGen1 = { newAtomicValues: List[AtomicValue] =>
                 oldDataPile.foldLeft(List.empty[DataPile] -> newAtomicValues) {
                   case ((newDataPiles, currentValues), oldDataPile) =>
                     val (newDataPile, remainData) = oldDataPile.renderFromList(currentValues)
@@ -259,7 +261,15 @@ object DataPile {
                 }._1
               }
 
-              columnGen(result, atomicValueGen)
+              val oldDataPile1 = oldDataPile
+
+              val contentGen = new DataPileContentGen {
+                override def atomicValueGen(atomicList: List[AtomicValue]) = atomicValueGen1(atomicList)
+                override val oldDataPiles = oldDataPile1
+                override val previousContent = Option(oldContent)
+              }
+
+              columnGen(result, contentGen)
             })
         }
 
