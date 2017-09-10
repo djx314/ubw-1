@@ -85,7 +85,7 @@ object InDeleteConvert extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): FoldableChannel[DeleteType[DataPileContent], DeleteType] = {
+  ): SingleFoldableChannel[DeleteType[DataPileContent], DeleteType] = {
     DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickDelete] :: needAtomicOpt[OneToOneRetrieve] :: FANil)

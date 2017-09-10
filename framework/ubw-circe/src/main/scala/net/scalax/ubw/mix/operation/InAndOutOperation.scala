@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext
 
 object InAndOutOperation extends PilesGenHelper with AtomicValueHelper {
 
-  def futureGen(implicit ec: ExecutionContext): InputChannel[Future[Option[DataPileContent]]] = {
+  def futureGen(implicit ec: ExecutionContext): SingleInputChannel[Future[Option[DataPileContent]]] = {
     DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickCreate])

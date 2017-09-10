@@ -54,7 +54,7 @@ object StrOutSelectConvert {
     implicit
     slickProfile1: JdbcProfile,
     ec: ExecutionContext
-  ): FoldableChannel[StrSlickQuery, ListAnyWrap3333] = {
+  ): SingleFoldableChannel[StrSlickQuery, ListAnyWrap3333] = {
     DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[StrSlickSelect] :: needAtomicOpt[StrNeededFetch] :: needAtomicOpt[StrOrderNullsLast] :: needAtomicOpt[StrOrderTargetName] :: needAtomicOpt[DefaultValue] :: needAtomic[FProperty] :: FANil)

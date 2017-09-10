@@ -43,7 +43,7 @@ trait GroupSlickReader {
 
 object GroupSelectConvert {
 
-  def ubwGen(wQuery1: SlickQueryBindImpl)(implicit _slickProfile: JdbcProfile, ec: ExecutionContext): FoldableChannel[FGroupQuery, test1.TestType] = {
+  def ubwGen(wQuery1: SlickQueryBindImpl)(implicit _slickProfile: JdbcProfile, ec: ExecutionContext): SingleFoldableChannel[FGroupQuery, test1.TestType] = {
     DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[GroupSlickSelect] :: needAtomicOpt[GroupableColumnBase] :: needAtomicOpt[CountableGroupColumn] :: needAtomic[FProperty] :: FANil)

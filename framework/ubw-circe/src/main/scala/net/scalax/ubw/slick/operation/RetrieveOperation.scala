@@ -83,7 +83,7 @@ object InRetrieveConvert extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): FoldableChannel[RetrieveType[DataPileContent], RetrieveType] = {
+  ): SingleFoldableChannel[RetrieveType[DataPileContent], RetrieveType] = {
     DataPile.transformTree({
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: needAtomicOpt[DefaultValue] :: FANil)

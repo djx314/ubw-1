@@ -99,11 +99,14 @@ object PropertiesOperation extends PilesGenHelper {
     { optPiles: List[Pile] =>
       val updateAction = JsonOperation.unfullreadGen.next(InUpdateConvert.updateGen)
 
-      {
-        data: Map[String, Json] =>
-          updateAction.result(optPiles) match {
-            case Right(result) =>
-              Future.successful(Right(result(data)(binds)))
+      updateAction.result(optPiles) match {
+        case Left(e) =>
+          throw e
+          e.printStackTrace
+          throw e
+        case Right(result) =>
+          { data: Map[String, Json] =>
+            Future.successful(Right(result(data)(binds)))
           }
       }
 

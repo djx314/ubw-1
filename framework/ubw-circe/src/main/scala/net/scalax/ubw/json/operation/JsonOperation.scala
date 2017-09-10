@@ -117,7 +117,7 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     jsonTupleList.collect { case Some(s) => s }.toMap: Map[String, Json]
   }*/
 
-  def unSafewriteGen: InputChannel[Map[String, Json]] = DataPile.transformTree {
+  def unSafewriteGen: SingleInputChannel[Map[String, Json]] = DataPile.transformTree {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {

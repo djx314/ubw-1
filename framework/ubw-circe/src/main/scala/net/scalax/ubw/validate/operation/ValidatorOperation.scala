@@ -1,18 +1,15 @@
 package net.scalax.fsn.json.operation
 
-import net.scalax.fsn.common.atomic.{ DefaultValue, FDescribe, FProperty }
+import net.scalax.fsn.common.atomic.{ FDescribe, FProperty }
 import net.scalax.fsn.core._
-import net.scalax.ubw.core.PileFilter
 import net.scalax.ubw.validate.atomic.{ ErrorMessage, ValidatorF }
 import shapeless._
-import cats.instances.future._
-import cats._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
 object ValidatorOperation extends AtomicValueHelper {
 
-  def readValidator(implicit ec: ExecutionContext): PileFilter[List[ErrorMessage], Future] = PileFilter {
+  def readValidator(implicit ec: ExecutionContext): AtomicPath => QueryTranform[Future[List[ErrorMessage]]] = {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[FProperty] :: needAtomicList[ValidatorF] :: needAtomicOpt[FDescribe] :: FANil)
         .mapTo {
@@ -41,17 +38,13 @@ object ValidatorOperation extends AtomicValueHelper {
             Future.sequence(validateResultFList).map { s =>
               val validateResult = s.collect { case Some(s) => s }
               (if (validateResult.isEmpty) {
-                data -> validateResult
+                validateResult
               } else {
-                emptyValue[data.DataType] -> validateResult
-              }): (AtomicValue, List[ErrorMessage])
+                validateResult
+              }): List[ErrorMessage]
             }
         }
     }.aa
-  }(implicitly[Monad[Future]], new Semigroup[List[ErrorMessage]] {
-    override def combine(x: List[ErrorMessage], y: List[ErrorMessage]): List[ErrorMessage] = {
-      x ::: y
-    }
-  })
+  }
 
 }

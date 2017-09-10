@@ -91,7 +91,7 @@ object InUpdateConvert extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): FoldableChannel[CreateType[DataPileContent], CreateType] = {
+  ): SingleFoldableChannel[CreateType[DataPileContent], CreateType] = {
     DataPile.transformTree(
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: needAtomicOpt[DefaultValue] :: FANil)

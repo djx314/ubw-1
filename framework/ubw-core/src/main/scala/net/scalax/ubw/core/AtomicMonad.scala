@@ -1,4 +1,4 @@
-package net.scalax.ubw.core
+/*package net.scalax.ubw.core
 
 import cats.{ Functor, Monad, Semigroup, Traverse }
 import cats.instances.list._
@@ -61,4 +61,4 @@ object PileFilter {
     }
   }
 
-}
+}*/ 

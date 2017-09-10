@@ -9,6 +9,7 @@ sealed abstract trait DataPile {
   def renderFromList(newData: List[AtomicValue]): (DataPile, List[AtomicValue])
   def toAtomicValues(data: DataType): List[AtomicValue]
   def selfPaths: List[AtomicPath]
+  def pathWithValues: List[PathWithValues]
 }
 
 trait DataPileList extends DataPile {
@@ -34,6 +35,9 @@ trait DataPileList extends DataPile {
   override def selfPaths: List[AtomicPath] = {
     self.encodePiles.flatMap(_.selfPaths)
   }
+  override def pathWithValues: List[PathWithValues] = {
+    encodePiles.flatMap(_.pathWithValues)
+  }
 }
 
 class DataPileListImpl[PT, DT](
@@ -51,32 +55,38 @@ class DataPileListImpl[PT, DT](
   override def encodePileData(data: DataType): List[Any] = dataEncoder(data)
 
   override def replaceData(newData: DataType): DataPileListImpl[PT, DT] = {
-    /*new DataPileListImpl(
+    new DataPileListImpl(
       pileEntity,
       newData,
       encoder,
-      decoder,
-      dataDecoder
-    )*/
-    ???
+      dataDecoder,
+      dataEncoder
+    )
   }
 
-  override def renderFromList(newData: List[AtomicValue]): (DataPileListImpl[List[CommonDataPile], DT], List[AtomicValue]) = {
+  override def renderFromList(newData: List[AtomicValue]): (DataPileListImpl[PT, DT], List[AtomicValue]) = {
+    val (commonPileList, resultData) = encodePiles.foldLeft(List.empty[CommonDataPile] -> newData) {
+      case ((currentPileList, currentData), currentPile) =>
+        val (pile, data) = currentPile.renderFromList(currentData)
+        (currentPileList ::: pile :: Nil) -> data
+    }
+    replaceData(decodePileData(commonPileList.map(_.data))) -> resultData
+  }
+
+  /*override def renderFromList(newData: List[AtomicValue]): (DataPileListImpl[List[CommonDataPile], DT], List[AtomicValue]) = {
     val (commonPileList, resultData) = encodePiles.foldLeft(List.empty[CommonDataPile] -> newData) {
       case ((currentPileList, currentData), currentPile) =>
         val (pile, data) = currentPile.renderFromList(currentData)
         (currentPileList ::: pile :: Nil) -> data
     }
     new DataPileListImpl(
-      //decodePiles(commonPileList),
       commonPileList,
       decodePileData(commonPileList.map(_.data)),
       commonPileList,
-      //decoder,
       dataDecoder,
       dataEncoder
     ) -> resultData
-  }
+  }*/
 }
 
 abstract trait CommonDataPile extends DataPile {
@@ -106,6 +116,16 @@ trait BranchDataPile extends CommonDataPile {
   def dataFromSub(subDatas: Any): DataType
   override def replaceData(newData: DataType): BranchDataPile
   override def renderFromList(newData: List[AtomicValue]): (BranchDataPile, List[AtomicValue])
+  override def pathWithValues: List[PathWithValues] = {
+    subs.pathWithValues ::: fShape.encodeColumn(pathPile).zip(fShape.encodeData(data)).map { s =>
+      new PathWithValues {
+        valueSelf =>
+        override type DataType = s._1.DataType
+        override val path = s._1.asInstanceOf[AtomicPathImpl[valueSelf.DataType]]
+        override val value = s._2.asInstanceOf[AtomicValueImpl[valueSelf.DataType]]
+      }
+    }
+  }
 
 }
 
@@ -158,6 +178,16 @@ class LeafDataPileImpl[PT, DT](
   override def renderFromList(newData: List[AtomicValue]): (LeafDataPileImpl[PT, DT], List[AtomicValue]) = {
     val (headList, tailList) = newData.splitAt(fShape.dataLength)
     replaceData(fShape.decodeData(headList)) -> tailList
+  }
+  override def pathWithValues: List[PathWithValues] = {
+    fShape.encodeColumn(pathPile).zip(fShape.encodeData(data)).map { s =>
+      new PathWithValues {
+        valueSelf =>
+        override type DataType = s._1.DataType
+        override val path = s._1.asInstanceOf[AtomicPathImpl[valueSelf.DataType]]
+        override val value = s._2.asInstanceOf[AtomicValueImpl[valueSelf.DataType]]
+      }
+    }
   }
 }
 
@@ -225,8 +255,8 @@ object DataPile {
     genTreeTailCall(pathGen, pile, pile)
   }
 
-  def transformTree[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: (List[U], DataPileContentGen) => T): InputChannel[T] = {
-    val pileGen1 = new Channel.PileGen[T] {
+  def transformTree[U, T](pathGen: AtomicPath => QueryTranform[U])(columnGen: (List[U], DataPileContentGen) => T): SingleInputChannel[T] = {
+    /*val pileGen1 = new Channel.PileGen[T] {
       override def gen(prePiles: Pile): Either[AtomicException, Channel.PilePip[T]] = {
         val piles = prePiles
 
@@ -277,6 +307,13 @@ object DataPile {
     }
     new InputChannel[T] {
       override val pilesGen = pileGen1
+    }*/
+    val columnGen1 = columnGen
+    val pathGen1 = pathGen
+    new SingleInputChannel[T] {
+      override def columnGen(tempList: List[QueryType], contentGen: DataPileContentGen): T = columnGen1(tempList, contentGen)
+      override def pathGen(path: AtomicPath): QueryTranform[QueryType] = pathGen1(path)
+      override type QueryType = U
     }
   }
 
