@@ -96,7 +96,7 @@ object InUpdateConvert extends AtomicValueHelper {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: needAtomicOpt[DefaultValue] :: FANil)
           .mapTo {
-            case (slickWriter :: oneToOneUpdateOpt :: defaultOpt :: HNil, data) => {
+            case (slickWriter :: oneToOneUpdateOpt :: defaultOpt :: HNil, data) => { () =>
               val uSlickSubGen = oneToOneUpdateOpt.map { oneToOneUpdate =>
                 new UpdateTran {
                   override val table = oneToOneUpdate.owner
@@ -159,9 +159,10 @@ object InUpdateConvert extends AtomicValueHelper {
       { binds: List[(Any, SlickQueryBindImpl)] =>
         val genListWithData = genList.zipWithIndex.map {
           case (s, index) =>
+            val writer1 = s()
             new ISlickUpdaterWithData {
-              override val writer = s
-              override val data = DataWithIndex(set(writer.data), index)
+              override val writer = writer1
+              override val data = DataWithIndex(set(writer1.data), index)
             }
         }
         UpdateOperation.parseInsert(binds, genListWithData).map { s =>

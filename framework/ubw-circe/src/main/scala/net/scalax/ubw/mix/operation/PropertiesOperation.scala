@@ -4,7 +4,7 @@ import net.scalax.fsn.core._
 import net.scalax.fsn.slick.model._
 import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
 import net.scalax.fsn.slick.operation._
-import net.scalax.fsn.json.operation.JsonOperation
+import net.scalax.fsn.json.operation.{ JsonOperation, ValidatorOperation }
 import slick.jdbc.JdbcProfile
 import io.circe.Json
 import net.scalax.ubw.validate.atomic.ErrorMessage
@@ -97,7 +97,7 @@ object PropertiesOperation extends PilesGenHelper {
     ec: ExecutionContext
   ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[DataPileContent]]]] =
     { optPiles: List[Pile] =>
-      val updateAction = JsonOperation.unfullreadGen.next(InUpdateConvert.updateGen)
+      val updateAction = JsonOperation.unfullreadGen.next(InUpdateConvert.updateGen.withFilter(ValidatorOperation.readValidator))
 
       updateAction.result(optPiles) match {
         case Left(e) =>
@@ -106,7 +106,15 @@ object PropertiesOperation extends PilesGenHelper {
           throw e
         case Right(result) =>
           { data: Map[String, Json] =>
-            Future.successful(Right(result(data)(binds)))
+            val (jsonValidate, updateGen) = result(data)
+            val errorMsgsF: Future[List[ErrorMessage]] = Future.sequence(jsonValidate).map(_.flatten)
+            errorMsgsF.map { errorMsgs =>
+              if (errorMsgs.isEmpty) {
+                Right(updateGen(binds))
+              } else {
+                Left(errorMsgs)
+              }
+            }
           }
       }
 

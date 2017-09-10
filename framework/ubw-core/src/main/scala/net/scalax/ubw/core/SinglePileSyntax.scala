@@ -71,11 +71,11 @@ trait SingleInputChannel[T] extends InputChannel[T] {
     }
   }
 
-  def withFilter[K](gen: AtomicPath => QueryTranform[K]): SingleInputChannel[(List[K], () => T)] = {
-    new SingleInputChannel[(List[K], () => T)] {
+  def withFilter[K](gen: AtomicPath => QueryTranform[K]): SingleInputChannel[(List[K], T)] = {
+    new SingleInputChannel[(List[K], T)] {
       override type QueryType = self.QueryType
       override def pathGen(path: AtomicPath): QueryTranform[QueryType] = self.pathGen(path)
-      override def columnGen(tempList: List[QueryType], contentGen: DataPileContentGen): (List[K], () => T) = {
+      override def columnGen(tempList: List[QueryType], contentGen: DataPileContentGen): (List[K], T) = {
         {
           contentGen.oldDataPiles.flatMap { oldDataPile =>
             oldDataPile.pathWithValues.flatMap { pAndV =>
@@ -87,7 +87,7 @@ trait SingleInputChannel[T] extends InputChannel[T] {
               }
             }
           }
-        } -> { () =>
+        } -> {
           self.columnGen(tempList, contentGen)
         }
       }
@@ -112,16 +112,16 @@ trait SingleIOChannel[T, R[_]] extends SingleInputChannel[T] with IOChannel[T, R
     }
   }
 
-  override def withFilter[K](gen: AtomicPath => QueryTranform[K]): SingleIOChannel[(List[K], () => T), ({ type L[M] = (List[K], R[M]) })#L] = {
-    new SingleIOChannel[(List[K], () => T), ({ type L[M] = (List[K], R[M]) })#L] {
-      override val PileSyntaxFunctor = new PileSyntaxFunctor[(List[K], () => T), ({ type L[M] = (List[K], R[M]) })#L] {
-        override def pileMap[H](a: (List[K], () => T), pervious: DataPileContent => H): (List[K], R[H]) = {
-          a._1 -> self.PileSyntaxFunctor.pileMap(a._2(), pervious)
+  override def withFilter[K](gen: AtomicPath => QueryTranform[K]): SingleIOChannel[(List[K], T), ({ type L[M] = (List[K], R[M]) })#L] = {
+    new SingleIOChannel[(List[K], T), ({ type L[M] = (List[K], R[M]) })#L] {
+      override val PileSyntaxFunctor = new PileSyntaxFunctor[(List[K], T), ({ type L[M] = (List[K], R[M]) })#L] {
+        override def pileMap[H](a: (List[K], T), pervious: DataPileContent => H): (List[K], R[H]) = {
+          a._1 -> self.PileSyntaxFunctor.pileMap(a._2, pervious)
         }
       }
       override type QueryType = self.QueryType
       override def pathGen(path: AtomicPath): QueryTranform[QueryType] = self.pathGen(path)
-      override def columnGen(tempList: List[QueryType], contentGen: DataPileContentGen): (List[K], () => T) = {
+      override def columnGen(tempList: List[QueryType], contentGen: DataPileContentGen): (List[K], T) = {
         {
           contentGen.oldDataPiles.flatMap { oldDataPile =>
             oldDataPile.pathWithValues.flatMap { pAndV =>
@@ -133,7 +133,7 @@ trait SingleIOChannel[T, R[_]] extends SingleInputChannel[T] with IOChannel[T, R
               }
             }
           }
-        } -> { () =>
+        } -> {
           self.columnGen(tempList, contentGen)
         }
       }
@@ -147,19 +147,19 @@ trait SingleFoldableChannel[T, R[_]] extends SingleIOChannel[T, R] with Foldable
 
   val functor: cats.Functor[R]
 
-  override def withFilter[K](gen: AtomicPath => QueryTranform[K]): SingleFoldableChannel[(List[K], () => T), ({ type L[M] = (List[K], R[M]) })#L] = {
-    new SingleFoldableChannel[(List[K], () => T), ({ type L[M] = (List[K], R[M]) })#L] {
+  override def withFilter[K](gen: AtomicPath => QueryTranform[K]): SingleFoldableChannel[(List[K], T), ({ type L[M] = (List[K], R[M]) })#L] = {
+    new SingleFoldableChannel[(List[K], T), ({ type L[M] = (List[K], R[M]) })#L] {
       override val functor = new Functor[({ type L[M] = (List[K], R[M]) })#L] {
         override def map[A, B](fa: (List[K], R[A]))(f: (A) => B): (List[K], R[B]) = fa._1 -> self.functor.map(fa._2)(f)
       }
-      override val PileSyntaxFunctor = new PileSyntaxFunctor[(List[K], () => T), ({ type L[M] = (List[K], R[M]) })#L] {
-        override def pileMap[H](a: (List[K], () => T), pervious: DataPileContent => H): (List[K], R[H]) = {
-          a._1 -> self.PileSyntaxFunctor.pileMap(a._2(), pervious)
+      override val PileSyntaxFunctor = new PileSyntaxFunctor[(List[K], T), ({ type L[M] = (List[K], R[M]) })#L] {
+        override def pileMap[H](a: (List[K], T), pervious: DataPileContent => H): (List[K], R[H]) = {
+          a._1 -> self.PileSyntaxFunctor.pileMap(a._2, pervious)
         }
       }
       override type QueryType = self.QueryType
       override def pathGen(path: AtomicPath): QueryTranform[QueryType] = self.pathGen(path)
-      override def columnGen(tempList: List[QueryType], contentGen: DataPileContentGen): (List[K], () => T) = {
+      override def columnGen(tempList: List[QueryType], contentGen: DataPileContentGen): (List[K], T) = {
         {
           contentGen.oldDataPiles.flatMap { oldDataPile =>
             oldDataPile.pathWithValues.flatMap { pAndV =>
@@ -171,7 +171,7 @@ trait SingleFoldableChannel[T, R[_]] extends SingleIOChannel[T, R] with Foldable
               }
             }
           }
-        } -> { () =>
+        } -> {
           self.columnGen(tempList, contentGen)
         }
       }
