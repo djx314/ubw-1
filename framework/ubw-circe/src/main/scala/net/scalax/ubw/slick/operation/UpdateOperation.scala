@@ -18,7 +18,7 @@ import slick.lifted._
 
 case class DataWithIndex(data: AtomicValue, index: Int)
 case class ExecInfo3[T](effectRows: Int, columns: T)
-case class ExecInfo4(effectRows: Int, content: DataPileContent) {
+/*case class ExecInfo4(effectRows: Int, content: DataPileContent) {
   lazy val extractContent: ExtractContent = ExtractContent(content)
   def extract[E](extractor: Extractor[E]): Option[E] = {
     extractContent.extract(extractor)
@@ -27,8 +27,7 @@ case class ExecInfo4(effectRows: Int, content: DataPileContent) {
   def extractAnyway[E](extractor: Extractor[E]): E = {
     extractContent.extractAnyway(extractor)
   }
-}
-
+}*/
 trait UpdateTran {
   val table: Any
   def convert(source: UpdateQuery): UpdateQuery

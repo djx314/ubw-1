@@ -1,6 +1,7 @@
 package net.scalax.ubw.core
 
 import cats.{ Functor, Monad }
+import net.scalax.ubw.core.Channel.PilePipImpl
 
 import scala.language.higherKinds
 
@@ -69,9 +70,59 @@ trait IOChannel[T, R[_]] extends InputChannel[T] {
       }
     }
   }
-
-  //def afterResult[E](filter: PileFilter[E])
-
+  /*def afterResult[E](filter: PileFilter[E]): IOChannel[(T, R[E]), ({ type L[K] = (R[K], R[E]) })#L] = {
+    new IOChannel[(T, R[E]), ({ type L[K] = (R[K], R[E]) })#L] {
+      override val pilesGen = new Channel.PileGen[(T, R[E])] {
+        override def gen(pile: Pile): Either[AtomicException, Channel.PilePip[(T, R[E])]] = {
+          self.pilesGen.gen(pile) match {
+            case Right(oldPile) =>
+              Right(PilePipImpl[DataPileContent => (T, R[E])](oldPile.piles, { dataPiles =>
+                oldPile.valueFunc(dataPiles) -> self.PileSyntaxFunctor.pileMap(oldPile.valueFunc(dataPiles), { content =>
+                  filter.transform(content.newDataPiles)
+                })
+              }))
+            case Left(e) => Left(e)
+          }
+        }
+      }
+      override val PileSyntaxFunctor = new PileSyntaxFunctor[(T, R[E]), ({ type L[K] = (R[K], R[E]) })#L] {
+        override def pileMap[U](a: (T, R[E]), pervious: DataPileContent => U): (R[U], R[E]) = {
+          self.PileSyntaxFunctor.pileMap(a._1, pervious) -> a._2
+        }
+      }
+    }
+  }*/
+  def afterResult[E](filter: PileFilter[E]): InputChannel[(R[E])] = {
+    new InputChannel[R[E]] {
+      override val pilesGen = new Channel.PileGen[R[E]] {
+        override def gen(pile: Pile): Either[AtomicException, Channel.PilePip[R[E]]] = {
+          self.pilesGen.gen(pile) match {
+            case Right(oldPile) =>
+              Right(PilePipImpl[DataPileContent => R[E]](oldPile.piles, { dataPiles =>
+                val selfResult = oldPile.valueFunc(dataPiles)
+                self.PileSyntaxFunctor.pileMap(selfResult, { content =>
+                  filter.transform(content.newDataPiles)
+                })
+              }))
+            case Left(e) => Left(e)
+          }
+        }
+      }
+      /*override val PileSyntaxFunctor = new PileSyntaxFunctor[R[(T, E)], ({ type L[K] = R[R[(K, E)]] })#L] {
+        override def pileMap[U](a: R[(T, E)], pervious: DataPileContent => U): R[R[(U, E)]] = {
+          self.functor.map(a) {
+            case (t, e) =>
+              self.PileSyntaxFunctor.pileMap(t, { content => pervious(content) -> e })
+          }
+        }
+      }
+      override val functor: cats.Functor[({ type L[K] = R[R[(K, E)]] })#L] = new cats.Functor[({ type L[K] = R[R[(K, E)]] })#L] {
+        override def map[A, B](fa: R[R[(A, E)]])(f: A => B): R[R[(B, E)]] = {
+          self.functor.map(fa) { t => self.functor.map(t)(t => f(t._1) -> t._2) }
+        }
+      }*/
+    }
+  }
 }
 
 trait FoldableChannel[T, R[_]] extends IOChannel[T, R] {
@@ -118,6 +169,38 @@ trait FoldableChannel[T, R[_]] extends IOChannel[T, R] {
 
     }
   }
+
+  /*def afterResult[E](filter: PileFilter[E]): InputChannel[(R[(T, E)]), ({ type L[K] = R[R[(K, E)]] })#L] = {
+    new FoldableChannel[R[(T, E)], ({ type L[K] = R[R[(K, E)]] })#L] {
+      override val pilesGen = new Channel.PileGen[R[(T, E)]] {
+        override def gen(pile: Pile): Either[AtomicException, Channel.PilePip[R[(T, E)]]] = {
+          self.pilesGen.gen(pile) match {
+            case Right(oldPile) =>
+              Right(PilePipImpl[DataPileContent => R[(T, E)]](oldPile.piles, { dataPiles =>
+                val selfResult = oldPile.valueFunc(dataPiles)
+                self.functor.map(self.PileSyntaxFunctor.pileMap(selfResult, { content =>
+                  filter.transform(content.newDataPiles)
+                })) { s => selfResult -> s }
+              }))
+            case Left(e) => Left(e)
+          }
+        }
+      }
+      override val PileSyntaxFunctor = new PileSyntaxFunctor[R[(T, E)], ({ type L[K] = R[R[(K, E)]] })#L] {
+        override def pileMap[U](a: R[(T, E)], pervious: DataPileContent => U): R[R[(U, E)]] = {
+          self.functor.map(a) {
+            case (t, e) =>
+              self.PileSyntaxFunctor.pileMap(t, { content => pervious(content) -> e })
+          }
+        }
+      }
+      override val functor: cats.Functor[({ type L[K] = R[R[(K, E)]] })#L] = new cats.Functor[({ type L[K] = R[R[(K, E)]] })#L] {
+        override def map[A, B](fa: R[R[(A, E)]])(f: A => B): R[R[(B, E)]] = {
+          self.functor.map(fa) { t => self.functor.map(t)(t => f(t._1) -> t._2) }
+        }
+      }
+    }
+  }*/
 
 }
 

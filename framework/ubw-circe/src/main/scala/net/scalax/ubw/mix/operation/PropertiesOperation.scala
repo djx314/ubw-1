@@ -4,9 +4,11 @@ import net.scalax.ubw.core._
 import net.scalax.ubw.slick.model._
 import net.scalax.ubw.slick.helpers.SlickQueryBindImpl
 import net.scalax.ubw.slick.operation._
-import net.scalax.ubw.json.operation.{ JsonOperation, ValidatorOperation }
+import net.scalax.ubw.json.operation.{JsonOperation, ValidatorOperation}
 import slick.jdbc.JdbcProfile
 import io.circe.Json
+import net.scalax.ubw.extraction.model.ExtractContent
+import net.scalax.ubw.extraction.operation.ExtractorOperation
 import net.scalax.ubw.validate.atomic.ErrorMessage
 import slick.basic.BasicBackend
 import slick.dbio._
@@ -107,7 +109,7 @@ object PropertiesOperation extends PilesGenHelper {
         case Right(result) =>
           { data: Map[String, Json] =>
             val (jsonValidate, updateGen) = result(data)
-            val errorMsgsF: Future[List[ErrorMessage]] = Future.sequence(jsonValidate).map(_.flatten)
+            val errorMsgsF: Future[List[ErrorMessage]] = jsonValidate
             errorMsgsF.map { errorMsgs =>
               if (errorMsgs.isEmpty) {
                 Right(updateGen(binds))
@@ -193,9 +195,9 @@ object PropertiesOperation extends PilesGenHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => Map[String, Json] => DBIO[ExecInfo3[DataPileContent]] =
+  ): List[Pile] => Map[String, Json] => DBIO[ExecInfo3[ExtractContent]] =
     { optPiles: List[Pile] =>
-      JsonOperation.unfullreadGen.next3333(InCreateConvert.createGen).result(optPiles) match {
+      JsonOperation.unfullreadGen.next3333(InCreateConvert.createGen).afterResult(ExtractorOperation.extractor).result(optPiles) match {
         case Right(result) =>
           { data: Map[String, Json] =>
             result(data)(binds)

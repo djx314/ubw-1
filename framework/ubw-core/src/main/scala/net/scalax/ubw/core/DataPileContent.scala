@@ -24,8 +24,7 @@ trait DataPileContent {
   val oldDataPiles: List[DataPile]
   val newDataPiles: List[DataPile]
   val previousContent: Option[DataPileContent]
-
-  def afterWithFilter[U](filter: AtomicPath => QueryTranform[U]): List[U] = {
+  /*def afterWithFilter[U](filter: AtomicPath => QueryTranform[U]): List[U] = {
     newDataPiles.flatMap { oldDataPile =>
       oldDataPile.pathWithValues.flatMap { pAndV =>
         val wrap = filter(pAndV.path)
@@ -36,5 +35,5 @@ trait DataPileContent {
         }
       }
     }
-  }
+  }*/
 }

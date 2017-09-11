@@ -9,7 +9,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 object ValidatorOperation extends AtomicValueHelper {
 
-  def readValidator(implicit ec: ExecutionContext): AtomicPath => QueryTranform[Future[List[ErrorMessage]]] = {
+  def readValidator(implicit ec: ExecutionContext): PileFilter[Future[List[ErrorMessage]]] = PileFilter {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[FProperty] :: needAtomicList[ValidatorF] :: needAtomicOpt[FDescribe] :: FANil)
         .mapTo {
@@ -45,6 +45,8 @@ object ValidatorOperation extends AtomicValueHelper {
             }
         }
     }.aa
+  } { messages =>
+    Future.sequence(messages).map(_.flatten)
   }
 
 }

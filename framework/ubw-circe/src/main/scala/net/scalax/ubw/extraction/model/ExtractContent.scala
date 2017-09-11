@@ -2,17 +2,16 @@ package net.scalax.ubw.extraction.model
 
 import net.scalax.ubw.core.DataPileContent
 import net.scalax.ubw.extraction.atomic.Extractor
-import net.scalax.ubw.extraction.operation.ExtractorOperation
 
 trait ExtractContent {
 
-  val dataPileContent: DataPileContent
-  lazy protected val map: Map[Extractor[_], Any] = dataPileContent.afterWithFilter(ExtractorOperation.extractor) match {
+  //val dataPileContent: DataPileContent
+  protected val map: Map[Extractor[_], Any] /*= dataPileContent.afterWithFilter(ExtractorOperation.extractor) match {
     case list if list.isEmpty =>
       Map.empty[Extractor[_], Any]
     case list =>
       list.reduce(_ ++ _)
-  }
+  }*/
 
   def extract[E](extractor: Extractor[E]): Option[E] = {
     map.get(extractor).map(_.asInstanceOf[E])
@@ -26,10 +25,10 @@ trait ExtractContent {
 
 object ExtractContent {
 
-  def apply(dataPileContent: DataPileContent): ExtractContent = {
-    val dataPileContent1 = dataPileContent
+  def apply(map: Map[Extractor[_], Any]): ExtractContent = {
+    val map1 = map
     new ExtractContent {
-      override val dataPileContent = dataPileContent1
+      override val map = map1
     }
   }
 
