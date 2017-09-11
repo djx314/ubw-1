@@ -138,7 +138,7 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
         } yield {
           updateStaticManyInfo
         }*/
-        Future.successful(Right(createInfoDBIO))
+        createInfoDBIO
       },
         deleteGen = (v: Map[String, Json]) => {
         PropertiesOperation.json2SlickDeleteOperation(crudQueryWrap.binds).apply(columns).apply(v)

@@ -1,7 +1,6 @@
 package net.scalax.ubw.slick.model
 
 import io.circe.Json
-import net.scalax.ubw.core.DataPileContent
 import net.scalax.ubw.extraction.model.ExtractContent
 import net.scalax.ubw.slick.operation.ExecInfo3
 import net.scalax.ubw.validate.atomic.ErrorMessage
@@ -46,7 +45,7 @@ case class QueryJsonInfo(
   retrieveGen: Map[String, Json] => DBIO[Map[String, Json]],
   insertGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]],
   deleteGen: Map[String, Json] => DBIO[Int],
-  updateGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[DataPileContent]]]],
+  updateGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]],
   //staticMany: Future[List[StaticManyUbw]]
 )
 
@@ -54,7 +53,7 @@ case class RWInfo(
     retrieveGen: Map[String, Json] => DBIO[Map[String, Json]],
     insertGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]],
     deleteGen: Map[String, Json] => DBIO[Int],
-    updateGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[DataPileContent]]]],
+    updateGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]],
     //staticMany: Future[List[StaticManyUbw]]
 ) {
 

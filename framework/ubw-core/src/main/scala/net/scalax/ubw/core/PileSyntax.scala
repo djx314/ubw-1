@@ -108,19 +108,6 @@ trait IOChannel[T, R[_]] extends InputChannel[T] {
           }
         }
       }
-      /*override val PileSyntaxFunctor = new PileSyntaxFunctor[R[(T, E)], ({ type L[K] = R[R[(K, E)]] })#L] {
-        override def pileMap[U](a: R[(T, E)], pervious: DataPileContent => U): R[R[(U, E)]] = {
-          self.functor.map(a) {
-            case (t, e) =>
-              self.PileSyntaxFunctor.pileMap(t, { content => pervious(content) -> e })
-          }
-        }
-      }
-      override val functor: cats.Functor[({ type L[K] = R[R[(K, E)]] })#L] = new cats.Functor[({ type L[K] = R[R[(K, E)]] })#L] {
-        override def map[A, B](fa: R[R[(A, E)]])(f: A => B): R[R[(B, E)]] = {
-          self.functor.map(fa) { t => self.functor.map(t)(t => f(t._1) -> t._2) }
-        }
-      }*/
     }
   }
 }
