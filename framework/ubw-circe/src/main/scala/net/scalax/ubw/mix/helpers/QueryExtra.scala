@@ -1,11 +1,11 @@
-package net.scalax.fsn.mix.helpers
+package net.scalax.ubw.mix.helpers
 
 import io.circe.Json
-import net.scalax.fsn.core._
-import net.scalax.fsn.mix.operation.PropertiesOperation
-import net.scalax.fsn.mix.slickbase.{ FQueryWrap, PileListQueryWrap }
-import net.scalax.fsn.slick.model._
-import net.scalax.fsn.slick.operation.GroupResult
+import net.scalax.ubw.core._
+import net.scalax.ubw.mix.operation.PropertiesOperation
+import net.scalax.ubw.mix.slickbase.{ FQueryWrap, PileListQueryWrap }
+import net.scalax.ubw.slick.model._
+import net.scalax.ubw.slick.operation.GroupResult
 import slick.jdbc.JdbcProfile
 
 import scala.concurrent.{ ExecutionContext, Future }

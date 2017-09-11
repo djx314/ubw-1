@@ -1,6 +1,6 @@
 package net.scalax.ubw.validate.helpers
 
-import net.scalax.fsn.json.operation.AtomicHelper
+import net.scalax.ubw.json.operation.AtomicHelper
 import net.scalax.ubw.validate.atomic.{ ErrorMessage, Validator }
 
 trait NestEmptyUnWrap[S, T] {

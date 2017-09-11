@@ -1,4 +1,4 @@
-package net.scalax.fsn.database.test
+package net.scalax.ubw.database.test
 
 import io.circe.Json
 import io.circe.syntax._

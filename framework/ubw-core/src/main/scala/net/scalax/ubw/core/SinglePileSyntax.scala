@@ -1,7 +1,7 @@
-package net.scalax.fsn.core
+package net.scalax.ubw.core
 
 import cats.{ Functor, Monad }
-import net.scalax.fsn.core.DataPile.{ TransPileWrap, fromPile, genTree }
+import net.scalax.ubw.core.DataPile.{ TransPileWrap, fromPile, genTree }
 
 import scala.language.higherKinds
 

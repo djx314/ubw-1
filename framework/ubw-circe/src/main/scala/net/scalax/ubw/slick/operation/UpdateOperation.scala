@@ -1,12 +1,12 @@
-package net.scalax.fsn.slick.operation
+package net.scalax.ubw.slick.operation
 
 import cats.Functor
-import net.scalax.fsn.common.atomic.DefaultValue
-import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue, ValidatorOperation}
-import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate}
-import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
-import net.scalax.fsn.slick.operation.InCreateConvert.CreateType
+import net.scalax.ubw.common.atomic.DefaultValue
+import net.scalax.ubw.core._
+import net.scalax.ubw.json.operation.{AtomicValueHelper, FSomeValue, ValidatorOperation}
+import net.scalax.ubw.slick.atomic.{OneToOneUpdate, SlickUpdate}
+import net.scalax.ubw.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
+import net.scalax.ubw.slick.operation.InCreateConvert.CreateType
 import net.scalax.ubw.extraction.atomic.Extractor
 import net.scalax.ubw.extraction.model.ExtractContent
 import net.scalax.ubw.validate.atomic.ErrorMessage

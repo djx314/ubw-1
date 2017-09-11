@@ -1,6 +1,6 @@
-package net.scalax.fsn.mix.slickbase
+package net.scalax.ubw.mix.slickbase
 
-import net.scalax.fsn.mix.helpers.SlickCRUDImplicits
-import net.scalax.fsn.slick.helpers.FilterRepImplicitHelper
+import net.scalax.ubw.mix.helpers.SlickCRUDImplicits
+import net.scalax.ubw.slick.helpers.FilterRepImplicitHelper
 
 trait SqlRepImplicits extends FilterRepImplicitHelper with SlickCRUDImplicits

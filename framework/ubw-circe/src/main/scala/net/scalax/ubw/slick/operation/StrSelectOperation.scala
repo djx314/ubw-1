@@ -1,12 +1,12 @@
-package net.scalax.fsn.slick.operation
+package net.scalax.ubw.slick.operation
 
 import cats.Functor
-import net.scalax.fsn.core._
-import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
-import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
-import net.scalax.fsn.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
-import net.scalax.fsn.slick.helpers._
-import net.scalax.fsn.slick.model._
+import net.scalax.ubw.core._
+import net.scalax.ubw.common.atomic.{ DefaultValue, FProperty }
+import net.scalax.ubw.json.operation.{ AtomicValueHelper, FSomeValue }
+import net.scalax.ubw.slick.atomic.{ StrNeededFetch, StrOrderNullsLast, StrOrderTargetName, StrSlickSelect }
+import net.scalax.ubw.slick.helpers._
+import net.scalax.ubw.slick.model._
 import shapeless._
 import slick.jdbc.JdbcProfile
 import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Query, Shape }

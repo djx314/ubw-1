@@ -1,7 +1,7 @@
-package net.scalax.fsn.common.atomic
+package net.scalax.ubw.common.atomic
 
 import cats.Applicative
-import net.scalax.fsn.core.Atomic
+import net.scalax.ubw.core.Atomic
 
 import scala.concurrent.{ ExecutionContext, Future }
 

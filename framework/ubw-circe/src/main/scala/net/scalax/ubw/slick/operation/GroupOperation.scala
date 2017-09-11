@@ -1,12 +1,12 @@
-package net.scalax.fsn.slick.operation
+package net.scalax.ubw.slick.operation
 
 import cats.Functor
-import net.scalax.fsn.core._
-import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.json.operation.AtomicValueHelper
-import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
-import net.scalax.fsn.slick.model._
+import net.scalax.ubw.core._
+import net.scalax.ubw.common.atomic.FProperty
+import net.scalax.ubw.json.operation.AtomicValueHelper
+import net.scalax.ubw.slick.atomic._
+import net.scalax.ubw.slick.helpers.{ ListColumnShape, SlickQueryBindImpl }
+import net.scalax.ubw.slick.model._
 import shapeless._
 import slick.ast.{ BaseTypedType, Ordering, TypedType }
 import slick.dbio.DBIO

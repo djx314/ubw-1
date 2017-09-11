@@ -1,11 +1,11 @@
-package net.scalax.fsn.mix.operation
+package net.scalax.ubw.mix.operation
 
-import net.scalax.fsn.core._
-import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.json.operation._
-//import net.scalax.fsn.mix.slickbase.InOutQueryWrap
-//import net.scalax.fsn.slick.model.SlickParam
-//import net.scalax.fsn.slick.operation.{ ExecInfo3, InCreateConvert, InUpdateConvert }
+import net.scalax.ubw.core._
+import net.scalax.ubw.slick.atomic._
+import net.scalax.ubw.json.operation._
+//import net.scalax.ubw.mix.slickbase.InOutQueryWrap
+//import net.scalax.ubw.slick.model.SlickParam
+//import net.scalax.ubw.slick.operation.{ ExecInfo3, InCreateConvert, InUpdateConvert }
 //import slick.jdbc.JdbcProfile
 
 import scala.concurrent.Future

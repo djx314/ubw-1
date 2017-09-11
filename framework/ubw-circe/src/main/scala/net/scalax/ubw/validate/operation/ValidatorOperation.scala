@@ -1,7 +1,7 @@
-package net.scalax.fsn.json.operation
+package net.scalax.ubw.json.operation
 
-import net.scalax.fsn.common.atomic.{ FDescribe, FProperty }
-import net.scalax.fsn.core._
+import net.scalax.ubw.common.atomic.{ FDescribe, FProperty }
+import net.scalax.ubw.core._
 import net.scalax.ubw.validate.atomic.{ ErrorMessage, ValidatorF }
 import shapeless._
 

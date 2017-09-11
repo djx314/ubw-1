@@ -1,8 +1,8 @@
-package net.scalax.fsn.slick.model
+package net.scalax.ubw.slick.model
 
 import io.circe.Json
-import net.scalax.fsn.core.DataPileContent
-import net.scalax.fsn.slick.operation.ExecInfo3
+import net.scalax.ubw.core.DataPileContent
+import net.scalax.ubw.slick.operation.ExecInfo3
 import net.scalax.ubw.validate.atomic.ErrorMessage
 import slick.dbio.DBIO
 

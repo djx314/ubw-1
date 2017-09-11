@@ -1,8 +1,8 @@
-package net.scalax.fsn.mix.helpers
+package net.scalax.ubw.mix.helpers
 
-import net.scalax.fsn.core.{ Atomic, AtomicPathImpl }
-import net.scalax.fsn.slick.atomic._
-import net.scalax.fsn.slick.helpers.FilterWrapper
+import net.scalax.ubw.core.{ Atomic, AtomicPathImpl }
+import net.scalax.ubw.slick.atomic._
+import net.scalax.ubw.slick.helpers.FilterWrapper
 import slick.lifted.{ FlatShapeLevel, Shape }
 
 case class SCRUD[S, D, T](

@@ -1,9 +1,9 @@
-package net.scalax.fsn.database.test
+package net.scalax.ubw.database.test
 
-import net.scalax.fsn.core.{ AtomicPathImpl, PilesPolyHelper }
-import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
-import net.scalax.fsn.slick.helpers.{ FilterRepImplicitHelper }
-import net.scalax.fsn.slick.model.ColumnOrder
+import net.scalax.ubw.core.{ AtomicPathImpl, PilesPolyHelper }
+import net.scalax.ubw.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
+import net.scalax.ubw.slick.helpers.{ FilterRepImplicitHelper }
+import net.scalax.ubw.slick.model.ColumnOrder
 import org.h2.jdbcx.JdbcDataSource
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
@@ -49,14 +49,14 @@ class CreateTest extends FlatSpec
   }
 
   object helper extends Slick2JsonFsnImplicit
-      with net.scalax.fsn.mix.slickbase.SqlRepImplicits
+      with net.scalax.ubw.mix.slickbase.SqlRepImplicits
       with PilesPolyHelper
-      with net.scalax.fsn.slick.helpers.StrFSSelectAtomicHelper
+      with net.scalax.ubw.slick.helpers.StrFSSelectAtomicHelper
       with SlickCRUDImplicits {
 
-    import net.scalax.fsn.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
-    import net.scalax.fsn.slick.helpers.FStrSelectExtAtomicHelper
-    import net.scalax.fsn.slick.helpers.FJsonAtomicHelper
+    import net.scalax.ubw.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
+    import net.scalax.ubw.slick.helpers.FStrSelectExtAtomicHelper
+    import net.scalax.ubw.slick.helpers.FJsonAtomicHelper
 
     implicit def fPilesOptionImplicit[D](path: AtomicPathImpl[D]): FJsonAtomicHelper[D] with FStrSelectExtAtomicHelper[D] with FPropertyAtomicHelper[D] with FDefaultAtomicHelper[D] = {
       val path1 = path

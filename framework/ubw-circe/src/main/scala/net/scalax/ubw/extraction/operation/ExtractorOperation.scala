@@ -1,7 +1,7 @@
 package net.scalax.ubw.extraction.operation
 
-import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
+import net.scalax.ubw.core._
+import net.scalax.ubw.json.operation.{ AtomicValueHelper, FSomeValue }
 import net.scalax.ubw.extraction.atomic.Extractor
 import shapeless._
 

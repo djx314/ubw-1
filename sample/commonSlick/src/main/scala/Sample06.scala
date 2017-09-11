@@ -1,10 +1,10 @@
-package net.scalax.fsn.database.test
+package net.scalax.ubw.database.test
 
-import net.scalax.fsn.core.AtomicPathImpl
-import net.scalax.fsn.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
-import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
-import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
-import net.scalax.fsn.slick.model._
+import net.scalax.ubw.core.AtomicPathImpl
+import net.scalax.ubw.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
+import net.scalax.ubw.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
+import net.scalax.ubw.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
+import net.scalax.ubw.slick.model._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.implicitConversions

@@ -1,10 +1,10 @@
-package net.scalax.fsn.mix.operation
+package net.scalax.ubw.mix.operation
 
-import net.scalax.fsn.core._
-import net.scalax.fsn.slick.model._
-import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
-import net.scalax.fsn.slick.operation._
-import net.scalax.fsn.json.operation.{ JsonOperation, ValidatorOperation }
+import net.scalax.ubw.core._
+import net.scalax.ubw.slick.model._
+import net.scalax.ubw.slick.helpers.SlickQueryBindImpl
+import net.scalax.ubw.slick.operation._
+import net.scalax.ubw.json.operation.{ JsonOperation, ValidatorOperation }
 import slick.jdbc.JdbcProfile
 import io.circe.Json
 import net.scalax.ubw.validate.atomic.ErrorMessage

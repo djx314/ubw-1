@@ -1,4 +1,4 @@
-/*package net.scalax.fsn.slick.helpers
+/*package net.scalax.ubw.slick.helpers
 
 trait EqType[F, V] {
   def to(in: F): V

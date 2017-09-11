@@ -1,4 +1,4 @@
-package net.scalax.fsn.parameter.atomic
+package net.scalax.ubw.parameter.atomic
 
 import io.circe.{ Encoder, Json }
 

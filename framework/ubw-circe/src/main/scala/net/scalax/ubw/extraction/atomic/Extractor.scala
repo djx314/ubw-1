@@ -1,6 +1,6 @@
 package net.scalax.ubw.extraction.atomic
 
-import net.scalax.fsn.core.Atomic
+import net.scalax.ubw.core.Atomic
 
 trait Extractor[E] extends Atomic[E] {
   override def toString: String = {

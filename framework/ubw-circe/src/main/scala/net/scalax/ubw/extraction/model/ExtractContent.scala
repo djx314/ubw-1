@@ -1,6 +1,6 @@
 package net.scalax.ubw.extraction.model
 
-import net.scalax.fsn.core.DataPileContent
+import net.scalax.ubw.core.DataPileContent
 import net.scalax.ubw.extraction.atomic.Extractor
 import net.scalax.ubw.extraction.operation.ExtractorOperation
 

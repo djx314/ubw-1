@@ -1,4 +1,4 @@
-package net.scalax.fsn.core
+package net.scalax.ubw.core
 
 import scala.reflect.runtime.universe._
 

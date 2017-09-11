@@ -1,11 +1,11 @@
-package net.scalax.fsn.json.operation
+package net.scalax.ubw.json.operation
 
 import cats.Functor
 import io.circe.Json
 import io.circe.syntax._
-import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
-import net.scalax.fsn.core._
-import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
+import net.scalax.ubw.common.atomic.{ DefaultValue, FProperty }
+import net.scalax.ubw.core._
+import net.scalax.ubw.json.atomic.{ JsonReader, JsonWriter }
 import shapeless._
 
 object JsonOperation extends AtomicValueHelper with PilesGenHelper {

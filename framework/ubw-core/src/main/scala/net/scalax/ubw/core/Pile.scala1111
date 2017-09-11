@@ -1,6 +1,6 @@
-package net.scalax.fsn.core
+package net.scalax.ubw.core
 
-import net.scalax.fsn.core.ListUtils.WeightData
+import net.scalax.ubw.core.ListUtils.WeightData
 import net.scalax.ubw.core.PileFilter
 import scala.language.higherKinds
 

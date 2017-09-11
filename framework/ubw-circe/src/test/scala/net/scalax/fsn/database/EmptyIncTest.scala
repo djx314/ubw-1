@@ -1,6 +1,6 @@
-package net.scalax.fsn.database.test
+package net.scalax.ubw.database.test
 
-import net.scalax.fsn.slick.helpers.SlickUtils
+import net.scalax.ubw.slick.helpers.SlickUtils
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 

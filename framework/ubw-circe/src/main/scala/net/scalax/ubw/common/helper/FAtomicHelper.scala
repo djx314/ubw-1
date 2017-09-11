@@ -1,7 +1,7 @@
-package net.scalax.fsn.json.operation
+package net.scalax.ubw.json.operation
 
-import net.scalax.fsn.common.atomic.{ DefaultValue, FDescribe, FProperty }
-import net.scalax.fsn.core.AtomicPathImpl
+import net.scalax.ubw.common.atomic.{ DefaultValue, FDescribe, FProperty }
+import net.scalax.ubw.core.AtomicPathImpl
 
 trait AtomicHelper[D] {
 

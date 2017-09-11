@@ -1,10 +1,10 @@
-package net.scalax.fsn.mix.slickbase
+package net.scalax.ubw.mix.slickbase
 
-import net.scalax.fsn.core.Pile
-import net.scalax.fsn.mix.operation.InAndOutOperation
-import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
-import net.scalax.fsn.slick.model.SlickParam
-import net.scalax.fsn.slick.operation.ExecInfo3
+import net.scalax.ubw.core.Pile
+import net.scalax.ubw.mix.operation.InAndOutOperation
+import net.scalax.ubw.slick.helpers.SlickQueryBindImpl
+import net.scalax.ubw.slick.model.SlickParam
+import net.scalax.ubw.slick.operation.ExecInfo3
 import slick.ast.{ AnonSymbol, Ref }
 import slick.dbio.DBIO
 import slick.jdbc.{ JdbcBackend, JdbcProfile }

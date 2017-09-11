@@ -1,6 +1,6 @@
-package net.scalax.fsn.slick.operation
+package net.scalax.ubw.slick.operation
 
-import net.scalax.fsn.slick.model.{ SlickPage, SlickParam, SlickRange }
+import net.scalax.ubw.slick.model.{ SlickPage, SlickParam, SlickRange }
 import slick.jdbc.JdbcProfile
 import slick.lifted.Query
 

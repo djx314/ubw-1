@@ -1,11 +1,11 @@
-package net.scalax.fsn.database.test
+package net.scalax.ubw.database.test
 
 import io.circe.syntax._
-import net.scalax.fsn.core.{ AtomicPathImpl, AtomicValueImpl, PilesPolyHelper }
-import net.scalax.fsn.json.operation.{ AtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper, FSomeValue }
-import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
-import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
-import net.scalax.fsn.slick.model.{ ColumnOrder, JsonView }
+import net.scalax.ubw.core.{ AtomicPathImpl, AtomicValueImpl, PilesPolyHelper }
+import net.scalax.ubw.json.operation.{ AtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper, FSomeValue }
+import net.scalax.ubw.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
+import net.scalax.ubw.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
+import net.scalax.ubw.slick.model.{ ColumnOrder, JsonView }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.implicitConversions

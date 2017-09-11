@@ -1,4 +1,4 @@
-package net.scalax.fsn.core
+package net.scalax.ubw.core
 
 sealed abstract trait DataPile {
   self =>

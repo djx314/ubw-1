@@ -1,7 +1,7 @@
-package net.scalax.fsn.slick.helpers
+package net.scalax.ubw.slick.helpers
 
-import net.scalax.fsn.json.operation.AtomicHelper
-import net.scalax.fsn.slick.atomic._
+import net.scalax.ubw.json.operation.AtomicHelper
+import net.scalax.ubw.slick.atomic._
 import slick.lifted.{ FlatShapeLevel, Shape }
 import scala.language.implicitConversions
 

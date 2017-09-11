@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick.model
+package net.scalax.ubw.slick.model
 
 import org.xarcher.cpoi.CellData
 import slick.dbio.DBIO
