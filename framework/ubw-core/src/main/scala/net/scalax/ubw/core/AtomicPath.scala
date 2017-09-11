@@ -1,4 +1,4 @@
-package net.scalax.fsn.core
+package net.scalax.ubw.core
 
 trait AtomicPath extends AtomicWrap {
   override type DataType

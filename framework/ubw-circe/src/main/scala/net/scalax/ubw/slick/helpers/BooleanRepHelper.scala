@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick.helpers
+package net.scalax.ubw.slick.helpers
 
 import scala.language.implicitConversions
 import slick.ast.TypedType

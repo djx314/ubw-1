@@ -1,6 +1,6 @@
-package net.scalax.fsn.slick.atomic
+package net.scalax.ubw.slick.atomic
 
-import net.scalax.fsn.core.Atomic
+import net.scalax.ubw.core.Atomic
 import slick.lifted.{ FlatShapeLevel, Shape }
 
 trait SlickCreate[E] extends Atomic[E] {

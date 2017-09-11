@@ -1,11 +1,11 @@
-package net.scalax.fsn.json.operation
+package net.scalax.ubw.json.operation
 
 import cats.Functor
 import io.circe.Json
 import io.circe.syntax._
-import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
-import net.scalax.fsn.core._
-import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
+import net.scalax.ubw.common.atomic.{ DefaultValue, FProperty }
+import net.scalax.ubw.core._
+import net.scalax.ubw.json.atomic.{ JsonReader, JsonWriter }
 import shapeless._
 
 object JsonOperation extends AtomicValueHelper with PilesGenHelper {
@@ -117,7 +117,7 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     jsonTupleList.collect { case Some(s) => s }.toMap: Map[String, Json]
   }*/
 
-  def unSafewriteGen: InputChannel[Map[String, Json]] = DataPile.transformTree {
+  def unSafewriteGen: SingleInputChannel[Map[String, Json]] = DataPile.transformTree {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonWriter] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -143,7 +143,7 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     }
   }
 
-  val unfullreadGen: FoldableChannel[Map[String, Json] => List[DataPile], V] = DataPile.transformTree {
+  val unfullreadGen: FoldableChannel[Map[String, Json] => DataPileContent, V] = DataPile.transformTree {
     new AtomicQuery(_) {
       val aa = withRep(needAtomic[JsonReader] :: needAtomic[FProperty] :: needAtomicOpt[DefaultValue] :: FANil)
         .mapTo {
@@ -177,10 +177,10 @@ object JsonOperation extends AtomicValueHelper with PilesGenHelper {
     }.aa
   } { (readlerList, atomicGen) =>
     { sourceData: Map[String, Json] =>
-      atomicGen(readlerList.map(_.apply(sourceData)))
+      atomicGen.toContent(readlerList.map(_.apply(sourceData)))
     }
-  }.withSyntax(new PileSyntaxFunctor[Map[String, Json] => List[DataPile], V] {
-    override def pileMap[U](a: Map[String, Json] => List[DataPile], pervious: List[DataPile] => U): Map[String, Json] => U = {
+  }.withSyntax(new PileSyntaxFunctor[Map[String, Json] => DataPileContent, V] {
+    override def pileMap[U](a: Map[String, Json] => DataPileContent, pervious: DataPileContent => U): Map[String, Json] => U = {
       { sourceData: Map[String, Json] =>
         pervious(a(sourceData))
       }

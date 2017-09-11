@@ -203,7 +203,7 @@ ReadableCellOperationAbs 和 WriteableCellOperationAbs (我开始后悔起了个
 
 考虑了这么多的问题之后,就可以建立出一个抽象了.(下面开始暴力贴 fsn 的代码了,做好准备)
 ```scala
-package net.scalax.fsn.core
+package net.scalax.ubw.core
 
 import scala.reflect.runtime.universe._
 

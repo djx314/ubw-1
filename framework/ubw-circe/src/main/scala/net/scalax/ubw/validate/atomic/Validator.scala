@@ -1,6 +1,6 @@
 package net.scalax.ubw.validate.atomic
 
-import net.scalax.fsn.core.Atomic
+import net.scalax.ubw.core.Atomic
 
 import scala.concurrent.Future
 

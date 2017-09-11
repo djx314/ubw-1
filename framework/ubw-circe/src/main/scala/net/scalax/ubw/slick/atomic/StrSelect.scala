@@ -1,7 +1,7 @@
-package net.scalax.fsn.slick.atomic
+package net.scalax.ubw.slick.atomic
 
-import net.scalax.fsn.core.{ Atomic, AtomicPathImpl }
-import net.scalax.fsn.slick.helpers.{ FilterWrapper, LikeableColumnGen }
+import net.scalax.ubw.core.{ Atomic, AtomicPathImpl }
+import net.scalax.ubw.slick.helpers.{ FilterWrapper, LikeableColumnGen }
 import slick.lifted.{ ColumnOrdered, FlatShapeLevel, Shape }
 
 trait StrSlickSelect[D] extends Atomic[D] {

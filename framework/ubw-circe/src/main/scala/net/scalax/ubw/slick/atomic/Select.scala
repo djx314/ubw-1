@@ -1,5 +1,5 @@
-package net.scalax.fsn.slick.atomic
-import net.scalax.fsn.core.Atomic
+package net.scalax.ubw.slick.atomic
+import net.scalax.ubw.core.Atomic
 /*trait SlickSelect[E] extends Atomic[E] {
   type SourceType
   type SlickType

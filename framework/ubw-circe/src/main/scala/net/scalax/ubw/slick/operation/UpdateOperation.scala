@@ -1,22 +1,29 @@
-package net.scalax.fsn.slick.operation
+package net.scalax.ubw.slick.operation
 
-import cats.Functor
-import net.scalax.fsn.common.atomic.DefaultValue
-import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue, ValidatorOperation}
-import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate}
-import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
-import net.scalax.fsn.slick.operation.InCreateConvert.CreateType
-import net.scalax.ubw.validate.atomic.ErrorMessage
+import net.scalax.ubw.common.atomic.DefaultValue
+import net.scalax.ubw.core._
+import net.scalax.ubw.json.operation.{AtomicValueHelper, FSomeValue}
+import net.scalax.ubw.slick.atomic.{OneToOneUpdate, SlickUpdate}
+import net.scalax.ubw.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
+import net.scalax.ubw.slick.operation.InCreateConvert.CreateType
 import slick.jdbc.JdbcProfile
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import shapeless._
 import slick.lifted._
 
 case class DataWithIndex(data: AtomicValue, index: Int)
 case class ExecInfo3[T](effectRows: Int, columns: T)
+/*case class ExecInfo4(effectRows: Int, content: DataPileContent) {
+  lazy val extractContent: ExtractContent = ExtractContent(content)
+  def extract[E](extractor: Extractor[E]): Option[E] = {
+    extractContent.extract(extractor)
+  }
 
+  def extractAnyway[E](extractor: Extractor[E]): E = {
+    extractContent.extractAnyway(extractor)
+  }
+}*/
 trait UpdateTran {
   val table: Any
   def convert(source: UpdateQuery): UpdateQuery
@@ -76,8 +83,7 @@ trait ISlickUpdaterWithData {
 }
 
 object InUpdateConvert extends AtomicValueHelper {
-
-  type UpdateType[T] = List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]
+  /*type UpdateType[T] = List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]
 
   def functor(implicit ec: ExecutionContext): Functor[UpdateType] = new Functor[UpdateType] {
     override def map[A, B](fa: UpdateType[A])(f: (A) => B): UpdateType[B] = {
@@ -85,18 +91,17 @@ object InUpdateConvert extends AtomicValueHelper {
         fa(binds).map(s => ExecInfo3(s.effectRows, f(s.columns)))
       }
     }
-  }
-
+  }*/
   def updateGen(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): FoldableChannel[CreateType[List[DataPile]], CreateType] = {
+  ): SingleFoldableChannel[CreateType[DataPileContent], CreateType] = {
     DataPile.transformTree(
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickUpdate] :: needAtomicOpt[OneToOneUpdate] :: needAtomicOpt[DefaultValue] :: FANil)
           .mapTo {
-            case (slickWriter :: oneToOneUpdateOpt :: defaultOpt :: HNil, data) => {
+            case (slickWriter :: oneToOneUpdateOpt :: defaultOpt :: HNil, data) => { () =>
               val uSlickSubGen = oneToOneUpdateOpt.map { oneToOneUpdate =>
                 new UpdateTran {
                   override val table = oneToOneUpdate.owner
@@ -156,27 +161,28 @@ object InUpdateConvert extends AtomicValueHelper {
             }
           }
       }.aa/*, ValidatorOperation.readValidator*/) { (genList, atomicValueGen) =>
-      { binds: List[(Any, SlickQueryBindImpl)] =>
+      CreateType { binds: List[(Any, SlickQueryBindImpl)] =>
         val genListWithData = genList.zipWithIndex.map {
           case (s, index) =>
+            val writer1 = s()
             new ISlickUpdaterWithData {
-              override val writer = s
-              override val data = DataWithIndex(set(writer.data), index)
+              override val writer = writer1
+              override val data = DataWithIndex(set(writer1.data), index)
             }
         }
         UpdateOperation.parseInsert(binds, genListWithData).map { s =>
-          ExecInfo3(s.effectRows, atomicValueGen(s.columns.sortBy(_.index).map(_.data)))
+          ExecInfo3(s.effectRows, atomicValueGen.toContent(s.columns.sortBy(_.index).map(_.data)))
         }
       }
-    }.withSyntax(new PileSyntaxFunctor[UpdateType[List[DataPile]], UpdateType] {
-      override def pileMap[U](a: UpdateType[List[DataPile]], pervious: List[DataPile] => U): UpdateType[U] = {
-        { binds: List[(Any, SlickQueryBindImpl)] =>
+    }.withSyntax(new PileSyntaxFunctor[CreateType[DataPileContent], CreateType] {
+      override def pileMap[U](a: CreateType[DataPileContent], pervious: DataPileContent => U): CreateType[U] = {
+        CreateType { binds: List[(Any, SlickQueryBindImpl)] =>
           a(binds).map { execInfo =>
             ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))
           }
         }
       }
-    }).withFunctor(functor)
+    }).withFunctor(InCreateConvert.functor)
   }
 }
 

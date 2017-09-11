@@ -1,6 +1,6 @@
 package net.scalax.ubw.validate.helpers
 
-import net.scalax.fsn.json.operation.AtomicHelper
+import net.scalax.ubw.json.operation.AtomicHelper
 import net.scalax.ubw.validate.atomic.{ ErrorMessage, Validator }
 
 trait NestEmptyUnWrap[S, T] {
@@ -55,7 +55,7 @@ trait ValidatorAtomicHelper[E] extends AtomicHelper[E] {
     override def validate(proName: String, describe: String): PartialFunction[Option[E], Option[ErrorMessage]] = {
       case s =>
         lazy val emptyErrMsg = Option(ErrorMessage.error(proName, s"${describe}不能为空"))
-        s.fold(emptyErrMsg) { s => None }
+        s.fold(emptyErrMsg) { _ => None }
     }
   })
 

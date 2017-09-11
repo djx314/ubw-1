@@ -1,10 +1,10 @@
-package net.scalax.fsn.database.test
+package net.scalax.ubw.database.test
 
-import net.scalax.fsn.core.AtomicPathImpl
-import net.scalax.fsn.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
-import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
-import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
-import net.scalax.fsn.slick.model.{ ColumnOrder, JsonOut, JsonView, SlickParam }
+import net.scalax.ubw.core.AtomicPathImpl
+import net.scalax.ubw.json.operation.{ FDefaultAtomicHelper, FPropertyAtomicHelper }
+import net.scalax.ubw.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
+import net.scalax.ubw.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
+import net.scalax.ubw.slick.model.{ ColumnOrder, JsonOut, JsonView }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.implicitConversions
@@ -33,7 +33,7 @@ object Sample05 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
   }
 
   val result1: JsonOut = fQuery.strResult
-  val view1: DBIO[JsonView] = result1.toView(SlickParam())
+  val view1: DBIO[JsonView] = result1.toView
 
   Await.result(Helper.db.run {
     Helper.initData
@@ -44,7 +44,7 @@ object Sample05 extends SlickCRUDImplicits with StrFSSelectAtomicHelper with Sli
       }
   }, duration.Duration.Inf)
 
-  val view2: DBIO[JsonView] = result1.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))))
+  val view2: DBIO[JsonView] = fQuery.addOrders(List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))).strResult.toView
 
   Await.result(Helper.db.run {
     view2.map { s =>

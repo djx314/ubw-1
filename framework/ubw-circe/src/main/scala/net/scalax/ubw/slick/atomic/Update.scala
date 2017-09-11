@@ -1,7 +1,7 @@
-package net.scalax.fsn.slick.atomic
+package net.scalax.ubw.slick.atomic
 
-import net.scalax.fsn.core.Atomic
-import net.scalax.fsn.slick.helpers.FilterWrapper
+import net.scalax.ubw.core.Atomic
+import net.scalax.ubw.slick.helpers.FilterWrapper
 import slick.lifted.{ FlatShapeLevel, Shape }
 
 trait SlickUpdate[E] extends Atomic[E] {

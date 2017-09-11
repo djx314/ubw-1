@@ -1,11 +1,11 @@
-package net.scalax.fsn.slick.operation
+package net.scalax.ubw.slick.operation
 
 import cats.Functor
-import net.scalax.fsn.common.atomic.DefaultValue
-import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue}
-import net.scalax.fsn.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
-import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
+import net.scalax.ubw.common.atomic.DefaultValue
+import net.scalax.ubw.core._
+import net.scalax.ubw.json.operation.{AtomicValueHelper, FSomeValue}
+import net.scalax.ubw.slick.atomic.{OneToOneRetrieve, SlickRetrieve}
+import net.scalax.ubw.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
 import slick.lifted._
 import shapeless._
 import slick.jdbc.JdbcProfile
@@ -83,7 +83,7 @@ object InRetrieveConvert extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): FoldableChannel[RetrieveType[List[DataPile]], RetrieveType] = {
+  ): SingleFoldableChannel[RetrieveType[DataPileContent], RetrieveType] = {
     DataPile.transformTree({
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: needAtomicOpt[DefaultValue] :: FANil)
@@ -152,11 +152,11 @@ object InRetrieveConvert extends AtomicValueHelper {
             }
         }
         RetrieveOperation.parseInsertWithIndex(binds, readersWithData).map { s =>
-          ExecInfo3(s.effectRows, atomicValueGen(s.columns.sortBy(_.index).map(_.data)))
+          ExecInfo3(s.effectRows, atomicValueGen.toContent(s.columns.sortBy(_.index).map(_.data)))
         }
       }
-    }).withSyntax(new PileSyntaxFunctor[RetrieveType[List[DataPile]], RetrieveType] {
-      override def pileMap[U](a: RetrieveType[List[DataPile]], pervious: List[DataPile] => U): RetrieveType[U] = {
+    }).withSyntax(new PileSyntaxFunctor[RetrieveType[DataPileContent], RetrieveType] {
+      override def pileMap[U](a: RetrieveType[DataPileContent], pervious: DataPileContent => U): RetrieveType[U] = {
         { binds: List[(Any, SlickQueryBindImpl)] =>
           a(binds).map { execInfo =>
             ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))

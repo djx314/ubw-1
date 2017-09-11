@@ -1,6 +1,6 @@
-package net.scalax.fsn.slick.atomic
+package net.scalax.ubw.slick.atomic
 
-import net.scalax.fsn.core.{ Atomic, AtomicPathImpl }
+import net.scalax.ubw.core.{ Atomic, AtomicPathImpl }
 import slick.ast.BaseTypedType
 import slick.lifted.{ FlatShapeLevel, Ordered, Rep, Shape }
 

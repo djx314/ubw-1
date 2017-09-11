@@ -1,10 +1,10 @@
-/*package net.scalax.fsn.json.operation
+/*package net.scalax.ubw.json.operation
 
 import io.circe.Json
-import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.core._
-import net.scalax.fsn.json.atomic.{ CompareToStringConvert, SlickCompare }
-import net.scalax.fsn.slick.helpers.{ FilterModel, FilterModelHelper }
+import net.scalax.ubw.common.atomic.FProperty
+import net.scalax.ubw.core._
+import net.scalax.ubw.json.atomic.{ CompareToStringConvert, SlickCompare }
+import net.scalax.ubw.slick.helpers.{ FilterModel, FilterModelHelper }
 import shapeless._
 
 object SlickCompareOperation extends FilterModelHelper {

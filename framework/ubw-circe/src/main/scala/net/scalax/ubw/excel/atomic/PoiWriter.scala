@@ -1,6 +1,6 @@
-package net.scalax.fsn.excel.atomic
+package net.scalax.ubw.excel.atomic
 
-import net.scalax.fsn.core.Atomic
+import net.scalax.ubw.core.Atomic
 import org.xarcher.cpoi.{ StyleTransform, WriteableCellOperationAbs }
 
 trait PoiWriter[E] extends Atomic[E] {

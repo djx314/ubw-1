@@ -1,4 +1,4 @@
-package net.scalax.fsn.database.test
+package net.scalax.ubw.database.test
 
 object Sample01 {
 

@@ -1,16 +1,16 @@
-package net.scalax.fsn.database.test
+package net.scalax.ubw.database.test
 
-import net.scalax.fsn.core._
+import net.scalax.ubw.core._
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
-import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
-import net.scalax.fsn.mix.helpers.SlickCRUDImplicits
+import net.scalax.ubw.json.atomic.{ JsonReader, JsonWriter }
+import net.scalax.ubw.mix.helpers.SlickCRUDImplicits
 import shapeless._
 import io.circe._
 import io.circe.syntax._
-import net.scalax.fsn.common.atomic.{ DefaultValue, FProperty }
-import net.scalax.fsn.json.operation.{ AtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper }
-import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper }
+import net.scalax.ubw.common.atomic.{ DefaultValue, FProperty }
+import net.scalax.ubw.json.operation.{ AtomicValueHelper, FDefaultAtomicHelper, FPropertyAtomicHelper }
+import net.scalax.ubw.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper }
 import scala.language.implicitConversions
 
 class ParTest extends FlatSpec

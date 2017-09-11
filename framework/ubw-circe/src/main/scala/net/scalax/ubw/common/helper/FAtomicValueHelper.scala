@@ -1,7 +1,7 @@
-package net.scalax.fsn.json.operation
+package net.scalax.ubw.json.operation
 
-import net.scalax.fsn.common.atomic.{ DefaultValue, FFutureValue, FValue }
-import net.scalax.fsn.core.AtomicValueImpl
+import net.scalax.ubw.common.atomic.{ DefaultValue, FFutureValue, FValue }
+import net.scalax.ubw.core.AtomicValueImpl
 
 import scala.concurrent.Future
 import scala.language.implicitConversions

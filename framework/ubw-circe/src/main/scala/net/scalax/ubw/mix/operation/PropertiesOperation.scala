@@ -1,12 +1,14 @@
-package net.scalax.fsn.mix.operation
+package net.scalax.ubw.mix.operation
 
-import net.scalax.fsn.core._
-import net.scalax.fsn.slick.model._
-import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
-import net.scalax.fsn.slick.operation._
-import net.scalax.fsn.json.operation.JsonOperation
+import net.scalax.ubw.core._
+import net.scalax.ubw.slick.model._
+import net.scalax.ubw.slick.helpers.SlickQueryBindImpl
+import net.scalax.ubw.slick.operation._
+import net.scalax.ubw.json.operation.{ JsonOperation, ValidatorOperation }
 import slick.jdbc.JdbcProfile
 import io.circe.Json
+import net.scalax.ubw.extraction.model.ExtractContent
+import net.scalax.ubw.extraction.operation.ExtractorOperation
 import net.scalax.ubw.validate.atomic.ErrorMessage
 import slick.basic.BasicBackend
 import slick.dbio._
@@ -95,46 +97,30 @@ object PropertiesOperation extends PilesGenHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[List[DataPile]]]]] =
+  ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]] =
     { optPiles: List[Pile] =>
-      val updateAction = JsonOperation.unfullreadGen.next(InUpdateConvert.updateGen)
+      val updateAction = JsonOperation.unfullreadGen
+        .next3333[ExecReuslt[DataPileContent], ExecReuslt](InUpdateConvert.updateGen.withFilter(ValidatorOperation.readValidator))
+        .afterResult(ExtractorOperation.extractor)
 
-      {
-        data: Map[String, Json] =>
-          updateAction.result(optPiles) match {
-            case Right(result) =>
-              Future.successful(Right(result(data)(binds)))
-          }
-      }
-
-      /*{ data: Map[String, Json] =>
-        JsonOperation.unfullreadGen.flatMap(InUpdateConvert.updateGen) { (jsonReader, slickWriterGen) =>
-          slickWriterGen(jsonReader.apply(data))
-        }.flatMap(StaticManyOperation.updateGen) {
-          case ((execInfoDBIOF, validateInfoF), staticManyReader) =>
-            validateInfoF.map { validateInfo =>
-              if (!validateInfo.isEmpty) {
-                Left(validateInfo)
+      updateAction.result(optPiles) match {
+        case Left(e) =>
+          throw e
+          e.printStackTrace
+          throw e
+        case Right(result) =>
+          { data: Map[String, Json] =>
+            val (jsonValidate, updateGen) = result(data)
+            val errorMsgsF: Future[List[ErrorMessage]] = jsonValidate
+            errorMsgsF.map { errorMsgs =>
+              if (errorMsgs.isEmpty) {
+                Right(updateGen(binds))
               } else {
-                Right(execInfoDBIOF.apply(binds).map { execInfoDBIO =>
-                  execInfoDBIO.flatMap { execInfo =>
-                    for {
-                      staticMany <- DBIO.from(staticManyReader(execInfo.columns.sortBy(_.index).map(s => s.data)))
-                    } yield UpdateStaticManyInfo(execInfo.effectRows, staticMany)
-                  }
-                })
+                Left(errorMsgs)
               }
             }
-        }.result(optPiles) match {
-          case Left(e: Exception) =>
-            e.printStackTrace()
-            throw e
-          case Right(s) => s.flatMap {
-            case Left(messages) => Future.successful(Left(messages))
-            case Right(t) => t.map(r => Right(r))
           }
-        }
-      }*/
+      }
     }
 
   def json2SlickDeleteOperation(binds: List[(Any, SlickQueryBindImpl)])(
@@ -147,69 +133,40 @@ object PropertiesOperation extends PilesGenHelper {
         case Left(e: Exception) =>
           e.printStackTrace()
           throw e
-        case Right(result) =>
-          { data: Map[String, Json] =>
-            result(data)(binds).flatMap(action => action.columns(binds).map(_.effectRows))
-          }
-        //TODO
-        /*JsonOperation.unfullreadGen.flatMap(InRetrieveConvert.convert) { (jsonReader, slickWriterGen) =>
-          slickWriterGen(jsonReader.apply(data))
-        }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
-          execInfoDBIO.apply(binds).flatMap { execInfo =>
-            val data = execInfo.columns.sortBy(_.index).map(s => s.data)
-            DBIO.from(staticManyReader(data)).flatMap { staticMany =>
-              DBIO.sequence(staticMany.map { case (key, query) => query.jsonGen.toView.flatMap { s => DBIO.sequence(s.data.map { eachData => query.deleteGen(eachData) }) } })
-            }.map { s =>
-              (s, data)
-            }
-          }
-        }.flatMap(InDeleteConvert.convert) {
-          case (dataList, slickWriterGen) =>
-            dataList.flatMap {
-              case (execInfo, data) =>
-                slickWriterGen(data).apply(binds).map(_.effectRows)
-            }
-        }.result(optPiles) match {
-          case Left(e: Exception) =>
-            e.printStackTrace()
-            throw e
-          case Right(s) => s
-        }*/
+        case Right(result) => { data: Map[String, Json] =>
+          result(data)(binds).flatMap(action => action.columns(binds).map(_.effectRows))
+        }
       }
     }
+
+  type ExecReuslt[T] = (Future[List[ErrorMessage]], InCreateConvert.CreateType[T])
 
   def json2SlickCreateOperation(binds: List[(Any, SlickQueryBindImpl)])(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => Map[String, Json] => DBIO[ExecInfo3[List[DataPile]]] =
-    { optPiles: List[Pile] =>
-      JsonOperation.unfullreadGen.next3333(InCreateConvert.createGen).result(optPiles) match {
-        case Right(result) =>
-          { data: Map[String, Json] =>
-            result(data)(binds)
+  ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]] = { optPiles: List[Pile] =>
+    val createGen = JsonOperation.unfullreadGen
+      .next3333[ExecReuslt[DataPileContent], ExecReuslt](InCreateConvert.createGen.withFilter(ValidatorOperation.readValidator))
+      .afterResult(ExtractorOperation.extractor)
+
+    createGen.result(optPiles) match {
+      case Left(e) =>
+        e.printStackTrace
+        throw e
+      case Right(result) => { data: Map[String, Json] =>
+        val (jsonValidate, updateGen) = result(data)
+        val errorMsgsF: Future[List[ErrorMessage]] = jsonValidate
+        errorMsgsF.map { errorMsgs =>
+          if (errorMsgs.isEmpty) {
+            Right(updateGen(binds))
+          } else {
+            Left(errorMsgs)
           }
-        case Left(e: Exception) =>
-          e.printStackTrace()
-          throw e
+        }
       }
-      /*{ data: Map[String, Json] =>
-          JsonOperation.unfullreadGen.flatMap(InCreateConvert.createGen) { (jsonReader, slickWriterGen) =>
-            slickWriterGen(jsonReader.apply(data))
-          }.flatMap(StaticManyOperation.updateGen) { (execInfoDBIO, staticManyReader) =>
-            execInfoDBIO.apply(binds).flatMap { execInfo =>
-              for {
-                staticMany <- DBIO.from(staticManyReader(execInfo.columns.sortBy(_.index).map(s => s.data)))
-              } yield UpdateStaticManyInfo(execInfo.effectRows, staticMany)
-            }
-          }.result(optPiles) match {
-            case Left(e: Exception) =>
-              e.printStackTrace()
-              throw e
-            case Right(s) => s
-          }
-        }*/
     }
+  }
 
   def slick_retrieve_i_slick_update_or_insert_o(binds: List[(Any, SlickQueryBindImpl)], db: BasicBackend#Database)(
     implicit

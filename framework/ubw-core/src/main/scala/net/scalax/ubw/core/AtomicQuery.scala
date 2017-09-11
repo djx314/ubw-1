@@ -1,4 +1,4 @@
-package net.scalax.fsn.core
+package net.scalax.ubw.core
 
 import scala.language.higherKinds
 import scala.reflect.runtime.universe._
@@ -10,13 +10,11 @@ trait QueryTranform[U] {
   val gen: Either[AtomicException, QueryType]
   def apply(rep: QueryType, data: AtomicValueImpl[path.DataType]): U
 }
-
-trait QueryTranformWithOutData[U] {
+/*trait QueryTranformWithOutData[U] {
   type QueryType
   val gen: Either[AtomicException, QueryType]
   def apply(rep: QueryType): U
-}
-
+}*/
 trait AtomicQueryImpl {
   self =>
 
@@ -45,10 +43,8 @@ trait AtomicQueryImpl {
         }
       }
     }
-
     //def mapToOption[R](cv: (A, AtomicValueImpl[path.DataType]) => R): QueryTranform[R] = mapTo[R](cv)
-
-    def mapToWithoutData[R](cv: A => R): QueryTranformWithOutData[R] = {
+    /*def mapToWithoutData[R](cv: A => R): QueryTranformWithOutData[R] = {
       new QueryTranformWithOutData[R] {
         override type QueryType = A
         override val gen = queryResult
@@ -56,8 +52,7 @@ trait AtomicQueryImpl {
           cv(rep)
         }
       }
-    }
-
+    }*/
     //def mapToOptionWithoutData[R](cv: A => R): QueryTranformWithOutData[R] = mapToWithoutData[R](cv)
   }
 

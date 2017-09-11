@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick.model
+package net.scalax.ubw.slick.model
 
 case class SelectProperty(
   property: String,

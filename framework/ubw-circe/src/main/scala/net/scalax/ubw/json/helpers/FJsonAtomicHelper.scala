@@ -1,9 +1,9 @@
-package net.scalax.fsn.slick.helpers
+package net.scalax.ubw.slick.helpers
 
 import io.circe.{ Decoder, Encoder }
 import io.circe.generic.auto._
-import net.scalax.fsn.json.atomic.{ JsonReader, JsonWriter }
-import net.scalax.fsn.json.operation.AtomicHelper
+import net.scalax.ubw.json.atomic.{ JsonReader, JsonWriter }
+import net.scalax.ubw.json.operation.AtomicHelper
 
 trait FJsonAtomicHelper[E] extends AtomicHelper[E] {
 

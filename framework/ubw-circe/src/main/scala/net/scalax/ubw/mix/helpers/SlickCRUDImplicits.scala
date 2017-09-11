@@ -1,9 +1,9 @@
-package net.scalax.fsn.mix.helpers
+package net.scalax.ubw.mix.helpers
 
-import net.scalax.fsn.common.atomic.FProperty
-import net.scalax.fsn.core._
-import net.scalax.fsn.mix.slickbase.{ CrudQueryExtensionMethods, InOutQueryExtensionMethods, PileListQueryExtensionMethods }
-import net.scalax.fsn.slick.helpers.{ FRep, SlickUtils }
+import net.scalax.ubw.common.atomic.FProperty
+import net.scalax.ubw.core._
+import net.scalax.ubw.mix.slickbase.{ CrudQueryExtensionMethods, InOutQueryExtensionMethods, PileListQueryExtensionMethods }
+import net.scalax.ubw.slick.helpers.{ FRep, SlickUtils }
 import slick.lifted.{ FlatShapeLevel, Query, Shape }
 import slick.relational.RelationalProfile
 

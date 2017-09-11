@@ -1,9 +1,9 @@
-package net.scalax.fsn.json.atomic
+package net.scalax.ubw.json.atomic
 
 import cats.functor.Contravariant
 import io.circe.Encoder
 import io.circe.syntax._
-import net.scalax.fsn.core.Atomic
+import net.scalax.ubw.core.Atomic
 
 trait JsonWriter[E] extends Atomic[E] {
 

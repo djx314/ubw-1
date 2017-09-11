@@ -1,8 +1,8 @@
-package net.scalax.fsn.mix.slickbase
+package net.scalax.ubw.mix.slickbase
 
-import net.scalax.fsn.core.Pile
-import net.scalax.fsn.slick.helpers.SlickQueryBindImpl
-import net.scalax.fsn.slick.model.{ ColumnOrder, SlickPage, SlickParam, SlickRange }
+import net.scalax.ubw.core.Pile
+import net.scalax.ubw.slick.helpers.SlickQueryBindImpl
+import net.scalax.ubw.slick.model.{ ColumnOrder, SlickPage, SlickParam, SlickRange }
 import slick.ast.{ AnonSymbol, Ref }
 import slick.lifted._
 

@@ -1,10 +1,10 @@
-package net.scalax.fsn.slick.operation
+package net.scalax.ubw.slick.operation
 
 import cats.Functor
-import net.scalax.fsn.core._
-import net.scalax.fsn.json.operation.{ AtomicValueHelper, FSomeValue }
-import net.scalax.fsn.slick.atomic.{ OneToOneRetrieve, SlickDelete }
-import net.scalax.fsn.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
+import net.scalax.ubw.core._
+import net.scalax.ubw.json.operation.{ AtomicValueHelper, FSomeValue }
+import net.scalax.ubw.slick.atomic.{ OneToOneRetrieve, SlickDelete }
+import net.scalax.ubw.slick.helpers.{ FilterColumnGen, ListAnyShape, SlickQueryBindImpl }
 
 import scala.concurrent.ExecutionContext
 import shapeless._
@@ -85,7 +85,7 @@ object InDeleteConvert extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): FoldableChannel[DeleteType[List[DataPile]], DeleteType] = {
+  ): SingleFoldableChannel[DeleteType[DataPileContent], DeleteType] = {
     DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickDelete] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
@@ -152,11 +152,11 @@ object InDeleteConvert extends AtomicValueHelper {
             }
         }
         DeleteOperation.parseInsert(binds, genListWithData).map { s =>
-          ExecInfo3(s.effectRows, atomicValueGen(s.columns.sortBy(_.index).map(_.data)))
+          ExecInfo3(s.effectRows, atomicValueGen.toContent(s.columns.sortBy(_.index).map(_.data)))
         }
       }
-    }.withSyntax(new PileSyntaxFunctor[DeleteType[List[DataPile]], DeleteType] {
-      override def pileMap[U](a: DeleteType[List[DataPile]], pervious: List[DataPile] => U): DeleteType[U] = {
+    }.withSyntax(new PileSyntaxFunctor[DeleteType[DataPileContent], DeleteType] {
+      override def pileMap[U](a: DeleteType[DataPileContent], pervious: DataPileContent => U): DeleteType[U] = {
         { binds: List[(Any, SlickQueryBindImpl)] =>
           a(binds).map { execInfo =>
             ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))

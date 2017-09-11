@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick.model
+package net.scalax.ubw.slick.model
 
 import io.circe.Json
 import slick.dbio.DBIO

@@ -1,4 +1,4 @@
-package net.scalax.fsn.core
+package net.scalax.ubw.core
 
 import shapeless.{ ::, HList, HNil }
 
@@ -141,8 +141,8 @@ class AtomicPartialFunctionGenImpl(val c: scala.reflect.macros.blackbox.Context)
     val typeSymbol = entity.typeSymbol
     val expr = c.Expr[AtomicPartialFunctionGen[T]](
       q"""
-        new _root_.net.scalax.fsn.core.AtomicPartialFunctionGen[$typeSymbol] {
-          override def par[U]: PartialFunction[_root_.net.scalax.fsn.core.Atomic[U], $typeSymbol[U]] = {
+        new _root_.net.scalax.ubw.core.AtomicPartialFunctionGen[$typeSymbol] {
+          override def par[U]: PartialFunction[_root_.net.scalax.ubw.core.Atomic[U], $typeSymbol[U]] = {
            case (s: $typeSymbol[U @_root_.scala.unchecked]) => s
           }
         }

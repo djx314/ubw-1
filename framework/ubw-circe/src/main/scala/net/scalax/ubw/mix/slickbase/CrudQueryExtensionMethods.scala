@@ -1,7 +1,7 @@
-package net.scalax.fsn.mix.slickbase
+package net.scalax.ubw.mix.slickbase
 
-import net.scalax.fsn.core.Pile
-import net.scalax.fsn.slick.helpers.{ SlickQueryBindImpl, SlickUtils }
+import net.scalax.ubw.core.Pile
+import net.scalax.ubw.slick.helpers.{ SlickQueryBindImpl, SlickUtils }
 import slick.ast.{ AnonSymbol, Ref }
 import slick.lifted._
 import slick.relational.RelationalProfile

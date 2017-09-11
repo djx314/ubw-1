@@ -1,4 +1,4 @@
-package net.scalax.fsn.slick.model
+package net.scalax.ubw.slick.model
 
 case class SlickRange(drop: Int, take: Option[Int])
 case class SlickPage(pageIndex: Int, pageSize: Int)

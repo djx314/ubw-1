@@ -1,10 +1,10 @@
-package net.scalax.fsn.database.test
+package net.scalax.ubw.database.test
 
-import net.scalax.fsn.core.{ AtomicPathImpl, PilesPolyHelper }
-import net.scalax.fsn.json.operation._
-import net.scalax.fsn.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
-import net.scalax.fsn.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
-import net.scalax.fsn.slick.model._
+import net.scalax.ubw.core.{ AtomicPathImpl, PilesPolyHelper }
+import net.scalax.ubw.json.operation._
+import net.scalax.ubw.mix.helpers.{ Slick2JsonFsnImplicit, SlickCRUDImplicits }
+import net.scalax.ubw.slick.helpers.{ FJsonAtomicHelper, FStrSelectExtAtomicHelper, StrFSSelectAtomicHelper }
+import net.scalax.ubw.slick.model._
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -53,9 +53,9 @@ object Sample07 extends SlickCRUDImplicits
     )
   }
 
-  val result1: JsonOut = fQuery.strResult
+  //val result1: JsonOut = fQuery.strResult
 
-  val view1: DBIO[JsonView] = result1.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))))
+  val view1: DBIO[JsonView] = fQuery.addOrders(List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))).strResult.toView
 
   Await.result(Helper.db.run {
     Helper.initData
@@ -87,7 +87,7 @@ object Sample07 extends SlickCRUDImplicits
               set(name)
             case _ =>
               emptyValue[String]
-          }) :: ("ageOpt" ofPile friend.age.out) :: FPNil).poly("account" ofPile AtomicPathImpl.empty[Aa]).transform { t =>
+          }) :: ("ageOpt" ofPile friend.age.out) :: FPNil).poly("account" ofPile emptyPath[Aa]).transform { t =>
             t match {
               case FSomeValue(name) :: FSomeValue(Some(age)) :: HNil =>
                 set(Aa(name, age))
@@ -97,8 +97,8 @@ object Sample07 extends SlickCRUDImplicits
             }
           } :: ("id" ofPile friend.id.out.order.describe("自增主键")) :: ("id" ofPile friend.age.out.order.describe("年龄")) :: FPNil).poly("info" ofPile AtomicPathImpl.empty[Map[String, Json]].writeJ).transform { t =>
             t match {
-              case FSomeValue(aa) :: FSomeValue(id) :: FSomeValue(ageOpt) :: HNil =>
-                set(Map("id" -> id.asJson, "accountInfo" -> aa.asJson, "ageOpt" -> ageOpt.asJson))
+              case FSomeValue(aa) :: FSomeValue(id) :: FSomeValue(Some(age)) :: HNil =>
+                set(Map("id" -> id.asJson, "accountInfo" -> aa.asJson, "ageOpt" -> age.asJson))
               case _ :: FSomeValue(id) :: _ :: HNil =>
                 set(Map("message" -> s"id为${id}的不知名人事".asJson))
             }
@@ -107,9 +107,9 @@ object Sample07 extends SlickCRUDImplicits
     )
   }
 
-  val result2: JsonOut = moreComplexQuery.strResult
+  //val result2: JsonOut = moreComplexQuery.strResult
 
-  val view2: DBIO[JsonView] = result2.toView(SlickParam(orders = List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))))
+  val view2: DBIO[JsonView] = moreComplexQuery.addOrders(List(ColumnOrder("name", true), ColumnOrder("id", false), ColumnOrder("ageOpt", false))).strResult.toView
 
   Await.result(Helper.db.run {
     view2.map { s =>
