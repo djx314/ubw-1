@@ -100,7 +100,7 @@ object PropertiesOperation extends PilesGenHelper {
   ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]] =
     { optPiles: List[Pile] =>
       val updateAction = JsonOperation.unfullreadGen
-        .next3333[(Future[List[ErrorMessage]], InUpdateConvert.UpdateType[DataPileContent]), ({ type L[K] = (Future[List[ErrorMessage]], InUpdateConvert.UpdateType[K]) })#L](InUpdateConvert.updateGen.withFilter(ValidatorOperation.readValidator))
+        .next3333[ExecReuslt[DataPileContent], ExecReuslt](InUpdateConvert.updateGen.withFilter(ValidatorOperation.readValidator))
         .afterResult(ExtractorOperation.extractor)
 
       updateAction.result(optPiles) match {
@@ -139,13 +139,15 @@ object PropertiesOperation extends PilesGenHelper {
       }
     }
 
+  type ExecReuslt[T] = (Future[List[ErrorMessage]], InCreateConvert.CreateType[T])
+
   def json2SlickCreateOperation(binds: List[(Any, SlickQueryBindImpl)])(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
   ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]] = { optPiles: List[Pile] =>
     val createGen = JsonOperation.unfullreadGen
-      .next3333[(Future[List[ErrorMessage]], InUpdateConvert.UpdateType[DataPileContent]), ({ type L[K] = (Future[List[ErrorMessage]], InUpdateConvert.UpdateType[K]) })#L](InCreateConvert.createGen.withFilter(ValidatorOperation.readValidator))
+      .next3333[ExecReuslt[DataPileContent], ExecReuslt](InCreateConvert.createGen.withFilter(ValidatorOperation.readValidator))
       .afterResult(ExtractorOperation.extractor)
 
     createGen.result(optPiles) match {

@@ -74,11 +74,20 @@ case class ISWriter[A, B, C, D, E, F](
 
 object InCreateConvert extends AtomicValueHelper {
 
-  type CreateType[T] = List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]
+  trait CreateType[T] extends (List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]])
+  object CreateType {
+    def apply[T](cv: List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]): CreateType[T] = {
+      new CreateType[T] {
+        override def apply(list: List[(Any, SlickQueryBindImpl)]) = {
+          cv(list)
+        }
+      }
+    }
+  }
 
   def functor(implicit ec: ExecutionContext): Functor[CreateType] = new Functor[CreateType] {
     override def map[A, B](fa: CreateType[A])(f: (A) => B): CreateType[B] = {
-      { binds: List[(Any, SlickQueryBindImpl)] =>
+      CreateType { binds: List[(Any, SlickQueryBindImpl)] =>
         fa(binds).map(s => ExecInfo3(s.effectRows, f(s.columns)))
       }
     }
@@ -178,7 +187,7 @@ object InCreateConvert extends AtomicValueHelper {
           }
       }.aa
     } { (genList, atomicValueGen) =>
-      { binds: List[(Any, SlickQueryBindImpl)] =>
+      CreateType { binds: List[(Any, SlickQueryBindImpl)] =>
         val genListWithIndex = genList.zipWithIndex.map {
           case (gen, index) =>
             new ISlickWriterWithData {
@@ -194,7 +203,7 @@ object InCreateConvert extends AtomicValueHelper {
       }
     }.withSyntax(new PileSyntaxFunctor[CreateType[DataPileContent], CreateType] {
       override def pileMap[U](a: CreateType[DataPileContent], pervious: DataPileContent => U): CreateType[U] = {
-        { binds: List[(Any, SlickQueryBindImpl)] =>
+        CreateType { binds: List[(Any, SlickQueryBindImpl)] =>
           a(binds).map { execInfo =>
             ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))
           }
