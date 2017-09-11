@@ -88,7 +88,7 @@ object InCreateConvert extends AtomicValueHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): SingleFoldableChannel[CreateType[DataPileContent], CreateType] = {
+  ): FoldableChannel[CreateType[DataPileContent], CreateType] = {
     val profile = slickProfile
     DataPile.transformTree {
       import profile.api._

@@ -7,6 +7,8 @@ import net.scalax.fsn.json.operation.{AtomicValueHelper, FSomeValue, ValidatorOp
 import net.scalax.fsn.slick.atomic.{OneToOneUpdate, SlickUpdate}
 import net.scalax.fsn.slick.helpers.{FilterColumnGen, ListAnyShape, SlickQueryBindImpl}
 import net.scalax.fsn.slick.operation.InCreateConvert.CreateType
+import net.scalax.ubw.extraction.atomic.Extractor
+import net.scalax.ubw.extraction.model.ExtractContent
 import net.scalax.ubw.validate.atomic.ErrorMessage
 import slick.jdbc.JdbcProfile
 
@@ -16,6 +18,16 @@ import slick.lifted._
 
 case class DataWithIndex(data: AtomicValue, index: Int)
 case class ExecInfo3[T](effectRows: Int, columns: T)
+case class ExecInfo4(effectRows: Int, content: DataPileContent) {
+  lazy val extractContent: ExtractContent = ExtractContent(content)
+  def extract[E](extractor: Extractor[E]): Option[E] = {
+    extractContent.extract(extractor)
+  }
+
+  def extractAnyway[E](extractor: Extractor[E]): E = {
+    extractContent.extractAnyway(extractor)
+  }
+}
 
 trait UpdateTran {
   val table: Any
