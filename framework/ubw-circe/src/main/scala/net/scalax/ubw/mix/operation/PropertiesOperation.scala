@@ -97,7 +97,7 @@ object PropertiesOperation extends PilesGenHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]] =
+  ): List[Pile] => ResultFromJson[ExecInfo3[ExtractContent]] =
     { optPiles: List[Pile] =>
       val updateAction = JsonOperation.unfullreadGen
         .next3333[ExecReuslt[DataPileContent], ExecReuslt](InUpdateConvert.updateGen.withFilter(ValidatorOperation.readValidator))
@@ -109,7 +109,7 @@ object PropertiesOperation extends PilesGenHelper {
           e.printStackTrace
           throw e
         case Right(result) =>
-          { data: Map[String, Json] =>
+          ResultFromJson { data: Map[String, Json] =>
             val (jsonValidate, updateGen) = result(data)
             val errorMsgsF: Future[List[ErrorMessage]] = jsonValidate
             errorMsgsF.map { errorMsgs =>
@@ -145,7 +145,7 @@ object PropertiesOperation extends PilesGenHelper {
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): List[Pile] => Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]] = { optPiles: List[Pile] =>
+  ): List[Pile] => ResultFromJson[ExecInfo3[ExtractContent]] = { optPiles: List[Pile] =>
     val createGen = JsonOperation.unfullreadGen
       .next3333[ExecReuslt[DataPileContent], ExecReuslt](InCreateConvert.createGen.withFilter(ValidatorOperation.readValidator))
       .afterResult(ExtractorOperation.extractor)
@@ -154,7 +154,7 @@ object PropertiesOperation extends PilesGenHelper {
       case Left(e) =>
         e.printStackTrace
         throw e
-      case Right(result) => { data: Map[String, Json] =>
+      case Right(result) => ResultFromJson { data: Map[String, Json] =>
         val (jsonValidate, updateGen) = result(data)
         val errorMsgsF: Future[List[ErrorMessage]] = jsonValidate
         errorMsgsF.map { errorMsgs =>

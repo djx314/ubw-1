@@ -8,7 +8,7 @@ import slick.dbio.DBIO
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class StaticManyInfo(
+/*case class StaticManyInfo(
   propertyInfo: List[RWProperty],
   model: Map[String, Json],
   many: Map[String, QueryJsonInfo]
@@ -38,24 +38,32 @@ case class StaticManyUbw(
   //关联表的从表 id 字段
   slaveryIdField: String,
   ubwGen: JsonOut
-)
+)*/
+
+trait ResultFromJson[T] {
+  def input(v1: Map[String, Json]): Future[Either[List[ErrorMessage], DBIO[T]]]
+}
+
+object ResultFromJson {
+  def apply[T](s: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[T]]]): ResultFromJson[T] = new ResultFromJson[T] {
+    override def input(v1: Map[String, Json]): Future[Either[List[ErrorMessage], DBIO[T]]] = s(v1)
+  }
+}
 
 case class QueryJsonInfo(
   jsonGen: JsonOut,
   retrieveGen: Map[String, Json] => DBIO[Map[String, Json]],
-  insertGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]],
+  insertGen: ResultFromJson[ExecInfo3[ExtractContent]],
   deleteGen: Map[String, Json] => DBIO[Int],
-  updateGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]],
+  updateGen: ResultFromJson[ExecInfo3[ExtractContent]],
   //staticMany: Future[List[StaticManyUbw]]
 )
 
-case class RWInfo(
-    retrieveGen: Map[String, Json] => DBIO[Map[String, Json]],
-    insertGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]],
-    deleteGen: Map[String, Json] => DBIO[Int],
-    updateGen: Map[String, Json] => Future[Either[List[ErrorMessage], DBIO[ExecInfo3[ExtractContent]]]],
-    //staticMany: Future[List[StaticManyUbw]]
-) {
+trait RWInfo {
+  def retrieveGen: Map[String, Json] => DBIO[Map[String, Json]]
+  def insertGen: ResultFromJson[ExecInfo3[ExtractContent]]
+  def deleteGen: Map[String, Json] => DBIO[Int]
+  def updateGen: ResultFromJson[ExecInfo3[ExtractContent]]
 
   def withJsonOut(jOut: JsonOut): QueryJsonInfo = {
     QueryJsonInfo(

@@ -8,7 +8,7 @@ import net.scalax.ubw.slick.model._
 import net.scalax.ubw.slick.operation.GroupResult
 import slick.jdbc.JdbcProfile
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.ExecutionContext
 
 trait Slick2JsonFsnImplicit extends PilesGenHelper {
 
@@ -32,22 +32,6 @@ trait Slick2JsonFsnImplicit extends PilesGenHelper {
       outJsonGen
     }
 
-    /*def strResult(orderColumn: String, isDesc: Boolean = true)(
-      implicit
-      slickProfile: JdbcProfile,
-      ec: ExecutionContext
-    ): JsonOut = {
-      strResult(List(ColumnOrder(orderColumn, isDesc)))
-    }
-
-    def strResult(
-      implicit
-      slickProfile: JdbcProfile,
-      ec: ExecutionContext
-    ): JsonOut = {
-      strResult(Nil)
-    }*/
-
     def filterResult(filter: Map[String, Json])(
       implicit
       slickProfile: JdbcProfile,
@@ -55,30 +39,6 @@ trait Slick2JsonFsnImplicit extends PilesGenHelper {
     ): JsonOut = {
       PropertiesOperation.filterStrSlick2jsonOperation(listQueryWrap.listQueryBind, listQueryWrap.slickParam).apply(listQueryWrap.columns).apply(filter)
     }
-
-    /*def result(
-      implicit
-      slickProfile: JdbcProfile,
-      ec: ExecutionContext
-    ): JsonOut = {
-      strResult(defaultOrders)
-    }
-
-    def result(orderColumn: String, isDesc: Boolean = true)(
-      implicit
-      slickProfile: JdbcProfile,
-      ec: ExecutionContext
-    ): JsonOut = {
-      result(List(ColumnOrder(orderColumn, isDesc)))
-    }
-
-    def result(
-      implicit
-      slickProfile: JdbcProfile,
-      ec: ExecutionContext
-    ): JsonOut = {
-      result(Nil)
-    }*/
 
     def jpResult(
       implicit
@@ -91,21 +51,7 @@ trait Slick2JsonFsnImplicit extends PilesGenHelper {
 
       (() => outJsonGen) -> (() => ???)
     }
-    /*def jpResult(orderColumn: String, isDesc: Boolean = true)(
-      implicit
-      slickProfile: JdbcProfile,
-      ec: ExecutionContext
-    ): (() => JsonOut, () => PoiOut) = {
-      jpResult(List(ColumnOrder(orderColumn, isDesc)))
-    }
 
-    def jpResult(
-      implicit
-      slickProfile: JdbcProfile,
-      ec: ExecutionContext
-    ): (() => JsonOut, () => PoiOut) = {
-      jpResult(Nil)
-    }*/
   }
 
 }
@@ -120,34 +66,25 @@ trait Slick2CrudFsnImplicit extends Slick2JsonFsnImplicit {
       slickProfile: JdbcProfile,
       ec: ExecutionContext
     ): RWInfo = {
-      RWInfo(
-        retrieveGen = { v: Map[String, Json] =>
-        val retrieveDBIO = PropertiesOperation.json2SlickRetrieveOperation(crudQueryWrap.binds).apply(columns).apply(v)
-        /*for {
-          (statcMany, jsonData) <- retrieveDBIO
-        } yield {
-          StaticManyInfo(Nil /*properties*/ , jsonData, statcMany)
-        }*/
-        retrieveDBIO
-      },
-        insertGen = { v: Map[String, Json] =>
-        val createInfoDBIO = PropertiesOperation.json2SlickCreateOperation(crudQueryWrap.binds).apply(columns).apply(v)
+      new RWInfo {
+        override lazy val retrieveGen = {
+          val retrieveDBIO = PropertiesOperation.json2SlickRetrieveOperation(crudQueryWrap.binds).apply(columns)
+          retrieveDBIO
+        }
 
-        /*val createAction = for {
-          updateStaticManyInfo <- createInfoDBIO
-        } yield {
-          updateStaticManyInfo
-        }*/
-        createInfoDBIO
-      },
-        deleteGen = (v: Map[String, Json]) => {
-        PropertiesOperation.json2SlickDeleteOperation(crudQueryWrap.binds).apply(columns).apply(v)
-      },
-        updateGen = (v: Map[String, Json]) => {
-        PropertiesOperation.json2SlickUpdateOperation(crudQueryWrap.binds).apply(columns).apply(v)
-      } //,
-      //staticMany = Future successful Nil //TODO StaticManyOperation.ubwStaticManyGen.result(columns).right.get
-      )
+        override lazy val insertGen = {
+          val createInfoDBIO = PropertiesOperation.json2SlickCreateOperation(crudQueryWrap.binds).apply(columns)
+          createInfoDBIO
+        }
+
+        override lazy val deleteGen = {
+          PropertiesOperation.json2SlickDeleteOperation(crudQueryWrap.binds).apply(columns)
+        }
+
+        override lazy val updateGen = {
+          PropertiesOperation.json2SlickUpdateOperation(crudQueryWrap.binds).apply(columns)
+        }
+      }
     }
 
     def result(orderColumn: String, isDesc: Boolean = true)(

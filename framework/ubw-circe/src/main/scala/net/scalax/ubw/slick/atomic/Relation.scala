@@ -2,7 +2,6 @@ package net.scalax.ubw.slick.atomic
 
 import net.scalax.ubw.core.Atomic
 import net.scalax.ubw.slick.helpers.FilterWrapper
-import net.scalax.ubw.slick.model.StaticManyGen
 import slick.lifted.{ FlatShapeLevel, Shape }
 
 import scala.concurrent.Future
@@ -52,11 +51,10 @@ trait OneToOneUpdate[E] extends Atomic[E] {
   //val convert: DataType => SlickType
   //val filterConvert: DataType => FilterData
 }
-
-trait StaticMany[E] extends Atomic[E] {
+/*trait StaticMany[E] extends Atomic[E] {
 
   type DataType = E
 
   val staticMany: Future[List[StaticManyGen[DataType]]]
 
-}
+}*/ 

@@ -1,6 +1,5 @@
 package net.scalax.ubw.slick.operation
 
-import cats.Functor
 import net.scalax.ubw.core._
 import net.scalax.ubw.json.operation.{ AtomicValueHelper, FSomeValue }
 import net.scalax.ubw.slick.atomic.{ OneToOneRetrieve, SlickDelete }
@@ -70,8 +69,7 @@ trait ISlickDeleteWithData {
 }
 
 object InDeleteConvert extends AtomicValueHelper {
-
-  type DeleteType[T] = List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]
+  /*type DeleteType[T] = List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]
 
   def functor(implicit ec: ExecutionContext): Functor[DeleteType] = new Functor[DeleteType] {
     override def map[A, B](fa: DeleteType[A])(f: (A) => B): DeleteType[B] = {
@@ -79,13 +77,12 @@ object InDeleteConvert extends AtomicValueHelper {
         fa(binds).map(s => ExecInfo3(s.effectRows, f(s.columns)))
       }
     }
-  }
-
+  }*/
   def convert(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): SingleFoldableChannel[DeleteType[DataPileContent], DeleteType] = {
+  ): SingleFoldableChannel[InCreateConvert.CreateType[DataPileContent], InCreateConvert.CreateType] = {
     DataPile.transformTree {
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickDelete] :: needAtomicOpt[OneToOneRetrieve] :: FANil)
@@ -143,7 +140,7 @@ object InDeleteConvert extends AtomicValueHelper {
           }
       }.aa
     } { (genList, atomicValueGen) =>
-      { binds: List[(Any, SlickQueryBindImpl)] =>
+      InCreateConvert.CreateType { binds: List[(Any, SlickQueryBindImpl)] =>
         val genListWithData = genList.zipWithIndex.map {
           case (gen, index) =>
             new ISlickDeleteWithData {
@@ -155,15 +152,15 @@ object InDeleteConvert extends AtomicValueHelper {
           ExecInfo3(s.effectRows, atomicValueGen.toContent(s.columns.sortBy(_.index).map(_.data)))
         }
       }
-    }.withSyntax(new PileSyntaxFunctor[DeleteType[DataPileContent], DeleteType] {
-      override def pileMap[U](a: DeleteType[DataPileContent], pervious: DataPileContent => U): DeleteType[U] = {
+    }.withSyntax(new PileSyntaxFunctor[InCreateConvert.CreateType[DataPileContent], InCreateConvert.CreateType] {
+      override def pileMap[U](a: InCreateConvert.CreateType[DataPileContent], pervious: DataPileContent => U): InCreateConvert.CreateType[U] = {
         { binds: List[(Any, SlickQueryBindImpl)] =>
           a(binds).map { execInfo =>
             ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))
           }
         }
       }
-    }).withFunctor(functor)
+    }).withFunctor(InCreateConvert.functor)
   }
 }
 

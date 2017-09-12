@@ -1,6 +1,5 @@
 package net.scalax.ubw.slick.operation
 
-import cats.Functor
 import net.scalax.ubw.common.atomic.DefaultValue
 import net.scalax.ubw.core._
 import net.scalax.ubw.json.operation.{AtomicValueHelper, FSomeValue}
@@ -69,7 +68,7 @@ trait ISlickReaderWithData {
 }
 
 object InRetrieveConvert extends AtomicValueHelper {
-  type RetrieveType[T] = List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]
+  /*type RetrieveType[T] = List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]
 
   def functor(implicit ec: ExecutionContext): Functor[RetrieveType] = new Functor[RetrieveType] {
     override def map[A, B](fa: RetrieveType[A])(f: (A) => B): RetrieveType[B] = {
@@ -77,13 +76,13 @@ object InRetrieveConvert extends AtomicValueHelper {
         fa(binds).map(s => ExecInfo3(s.effectRows, f(s.columns)))
       }
     }
-  }
+  }*/
 
   def convert(
     implicit
     slickProfile: JdbcProfile,
     ec: ExecutionContext
-  ): SingleFoldableChannel[RetrieveType[DataPileContent], RetrieveType] = {
+  ): SingleFoldableChannel[InCreateConvert.CreateType[DataPileContent], InCreateConvert.CreateType] = {
     DataPile.transformTree({
       new AtomicQuery(_) {
         val aa = withRep(needAtomic[SlickRetrieve] :: needAtomicOpt[OneToOneRetrieve] :: needAtomicOpt[DefaultValue] :: FANil)
@@ -140,7 +139,7 @@ object InRetrieveConvert extends AtomicValueHelper {
           }
       }.aa
     })({ (genList, atomicValueGen) =>
-      { binds: List[(Any, SlickQueryBindImpl)] =>
+      InCreateConvert.CreateType { binds: List[(Any, SlickQueryBindImpl)] =>
         //genListF.map { genList =>
         val readersWithData = genList.zipWithIndex.map {
           case (reader1, index) =>
@@ -155,15 +154,15 @@ object InRetrieveConvert extends AtomicValueHelper {
           ExecInfo3(s.effectRows, atomicValueGen.toContent(s.columns.sortBy(_.index).map(_.data)))
         }
       }
-    }).withSyntax(new PileSyntaxFunctor[RetrieveType[DataPileContent], RetrieveType] {
-      override def pileMap[U](a: RetrieveType[DataPileContent], pervious: DataPileContent => U): RetrieveType[U] = {
+    }).withSyntax(new PileSyntaxFunctor[InCreateConvert.CreateType[DataPileContent], InCreateConvert.CreateType] {
+      override def pileMap[U](a: InCreateConvert.CreateType[DataPileContent], pervious: DataPileContent => U): InCreateConvert.CreateType[U] = {
         { binds: List[(Any, SlickQueryBindImpl)] =>
           a(binds).map { execInfo =>
             ExecInfo3(execInfo.effectRows, pervious(execInfo.columns))
           }
         }
       }
-    }).withFunctor(functor)
+    }).withFunctor(InCreateConvert.functor)
   }
 }
 

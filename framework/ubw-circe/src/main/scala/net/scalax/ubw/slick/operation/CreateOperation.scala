@@ -74,7 +74,10 @@ case class ISWriter[A, B, C, D, E, F](
 
 object InCreateConvert extends AtomicValueHelper {
 
-  trait CreateType[T] extends (List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]])
+  trait CreateType[T] extends (List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]) {
+    override def apply(binds: List[(Any, SlickQueryBindImpl)]): slick.dbio.DBIO[ExecInfo3[T]]
+  }
+
   object CreateType {
     def apply[T](cv: List[(Any, SlickQueryBindImpl)] => slick.dbio.DBIO[ExecInfo3[T]]): CreateType[T] = {
       new CreateType[T] {

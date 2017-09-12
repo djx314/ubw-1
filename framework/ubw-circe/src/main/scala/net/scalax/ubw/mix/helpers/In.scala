@@ -3,10 +3,7 @@ package net.scalax.ubw.mix.helpers
 import net.scalax.ubw.core.Atomic
 import net.scalax.ubw.slick.atomic._
 import net.scalax.ubw.slick.helpers.{ FilterWrapper, SlickUtils }
-import net.scalax.ubw.slick.model.StaticManyGen
 import slick.lifted.{ FlatShapeLevel, Shape }
-
-import scala.concurrent.Future
 
 object In {
 
@@ -75,9 +72,7 @@ object In {
       override val mainShape = shape
     }
   )
-
-  def staticMany[E](staticMany1: Future[List[StaticManyGen[E]]]): List[Atomic[E]] = List(new StaticMany[E] {
+  /*def staticMany[E](staticMany1: Future[List[StaticManyGen[E]]]): List[Atomic[E]] = List(new StaticMany[E] {
     val staticMany = staticMany1
-  })
-
+  })*/
 }
