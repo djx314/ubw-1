@@ -18,6 +18,10 @@ case class PileListQueryWrap(
     this.copy(slickParam = this.slickParam.copy(page = Option(page)))
   }
 
+  def pageOpt(pageOpt: Option[SlickPage]): PileListQueryWrap = {
+    this.copy(slickParam = this.slickParam.copy(page = pageOpt))
+  }
+
   def pageIndex(index: Int): PileListQueryWrap = {
     this.copy(slickParam = this.slickParam.copy(page = Option(SlickPage(pageIndex = index, pageSize = this.slickParam.page.map(_.pageSize).getOrElse(10)))))
   }
@@ -28,6 +32,10 @@ case class PileListQueryWrap(
 
   def range(range: SlickRange): PileListQueryWrap = {
     this.copy(slickParam = this.slickParam.copy(range = Option(range)))
+  }
+
+  def rangeOpt(rangeOpt: Option[SlickRange]): PileListQueryWrap = {
+    this.copy(slickParam = this.slickParam.copy(range = rangeOpt))
   }
 
   def drop(drop: Int): PileListQueryWrap = {
