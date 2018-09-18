@@ -9,8 +9,8 @@ jdk:
   - oraclejdk8
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION allClean coverage allTest
-  - sbt ++$TRAVIS_SCALA_VERSION allReport
+  - sbt ++$TRAVIS_SCALA_VERSION clean coverage allTest
+  - sbt ++$TRAVIS_SCALA_VERSION coverageReport
 
 
 after_success: bash <(curl -s https://codecov.io/bash)
