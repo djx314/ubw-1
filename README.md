@@ -1,6 +1,6 @@
 # fsn
 
-[![Build Status](https://travis-ci.org/scalax/fsn.svg?branch=master)](https://travis-ci.org/scalax/fsn)
+[![Build Status](https://travis-ci.org/djx314/ubw.svg?branch=master)](https://travis-ci.org/djx314/ubw)
 
 一个数据转换的抽象。
 
